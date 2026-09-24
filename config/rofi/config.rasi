@@ -30,4 +30,4 @@ configuration {
     kb-cancel:           "Escape,Control+g,Control+bracketleft,Super+space";
 }
 
-@theme "~/.config/rofi/nord.rasi"
+@theme "~/.config/rofi/tema.rasi"

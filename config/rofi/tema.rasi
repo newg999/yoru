@@ -1,17 +1,19 @@
 /* ============================================================================
-   Tema Nord para rofi
+   Tema "blanco" para rofi (a juego con la barra)
    El fondo es semitransparente: Niri lo desenfoca (rules.kdl → rofi)
    Para cambiar la paleta, cambia solo los colores de este primer bloque.
    ========================================================================== */
 
 * {
-    fondo:        rgba(46, 52, 64, 78%);     /* nord0 */
-    fondo-alt:    rgba(59, 66, 82, 85%);     /* nord1 */
-    seleccion:    rgba(76, 86, 106, 75%);    /* nord3 */
-    texto:        #d8dee9;                   /* nord4 */
-    texto-tenue:  #7b88a1;
-    acento:       #88c0d0;                   /* nord8 */
-    activo:       #a3be8c;                   /* verde */
+    fondo:        rgba(26, 27, 30, 72%);     /* oscuro translúcido */
+    fondo-alt:    rgba(255, 255, 255, 6%);   /* cajas (búsqueda, mensaje) */
+    seleccion:    rgba(255, 255, 255, 90%);  /* fila elegida: blanca... */
+    texto-sel:    #1a1b1e;                   /* ...con texto oscuro */
+    texto:        #e5e9f0;
+    texto-tenue:  #8a8f98;
+    acento:       #ffffff;
+    borde:        rgba(255, 255, 255, 18%);
+    activo-fondo: rgba(255, 255, 255, 12%);  /* conectado / en uso */
     urgente:      #bf616a;                   /* rojo  */
 
     background-color: transparent;
@@ -24,8 +26,8 @@ window {
     anchor:           center;
     width:            560px;
     background-color: @fondo;
-    border:           2px;
-    border-color:     @acento;
+    border:           1px;
+    border-color:     @borde;
     border-radius:    14px;
     padding:          16px;
 }
@@ -86,18 +88,18 @@ element alternate.normal {
 }
 element selected.normal {
     background-color: @seleccion;
-    text-color:       @acento;
+    text-color:       @texto-sel;
 }
 
 /* "active" = conectado / encendido (wifi actual, auriculares conectados...) */
 element normal.active,
 element alternate.active {
-    background-color: transparent;
-    text-color:       @activo;
+    background-color: @activo-fondo;
+    text-color:       @acento;
 }
 element selected.active {
     background-color: @seleccion;
-    text-color:       @activo;
+    text-color:       @texto-sel;
 }
 
 element normal.urgent,
@@ -106,8 +108,8 @@ element alternate.urgent {
     text-color:       @urgente;
 }
 element selected.urgent {
-    background-color: @seleccion;
-    text-color:       @urgente;
+    background-color: @urgente;
+    text-color:       @acento;
 }
 
 element-icon {

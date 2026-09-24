@@ -6,7 +6,7 @@ No se ejecuta solo: los otros scripts lo importan.
 
 import subprocess
 
-# Tamaño de los menús pequeños (se suma al tema nord.rasi)
+# Tamaño de los menús pequeños (se suma al tema tema.rasi)
 TEMA_MENU = "window { width: 460px; } listview { lines: 9; } inputbar { children: [ prompt ]; }"
 
 

@@ -1,37 +1,36 @@
 // ============================================================================
 //  colors.kdl — El "tema" de Niri
 // ----------------------------------------------------------------------------
-//  Paleta: Nord (https://www.nordtheme.com/docs/colors-and-palettes)
+//  Tema "blanco": blanco sobre oscuro neutro, translúcido. El color se
+//  reserva para los avisos (rojo = urgente/error, amarillo = atención).
 //  Si cambias de paleta, cambia también:
-//    waybar/style.css · rofi/nord.rasi · mako/config
-//    kitty/kitty.conf · swaylock/config
+//    waybar/style.css · rofi/tema.rasi · mako/config
+//    kitty/kitty.conf · swaylock/config · flameshot/flameshot.ini
 // ----------------------------------------------------------------------------
-//  Noche   nord0 #2e3440  nord1 #3b4252  nord2 #434c5e  nord3 #4c566a
-//  Nieve   nord4 #d8dee9  nord5 #e5e9f0  nord6 #eceff4
-//  Escarcha nord7 #8fbcbb nord8 #88c0d0  nord9 #81a1c1  nord10 #5e81ac
-//  Aurora  rojo #bf616a  naranja #d08770  amarillo #ebcb8b
-//          verde #a3be8c morado #b48ead
+//  oscuro #1a1b1e   oscuro-2 #26272b   gris #8a8f98
+//  texto  #e5e9f0   blanco   #ffffff
+//  rojo   #bf616a   amarillo #ebcb8b
 // ============================================================================
 
 layout {
     focus-ring {
-        // Degradado escarcha en la ventana activa. Para color sólido:
-        // active-color "#88c0d0" y borra la línea del gradiente.
-        active-gradient from="#88c0d0" to="#5e81ac" angle=45
-        inactive-color "#4c566a"
+        // Blanco translúcido en la ventana activa (los dos últimos dígitos
+        // son la opacidad: ff = sólido, 80 = mitad)
+        active-color "#ffffffcc"
+        inactive-color "#ffffff26"
     }
 
     border {
-        active-color "#88c0d0"
-        inactive-color "#3b4252"
+        active-color "#ffffffcc"
+        inactive-color "#ffffff26"
         urgent-color "#bf616a"
     }
 
     shadow {
-        color "#1c202899"
+        color "#00000099"
     }
 }
 
 overview {
-    backdrop-color "#242933"
+    backdrop-color "#111214"
 }
