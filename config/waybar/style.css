@@ -1,27 +1,20 @@
 /* ============================================================================
-   Waybar — estilos, versión "islas" con paleta Nord
+   Waybar — estilos, versión "islas" monocroma y semitransparente
+   Todo en blanco; solo los avisos (batería baja, sin red...) llevan color.
    (CSS de GTK: parecido al CSS web, pero no todo funciona)
    Para depurar en vivo:  GTK_DEBUG=interactive waybar
    ========================================================================== */
 
-@define-color nord0  #2e3440;
-@define-color nord1  #3b4252;
-@define-color nord2  #434c5e;
-@define-color nord3  #4c566a;
-@define-color nord4  #d8dee9;
-@define-color nord6  #eceff4;
-@define-color nord7  #8fbcbb;
-@define-color nord8  #88c0d0;
-@define-color nord9  #81a1c1;
-@define-color nord10 #5e81ac;
-@define-color red    #bf616a;
-@define-color orange #d08770;
-@define-color yellow #ebcb8b;
-@define-color green  #a3be8c;
-@define-color purple #b48ead;
+@define-color blanco  #ffffff;
+@define-color texto   #e5e9f0;
+@define-color tenue   alpha(#ffffff, 0.35);   /* estados apagados/silenciados */
+@define-color oscuro  #1a1b1e;
+@define-color red     #bf616a;
+@define-color yellow  #ebcb8b;
 
-/* Opacidad de las islas: 1.0 = sólidas, 0.0 = invisibles */
-@define-color isla alpha(@nord0, 0.85);
+/* Transparencia de las islas: 1.0 = sólidas, 0.0 = invisibles */
+@define-color isla        alpha(@oscuro, 0.45);
+@define-color isla-borde  alpha(@blanco, 0.12);
 
 * {
     font-family: "JetBrainsMono Nerd Font", monospace;
@@ -35,15 +28,15 @@
 /* La barra en sí es invisible: solo se ven las islas */
 window#waybar {
     background: transparent;
-    color: @nord4;
+    color: @texto;
 }
 
 tooltip {
-    background: @nord0;
-    border: 1px solid @nord3;
-    border-radius: 10px;
+    background: alpha(@oscuro, 0.92);
+    border: 1px solid @isla-borde;
+    border-radius: 12px;
 }
-tooltip label { color: @nord4; }
+tooltip label { color: @texto; padding: 4px 6px; }
 
 /* ---------------------------------------------------------------- Islas */
 #workspaces,
@@ -54,7 +47,7 @@ tooltip label { color: @nord4; }
 #mpris,
 #tray {
     background: @isla;
-    border: 1px solid alpha(@nord3, 0.6);
+    border: 1px solid @isla-borde;
     border-radius: 12px;
     padding: 0 14px;
 }
@@ -80,49 +73,42 @@ window#waybar.empty #window {
 /* ---------------------------------------------------------- Escritorios */
 #workspaces { padding: 0 6px; }
 #workspaces button {
-    color: @nord3;
+    color: @tenue;
     padding: 0 5px;
     background: transparent;
-    font-size: 11px;
+    font-size: 12px;
 }
-#workspaces button.active { color: @nord8; }
-#workspaces button:hover  { color: @nord6; background: transparent; }
+#workspaces button.active { color: @blanco; }
+#workspaces button:hover  { color: @blanco; background: transparent; }
 
 /* --------------------------------------------------------------- Colores */
-#window     { color: @nord4; font-weight: normal; }
-#clock      { color: @nord6; }
-#cpu        { color: @nord8; }
-#memory     { color: @purple; }
-#battery    { color: @green; }
-#battery.charging,
-#battery.plugged,
-#battery.full    { color: @nord8; }
+/* Todo blanco; los estados "apagados" en gris y los avisos en color */
+#window { font-weight: normal; }
+#clock, #cpu, #memory, #battery, #mpris,
+#pulseaudio, #network, #bluetooth { color: @texto; }
+
+#mpris        { font-weight: normal; }
+#mpris.paused,
+#pulseaudio.muted,
+#bluetooth.off,
+#bluetooth.disabled { color: @tenue; }
+
 #battery.warning:not(.charging) { color: @yellow; }
 #battery.critical:not(.charging) {
     color: @red;
     animation: parpadeo 1s steps(2) infinite alternate;
 }
-@keyframes parpadeo { to { color: @nord6; } }
-
-#mpris        { color: @nord7; font-weight: normal; }
-#mpris.paused { color: @nord3; }
-#pulseaudio { color: @nord7; }
-#pulseaudio.muted { color: @nord3; }
-#network    { color: @green; }
+@keyframes parpadeo { to { color: @blanco; } }
 #network.disconnected { color: @red; }
-#bluetooth  { color: @nord9; }
-#bluetooth.off,
-#bluetooth.disabled { color: @nord3; }
-#bluetooth.connected { color: @nord8; }
 
 /* Módulos con menú: se iluminan al pasar el ratón */
 #clock:hover, #network:hover, #bluetooth:hover, #pulseaudio:hover,
-#mpris:hover { color: @nord6; }
+#mpris:hover { color: @blanco; }
 
 /* Menús de la bandeja (clic derecho en un icono) */
 #tray menu {
-    background: @nord0;
-    border: 1px solid @nord3;
+    background: alpha(@oscuro, 0.92);
+    border: 1px solid @isla-borde;
     border-radius: 10px;
     padding: 4px 0;
 }

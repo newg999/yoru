@@ -37,8 +37,8 @@
     "niri/workspaces": {
         "format": "{icon}",
         "format-icons": {
-            "active":  "",
-            "default": ""
+            "active":  "󰝥",
+            "default": "󰝦"
         }
     },
 
@@ -48,28 +48,43 @@
         "separate-outputs": true
     },
 
+    // Calendario al pasar el ratón por encima:
+    //   rueda = mes anterior/siguiente · clic = ver el año entero
+    //   clic central = volver a hoy · clic derecho = app Calendario (eventos)
     "clock": {
-        "format": "  {:%H:%M}",
-        "on-click": "~/.config/rofi/scripts/calendario.py",
-        "on-click-right": "gnome-calendar",
+        "format": "󰅐  {:%H:%M}",
         "locale": "es_ES.UTF-8",
-        "tooltip-format": "<tt>{calendar}</tt>",
+        "tooltip-format": "<span size='15pt' color='#ffffff'><b>{0:%H:%M}</b></span>   <span color='#e5e9f0'>{0:%A, %e de %B de %Y}</span>\n\n<span size='13pt'><tt>{calendar}</tt></span>\n\n<span size='9pt' color='#8a8f98'>rueda: mes · clic: año · clic central: hoy · clic dcho: eventos</span>",
         "calendar": {
             "mode": "month",
+            "mode-mon-col": 3,
+            "weeks-pos": "left",
+            "on-scroll": 1,
             "format": {
-                "today": "<span color='#88c0d0'><b>{}</b></span>"
+                "months":   "<span color='#ffffff'><b>{}</b></span>",
+                "weekdays": "<span color='#9aa0aa'><b>{}</b></span>",
+                "weeks":    "<span color='#5c616b'>{}</span>",
+                "days":     "<span color='#e5e9f0'>{}</span>",
+                "today":    "<span background='#ffffff' color='#1a1b1e'><b>{}</b></span>"
             }
-        }
+        },
+        "actions": {
+            "on-click": "mode",
+            "on-click-middle": "shift_reset",
+            "on-scroll-up": "shift_down",
+            "on-scroll-down": "shift_up"
+        },
+        "on-click-right": "gnome-calendar"
     },
 
     "cpu": {
-        "format": "  {usage}%",
+        "format": "󰘚  {usage}%",
         "interval": 5,
         "on-click": "kitty -e htop"
     },
 
     "memory": {
-        "format": "  {percentage}%",
+        "format": "󰍛  {percentage}%",
         "interval": 10,
         "tooltip-format": "{used:0.1f} / {total:0.1f} GiB"
     },
@@ -77,8 +92,8 @@
     // Música/vídeo que suena (Spotify, YouTube en Brave, mpv...).
     // Se oculta sola si no hay nada. Clic = pausa · Clic derecho = siguiente
     "mpris": {
-        "format": "  {dynamic}",
-        "format-paused": "  {dynamic}",
+        "format": "󰝚  {dynamic}",
+        "format-paused": "󰏤  {dynamic}",
         "dynamic-order": ["artist", "title"],
         "dynamic-len": 45,
         // Si no cabe todo, se sacrifica antes el artista que el título
@@ -94,19 +109,19 @@
     "battery": {
         "states": { "warning": 25, "critical": 10 },
         "format": "{icon}  {capacity}%",
-        "format-charging": "  {capacity}%",
-        "format-plugged": "  {capacity}%",
-        "format-full": "  {capacity}%",
-        "format-icons": ["", "", "", "", ""],
+        "format-charging": "󰂄  {capacity}%",
+        "format-plugged": "󰚥  {capacity}%",
+        "format-full": "󰁹  {capacity}%",
+        "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
         "tooltip-format": "{timeTo}\n{power:.1f} W · salud {health}%"
     },
 
     "pulseaudio": {
         "format": "{icon}  {volume}%",
-        "format-muted": "  mute",
+        "format-muted": "󰖁  mute",
         "format-icons": {
-            "headphone": "",
-            "default": ["", "", ""]
+            "headphone": "󰋋",
+            "default": ["󰕿", "󰖀", "󰕾"]
         },
         "scroll-step": 5,
         "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
@@ -114,9 +129,10 @@
     },
 
     "network": {
-        "format-wifi": "",
-        "format-ethernet": "",
-        "format-disconnected": "",
+        "format-wifi": "{icon}",
+        "format-icons": ["󰤟", "󰤢", "󰤥", "󰤨"],
+        "format-ethernet": "󰈀",
+        "format-disconnected": "󰤮",
         "tooltip-format-wifi": "{essid} · {signalStrength}% · {ipaddr}",
         "tooltip-format-ethernet": "{ifname} · {ipaddr}",
         "on-click": "~/.config/rofi/scripts/wifi.py",
@@ -124,10 +140,10 @@
     },
 
     "bluetooth": {
-        "format": "",
-        "format-disabled": "",
-        "format-off": "",
-        "format-connected": " {num_connections}",
+        "format": "󰂯",
+        "format-disabled": "󰂲",
+        "format-off": "󰂲",
+        "format-connected": "󰂱 {num_connections}",
         "tooltip-format-connected": "{device_enumerate}",
         "tooltip-format-enumerate-connected": "{device_alias}",
         "on-click": "~/.config/rofi/scripts/bluetooth.py",

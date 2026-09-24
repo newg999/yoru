@@ -6,7 +6,7 @@ calendario.py — Calendario mensual con rofi
   · Navega entre meses (también con las flechas ← → del teclado)
   · Abre la app Calendario de GNOME para ver/crear eventos
 
-Atajo: Mod+Alt+C   ·   Clic en el reloj de la barra
+Atajo: Mod+Alt+C   (en la barra, el reloj tiene su propio calendario al pasar el ratón)
 """
 
 import calendar
