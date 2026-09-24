@@ -1,0 +1,33 @@
+/* ============================================================================
+   rofi — lanzador de apps (Mod+Space) y base de todos los menús
+   Referencia:  man rofi   ·   man rofi-theme
+   Los menús (wifi, bluetooth, calendario...) están en scripts/
+   ========================================================================== */
+
+configuration {
+    modi:                "drun,run";
+    show-icons:          true;
+    icon-theme:          "Papirus-Dark";
+    terminal:            "kitty";
+    font:                "JetBrainsMono Nerd Font 12";
+
+    drun-display-format: "{name}";
+    display-drun:        "";
+    display-run:         "";
+    display-dmenu:       "";
+
+    matching:            "fuzzy";
+    sort:                true;
+    sorting-method:      "fzf";
+    case-sensitive:      false;
+
+    /* Un solo clic para abrir, y el ratón resalta lo que tiene debajo */
+    hover-select:        true;
+    me-select-entry:     "";
+    me-accept-entry:     "MousePrimary";
+
+    /* Mod+Space otra vez (o Escape) cierra el menú */
+    kb-cancel:           "Escape,Control+g,Control+bracketleft,Super+space";
+}
+
+@theme "~/.config/rofi/nord.rasi"

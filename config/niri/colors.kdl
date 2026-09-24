@@ -1,0 +1,37 @@
+// ============================================================================
+//  colors.kdl — El "tema" de Niri
+// ----------------------------------------------------------------------------
+//  Paleta: Nord (https://www.nordtheme.com/docs/colors-and-palettes)
+//  Si cambias de paleta, cambia también:
+//    waybar/style.css · rofi/nord.rasi · mako/config
+//    kitty/kitty.conf · swaylock/config
+// ----------------------------------------------------------------------------
+//  Noche   nord0 #2e3440  nord1 #3b4252  nord2 #434c5e  nord3 #4c566a
+//  Nieve   nord4 #d8dee9  nord5 #e5e9f0  nord6 #eceff4
+//  Escarcha nord7 #8fbcbb nord8 #88c0d0  nord9 #81a1c1  nord10 #5e81ac
+//  Aurora  rojo #bf616a  naranja #d08770  amarillo #ebcb8b
+//          verde #a3be8c morado #b48ead
+// ============================================================================
+
+layout {
+    focus-ring {
+        // Degradado escarcha en la ventana activa. Para color sólido:
+        // active-color "#88c0d0" y borra la línea del gradiente.
+        active-gradient from="#88c0d0" to="#5e81ac" angle=45
+        inactive-color "#4c566a"
+    }
+
+    border {
+        active-color "#88c0d0"
+        inactive-color "#3b4252"
+        urgent-color "#bf616a"
+    }
+
+    shadow {
+        color "#1c202899"
+    }
+}
+
+overview {
+    backdrop-color "#242933"
+}

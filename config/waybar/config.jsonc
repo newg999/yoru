@@ -1,0 +1,108 @@
+// ============================================================================
+//  Waybar — la barra superior (estilo "islas")
+//  Tras editar, recarga con:  pkill -SIGUSR2 waybar
+//  Referencia de módulos:     https://github.com/Alexays/Waybar/wiki
+//  Los iconos (\uXXXX) son glifos de JetBrainsMono Nerd Font.
+//  Buscador de iconos:        https://www.nerdfonts.com/cheat-sheet
+// ----------------------------------------------------------------------------
+//  Cada "isla" es un módulo o un grupo de módulos ("group/...").
+//  Para mover algo de sitio, cámbialo de lista o de grupo.
+//  Clic izquierdo = menú rofi · Clic derecho = app completa
+// ============================================================================
+{
+    "layer": "top",
+    "position": "top",
+    "height": 36,
+    "margin-top": 8,
+    "margin-left": 12,
+    "margin-right": 12,
+    "spacing": 8,
+
+    "modules-left":   ["niri/workspaces", "niri/window"],
+    "modules-center": ["clock"],
+    "modules-right":  ["group/sistema", "group/conexion"],
+
+    // ------------------------------------------------------------- Grupos
+    "group/sistema": {
+        "orientation": "horizontal",
+        "modules": ["cpu", "memory"]
+    },
+    "group/conexion": {
+        "orientation": "horizontal",
+        "modules": ["pulseaudio", "network", "bluetooth"]
+    },
+
+    // ------------------------------------------------------------ Módulos
+    "niri/workspaces": {
+        "format": "{icon}",
+        "format-icons": {
+            "active":  "",
+            "default": ""
+        }
+    },
+
+    "niri/window": {
+        "format": "{title}",
+        "max-length": 45,
+        "separate-outputs": true
+    },
+
+    "clock": {
+        "format": "  {:%H:%M}",
+        "on-click": "~/.config/rofi/scripts/calendario.py",
+        "on-click-right": "gnome-calendar",
+        "locale": "es_ES.UTF-8",
+        "tooltip-format": "<tt>{calendar}</tt>",
+        "calendar": {
+            "mode": "month",
+            "format": {
+                "today": "<span color='#88c0d0'><b>{}</b></span>"
+            }
+        }
+    },
+
+    "cpu": {
+        "format": "  {usage}%",
+        "interval": 5,
+        "on-click": "kitty -e htop"
+    },
+
+    "memory": {
+        "format": "  {percentage}%",
+        "interval": 10,
+        "tooltip-format": "{used:0.1f} / {total:0.1f} GiB"
+    },
+
+    "pulseaudio": {
+        "format": "{icon}  {volume}%",
+        "format-muted": "  mute",
+        "format-icons": {
+            "headphone": "",
+            "default": ["", "", ""]
+        },
+        "scroll-step": 5,
+        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "on-click-right": "pavucontrol"
+    },
+
+    "network": {
+        "format-wifi": "",
+        "format-ethernet": "",
+        "format-disconnected": "",
+        "tooltip-format-wifi": "{essid} · {signalStrength}% · {ipaddr}",
+        "tooltip-format-ethernet": "{ifname} · {ipaddr}",
+        "on-click": "~/.config/rofi/scripts/wifi.py",
+        "on-click-right": "nm-connection-editor"
+    },
+
+    "bluetooth": {
+        "format": "",
+        "format-disabled": "",
+        "format-off": "",
+        "format-connected": " {num_connections}",
+        "tooltip-format-connected": "{device_enumerate}",
+        "tooltip-format-enumerate-connected": "{device_alias}",
+        "on-click": "~/.config/rofi/scripts/bluetooth.py",
+        "on-click-right": "blueman-manager"
+    }
+}

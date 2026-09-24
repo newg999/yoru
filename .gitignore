@@ -1,0 +1,11 @@
+# Ajustes solo de este equipo (monitores, escala...)
+config/niri/local.kdl
+
+# Basura habitual
+*.bak
+*~
+.DS_Store
+
+# Caché de Python (scripts de rofi)
+__pycache__/
+*.pyc

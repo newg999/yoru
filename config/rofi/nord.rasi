@@ -1,0 +1,122 @@
+/* ============================================================================
+   Tema Nord para rofi
+   El fondo es semitransparente: Niri lo desenfoca (rules.kdl → rofi)
+   Para cambiar la paleta, cambia solo los colores de este primer bloque.
+   ========================================================================== */
+
+* {
+    fondo:        rgba(46, 52, 64, 78%);     /* nord0 */
+    fondo-alt:    rgba(59, 66, 82, 85%);     /* nord1 */
+    seleccion:    rgba(76, 86, 106, 75%);    /* nord3 */
+    texto:        #d8dee9;                   /* nord4 */
+    texto-tenue:  #7b88a1;
+    acento:       #88c0d0;                   /* nord8 */
+    activo:       #a3be8c;                   /* verde */
+    urgente:      #bf616a;                   /* rojo  */
+
+    background-color: transparent;
+    text-color:       @texto;
+    font:             "JetBrainsMono Nerd Font 12";
+}
+
+window {
+    location:         center;
+    anchor:           center;
+    width:            560px;
+    background-color: @fondo;
+    border:           2px;
+    border-color:     @acento;
+    border-radius:    14px;
+    padding:          16px;
+}
+
+mainbox {
+    spacing:  12px;
+    children: [ inputbar, message, listview ];
+}
+
+inputbar {
+    spacing:          12px;
+    padding:          10px 14px;
+    background-color: @fondo-alt;
+    border-radius:    10px;
+    children:         [ prompt, entry ];
+}
+
+prompt {
+    text-color: @acento;
+}
+
+entry {
+    placeholder:       "Buscar…";
+    placeholder-color: @texto-tenue;
+    cursor:            text;
+}
+
+message {
+    padding:          12px 14px;
+    background-color: @fondo-alt;
+    border-radius:    10px;
+}
+
+textbox {
+    text-color: @texto;
+}
+
+listview {
+    lines:        8;
+    columns:      1;
+    spacing:      4px;
+    fixed-height: false;
+    scrollbar:    false;
+    cycle:        true;
+}
+
+element {
+    padding:       8px 12px;
+    spacing:       12px;
+    border-radius: 8px;
+    cursor:        pointer;
+}
+
+element normal.normal,
+element alternate.normal {
+    background-color: transparent;
+    text-color:       @texto;
+}
+element selected.normal {
+    background-color: @seleccion;
+    text-color:       @acento;
+}
+
+/* "active" = conectado / encendido (wifi actual, auriculares conectados...) */
+element normal.active,
+element alternate.active {
+    background-color: transparent;
+    text-color:       @activo;
+}
+element selected.active {
+    background-color: @seleccion;
+    text-color:       @activo;
+}
+
+element normal.urgent,
+element alternate.urgent {
+    background-color: transparent;
+    text-color:       @urgente;
+}
+element selected.urgent {
+    background-color: @seleccion;
+    text-color:       @urgente;
+}
+
+element-icon {
+    size:           26px;
+    vertical-align: 0.5;
+}
+
+element-text {
+    vertical-align: 0.5;
+    text-color:     inherit;
+    highlight:      bold;
+}

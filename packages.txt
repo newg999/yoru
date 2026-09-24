@@ -1,0 +1,41 @@
+# ============================================================================
+#  Paquetes que instala install.sh (repositorios oficiales de Fedora)
+#  Una línea por paquete. Lo que va detrás de # se ignora.
+#  ¿Quieres algo más? Añádelo aquí y vuelve a ejecutar ./install.sh
+# ============================================================================
+
+# --- Núcleo ------------------------------------------------------------------
+niri                      # el compositor
+xwayland-satellite        # apps X11 (Steam, Discord...). Niri lo arranca solo
+xdg-desktop-portal-gnome  # compartir pantalla, capturas
+xdg-desktop-portal-gtk    # selector de archivos y ajustes para apps
+gnome-keyring             # guarda contraseñas (wifi, navegador...)
+mate-polkit               # ventana que pide la contraseña de administrador
+
+# --- Escritorio --------------------------------------------------------------
+waybar                    # barra superior
+rofi                      # lanzador de apps y menús (wifi, bluetooth...)
+papirus-icon-theme        # iconos de apps en el lanzador
+flameshot                 # capturas con editor
+gnome-calendar            # calendario con eventos (ya viene con GNOME)
+mako                      # notificaciones
+swaybg                    # fondo de pantalla
+swaylock                  # pantalla de bloqueo
+swayidle                  # bloqueo automático por inactividad
+kitty                     # terminal
+
+# --- Utilidades --------------------------------------------------------------
+wl-clipboard              # copiar/pegar desde la terminal (wl-copy, wl-paste)
+cliphist                  # historial del portapapeles (Fedora 44+)
+brightnessctl             # teclas de brillo
+playerctl                 # teclas multimedia
+pavucontrol               # mezclador de audio
+network-manager-applet    # icono de red en la bandeja
+blueman                   # bluetooth
+libnotify                 # notify-send
+htop                      # monitor del sistema
+nautilus                  # archivos (ya viene con GNOME)
+fontconfig                # fc-cache
+curl
+tar
+xz

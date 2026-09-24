@@ -1,0 +1,165 @@
+// ============================================================================
+//  binds.kdl — Atajos de teclado
+// ----------------------------------------------------------------------------
+//  Mod = tecla Super (Windows).  Mod+Shift+/ muestra la chuleta en pantalla.
+//  Para saber el nombre de una tecla, instala y ejecuta `wev`.
+//  Todas las acciones también se pueden lanzar con: niri msg action <acción>
+// ============================================================================
+
+binds {
+    // Chuleta de atajos. En teclado español, Mod+F1 es más cómodo.
+    Mod+Shift+Slash { show-hotkey-overlay; }
+    Mod+F1          { show-hotkey-overlay; }
+
+    // ------------------------------------------------------------------ Apps
+    Mod+Return hotkey-overlay-title="Terminal (kitty)"       { spawn "kitty"; }
+    Mod+T      hotkey-overlay-title=null                     { spawn "kitty"; }
+    Mod+Space  hotkey-overlay-title="Lanzador de apps"       { spawn "rofi" "-show" "drun"; }
+    Mod+D      hotkey-overlay-title=null                     { spawn "rofi" "-show" "drun"; }
+    Mod+E      hotkey-overlay-title="Archivos (Nautilus)"    { spawn "nautilus"; }
+    Mod+B      hotkey-overlay-title="Navegador"              { spawn "firefox"; }
+
+    // --------------------------------------------------------- Menús propios
+    Mod+Shift+BackSpace hotkey-overlay-title="Menú de apagado" { spawn-sh "~/.config/rofi/scripts/apagado.sh"; }
+    Mod+Alt+N           hotkey-overlay-title="Wifi"            { spawn-sh "~/.config/rofi/scripts/wifi.py"; }
+    Mod+Alt+B           hotkey-overlay-title="Bluetooth"       { spawn-sh "~/.config/rofi/scripts/bluetooth.py"; }
+    Mod+Alt+C           hotkey-overlay-title="Calendario"      { spawn-sh "~/.config/rofi/scripts/calendario.py"; }
+    Mod+Alt+V           hotkey-overlay-title="Portapapeles"    { spawn-sh "~/.config/rofi/scripts/portapapeles.sh"; }
+    Mod+Alt+W           hotkey-overlay-title="Fondo siguiente" { spawn-sh "~/.config/niri/scripts/wallpaper.sh next"; }
+
+    // --------------------------------------------------------------- Sesión
+    Mod+BackSpace hotkey-overlay-title="Bloquear pantalla" { spawn "swaylock"; }
+    Super+Alt+L   hotkey-overlay-title=null                { spawn "swaylock"; }
+    Mod+Shift+E   { quit; }
+    Ctrl+Alt+Delete { quit; }
+    Mod+Shift+P   { power-off-monitors; }
+
+    // Pantalla del portátil (eDP-1): encender / apagar
+    Mod+Alt+P       { spawn "niri" "msg" "output" "eDP-1" "on"; }
+    Mod+Alt+Shift+P { spawn "niri" "msg" "output" "eDP-1" "off"; }
+
+    // ---------------------------------------------------- Volumen y brillo
+    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ -l 1.0"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"; }
+    XF86AudioMute        allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
+    XF86AudioMicMute     allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
+
+    XF86AudioPlay  allow-when-locked=true { spawn "playerctl" "play-pause"; }
+    XF86AudioPause allow-when-locked=true { spawn "playerctl" "play-pause"; }
+    XF86AudioNext  allow-when-locked=true { spawn "playerctl" "next"; }
+    XF86AudioPrev  allow-when-locked=true { spawn "playerctl" "previous"; }
+
+    XF86MonBrightnessUp   allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "10%-"; }
+
+    // ------------------------------------------------------------ Capturas
+    // Captura de Niri: selecciona zona, Espacio/Enter para guardar
+    // (se guarda en ~/Pictures/Screenshots y se copia al portapapeles)
+    Print      { screenshot; }
+    Ctrl+Print { screenshot-screen; }
+    Alt+Print  { screenshot-window; }
+    // Flameshot: captura con editor (flechas, texto, difuminar...)
+    Mod+Shift+S hotkey-overlay-title="Captura con editor (Flameshot)" { spawn "flameshot" "gui"; }
+
+    // ------------------------------------------------------------ Ventanas
+    Mod+Q repeat=false { close-window; }
+    Mod+O repeat=false { toggle-overview; }
+
+    // Mover el foco (flechas o hjkl)
+    Mod+Left  { focus-column-left; }
+    Mod+Right { focus-column-right; }
+    Mod+Up    { focus-window-or-workspace-up; }
+    Mod+Down  { focus-window-or-workspace-down; }
+    Mod+H     { focus-column-left; }
+    Mod+L     { focus-column-right; }
+    Mod+K     { focus-window-or-workspace-up; }
+    Mod+J     { focus-window-or-workspace-down; }
+
+    // Mover la ventana/columna
+    Mod+Ctrl+Left  { move-column-left; }
+    Mod+Ctrl+Right { move-column-right; }
+    Mod+Ctrl+Up    { move-window-up-or-to-workspace-up; }
+    Mod+Ctrl+Down  { move-window-down-or-to-workspace-down; }
+    Mod+Ctrl+H     { move-column-left; }
+    Mod+Ctrl+L     { move-column-right; }
+    Mod+Ctrl+K     { move-window-up-or-to-workspace-up; }
+    Mod+Ctrl+J     { move-window-down-or-to-workspace-down; }
+
+    Mod+Home      { focus-column-first; }
+    Mod+End       { focus-column-last; }
+    Mod+Ctrl+Home { move-column-to-first; }
+    Mod+Ctrl+End  { move-column-to-last; }
+
+    // Meter/sacar ventanas de una columna
+    // (los corchetes [ ] en teclado español necesitan AltGr: usa , y .)
+    Mod+BracketLeft  { consume-or-expel-window-left; }
+    Mod+BracketRight { consume-or-expel-window-right; }
+    Mod+Comma        { consume-window-into-column; }
+    Mod+Period       { expel-window-from-column; }
+
+    // Tamaños
+    Mod+R       { switch-preset-column-width; }
+    Mod+Shift+R { switch-preset-column-width-back; }
+    Mod+F       { maximize-column; }
+    Mod+Shift+F { fullscreen-window; }
+    Mod+M       { maximize-window-to-edges; }
+    Mod+Ctrl+F  { expand-column-to-available-width; }
+    Mod+C       { center-column; }
+    // En teclado español la tecla "+" está junto a Enter (Plus);
+    // en teclado inglés es "=" (Equal). Dejamos las dos.
+    Mod+Minus   { set-column-width "-10%"; }
+    Mod+Plus    { set-column-width "+10%"; }
+    Mod+Equal   { set-column-width "+10%"; }
+    Mod+Shift+Minus { set-window-height "-10%"; }
+    Mod+Shift+Plus  { set-window-height "+10%"; }
+    Mod+Shift+Equal { set-window-height "+10%"; }
+
+    // Flotantes y pestañas
+    Mod+V       { toggle-window-floating; }
+    Mod+Shift+V { switch-focus-between-floating-and-tiling; }
+    Mod+W       { toggle-column-tabbed-display; }
+
+    // Quitar/poner la transparencia de la ventana actual
+    Mod+Alt+O   { toggle-window-rule-opacity; }
+
+    // ------------------------------------------------ Escritorios (workspaces)
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+    Mod+Shift+1 { move-column-to-workspace 1; }
+    Mod+Shift+2 { move-column-to-workspace 2; }
+    Mod+Shift+3 { move-column-to-workspace 3; }
+    Mod+Shift+4 { move-column-to-workspace 4; }
+    Mod+Shift+5 { move-column-to-workspace 5; }
+    Mod+Shift+6 { move-column-to-workspace 6; }
+    Mod+Shift+7 { move-column-to-workspace 7; }
+    Mod+Shift+8 { move-column-to-workspace 8; }
+    Mod+Shift+9 { move-column-to-workspace 9; }
+    Mod+Tab     { focus-workspace-previous; }
+
+    Mod+Page_Down { focus-workspace-down; }
+    Mod+Page_Up   { focus-workspace-up; }
+    Mod+Shift+Page_Down { move-workspace-down; }
+    Mod+Shift+Page_Up   { move-workspace-up; }
+
+    // ------------------------------------------------------------- Monitores
+    Mod+Shift+Left  { focus-monitor-left; }
+    Mod+Shift+Right { focus-monitor-right; }
+    Mod+Shift+Ctrl+Left  { move-column-to-monitor-left; }
+    Mod+Shift+Ctrl+Right { move-column-to-monitor-right; }
+
+    // ----------------------------------------------------------------- Ratón
+    Mod+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
+    Mod+WheelScrollUp   cooldown-ms=150 { focus-workspace-up; }
+    Mod+Shift+WheelScrollDown { focus-column-right; }
+    Mod+Shift+WheelScrollUp   { focus-column-left; }
+
+    // Salida de emergencia si una app "secuestra" el teclado
+    Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+}

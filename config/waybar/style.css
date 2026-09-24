@@ -1,0 +1,97 @@
+/* ============================================================================
+   Waybar — estilos, versión "islas" con paleta Nord
+   (CSS de GTK: parecido al CSS web, pero no todo funciona)
+   Para depurar en vivo:  GTK_DEBUG=interactive waybar
+   ========================================================================== */
+
+@define-color nord0  #2e3440;
+@define-color nord1  #3b4252;
+@define-color nord2  #434c5e;
+@define-color nord3  #4c566a;
+@define-color nord4  #d8dee9;
+@define-color nord6  #eceff4;
+@define-color nord7  #8fbcbb;
+@define-color nord8  #88c0d0;
+@define-color nord9  #81a1c1;
+@define-color nord10 #5e81ac;
+@define-color red    #bf616a;
+@define-color orange #d08770;
+@define-color yellow #ebcb8b;
+@define-color green  #a3be8c;
+@define-color purple #b48ead;
+
+/* Opacidad de las islas: 1.0 = sólidas, 0.0 = invisibles */
+@define-color isla alpha(@nord0, 0.85);
+
+* {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 13px;
+    font-weight: bold;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+}
+
+/* La barra en sí es invisible: solo se ven las islas */
+window#waybar {
+    background: transparent;
+    color: @nord4;
+}
+
+tooltip {
+    background: @nord0;
+    border: 1px solid @nord3;
+    border-radius: 10px;
+}
+tooltip label { color: @nord4; }
+
+/* ---------------------------------------------------------------- Islas */
+#workspaces,
+#window,
+#clock,
+#sistema,
+#conexion {
+    background: @isla;
+    border: 1px solid alpha(@nord3, 0.6);
+    border-radius: 12px;
+    padding: 0 14px;
+}
+
+/* Sin ventanas abiertas, la isla del título desaparece */
+window#waybar.empty #window {
+    background: transparent;
+    border-color: transparent;
+}
+
+/* Separación entre módulos dentro de una misma isla */
+#cpu, #memory, #pulseaudio, #network, #bluetooth {
+    padding: 0 7px;
+}
+
+/* ---------------------------------------------------------- Escritorios */
+#workspaces { padding: 0 6px; }
+#workspaces button {
+    color: @nord3;
+    padding: 0 5px;
+    background: transparent;
+    font-size: 11px;
+}
+#workspaces button.active { color: @nord8; }
+#workspaces button:hover  { color: @nord6; background: transparent; }
+
+/* --------------------------------------------------------------- Colores */
+#window     { color: @nord4; font-weight: normal; }
+#clock      { color: @nord6; }
+#cpu        { color: @nord8; }
+#memory     { color: @purple; }
+#pulseaudio { color: @nord7; }
+#pulseaudio.muted { color: @nord3; }
+#network    { color: @green; }
+#network.disconnected { color: @red; }
+#bluetooth  { color: @nord9; }
+#bluetooth.off,
+#bluetooth.disabled { color: @nord3; }
+#bluetooth.connected { color: @nord8; }
+
+/* Módulos con menú: se iluminan al pasar el ratón */
+#clock:hover, #network:hover, #bluetooth:hover, #pulseaudio:hover { color: @nord6; }
