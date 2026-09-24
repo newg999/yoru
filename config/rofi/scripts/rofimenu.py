@@ -1,5 +1,5 @@
 """
-rofimenu.py — Utilidades compartidas por los menús (wifi, bluetooth, calendario)
+rofimenu.py — Utilidades compartidas por los menús (wifi, bluetooth, audio, calendario)
 
 No se ejecuta solo: los otros scripts lo importan.
 """
