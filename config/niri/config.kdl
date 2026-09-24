@@ -48,6 +48,10 @@ input {
 layout {
     gaps 12
 
+    // Escritorios transparentes: así se ve el fondo de pantalla, que está
+    // "detrás" (en el backdrop, para que también salga en el overview)
+    background-color "transparent"
+
     // "never" | "always" | "on-overflow"
     center-focused-column "on-overflow"
 
