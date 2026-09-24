@@ -4,17 +4,20 @@
 # ----------------------------------------------------------------------------
 #  Qué hace, en orden:
 #    1. Comprueba que estás en Fedora y que no lo ejecutas como root
-#    2. Instala los paquetes de packages.txt con dnf
+#    2. Añade el repositorio de Brave e instala los paquetes de packages.txt
 #    3. Descarga la fuente JetBrainsMono Nerd Font (iconos de la barra)
 #    4. Hace copia de seguridad de tus configs actuales
 #    5. Enlaza (symlink) las carpetas de config/ en ~/.config/
-#    6. Pone tema oscuro e iconos Papirus en las apps GTK
-#    7. Valida la configuración de Niri
+#    6. Activa servicios (bluetooth, energía) y, si no tienes ninguna,
+#       la pantalla de inicio de sesión (greetd + tuigreet)
+#    7. Pone tema oscuro e iconos Papirus en las apps GTK
+#    8. Valida la configuración de Niri
+#
+#  Funciona tanto en una Fedora MÍNIMA (sin escritorio) como en una con
+#  GNOME. Si ya tienes GNOME, se respeta su pantalla de inicio (GDM).
 #
 #  Como usa enlaces simbólicos, cualquier cambio que hagas en ~/.config/niri
 #  se está haciendo en realidad dentro de este repositorio → git lo ve.
-#
-#  GNOME no se toca: seguirá disponible en la pantalla de inicio de sesión.
 #
 #  Opciones:
 #    ./install.sh               instalación completa
@@ -32,6 +35,7 @@ BACKUP_ROOT="$HOME/.local/state/mis-dotfiles/backups"
 BACKUP_DIR="$BACKUP_ROOT/$(date +%Y%m%d-%H%M%S)"
 FONT_DIR="$HOME/.local/share/fonts/JetBrainsMonoNerd"
 FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz"
+BRAVE_REPO="https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo"
 
 # ---------------------------------------------------------------- Mensajes
 AZUL='\033[1;34m'; VERDE='\033[1;32m'; AMARILLO='\033[1;33m'; ROJO='\033[1;31m'; NC='\033[0m'
@@ -55,6 +59,20 @@ comprobar_sistema() {
 }
 
 # ------------------------------------------------------------------ Paquetes
+# Brave no está en los repositorios de Fedora: se añade el suyo oficial
+repo_brave() {
+    paso "Repositorio de Brave"
+    if [[ -f /etc/yum.repos.d/brave-browser.repo ]]; then
+        ok "Ya estaba añadido"
+        return
+    fi
+    if sudo curl -fsSL -o /etc/yum.repos.d/brave-browser.repo "$BRAVE_REPO"; then
+        ok "Añadido"
+    else
+        aviso "No se pudo añadir. Brave no se instalará (el resto sí)."
+    fi
+}
+
 instalar_paquetes() {
     paso "Instalando paquetes (packages.txt)"
     # Lee el archivo quitando comentarios y líneas vacías
@@ -137,6 +155,56 @@ enlazar_todo() {
     mkdir -p "$HOME/Pictures/Screenshots"
 }
 
+# ------------------------------------------------------------------ Sistema
+configurar_sistema() {
+    paso "Servicios del sistema"
+    # --now: los arranca ya, sin esperar a reiniciar. Si ya estaban, no pasa nada.
+    for servicio in bluetooth tuned-ppd; do
+        if sudo systemctl enable --now "$servicio" >/dev/null 2>&1; then
+            ok "$servicio"
+        else
+            aviso "$servicio no se pudo activar (¿no está instalado?)"
+        fi
+    done
+
+    # Carpetas personales (Descargas, Imágenes...), según el idioma del sistema
+    xdg-user-dirs-update 2>/dev/null && ok "Carpetas personales"
+
+    pantalla_login
+}
+
+# Pantalla de inicio de sesión: solo si el sistema no tiene ya una.
+# En una Fedora con GNOME ya existe GDM y no se toca.
+pantalla_login() {
+    paso "Pantalla de inicio de sesión"
+    if [[ -e /etc/systemd/system/display-manager.service ]]; then
+        local actual
+        actual="$(basename "$(readlink -f /etc/systemd/system/display-manager.service)" .service)"
+        if [[ "$actual" != "greetd" ]]; then
+            ok "Ya tienes una ($actual). No la cambio."
+            return
+        fi
+    fi
+    if ! command -v tuigreet >/dev/null; then
+        aviso "tuigreet no está instalado, me lo salto"
+        return
+    fi
+
+    # La config pertenece a root: se copia (guardando la original una vez)
+    if [[ -f /etc/greetd/config.toml && ! -f /etc/greetd/config.toml.original ]]; then
+        sudo cp /etc/greetd/config.toml /etc/greetd/config.toml.original
+    fi
+    sudo install -m 644 "$REPO/system/greetd/config.toml" /etc/greetd/config.toml
+
+    # tuigreet necesita esta carpeta para recordar el último usuario y sesión
+    sudo install -d -m 755 -o greetd -g greetd /var/cache/tuigreet
+    command -v restorecon >/dev/null && sudo restorecon -R /var/cache/tuigreet
+
+    sudo systemctl enable greetd >/dev/null 2>&1
+    sudo systemctl set-default graphical.target >/dev/null 2>&1
+    ok "greetd + tuigreet activado (se verá al reiniciar)"
+}
+
 # --------------------------------------------------------------- Apps GTK
 # Tema oscuro e iconos Papirus para Nautilus, Calendario, etc.
 # (son ajustes del sistema: también se notan si vuelves a GNOME)
@@ -208,7 +276,8 @@ deshacer() {
 # ---------------------------------------------------------------------- Main
 case "${1:-}" in
     --ayuda|-h|--help)
-        sed -n '2,25p' "$0" | sed 's/^# \{0,1\}//'
+        # Muestra la cabecera de comentarios de este archivo
+        awk 'NR > 1 && !/^#/ { exit } NR > 1' "$0" | sed 's/^# \{0,1\}//'
         exit 0 ;;
     --deshacer)
         deshacer
@@ -221,9 +290,11 @@ case "${1:-}" in
         validar ;;
     "")
         comprobar_sistema
+        repo_brave
         instalar_paquetes
         instalar_fuente
         enlazar_todo
+        configurar_sistema
         ajustes_gtk
         validar ;;
     *)
@@ -232,7 +303,14 @@ case "${1:-}" in
 esac
 
 echo -e "\n${VERDE}¡Listo!${NC}"
-echo "  1. Cierra la sesión de GNOME."
-echo "  2. En la pantalla de inicio, pulsa el engranaje ⚙ (abajo a la derecha) y elige «Niri»."
-echo "  3. Entra. Pulsa Super+F1 para ver los atajos."
-echo "  Para volver a GNOME, repite el paso 2 eligiendo «GNOME»."
+if [[ "$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null)" == */greetd.service ]]; then
+    echo "  1. Reinicia el equipo:  sudo reboot"
+    echo "  2. En la pantalla de inicio, escribe tu usuario y contraseña: entrarás en Niri."
+    echo "     (F2 cambia de sesión, F12 apaga o reinicia)"
+    echo "  3. Pulsa Super+F1 para ver los atajos."
+else
+    echo "  1. Cierra la sesión actual."
+    echo "  2. En la pantalla de inicio, pulsa el engranaje ⚙ (abajo a la derecha) y elige «Niri»."
+    echo "  3. Entra. Pulsa Super+F1 para ver los atajos."
+    echo "  Para volver a GNOME, repite el paso 2 eligiendo «GNOME»."
+fi
