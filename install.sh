@@ -8,6 +8,7 @@
 #    3. Descarga la fuente JetBrainsMono Nerd Font (iconos de la barra)
 #    4. Hace copia de seguridad de tus configs actuales
 #    5. Enlaza (symlink) las carpetas de config/ en ~/.config/
+#       y pregunta si quieres bajar los fondos anime (~170 MB)
 #    6. Activa servicios (bluetooth, energía) y, si no tienes ninguna,
 #       la pantalla de inicio de sesión (greetd + tuigreet)
 #    7. Pone tema oscuro e iconos Papirus en las apps GTK
@@ -150,10 +151,40 @@ enlazar_todo() {
 
     paso "Enlazando fondos de pantalla"
     enlazar "$REPO/wallpapers" "$HOME/.local/share/wallpapers"
-    "$REPO/wallpapers/descargar.sh" || aviso "No se pudieron bajar algunos fondos (¿sin internet?)"
 
     chmod +x "$REPO"/config/niri/scripts/*.sh
     mkdir -p "$HOME/Pictures/Screenshots"
+}
+
+# ------------------------------------------------------------------- Fondos
+# Los fondos anime no están en el repo (son de sus autores): se descargan de
+# wallhaven.cc. Son bastantes MB, así que se pregunta antes.
+bajar_fondos() {
+    paso "Fondos de pantalla anime"
+    local total faltan
+    total=$(grep -cv '^[[:space:]]*\(#\|$\)' "$REPO/wallpapers/wallhaven.txt" || true)
+    faltan=0
+    while read -r id url; do
+        [[ -z "$id" || "$id" == \#* ]] && continue
+        [[ -f "$REPO/wallpapers/anime-$id.${url##*.}" ]] || faltan=$((faltan + 1))
+    done < "$REPO/wallpapers/wallhaven.txt"
+
+    if [[ $faltan -eq 0 ]]; then
+        ok "Ya están los $total"
+        return
+    fi
+    if [[ ! -t 0 ]]; then
+        aviso "Sin terminal para preguntar: no se bajan. Hazlo luego con wallpapers/descargar.sh"
+        return
+    fi
+    local respuesta
+    read -rp "  ¿Descargar $faltan fondos (unos 170 MB en total)? [s/N] " respuesta
+    if [[ "${respuesta,,}" == s* ]]; then
+        "$REPO/wallpapers/descargar.sh" && ok "Fondos descargados" \
+            || aviso "No se pudieron bajar algunos (¿sin internet?). Reintenta con wallpapers/descargar.sh"
+    else
+        aviso "Saltado. Puedes bajarlos cuando quieras con wallpapers/descargar.sh"
+    fi
 }
 
 # ------------------------------------------------------------------ Sistema
@@ -304,6 +335,7 @@ case "${1:-}" in
         comprobar_sistema
         instalar_fuente
         enlazar_todo
+        bajar_fondos
         activar_barra
         ajustes_gtk
         validar ;;
@@ -313,6 +345,7 @@ case "${1:-}" in
         instalar_paquetes
         instalar_fuente
         enlazar_todo
+        bajar_fondos
         configurar_sistema
         activar_barra
         ajustes_gtk
