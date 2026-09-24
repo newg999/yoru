@@ -1,6 +1,7 @@
 // ============================================================================
 //  Waybar — la barra superior (estilo "islas")
-//  Tras editar, recarga con:  pkill -SIGUSR2 waybar
+//  Tras editar, reinicia con:  systemctl --user restart waybar
+//  (evita "pkill -SIGUSR2 waybar": con el módulo mpris puede cerrar la barra)
 //  Referencia de módulos:     https://github.com/Alexays/Waybar/wiki
 //  Los iconos (\uXXXX) son glifos de JetBrainsMono Nerd Font.
 //  Buscador de iconos:        https://www.nerdfonts.com/cheat-sheet

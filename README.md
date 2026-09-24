@@ -118,7 +118,7 @@ Niri recarga su configuración **al guardar**. Para el resto:
 
 ```bash
 niri validate            # comprobar la config de Niri
-pkill -SIGUSR2 waybar    # recargar la barra
+systemctl --user restart waybar   # reiniciar la barra
 makoctl reload           # recargar notificaciones
 niri msg windows         # ver el app-id de las ventanas abiertas (para reglas)
 niri msg outputs         # ver tus monitores

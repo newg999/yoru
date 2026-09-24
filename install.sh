@@ -205,6 +205,18 @@ pantalla_login() {
     ok "greetd + tuigreet activado (se verá al reiniciar)"
 }
 
+# -------------------------------------------------------------------- Barra
+# Waybar arranca como servicio de usuario: si se cae, systemd la levanta.
+# (el servicio ya viene con waybar y no se activa dentro de GNOME)
+activar_barra() {
+    paso "Barra (waybar)"
+    if systemctl --user enable waybar.service >/dev/null 2>&1; then
+        ok "Servicio de usuario activado"
+    else
+        aviso "No se pudo activar waybar.service (¿está instalado waybar?)"
+    fi
+}
+
 # --------------------------------------------------------------- Apps GTK
 # Tema oscuro e iconos Papirus para Nautilus, Calendario, etc.
 # (son ajustes del sistema: también se notan si vuelves a GNOME)
@@ -286,6 +298,7 @@ case "${1:-}" in
         comprobar_sistema
         instalar_fuente
         enlazar_todo
+        activar_barra
         ajustes_gtk
         validar ;;
     "")
@@ -295,6 +308,7 @@ case "${1:-}" in
         instalar_fuente
         enlazar_todo
         configurar_sistema
+        activar_barra
         ajustes_gtk
         validar ;;
     *)
