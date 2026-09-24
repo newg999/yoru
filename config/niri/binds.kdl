@@ -26,7 +26,8 @@ binds {
     Mod+Alt+A           hotkey-overlay-title="Audio"           { spawn-sh "~/.config/rofi/scripts/audio.py"; }
     Mod+Alt+C           hotkey-overlay-title="Calendario"      { spawn-sh "~/.config/rofi/scripts/calendario.py"; }
     Mod+Alt+V           hotkey-overlay-title="Portapapeles"    { spawn-sh "~/.config/rofi/scripts/portapapeles.sh"; }
-    Mod+Alt+W           hotkey-overlay-title="Fondo siguiente" { spawn-sh "~/.config/niri/scripts/wallpaper.sh next"; }
+    Mod+Alt+W           hotkey-overlay-title="Elegir fondo"    { spawn-sh "~/.config/rofi/scripts/fondos.sh"; }
+    Mod+Alt+Shift+W     hotkey-overlay-title="Fondo siguiente" { spawn-sh "~/.config/niri/scripts/wallpaper.sh next"; }
 
     // --------------------------------------------------------------- Sesión
     Mod+BackSpace hotkey-overlay-title="Bloquear pantalla" { spawn "swaylock"; }

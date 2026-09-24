@@ -93,7 +93,8 @@ El script **no copia** archivos: crea *enlaces simbólicos*. `~/.config/niri` ap
 | `Mod+Alt+A` | Menú de audio (salida, micrófono, volumen) |
 | `Mod+Alt+C` | Calendario |
 | `Mod+Alt+V` | Historial del portapapeles |
-| `Mod+Alt+W` | Siguiente fondo de pantalla |
+| `Mod+Alt+W` | Elegir fondo de pantalla (con miniaturas) |
+| `Mod+Alt+Shift+W` | Siguiente fondo de pantalla |
 | `Mod+BackSpace` | Bloquear |
 | `Mod+Shift+BackSpace` | Menú de apagado |
 | `Mod+Alt+P` / `Mod+Alt+Shift+P` | Encender / apagar la pantalla del portátil |
