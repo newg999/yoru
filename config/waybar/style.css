@@ -44,13 +44,34 @@ tooltip label { color: @texto; padding: 4px 6px; }
 #clock,
 #sistema,
 #conexion,
-#mpris,
 #tray {
     background: @isla;
     border: 1px solid @isla-borde;
     border-radius: 12px;
     padding: 0 14px;
 }
+
+/* Isla de música: se dibuja por piezas (botones + canción) en vez de en el
+   grupo, para que desaparezca entera cuando no suena nada */
+#custom-anterior, #custom-playpausa, #custom-siguiente, #mpris {
+    background: @isla;
+    border-top: 1px solid @isla-borde;
+    border-bottom: 1px solid @isla-borde;
+    padding: 0 7px;
+}
+#custom-anterior {
+    border-left: 1px solid @isla-borde;
+    border-radius: 12px 0 0 12px;
+    padding-left: 14px;
+}
+#mpris {
+    border-right: 1px solid @isla-borde;
+    border-radius: 0 12px 12px 0;
+    padding: 0 14px 0 10px;
+}
+#custom-playpausa { font-size: 15px; }
+#custom-anterior:hover, #custom-playpausa:hover,
+#custom-siguiente:hover { color: @blanco; }
 
 /* Sin ventanas abiertas, la isla del título desaparece */
 window#waybar.empty #window {
@@ -85,6 +106,7 @@ window#waybar.empty #window {
 /* Todo blanco; los estados "apagados" en gris y los avisos en color */
 #window { font-weight: normal; }
 #clock, #cpu, #memory, #battery, #mpris,
+#custom-anterior, #custom-playpausa, #custom-siguiente,
 #pulseaudio, #network, #bluetooth { color: @texto; }
 
 #mpris        { font-weight: normal; }
