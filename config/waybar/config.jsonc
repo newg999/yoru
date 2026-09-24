@@ -20,10 +20,15 @@
     "spacing": 8,
 
     "modules-left":   ["niri/workspaces", "niri/window"],
-    "modules-center": ["clock"],
-    "modules-right":  ["mpris", "group/sistema", "group/conexion", "tray"],
+    "modules-center": ["clock", "group/musica"],
+    "modules-right":  ["group/sistema", "group/conexion", "tray"],
 
     // ------------------------------------------------------------- Grupos
+    // Botones de música + canción que suena (se oculta sin reproductor)
+    "group/musica": {
+        "orientation": "horizontal",
+        "modules": ["custom/anterior", "custom/playpausa", "custom/siguiente", "mpris"]
+    },
     "group/sistema": {
         "orientation": "horizontal",
         "modules": ["cpu", "memory", "battery"]
@@ -89,11 +94,28 @@
         "tooltip-format": "{used:0.1f} / {total:0.1f} GiB"
     },
 
+    // Botones de música (el script oculta los botones si no suena nada)
+    "custom/anterior": {
+        "exec": "~/.config/waybar/scripts/musica.sh anterior",
+        "on-click": "playerctl previous",
+        "tooltip-format": "Anterior"
+    },
+    "custom/playpausa": {
+        "exec": "~/.config/waybar/scripts/musica.sh playpausa",
+        "on-click": "playerctl play-pause",
+        "tooltip-format": "Play / pausa"
+    },
+    "custom/siguiente": {
+        "exec": "~/.config/waybar/scripts/musica.sh siguiente",
+        "on-click": "playerctl next",
+        "tooltip-format": "Siguiente"
+    },
+
     // Música/vídeo que suena (Spotify, YouTube en Brave, mpv...).
     // Se oculta sola si no hay nada. Clic = pausa · Clic derecho = siguiente
     "mpris": {
         "format": "󰝚  {dynamic}",
-        "format-paused": "󰏤  {dynamic}",
+        "format-paused": "󰝚  {dynamic}",
         "dynamic-order": ["artist", "title"],
         "dynamic-len": 45,
         // Si no cabe todo, se sacrifica antes el artista que el título
