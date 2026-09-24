@@ -72,8 +72,10 @@ tooltip label { color: @texto; padding: 4px 6px; }
 #custom-playpausa { font-size: 15px; }
 
 /* Copia invisible de la música a la izquierda del reloj (ver config.jsonc) */
-#custom-anterior.espejo, #custom-playpausa.espejo,
-#custom-siguiente.espejo, #mpris.espejo {
+/* (con "#espejo" delante para ganar a reglas como #mpris.paused) */
+#espejo #custom-anterior, #espejo #custom-playpausa,
+#espejo #custom-siguiente, #espejo #mpris,
+#espejo #mpris.paused, #espejo *:hover {
     color: transparent;
     background: transparent;
     border-color: transparent;

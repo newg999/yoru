@@ -124,7 +124,7 @@
         "format": "󰝚  {dynamic}",
         "format-paused": "󰝚  {dynamic}",
         "dynamic-order": ["artist", "title"],
-        "dynamic-len": 45,
+        "dynamic-len": 16,
         // Si no cabe todo, se sacrifica antes el artista que el título
         "dynamic-importance-order": ["title", "artist"],
         "dynamic-separator": " · ",
@@ -152,7 +152,7 @@
         "format": "󰝚  {dynamic}",
         "format-paused": "󰝚  {dynamic}",
         "dynamic-order": ["artist", "title"],
-        "dynamic-len": 45,
+        "dynamic-len": 16,
         // Si no cabe todo, se sacrifica antes el artista que el título
         "dynamic-importance-order": ["title", "artist"],
         "dynamic-separator": " · "
