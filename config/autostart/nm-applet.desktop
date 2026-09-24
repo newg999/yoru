@@ -1,0 +1,7 @@
+# Anula /etc/xdg/autostart/nm-applet.desktop: no arrancar nm-applet.
+# La barra ya tiene su módulo de red y el menú de wifi (rofi).
+# (en GNOME tampoco arranca: su propio archivo lo excluye)
+[Desktop Entry]
+Type=Application
+Name=Network
+Hidden=true
