@@ -10,21 +10,21 @@ ignore-empty-password
 show-failed-attempts
 indicator-caps-lock
 
-color=2e3440
+color=1a1b1e
 indicator-radius=110
 indicator-thickness=8
 
-inside-color=2e3440
-inside-clear-color=2e3440
-inside-ver-color=2e3440
-inside-wrong-color=2e3440
+inside-color=1a1b1e
+inside-clear-color=1a1b1e
+inside-ver-color=1a1b1e
+inside-wrong-color=1a1b1e
 
-ring-color=3b4252
-ring-clear-color=81a1c1
-ring-ver-color=88c0d0
+ring-color=ffffff26
+ring-clear-color=8a8f98
+ring-ver-color=ffffff
 ring-wrong-color=bf616a
 
-key-hl-color=88c0d0
+key-hl-color=ffffff
 bs-hl-color=bf616a
 caps-lock-key-hl-color=ebcb8b
 
@@ -34,7 +34,7 @@ line-ver-color=00000000
 line-wrong-color=00000000
 separator-color=00000000
 
-text-color=d8dee9
-text-clear-color=81a1c1
-text-ver-color=88c0d0
+text-color=e5e9f0
+text-clear-color=8a8f98
+text-ver-color=ffffff
 text-wrong-color=bf616a

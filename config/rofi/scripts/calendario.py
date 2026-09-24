@@ -19,11 +19,11 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 from rofimenu import ejecutar  # noqa: E402
 
-# Colores Nord
-ACENTO = "#88c0d0"
-TENUE = "#4c566a"
-FINDE = "#81a1c1"
-FONDO = "#2e3440"
+# Colores del tema "blanco"
+ACENTO = "#ffffff"
+TENUE = "#5c616b"
+FINDE = "#8a8f98"
+FONDO = "#1a1b1e"
 
 ANTERIOR, SIGUIENTE, HOY, APP = "", "", "󰃶", ""
 

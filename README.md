@@ -25,7 +25,7 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Archivos | `nautilus` | — |
 | Navegador | `brave-browser` | — |
 
-Tema: **[Nord](https://www.nordtheme.com)**, con barra en islas y desenfoque. Fuente: **JetBrainsMono Nerd Font**.
+Tema: **blanco sobre oscuro translúcido**, con barra en islas, menús desenfocados y fondos anime. El color se reserva para los avisos. Fuente: **JetBrainsMono Nerd Font**.
 
 ## Instalación
 
@@ -137,4 +137,4 @@ niri msg outputs         # ver tus monitores
 
 - Inspirado en [SygurDot](https://github.com/sygurd24/SygurDot).
 - Configuración base a partir de la config por defecto de [Niri](https://github.com/niri-wm/niri).
-- Colores: [Nord](https://www.nordtheme.com).
+- Colores de la terminal: [Nord](https://www.nordtheme.com).

@@ -21,7 +21,7 @@ Marca las casillas conforme avances (`- [x]`).
 - [ ] Anotar en un `TROUBLESHOOTING.md` cada problema que encuentres y cómo lo arreglaste
 
 ## Fase 2 · Tu identidad visual
-- [ ] Elegir **tu** paleta (Catppuccin, Gruvbox, Nord, Tokyo Night, Rosé Pine... o inventarla)
+- [x] Elegir **tu** paleta: tema "blanco" (monocromo translúcido)
 - [ ] Buscar fondos de pantalla que encajen y echarlos en `wallpapers/`
 - [ ] Ajustar `gaps`, anchura del `focus-ring`, sombras y radio de esquinas
 - [ ] Probar **desenfoque** (blur) en la barra con un `layer-rule` y `background-effect` → [docs](https://niri-wm.github.io/niri/Configuration:-Layer-Rules.html)
