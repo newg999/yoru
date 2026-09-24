@@ -43,6 +43,7 @@ mate-polkit               # ventana que pide la contraseña de administrador
 # --- Escritorio --------------------------------------------------------------
 waybar                    # barra superior
 rofi                      # lanzador de apps y menús (wifi, bluetooth...)
+ImageMagick               # miniaturas del selector de fondos
 papirus-icon-theme        # iconos
 flameshot                 # capturas con editor
 mako                      # notificaciones
