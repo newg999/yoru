@@ -112,7 +112,7 @@ El script **no copia** archivos: crea *enlaces simbólicos*. `~/.config/niri` ap
 | Monitores y escala | `config/niri/local.kdl` (copia `local.kdl.example`) |
 | Pantalla de inicio de sesión | `system/greetd/config.toml` (se copia a `/etc`, vuelve a ejecutar `./install.sh`) |
 | Paquetes que se instalan | `packages.txt` |
-| Módulos de la barra | `config/waybar/config.jsonc` |
+| Módulos de la barra | `config/waybar/modulos.jsonc` (y `config.jsonc` para lo que cambia en cada pantalla) |
 | Aspecto de la barra | `config/waybar/style.css` |
 | Fondos de pantalla | Echa imágenes en `wallpapers/`, o añade uno de wallhaven.cc a `wallpapers/wallhaven.txt` y ejecuta `wallpapers/descargar.sh` |
 
