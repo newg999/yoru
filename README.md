@@ -112,7 +112,7 @@ El script **no copia** archivos: crea *enlaces simbólicos*. `~/.config/niri` ap
 | Paquetes que se instalan | `packages.txt` |
 | Módulos de la barra | `config/waybar/config.jsonc` |
 | Aspecto de la barra | `config/waybar/style.css` |
-| Fondos de pantalla | Echa imágenes en `wallpapers/` |
+| Fondos de pantalla | Echa imágenes en `wallpapers/`, o añade uno de wallhaven.cc a `wallpapers/wallhaven.txt` y ejecuta `wallpapers/descargar.sh` |
 
 Niri recarga su configuración **al guardar**. Para el resto:
 
