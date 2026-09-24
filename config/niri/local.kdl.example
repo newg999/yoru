@@ -7,13 +7,17 @@
 
 output "eDP-1" {
     // mode "1920x1080@60"
-    scale 1.25
+    scale 1
     // position x=0 y=0
 }
 
-// Un segundo monitor a la derecha:
+// Un monitor externo encima del portátil:
 // output "HDMI-A-1" {
-//     mode "2560x1440@144"
+//     mode "2560x1440@60"
 //     scale 1
-//     position x=1536 y=0
+//     position x=0 y=0
 // }
+
+// Apagar la pantalla del portátil al entrar si hay un monitor externo
+// (no pongas "off" fijo: sin monitor te quedarías sin pantalla)
+// spawn-sh-at-startup "~/.config/niri/scripts/pantallas.sh"

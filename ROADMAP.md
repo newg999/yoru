@@ -7,13 +7,13 @@ Marca las casillas conforme avances (`- [x]`).
 ---
 
 ## Fase 0 · Preparar el terreno
-- [ ] Crear el repositorio en GitHub y subir esta base (`git init`, `git add .`, `git commit`, `git push`)
+- [ ] Crear el repositorio en GitHub y subir esta base (ya hay `git init` y primer commit; falta GitHub) (`git init`, `git add .`, `git commit`, `git push`)
 - [ ] *(Opcional pero recomendado)* Probar primero en una máquina virtual con **GNOME Boxes** y Fedora
 - [ ] Ejecutar `./install.sh` y entrar en Niri desde la pantalla de inicio
 - [ ] Hacer la primera captura y ponerla en el README
 
 ## Fase 1 · Que todo funcione en tu equipo
-- [ ] Copiar `local.kdl.example` a `local.kdl` y ajustar monitores y escala (`niri msg outputs`)
+- [x] Copiar `local.kdl.example` a `local.kdl` y ajustar monitores y escala (`niri msg outputs`)
 - [ ] Revisar touchpad y ratón en `config.kdl` → `input` (velocidad, scroll natural...)
 - [ ] Comprobar volumen, brillo, wifi, bluetooth y batería en la barra
 - [ ] Comprobar que compartir pantalla funciona (Meet, Discord...)
@@ -26,7 +26,7 @@ Marca las casillas conforme avances (`- [x]`).
 - [ ] Ajustar `gaps`, anchura del `focus-ring`, sombras y radio de esquinas
 - [ ] Probar **desenfoque** (blur) en la barra con un `layer-rule` y `background-effect` → [docs](https://niri-wm.github.io/niri/Configuration:-Layer-Rules.html)
 - [ ] Probar las **animaciones** y encontrar la velocidad que te guste → [docs](https://niri-wm.github.io/niri/Configuration:-Animations.html)
-- [ ] Tema oscuro para apps GTK: `gsettings set org.gnome.desktop.interface color-scheme prefer-dark`
+- [x] Tema oscuro para apps GTK: `gsettings set org.gnome.desktop.interface color-scheme prefer-dark`
 - [ ] Tema de iconos y cursor (por ejemplo, Papirus y Bibata)
 
 ## Fase 3 · Centralizar los colores

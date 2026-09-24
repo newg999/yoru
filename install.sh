@@ -8,7 +8,8 @@
 #    3. Descarga la fuente JetBrainsMono Nerd Font (iconos de la barra)
 #    4. Hace copia de seguridad de tus configs actuales
 #    5. Enlaza (symlink) las carpetas de config/ en ~/.config/
-#    6. Valida la configuración de Niri
+#    6. Pone tema oscuro e iconos Papirus en las apps GTK
+#    7. Valida la configuración de Niri
 #
 #  Como usa enlaces simbólicos, cualquier cambio que hagas en ~/.config/niri
 #  se está haciendo en realidad dentro de este repositorio → git lo ve.
@@ -136,6 +137,21 @@ enlazar_todo() {
     mkdir -p "$HOME/Pictures/Screenshots"
 }
 
+# --------------------------------------------------------------- Apps GTK
+# Tema oscuro e iconos Papirus para Nautilus, Calendario, etc.
+# (son ajustes del sistema: también se notan si vuelves a GNOME)
+ajustes_gtk() {
+    paso "Tema oscuro para las apps GTK"
+    if ! command -v gsettings >/dev/null; then
+        aviso "gsettings no está disponible, me lo salto"
+        return
+    fi
+    gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'   # GTK4 / libadwaita
+    gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'     # GTK3
+    gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark'
+    ok "Tema oscuro e iconos Papirus-Dark"
+}
+
 # ------------------------------------------------------------------ Validar
 validar() {
     paso "Validando la configuración de Niri"
@@ -192,7 +208,7 @@ deshacer() {
 # ---------------------------------------------------------------------- Main
 case "${1:-}" in
     --ayuda|-h|--help)
-        sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'
+        sed -n '2,25p' "$0" | sed 's/^# \{0,1\}//'
         exit 0 ;;
     --deshacer)
         deshacer
@@ -201,12 +217,14 @@ case "${1:-}" in
         comprobar_sistema
         instalar_fuente
         enlazar_todo
+        ajustes_gtk
         validar ;;
     "")
         comprobar_sistema
         instalar_paquetes
         instalar_fuente
         enlazar_todo
+        ajustes_gtk
         validar ;;
     *)
         error "Opción desconocida: $1  (usa --ayuda)"
