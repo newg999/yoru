@@ -1,215 +1,23 @@
 // ============================================================================
-//  Waybar — la barra superior (estilo "islas")
-//  Tras editar, reinicia con:  systemctl --user restart waybar
-//  (evita "pkill -SIGUSR2 waybar": con el módulo mpris puede cerrar la barra)
-//  Referencia de módulos:     https://github.com/Alexays/Waybar/wiki
-//  Los iconos (\uXXXX) son glifos de JetBrainsMono Nerd Font.
-//  Buscador de iconos:        https://www.nerdfonts.com/cheat-sheet
+//  Waybar — una barra por pantalla
+//  Todo lo común (módulos, iconos, clics...) está en modulos.jsonc; aquí solo
+//  va lo que cambia entre pantallas. Tras editar:  systemctl --user restart waybar
 // ----------------------------------------------------------------------------
-//  Cada "isla" es un módulo o un grupo de módulos ("group/...").
-//  Para mover algo de sitio, cámbialo de lista o de grupo.
-//  Clic izquierdo = menú rofi · Clic derecho = app completa
+//  "output" elige la pantalla por nombre (míralos con: niri msg outputs).
+//  "!eDP-1" = todas menos la del portátil.
 // ============================================================================
-{
-    "layer": "top",
-    "position": "top",
-    "height": 36,
-    "margin-top": 8,
-    "margin-left": 12,
-    "margin-right": 12,
-    "spacing": 8,
-
-    "modules-left":   ["niri/workspaces", "niri/window"],
-    // "group/espejo" es una copia invisible de la música: ocupa lo mismo a la
-    // izquierda del reloj para que el reloj quede siempre en el centro exacto
-    "modules-center": ["group/espejo", "clock", "group/musica"],
-    "modules-right":  ["group/sistema", "group/conexion", "tray"],
-
-    // ------------------------------------------------------------- Grupos
-    // Botones de música + canción que suena (se oculta sin reproductor)
-    "group/musica": {
-        "orientation": "horizontal",
-        "modules": ["custom/anterior", "custom/playpausa", "custom/siguiente", "mpris"]
-    },
-    "group/espejo": {
-        "orientation": "horizontal",
-        "modules": ["custom/anterior#espejo", "custom/playpausa#espejo",
-                    "custom/siguiente#espejo", "mpris#espejo"]
-    },
-    "group/sistema": {
-        "orientation": "horizontal",
-        "modules": ["cpu", "memory", "battery"]
-    },
-    "group/conexion": {
-        "orientation": "horizontal",
-        "modules": ["pulseaudio", "network", "bluetooth"]
+[
+    // Portátil: pantalla pequeña → título de la canción corto
+    {
+        "output": "eDP-1",
+        "include": ["~/.config/waybar/modulos.jsonc"]
     },
 
-    // ------------------------------------------------------------ Módulos
-    "niri/workspaces": {
-        "format": "{icon}",
-        "format-icons": {
-            "active":  "󰝥",
-            "default": "󰝦"
-        }
-    },
-
-    "niri/window": {
-        "format": "{title}",
-        "max-length": 45,
-        "separate-outputs": true
-    },
-
-    // Calendario al pasar el ratón por encima:
-    //   rueda = mes anterior/siguiente · clic = ver el año entero
-    //   clic central = volver a hoy · clic derecho = app Calendario (eventos)
-    "clock": {
-        "format": "󰅐  {:%H:%M}",
-        "locale": "es_ES.UTF-8",
-        "tooltip-format": "<span size='15pt' color='#ffffff'><b>{0:%H:%M}</b></span>   <span color='#e5e9f0'>{0:%A, %e de %B de %Y}</span>\n\n<span size='13pt'><tt>{calendar}</tt></span>\n\n<span size='9pt' color='#8a8f98'>rueda: mes · clic: año · clic central: hoy · clic dcho: eventos</span>",
-        "calendar": {
-            "mode": "month",
-            "mode-mon-col": 3,
-            "weeks-pos": "left",
-            "on-scroll": 1,
-            "format": {
-                "months":   "<span color='#ffffff'><b>{}</b></span>",
-                "weekdays": "<span color='#9aa0aa'><b>{}</b></span>",
-                "weeks":    "<span color='#5c616b'>{}</span>",
-                "days":     "<span color='#e5e9f0'>{}</span>",
-                "today":    "<span background='#ffffff' color='#1a1b1e'><b>{}</b></span>"
-            }
-        },
-        "actions": {
-            "on-click": "mode",
-            "on-click-middle": "shift_reset",
-            "on-scroll-up": "shift_down",
-            "on-scroll-down": "shift_up"
-        },
-        "on-click-right": "gnome-calendar"
-    },
-
-    "cpu": {
-        "format": "󰘚  {usage}%",
-        "interval": 5,
-        "on-click": "kitty -e htop"
-    },
-
-    "memory": {
-        "format": "󰍛  {percentage}%",
-        "interval": 10,
-        "tooltip-format": "{used:0.1f} / {total:0.1f} GiB"
-    },
-
-    // Botones de música (el script oculta los botones si no suena nada)
-    "custom/anterior": {
-        "exec": "~/.config/waybar/scripts/musica.sh anterior",
-        "on-click": "playerctl previous",
-        "tooltip-format": "Anterior"
-    },
-    "custom/playpausa": {
-        "exec": "~/.config/waybar/scripts/musica.sh playpausa",
-        "on-click": "playerctl play-pause",
-        "tooltip-format": "Play / pausa"
-    },
-    "custom/siguiente": {
-        "exec": "~/.config/waybar/scripts/musica.sh siguiente",
-        "on-click": "playerctl next",
-        "tooltip-format": "Siguiente"
-    },
-
-    // Música/vídeo que suena (Spotify, YouTube en Brave, mpv...).
-    // Se oculta sola si no hay nada. Clic = pausa · Clic derecho = siguiente
-    "mpris": {
-        "format": "󰝚  {dynamic}",
-        "format-paused": "󰝚  {dynamic}",
-        "dynamic-order": ["artist", "title"],
-        "dynamic-len": 16,
-        // Si no cabe todo, se sacrifica antes el artista que el título
-        "dynamic-importance-order": ["title", "artist"],
-        "dynamic-separator": " · ",
-        "tooltip-format": "{player}: {artist} · {title}",
-        "on-click": "playerctl play-pause",
-        "on-click-right": "playerctl next",
-        "on-click-middle": "playerctl previous"
-    },
-
-    // Copias invisibles (ver "group/espejo"): mismo contenido, sin clics
-    "custom/anterior#espejo": {
-        "tooltip": false,
-        "exec": "~/.config/waybar/scripts/musica.sh anterior"
-    },
-    "custom/playpausa#espejo": {
-        "tooltip": false,
-        "exec": "~/.config/waybar/scripts/musica.sh playpausa"
-    },
-    "custom/siguiente#espejo": {
-        "tooltip": false,
-        "exec": "~/.config/waybar/scripts/musica.sh siguiente"
-    },
-    "mpris#espejo": {
-        "tooltip": false,
-        "format": "󰝚  {dynamic}",
-        "format-paused": "󰝚  {dynamic}",
-        "dynamic-order": ["artist", "title"],
-        "dynamic-len": 16,
-        // Si no cabe todo, se sacrifica antes el artista que el título
-        "dynamic-importance-order": ["title", "artist"],
-        "dynamic-separator": " · "
-    },
-
-    // Se oculta sola en equipos sin batería
-    "battery": {
-        "states": { "warning": 25, "critical": 10 },
-        "format": "{icon}  {capacity}%",
-        "format-charging": "󰂄  {capacity}%",
-        "format-plugged": "󰚥  {capacity}%",
-        "format-full": "󰁹  {capacity}%",
-        "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
-        "tooltip-format": "{timeTo}\n{power:.1f} W · salud {health}%"
-    },
-
-    "pulseaudio": {
-        "format": "{icon}  {volume}%",
-        "format-muted": "󰖁  mute",
-        "format-icons": {
-            "headphone": "󰋋",
-            "default": ["󰕿", "󰖀", "󰕾"]
-        },
-        "scroll-step": 5,
-        // Clic = elegir salida (altavoces, auriculares, monitor...) y micro
-        // Clic central = silenciar · Clic derecho = mezclador · Rueda = volumen
-        "on-click": "~/.config/rofi/scripts/audio.py",
-        "on-click-middle": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
-        "on-click-right": "pavucontrol",
-        "tooltip-format": "{desc} · {volume}%"
-    },
-
-    "network": {
-        "format-wifi": "{icon}",
-        "format-icons": ["󰤟", "󰤢", "󰤥", "󰤨"],
-        "format-ethernet": "󰈀",
-        "format-disconnected": "󰤮",
-        "tooltip-format-wifi": "{essid} · {signalStrength}% · {ipaddr}",
-        "tooltip-format-ethernet": "{ifname} · {ipaddr}",
-        "on-click": "~/.config/rofi/scripts/wifi.py",
-        "on-click-right": "nm-connection-editor"
-    },
-
-    "bluetooth": {
-        "format": "󰂯",
-        "format-disabled": "󰂲",
-        "format-off": "󰂲",
-        "format-connected": "󰂱 {num_connections}",
-        "tooltip-format-connected": "{device_enumerate}",
-        "tooltip-format-enumerate-connected": "{device_alias}",
-        "on-click": "~/.config/rofi/scripts/bluetooth.py",
-        "on-click-right": "blueman-manager"
-    },
-
-    // Bandeja del sistema: iconos de apps en segundo plano (Discord, Steam...)
-    "tray": {
-        "icon-size": 16,
-        "spacing": 10
+    // Monitores externos: hay sitio de sobra → título largo
+    {
+        "output": "!eDP-1",
+        "include": ["~/.config/waybar/modulos.jsonc"],
+        "mpris":        { "dynamic-len": 45 },
+        "mpris#espejo": { "dynamic-len": 45 }
     }
-}
+]
