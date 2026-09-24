@@ -90,6 +90,7 @@ El script **no copia** archivos: crea *enlaces simbólicos*. `~/.config/niri` ap
 | `Mod+Shift+S` | Captura con editor (Flameshot) |
 | `Mod+Alt+N` | Menú de wifi |
 | `Mod+Alt+B` | Menú de bluetooth |
+| `Mod+Alt+A` | Menú de audio (salida, micrófono, volumen) |
 | `Mod+Alt+C` | Calendario |
 | `Mod+Alt+V` | Historial del portapapeles |
 | `Mod+Alt+W` | Siguiente fondo de pantalla |

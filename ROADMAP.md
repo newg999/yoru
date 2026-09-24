@@ -38,7 +38,8 @@ Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de má
 - [ ] Decidir qué módulos quieres realmente y en qué orden
 - [ ] Crear tu primer módulo `custom/` con un script (por ejemplo, la temperatura o la canción que suena con `playerctl`)
 - [x] Menús con rofi: wifi, bluetooth, calendario, apagado y portapapeles
-- [ ] Más menús: perfiles de energía, audio (salida/entrada), brillo
+- [x] Menú de audio: salida, micrófono y volumen
+- [ ] Más menús: perfiles de energía, brillo
 - [ ] *(Avanzado)* Probar alternativas a Waybar: **[Quickshell](https://quickshell.org)**, **[Ironbar](https://github.com/JakeStanger/ironbar)** o **[eww](https://github.com/elkowar/eww)**
 
 ## Fase 5 · Terminal y shell

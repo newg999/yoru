@@ -23,6 +23,7 @@ binds {
     Mod+Shift+BackSpace hotkey-overlay-title="Menú de apagado" { spawn-sh "~/.config/rofi/scripts/apagado.sh"; }
     Mod+Alt+N           hotkey-overlay-title="Wifi"            { spawn-sh "~/.config/rofi/scripts/wifi.py"; }
     Mod+Alt+B           hotkey-overlay-title="Bluetooth"       { spawn-sh "~/.config/rofi/scripts/bluetooth.py"; }
+    Mod+Alt+A           hotkey-overlay-title="Audio"           { spawn-sh "~/.config/rofi/scripts/audio.py"; }
     Mod+Alt+C           hotkey-overlay-title="Calendario"      { spawn-sh "~/.config/rofi/scripts/calendario.py"; }
     Mod+Alt+V           hotkey-overlay-title="Portapapeles"    { spawn-sh "~/.config/rofi/scripts/portapapeles.sh"; }
     Mod+Alt+W           hotkey-overlay-title="Fondo siguiente" { spawn-sh "~/.config/niri/scripts/wallpaper.sh next"; }

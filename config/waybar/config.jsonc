@@ -177,8 +177,12 @@
             "default": ["󰕿", "󰖀", "󰕾"]
         },
         "scroll-step": 5,
-        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
-        "on-click-right": "pavucontrol"
+        // Clic = elegir salida (altavoces, auriculares, monitor...) y micro
+        // Clic central = silenciar · Clic derecho = mezclador · Rueda = volumen
+        "on-click": "~/.config/rofi/scripts/audio.py",
+        "on-click-middle": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "on-click-right": "pavucontrol",
+        "tooltip-format": "{desc} · {volume}%"
     },
 
     "network": {
