@@ -53,7 +53,7 @@ El script **no copia** archivos: crea *enlaces simbólicos*. `~/.config/niri` ap
 | `Mod+Return` / `Mod+T` | Terminal |
 | `Mod+Space` / `Mod+D` | Lanzador de apps |
 | `Mod+E` | Archivos |
-| `Mod+B` | Navegador |
+| `Mod+B` | Navegador (Brave) |
 | `Mod+Q` | Cerrar ventana |
 | `Mod+O` | Overview (vista de todo) |
 | `Mod+←/→` o `Mod+H/L` | Moverse entre columnas |

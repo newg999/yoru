@@ -17,7 +17,7 @@ binds {
     Mod+Space  hotkey-overlay-title="Lanzador de apps"       { spawn "rofi" "-show" "drun"; }
     Mod+D      hotkey-overlay-title=null                     { spawn "rofi" "-show" "drun"; }
     Mod+E      hotkey-overlay-title="Archivos (Nautilus)"    { spawn "nautilus"; }
-    Mod+B      hotkey-overlay-title="Navegador"              { spawn "firefox"; }
+    Mod+B      hotkey-overlay-title="Navegador (Brave)"      { spawn "brave-browser"; }
 
     // --------------------------------------------------------- Menús propios
     Mod+Shift+BackSpace hotkey-overlay-title="Menú de apagado" { spawn-sh "~/.config/rofi/scripts/apagado.sh"; }
