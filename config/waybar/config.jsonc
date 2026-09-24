@@ -20,7 +20,9 @@
     "spacing": 8,
 
     "modules-left":   ["niri/workspaces", "niri/window"],
-    "modules-center": ["clock", "group/musica"],
+    // "group/espejo" es una copia invisible de la música: ocupa lo mismo a la
+    // izquierda del reloj para que el reloj quede siempre en el centro exacto
+    "modules-center": ["group/espejo", "clock", "group/musica"],
     "modules-right":  ["group/sistema", "group/conexion", "tray"],
 
     // ------------------------------------------------------------- Grupos
@@ -28,6 +30,11 @@
     "group/musica": {
         "orientation": "horizontal",
         "modules": ["custom/anterior", "custom/playpausa", "custom/siguiente", "mpris"]
+    },
+    "group/espejo": {
+        "orientation": "horizontal",
+        "modules": ["custom/anterior#espejo", "custom/playpausa#espejo",
+                    "custom/siguiente#espejo", "mpris#espejo"]
     },
     "group/sistema": {
         "orientation": "horizontal",
@@ -125,6 +132,30 @@
         "on-click": "playerctl play-pause",
         "on-click-right": "playerctl next",
         "on-click-middle": "playerctl previous"
+    },
+
+    // Copias invisibles (ver "group/espejo"): mismo contenido, sin clics
+    "custom/anterior#espejo": {
+        "tooltip": false,
+        "exec": "~/.config/waybar/scripts/musica.sh anterior"
+    },
+    "custom/playpausa#espejo": {
+        "tooltip": false,
+        "exec": "~/.config/waybar/scripts/musica.sh playpausa"
+    },
+    "custom/siguiente#espejo": {
+        "tooltip": false,
+        "exec": "~/.config/waybar/scripts/musica.sh siguiente"
+    },
+    "mpris#espejo": {
+        "tooltip": false,
+        "format": "󰝚  {dynamic}",
+        "format-paused": "󰝚  {dynamic}",
+        "dynamic-order": ["artist", "title"],
+        "dynamic-len": 45,
+        // Si no cabe todo, se sacrifica antes el artista que el título
+        "dynamic-importance-order": ["title", "artist"],
+        "dynamic-separator": " · "
     },
 
     // Se oculta sola en equipos sin batería
