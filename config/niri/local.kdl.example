@@ -1,0 +1,19 @@
+// ============================================================================
+//  local.kdl — Ajustes solo para ESTE equipo (no se sube a git)
+// ----------------------------------------------------------------------------
+//  Copia este archivo:  cp local.kdl.example local.kdl
+//  Nombres y modos de tus pantallas:  niri msg outputs
+// ============================================================================
+
+output "eDP-1" {
+    // mode "1920x1080@60"
+    scale 1.25
+    // position x=0 y=0
+}
+
+// Un segundo monitor a la derecha:
+// output "HDMI-A-1" {
+//     mode "2560x1440@144"
+//     scale 1
+//     position x=1536 y=0
+// }

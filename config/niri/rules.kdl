@@ -1,0 +1,105 @@
+// ============================================================================
+//  rules.kdl — Reglas para ventanas y capas
+// ----------------------------------------------------------------------------
+//  Para saber el app-id de una ventana:  niri msg windows
+//  Para ver las capas (barra, fondo...):  niri msg layers
+//  Las reglas se aplican en orden: si dos chocan, gana la de más abajo.
+// ============================================================================
+
+// --- Todas las ventanas ------------------------------------------------------
+window-rule {
+    // Esquinas redondeadas
+    geometry-corner-radius 10
+    clip-to-geometry true
+
+    // El anillo de foco se dibuja alrededor, no detrás (si no, se
+    // transparenta a través de las ventanas semitransparentes)
+    draw-border-with-background false
+
+    // Algunas apps (Brave, Chrome, VS Code...) recuerdan que las cerraste
+    // maximizadas y piden abrirse "a pantalla entera", sin márgenes.
+    // Esto lo impide: todas se abren como una columna normal.
+    // Para maximizar a mano una ventana: Mod+M (o Mod+F dejando márgenes).
+    open-maximized-to-edges false
+}
+
+// --- Transparencia y desenfoque ----------------------------------------------
+// Las ventanas que no tienen el foco se vuelven un poco transparentes.
+// Mod+Alt+O activa/desactiva la transparencia de la ventana actual.
+window-rule {
+    match is-active=false
+    opacity 0.92
+}
+
+// Terminal: transparente y con el fondo desenfocado
+window-rule {
+    match app-id="^kitty$"
+    default-column-width { proportion 0.4; }
+    background-effect {
+        blur true
+    }
+}
+
+// Navegadores y reproductores siempre opacos (vídeos, fotos...)
+window-rule {
+    match app-id=r#"(?i)(firefox|brave|chrom|mpv|vlc|celluloid|loupe)"#
+    opacity 1.0
+}
+
+// --- Ventanas flotantes ------------------------------------------------------
+window-rule {
+    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    match title="^Picture in picture$"
+    match app-id="^org.pulseaudio.pavucontrol$"
+    match app-id="^blueman-manager$"
+    match app-id="^nm-connection-editor$"
+    match title="^(Abrir|Guardar|Open|Save)( archivo| File)?"
+    open-floating true
+}
+
+// Flameshot: que su capa de captura no descoloque las ventanas
+window-rule {
+    match app-id="flameshot"
+    open-floating true
+    open-fullscreen false
+}
+
+// Calendario de GNOME flotante y centrado
+window-rule {
+    match app-id="^org.gnome.Calendar$"
+    open-floating true
+    default-column-width { fixed 900; }
+    default-window-height { fixed 650; }
+}
+
+// --- Privacidad --------------------------------------------------------------
+window-rule {
+    match app-id=r#"^org\.keepassxc\.KeePassXC$"#
+    match app-id=r#"^org\.gnome\.World\.Secrets$"#
+    block-out-from "screen-capture"
+}
+
+// --- Capas (barra, lanzador, notificaciones, fondo) --------------------------
+
+// Fondo de pantalla visible dentro del overview (Mod+O)
+layer-rule {
+    match namespace="^wallpaper$"
+    place-within-backdrop true
+}
+
+// Rofi (lanzador y menús) con fondo desenfocado
+layer-rule {
+    match namespace="^rofi"
+    geometry-corner-radius 14
+    background-effect {
+        blur true
+    }
+}
+
+// Las notificaciones no salen en grabaciones de pantalla
+// (sin blur: mako dibuja todas en una misma capa y el desenfoque
+//  se vería como un rectángulo más grande que la notificación)
+layer-rule {
+    match namespace="^notifications$"
+    block-out-from "screencast"
+}

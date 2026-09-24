@@ -1,0 +1,146 @@
+// ============================================================================
+//  config.kdl — Configuración principal de Niri
+// ----------------------------------------------------------------------------
+//  Niri recarga este archivo en vivo: guarda y verás el cambio al instante.
+//  Si algo falla, Niri muestra un aviso en pantalla y mantiene la última
+//  configuración válida. Para comprobarla a mano:  niri validate
+//
+//  Esta config está dividida en varios archivos para que sea fácil de tocar:
+//    config.kdl   -> este archivo: teclado, ratón, layout, arranque
+//    colors.kdl   -> colores de bordes, sombras y overview (tu "tema")
+//    binds.kdl    -> atajos de teclado
+//    rules.kdl    -> reglas de ventanas y capas (esquinas, flotantes...)
+//    local.kdl    -> opcional, NO va a git: monitores y cosas de ESTE equipo
+//
+//  Documentación completa: https://niri-wm.github.io/niri/
+// ============================================================================
+
+// ---------------------------------------------------------------------------
+//  Entrada: teclado, touchpad y ratón
+// ---------------------------------------------------------------------------
+input {
+    keyboard {
+        xkb {
+            // Vacío = usa la distribución del sistema (la que eligió Fedora
+            // al instalar). Si quieres forzarla, descomenta:
+            // layout "es"
+        }
+        numlock
+    }
+
+    touchpad {
+        tap                 // tocar = clic
+        natural-scroll      // scroll "tipo móvil"
+        dwt                 // desactiva el touchpad mientras escribes
+    }
+
+    mouse {
+        // accel-profile "flat"
+    }
+
+    // El foco sigue al ratón (solo en ventanas completamente visibles).
+    // focus-follows-mouse max-scroll-amount="0%"
+}
+
+// ---------------------------------------------------------------------------
+//  Layout: cómo se colocan las ventanas en la "cinta" infinita
+// ---------------------------------------------------------------------------
+layout {
+    gaps 12
+
+    // "never" | "always" | "on-overflow"
+    center-focused-column "on-overflow"
+
+    // Anchos por los que va rotando Mod+R
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    default-column-width { proportion 0.5; }
+
+    // Anillo de foco alrededor de la ventana activa (los colores, en colors.kdl)
+    focus-ring {
+        width 2
+    }
+
+    border {
+        off
+    }
+
+    shadow {
+        on
+        softness 30
+        spread 4
+        offset x=0 y=6
+    }
+
+    // Márgenes extra en los bordes de la pantalla
+    struts {
+        // left 24
+        // right 24
+    }
+}
+
+// Los colores van DESPUÉS de layout para que lo sobrescriban.
+include "colors.kdl"
+
+// ---------------------------------------------------------------------------
+//  Programas que arrancan con la sesión
+// ---------------------------------------------------------------------------
+spawn-at-startup "waybar"
+spawn-at-startup "mako"
+spawn-sh-at-startup "~/.config/niri/scripts/wallpaper.sh"
+spawn-sh-at-startup "~/.config/niri/scripts/polkit.sh"
+
+// Bloqueo automático: a los 5 min bloquea, a los 10 apaga la pantalla,
+// y bloquea siempre antes de suspender.
+spawn-at-startup "swayidle" "-w" "timeout" "300" "swaylock -f" "timeout" "600" "niri msg action power-off-monitors" "before-sleep" "swaylock -f"
+
+// Historial del portapapeles (requiere cliphist; si no está, no pasa nada)
+spawn-sh-at-startup "command -v cliphist && wl-paste --watch cliphist store"
+
+// Agente de bluetooth: muestra el PIN al emparejar dispositivos
+spawn-sh-at-startup "command -v blueman-applet && blueman-applet"
+
+// ---------------------------------------------------------------------------
+//  Varios
+// ---------------------------------------------------------------------------
+
+// Pide a las apps que no dibujen su propia barra de título
+prefer-no-csd
+
+// Mostrar la chuleta de atajos al entrar (Mod+Shift+/ la abre cuando quieras).
+// Cuando te sepas los atajos, descomenta esto:
+// hotkey-overlay { skip-at-startup; }
+
+screenshot-path "~/Pictures/Screenshots/Captura %Y-%m-%d %H-%M-%S.png"
+
+// Desenfoque (blur). Estos son los valores por defecto; más "passes"
+// y "offset" = más borroso. Las ventanas que lo usan están en rules.kdl.
+blur {
+    passes 3
+    offset 3
+    noise 0.02
+    saturation 1.5
+}
+
+animations {
+    // off
+    // slowdown 1.5
+}
+
+// Por defecto, llevar el ratón a la esquina superior izquierda abre el
+// overview. Para desactivarlo, descomenta:
+// gestures { hot-corners { off; } }
+
+// ---------------------------------------------------------------------------
+//  Resto de módulos
+// ---------------------------------------------------------------------------
+include "binds.kdl"
+include "rules.kdl"
+
+// Ajustes solo de este equipo (monitores, escala...). No existe por defecto.
+// Copia local.kdl.example a local.kdl y edítalo.
+include optional=true "local.kdl"

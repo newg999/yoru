@@ -1,0 +1,40 @@
+# ============================================================================
+#  swaylock — pantalla de bloqueo (Mod+BackSpace)
+#  Referencia: man swaylock
+#  Truco: para un bloqueo con fondo desenfocado y reloj, mira "swaylock-effects"
+#  o "hyprlock" en la hoja de ruta (ROADMAP.md).
+# ============================================================================
+
+daemonize
+ignore-empty-password
+show-failed-attempts
+indicator-caps-lock
+
+color=2e3440
+indicator-radius=110
+indicator-thickness=8
+
+inside-color=2e3440
+inside-clear-color=2e3440
+inside-ver-color=2e3440
+inside-wrong-color=2e3440
+
+ring-color=3b4252
+ring-clear-color=81a1c1
+ring-ver-color=88c0d0
+ring-wrong-color=bf616a
+
+key-hl-color=88c0d0
+bs-hl-color=bf616a
+caps-lock-key-hl-color=ebcb8b
+
+line-color=00000000
+line-clear-color=00000000
+line-ver-color=00000000
+line-wrong-color=00000000
+separator-color=00000000
+
+text-color=d8dee9
+text-clear-color=81a1c1
+text-ver-color=88c0d0
+text-wrong-color=bf616a
