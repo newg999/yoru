@@ -230,6 +230,11 @@ ajustes_gtk() {
     gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'     # GTK3
     gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark'
     ok "Tema oscuro e iconos Papirus-Dark"
+
+    # Blueman sin icono en la bandeja (la barra ya tiene su módulo).
+    # El agente que muestra el PIN al emparejar sigue funcionando.
+    gsettings set org.blueman.general plugin-list "['!StatusNotifierItem']" 2>/dev/null \
+        && ok "Blueman sin icono en la bandeja"
 }
 
 # ------------------------------------------------------------------ Validar
