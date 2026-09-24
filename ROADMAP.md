@@ -15,7 +15,7 @@ Marca las casillas conforme avances (`- [x]`).
 ## Fase 1 · Que todo funcione en tu equipo
 - [x] Copiar `local.kdl.example` a `local.kdl` y ajustar monitores y escala (`niri msg outputs`)
 - [ ] Revisar touchpad y ratón en `config.kdl` → `input` (velocidad, scroll natural...)
-- [ ] Comprobar volumen, brillo, wifi, bluetooth y batería en la barra
+- [ ] Comprobar volumen, brillo, wifi, bluetooth y batería en la barra (batería ya añadida)
 - [ ] Comprobar que compartir pantalla funciona (Meet, Discord...)
 - [ ] Probar el bloqueo (`Mod+BackSpace`) y la suspensión
 - [ ] Anotar en un `TROUBLESHOOTING.md` cada problema que encuentres y cómo lo arreglaste

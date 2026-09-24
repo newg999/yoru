@@ -20,12 +20,12 @@
 
     "modules-left":   ["niri/workspaces", "niri/window"],
     "modules-center": ["clock"],
-    "modules-right":  ["group/sistema", "group/conexion"],
+    "modules-right":  ["mpris", "group/sistema", "group/conexion", "tray"],
 
     // ------------------------------------------------------------- Grupos
     "group/sistema": {
         "orientation": "horizontal",
-        "modules": ["cpu", "memory"]
+        "modules": ["cpu", "memory", "battery"]
     },
     "group/conexion": {
         "orientation": "horizontal",
@@ -73,6 +73,33 @@
         "tooltip-format": "{used:0.1f} / {total:0.1f} GiB"
     },
 
+    // Música/vídeo que suena (Spotify, YouTube en Brave, mpv...).
+    // Se oculta sola si no hay nada. Clic = pausa · Clic derecho = siguiente
+    "mpris": {
+        "format": "  {dynamic}",
+        "format-paused": "  {dynamic}",
+        "dynamic-order": ["artist", "title"],
+        "dynamic-len": 45,
+        // Si no cabe todo, se sacrifica antes el artista que el título
+        "dynamic-importance-order": ["title", "artist"],
+        "dynamic-separator": " · ",
+        "tooltip-format": "{player}: {artist} · {title}",
+        "on-click": "playerctl play-pause",
+        "on-click-right": "playerctl next",
+        "on-click-middle": "playerctl previous"
+    },
+
+    // Se oculta sola en equipos sin batería
+    "battery": {
+        "states": { "warning": 25, "critical": 10 },
+        "format": "{icon}  {capacity}%",
+        "format-charging": "  {capacity}%",
+        "format-plugged": "  {capacity}%",
+        "format-full": "  {capacity}%",
+        "format-icons": ["", "", "", "", ""],
+        "tooltip-format": "{timeTo}\n{power:.1f} W · salud {health}%"
+    },
+
     "pulseaudio": {
         "format": "{icon}  {volume}%",
         "format-muted": "  mute",
@@ -104,5 +131,11 @@
         "tooltip-format-enumerate-connected": "{device_alias}",
         "on-click": "~/.config/rofi/scripts/bluetooth.py",
         "on-click-right": "blueman-manager"
+    },
+
+    // Bandeja del sistema: iconos de apps en segundo plano (Discord, Steam...)
+    "tray": {
+        "icon-size": 16,
+        "spacing": 10
     }
 }
