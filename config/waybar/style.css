@@ -50,7 +50,9 @@ tooltip label { color: @nord4; }
 #window,
 #clock,
 #sistema,
-#conexion {
+#conexion,
+#mpris,
+#tray {
     background: @isla;
     border: 1px solid alpha(@nord3, 0.6);
     border-radius: 12px;
@@ -63,8 +65,15 @@ window#waybar.empty #window {
     border-color: transparent;
 }
 
+/* Sin iconos en la bandeja, su isla desaparece */
+#tray.empty {
+    background: transparent;
+    border-color: transparent;
+    padding: 0;
+}
+
 /* Separación entre módulos dentro de una misma isla */
-#cpu, #memory, #pulseaudio, #network, #bluetooth {
+#cpu, #memory, #battery, #pulseaudio, #network, #bluetooth {
     padding: 0 7px;
 }
 
@@ -84,6 +93,19 @@ window#waybar.empty #window {
 #clock      { color: @nord6; }
 #cpu        { color: @nord8; }
 #memory     { color: @purple; }
+#battery    { color: @green; }
+#battery.charging,
+#battery.plugged,
+#battery.full    { color: @nord8; }
+#battery.warning:not(.charging) { color: @yellow; }
+#battery.critical:not(.charging) {
+    color: @red;
+    animation: parpadeo 1s steps(2) infinite alternate;
+}
+@keyframes parpadeo { to { color: @nord6; } }
+
+#mpris        { color: @nord7; font-weight: normal; }
+#mpris.paused { color: @nord3; }
 #pulseaudio { color: @nord7; }
 #pulseaudio.muted { color: @nord3; }
 #network    { color: @green; }
@@ -94,4 +116,14 @@ window#waybar.empty #window {
 #bluetooth.connected { color: @nord8; }
 
 /* Módulos con menú: se iluminan al pasar el ratón */
-#clock:hover, #network:hover, #bluetooth:hover, #pulseaudio:hover { color: @nord6; }
+#clock:hover, #network:hover, #bluetooth:hover, #pulseaudio:hover,
+#mpris:hover { color: @nord6; }
+
+/* Menús de la bandeja (clic derecho en un icono) */
+#tray menu {
+    background: @nord0;
+    border: 1px solid @nord3;
+    border-radius: 10px;
+    padding: 4px 0;
+}
+#tray > .needs-attention { color: @red; }
