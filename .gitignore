@@ -9,3 +9,7 @@ config/niri/local.kdl
 # Caché de Python (scripts de rofi)
 __pycache__/
 *.pyc
+
+# Fondos descargados (obras de otros artistas): no se suben al repo.
+# Se vuelven a bajar con wallpapers/descargar.sh
+wallpapers/anime-*

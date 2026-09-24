@@ -150,6 +150,7 @@ enlazar_todo() {
 
     paso "Enlazando fondos de pantalla"
     enlazar "$REPO/wallpapers" "$HOME/.local/share/wallpapers"
+    "$REPO/wallpapers/descargar.sh" || aviso "No se pudieron bajar algunos fondos (¿sin internet?)"
 
     chmod +x "$REPO"/config/niri/scripts/*.sh
     mkdir -p "$HOME/Pictures/Screenshots"
