@@ -8,7 +8,7 @@ Marca las casillas conforme avances (`- [x]`).
 
 ## Fase 0 · Preparar el terreno
 - [ ] Crear el repositorio en GitHub y subir esta base (ya hay `git init` y primer commit; falta GitHub) (`git init`, `git add .`, `git commit`, `git push`)
-- [ ] *(Opcional pero recomendado)* Probar primero en una máquina virtual con **GNOME Boxes** y Fedora
+- [ ] *(Recomendado)* Probar la instalación desde una **Fedora mínima** en una máquina virtual (GNOME Boxes)
 - [ ] Ejecutar `./install.sh` y entrar en Niri desde la pantalla de inicio
 - [ ] Hacer la primera captura y ponerla en el README
 
@@ -54,7 +54,7 @@ Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de má
 - [ ] Reglas de ventanas: qué app se abre en qué escritorio (`niri msg windows` para ver el `app-id`)
 - [ ] Escritorios con nombre (`workspace "web"`, `workspace "código"`...) → [docs](https://niri-wm.github.io/niri/Configuration:-Named-Workspaces.html)
 - [ ] Visualizador de audio con **cava** en la barra o en una terminal flotante
-- [ ] Pantalla de inicio de sesión a juego (tema de GDM o cambiar a **greetd** + **tuigreet**)
+- [x] Pantalla de inicio de sesión: **greetd** + **tuigreet** (en instalaciones mínimas)
 
 ## Fase 7 · Compartirlo
 - [ ] README con capturas de cada parte (como hace SygurDot)

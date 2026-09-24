@@ -1,10 +1,38 @@
 # ============================================================================
-#  Paquetes que instala install.sh (repositorios oficiales de Fedora)
+#  Paquetes que instala install.sh
 #  Una línea por paquete. Lo que va detrás de # se ignora.
 #  ¿Quieres algo más? Añádelo aquí y vuelve a ejecutar ./install.sh
+#
+#  Pensado para una Fedora MÍNIMA (sin escritorio). Si ya tienes GNOME,
+#  muchos estarán instalados y dnf simplemente se los salta.
 # ============================================================================
 
-# --- Núcleo ------------------------------------------------------------------
+# --- Sistema base (lo que una Fedora mínima no trae) -------------------------
+mesa-dri-drivers          # gráficos (OpenGL)
+mesa-vulkan-drivers       # gráficos (Vulkan)
+pipewire                  # sonido
+pipewire-pulseaudio       # compatibilidad con apps de PulseAudio (y la barra)
+pipewire-alsa
+wireplumber               # gestor de sesión de audio (wpctl)
+NetworkManager-wifi       # wifi
+bluez                     # bluetooth
+upower                    # estado de la batería
+tuned-ppd                 # perfiles de energía (ahorro / equilibrado / rendimiento)
+xdg-user-dirs             # crea Descargas, Imágenes, Documentos...
+xdg-utils                 # xdg-open: abrir archivos y enlaces con su app
+dconf                     # guarda los ajustes de las apps GTK (gsettings)
+gvfs                      # papelera, unidades USB y red en el gestor de archivos
+gvfs-mtp                  # móviles Android por USB
+gvfs-smb                  # carpetas compartidas de Windows/Samba
+google-noto-sans-fonts    # fuente general de las apps
+google-noto-color-emoji-fonts  # emojis 🎉
+
+# --- Inicio de sesión --------------------------------------------------------
+# Solo se activa si no tienes ya uno (por ejemplo, GDM de GNOME)
+greetd                    # gestor de inicio de sesión
+tuigreet                  # pantalla de login en modo texto
+
+# --- Núcleo de Niri ----------------------------------------------------------
 niri                      # el compositor
 xwayland-satellite        # apps X11 (Steam, Discord...). Niri lo arranca solo
 xdg-desktop-portal-gnome  # compartir pantalla, capturas
@@ -15,27 +43,36 @@ mate-polkit               # ventana que pide la contraseña de administrador
 # --- Escritorio --------------------------------------------------------------
 waybar                    # barra superior
 rofi                      # lanzador de apps y menús (wifi, bluetooth...)
-papirus-icon-theme        # iconos de apps en el lanzador
+papirus-icon-theme        # iconos
 flameshot                 # capturas con editor
-gnome-calendar            # calendario con eventos (ya viene con GNOME)
 mako                      # notificaciones
 swaybg                    # fondo de pantalla
 swaylock                  # pantalla de bloqueo
 swayidle                  # bloqueo automático por inactividad
 kitty                     # terminal
 
+# --- Aplicaciones ------------------------------------------------------------
+brave-browser             # navegador (install.sh añade antes su repositorio)
+nautilus                  # gestor de archivos (Mod+E)
+file-roller               # comprimir/descomprimir (integrado en Nautilus)
+loupe                     # visor de imágenes
+mpv                       # vídeo
+papers                    # visor de PDF
+gnome-text-editor         # editor de texto sencillo
+gnome-calendar            # calendario con eventos
+pavucontrol               # mezclador de audio
+blueman                   # bluetooth
+network-manager-applet    # icono de red y editor de conexiones
+
 # --- Utilidades --------------------------------------------------------------
 wl-clipboard              # copiar/pegar desde la terminal (wl-copy, wl-paste)
-cliphist                  # historial del portapapeles (Fedora 44+)
+cliphist                  # historial del portapapeles
 brightnessctl             # teclas de brillo
 playerctl                 # teclas multimedia
-pavucontrol               # mezclador de audio
-network-manager-applet    # icono de red en la bandeja
-blueman                   # bluetooth
 libnotify                 # notify-send
 htop                      # monitor del sistema
-nautilus                  # archivos (ya viene con GNOME)
 fontconfig                # fc-cache
+git
 curl
 tar
 xz

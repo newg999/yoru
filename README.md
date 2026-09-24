@@ -21,18 +21,36 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Bloqueo | `swaylock` + `swayidle` | `config/swaylock/` |
 | Fondo | `swaybg` | `config/niri/scripts/wallpaper.sh` |
 | Apps X11 | `xwayland-satellite` | automático |
+| Inicio de sesión | `greetd` + `tuigreet` | `system/greetd/config.toml` |
+| Archivos | `nautilus` | — |
+| Navegador | `brave-browser` | — |
 
 Tema: **[Nord](https://www.nordtheme.com)**, con barra en islas y desenfoque. Fuente: **JetBrainsMono Nerd Font**.
 
 ## Instalación
 
+Hay dos caminos. Lo ideal es el primero: un sistema limpio con solo lo necesario.
+
+### A · Desde una Fedora mínima (recomendado)
+
+1. Descarga **Fedora Everything** (la imagen *netinstall*) desde <https://fedoraproject.org/misc/#everything>.
+2. En el instalador, en **Selección de software**, elige **Instalación mínima** (*Minimal Install*) y nada más.
+3. Crea tu usuario y marca **Hacer administrador a este usuario**.
+4. Al reiniciar entrarás en una consola de texto. Inicia sesión y ejecuta:
+
 ```bash
+sudo dnf install -y git
 git clone https://github.com/TU_USUARIO/mis-dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ./install.sh
+sudo reboot
 ```
 
-Después cierra la sesión y en la pantalla de inicio pulsa el engranaje ⚙ (abajo a la derecha), elige **Niri** y entra. **GNOME no se toca**: puedes volver a él desde el mismo menú.
+Al volver verás la pantalla de inicio de **tuigreet**: escribe tu usuario y contraseña y entrarás en Niri.
+
+### B · Sobre una Fedora con GNOME
+
+Los mismos comandos (sin el `reboot`). Después cierra la sesión y en la pantalla de inicio pulsa el engranaje ⚙ (abajo a la derecha), elige **Niri** y entra. **GNOME no se toca**: el instalador respeta su pantalla de inicio (GDM) y puedes volver a él desde el mismo menú.
 
 | Comando | Qué hace |
 |---|---|
@@ -90,6 +108,8 @@ El script **no copia** archivos: crea *enlaces simbólicos*. `~/.config/niri` ap
 | Qué arranca al iniciar | `config/niri/config.kdl` → `spawn-at-startup` |
 | Esquinas, ventanas flotantes | `config/niri/rules.kdl` |
 | Monitores y escala | `config/niri/local.kdl` (copia `local.kdl.example`) |
+| Pantalla de inicio de sesión | `system/greetd/config.toml` (se copia a `/etc`, vuelve a ejecutar `./install.sh`) |
+| Paquetes que se instalan | `packages.txt` |
 | Módulos de la barra | `config/waybar/config.jsonc` |
 | Aspecto de la barra | `config/waybar/style.css` |
 | Fondos de pantalla | Echa imágenes en `wallpapers/` |

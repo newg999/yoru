@@ -1,0 +1,17 @@
+# ============================================================================
+#  greetd + tuigreet — pantalla de inicio de sesión (modo texto)
+# ----------------------------------------------------------------------------
+#  install.sh COPIA este archivo a /etc/greetd/config.toml (no es un enlace:
+#  pertenece a root). Si lo cambias, vuelve a ejecutar ./install.sh o cópialo:
+#    sudo cp system/greetd/config.toml /etc/greetd/config.toml
+#
+#  F2 = elegir sesión (Niri, GNOME si lo tienes...)   F12 = apagar/reiniciar
+#  Opciones:  man tuigreet
+# ============================================================================
+
+[terminal]
+vt = 1
+
+[default_session]
+command = "tuigreet --time --time-format '%A %d de %B · %H:%M' --remember --remember-session --asterisks --greeting 'Fedora · Niri' --window-padding 2 --container-padding 2 --theme 'border=cyan;title=lightcyan;text=white;time=blue;greet=lightblue;prompt=cyan;input=white;action=darkgray;button=cyan' --cmd niri-session"
+user = "greetd"
