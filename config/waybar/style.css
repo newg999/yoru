@@ -169,6 +169,16 @@ window#waybar.empty #window {
 }
 #tray > .needs-attention { color: @red; }
 
+/* Iconos de la bandeja (Discord, Telegram...): al pasar el ratón crecen un
+   poco y se iluminan, como el wifi o el volumen (que pasan a blanco) */
+#tray > widget image {
+    transition: -gtk-icon-transform 120ms ease-out;
+}
+#tray > widget:hover image {
+    -gtk-icon-transform: scale(1.18);
+    -gtk-icon-effect: highlight;
+}
+
 /* ------------------------------------------------ Copia invisible (espejo)
    La copia de la música a la izquierda del reloj (ver modulos.jsonc) no se
    ve NUNCA, ni al pasar el ratón. Va al final y con dos # para ganar a las
