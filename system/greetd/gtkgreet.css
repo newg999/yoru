@@ -1,0 +1,83 @@
+/* ============================================================================
+   gtkgreet.css — El recuadro de la pantalla de inicio de Yoru
+   Mismo estilo que los menús de rofi (rofi/tema.rasi): oscuro casi opaco,
+   borde blanco de 2 px como el foco de las ventanas y esquinas redondeadas.
+   Si cambias la paleta, cambia también rofi/tema.rasi y waybar/style.css.
+   ========================================================================== */
+
+* {
+    font-family: "JetBrains Mono", "JetBrainsMono Nerd Font", monospace;
+    font-size: 14px;
+    color: #e5e9f0;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
+}
+
+/* La ventana es invisible: detrás se ve el fondo (swaybg) */
+window, window.background {
+    background: transparent;
+}
+
+/* El recuadro */
+#body {
+    background: rgba(26, 27, 30, 0.90);
+    border: 2px solid rgba(255, 255, 255, 0.80);
+    border-radius: 14px;
+    padding: 36px 44px 32px 44px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* Reloj grande arriba */
+#clock {
+    font-size: 44px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 18px;
+}
+
+/* Campos de texto: como el buscador de rofi */
+entry {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 8px 12px;
+    min-height: 22px;
+    box-shadow: none;
+    caret-color: #ffffff;
+}
+entry:focus { border-color: rgba(255, 255, 255, 0.80); }
+
+/* Selector de sesión (Niri, GNOME...): el contenedor no se ve y su campo y
+   su flecha forman una sola pieza, igual que los demás campos */
+#command-selector, #command-selector box {
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+}
+#command-selector entry { border-radius: 10px 0 0 10px; border-right: none; }
+#command-selector button {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    padding: 0 12px;
+}
+entry placeholder, entry text selection { color: #8a8f98; }
+
+/* Botones: el principal blanco con texto oscuro, como la fila elegida de rofi */
+button {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 8px 18px;
+    box-shadow: none;
+}
+button:hover { background: rgba(255, 255, 255, 0.14); }
+button.suggested-action, button:focus {
+    background: rgba(255, 255, 255, 0.90);
+    border-color: transparent;
+}
+button.suggested-action label, button:focus label { color: #1a1b1e; font-weight: bold; }
+
+label { margin: 2px 0; }

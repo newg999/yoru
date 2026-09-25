@@ -1,0 +1,37 @@
+// ============================================================================
+//  niri-greeter.kdl — La pantalla de inicio de Yoru
+// ----------------------------------------------------------------------------
+//  greetd arranca un niri mínimo con esta config: tu fondo detrás y gtkgreet
+//  (el recuadro de usuario y contraseña, estilo en gtkgreet.css) delante.
+//  Al entrar, gtkgreet termina y este niri se cierra para dar paso a tu sesión.
+//  install.sh lo copia a /etc/greetd/ (es del sistema, no de tu usuario).
+// ============================================================================
+
+input {
+    keyboard {
+        xkb { }     // la distribución del sistema (la de la instalación)
+        numlock
+    }
+    touchpad { tap; }
+}
+
+// Nada de chuleta de atajos ni barras de título aquí
+hotkey-overlay { skip-at-startup; }
+prefer-no-csd
+
+layout {
+    background-color "#1a1b1e"
+}
+
+// Fondo: una copia de uno de tus fondos (install.sh la deja aquí)
+spawn-at-startup "swaybg" "-m" "fill" "-i" "/usr/share/backgrounds/yoru/inicio"
+
+// El recuadro de inicio de sesión. GTK_THEME: campos y botones oscuros aunque
+// el usuario de la pantalla de inicio no tenga ajustes propios
+spawn-sh-at-startup "GTK_THEME=Adwaita:dark gtkgreet --layer-shell --style /etc/greetd/gtkgreet.css --command niri-session; niri msg action quit --skip-confirmation"
+
+binds {
+    // Apagar y reiniciar sin entrar (el botón de encendido también apaga)
+    Ctrl+Alt+Delete { spawn "systemctl" "reboot"; }
+    Ctrl+Alt+End    { spawn "systemctl" "poweroff"; }
+}

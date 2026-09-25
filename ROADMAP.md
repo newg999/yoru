@@ -55,7 +55,7 @@ Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de má
 - [ ] Reglas de ventanas: qué app se abre en qué escritorio (`niri msg windows` para ver el `app-id`)
 - [ ] Escritorios con nombre (`workspace "web"`, `workspace "código"`...) → [docs](https://niri-wm.github.io/niri/Configuration:-Named-Workspaces.html)
 - [ ] Visualizador de audio con **cava** en la barra o en una terminal flotante
-- [x] Pantalla de inicio de sesión: **greetd** + **tuigreet** (en instalaciones mínimas)
+- [x] Pantalla de inicio de sesión: **greetd** + **gtkgreet** dentro de un niri mínimo, con el estilo de Yoru
 
 ## Fase 7 · Compartirlo
 - [ ] README con capturas de cada parte (como hace SygurDot)
