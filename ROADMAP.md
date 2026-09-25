@@ -1,4 +1,4 @@
-# Hoja de ruta · de "funciona" a "mi escritorio perfecto"
+# Hoja de ruta de Yoru · de "funciona" a "mi escritorio perfecto"
 
 La idea es avanzar **una fase cada vez** y hacer un commit en git al terminar cada tarea. Así, si algo se rompe, vuelves atrás con `git checkout`.
 

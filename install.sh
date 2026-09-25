@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-#  install.sh — Instalador de mis dotfiles (Fedora + Niri)
+#  install.sh — Instalador de Yoru (Fedora + Niri)
 # ----------------------------------------------------------------------------
 #  Qué hace, en orden:
 #    1. Comprueba que estás en Fedora y que no lo ejecutas como root
@@ -33,7 +33,7 @@ set -euo pipefail
 # Carpeta donde está este script (el repositorio), da igual desde dónde lo lances
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
-BACKUP_ROOT="$HOME/.local/state/mis-dotfiles/backups"
+BACKUP_ROOT="$HOME/.local/state/yoru/backups"
 BACKUP_DIR="$BACKUP_ROOT/$(date +%Y%m%d-%H%M%S)"
 FONT_DIR="$HOME/.local/share/fonts/JetBrainsMonoNerd"
 FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz"
