@@ -43,7 +43,7 @@ Hay dos caminos. Lo ideal es el primero: un sistema limpio con solo lo necesario
 
 ```bash
 sudo dnf install -y git
-git clone https://github.com/TU_USUARIO/yoru.git ~/dotfiles
+git clone https://github.com/newg999/yoru.git ~/dotfiles
 cd ~/dotfiles
 ./install.sh
 sudo reboot
