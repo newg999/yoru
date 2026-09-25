@@ -145,6 +145,14 @@ animations {
 //  Resto de módulos
 // ---------------------------------------------------------------------------
 include "binds.kdl"
+// Clic en el icono de la bandeja (Telegram, Discord...) = ir a su ventana.
+// Estas apps piden el foco sin el "permiso" que Wayland exige y niri, por
+// defecto, las ignora para que ninguna ventana te robe el foco sola.
+// https://niri-wm.github.io/niri/Configuration:-Debug-Options.html
+debug {
+    honor-xdg-activation-with-invalid-serial
+}
+
 include "rules.kdl"
 
 // Ajustes solo de este equipo (monitores, escala...). No existe por defecto.
