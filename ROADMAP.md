@@ -7,7 +7,7 @@ Marca las casillas conforme avances (`- [x]`).
 ---
 
 ## Fase 0 · Preparar el terreno
-- [ ] Crear el repositorio en GitHub y subir esta base (ya hay `git init` y primer commit; falta GitHub) (`git init`, `git add .`, `git commit`, `git push`)
+- [x] Crear el repositorio en GitHub y subir esta base → <https://github.com/newg999/yoru>
 - [ ] *(Recomendado)* Probar la instalación desde una **Fedora mínima** en una máquina virtual (GNOME Boxes)
 - [ ] Ejecutar `./install.sh` y entrar en Niri desde la pantalla de inicio
 - [ ] Hacer la primera captura y ponerla en el README
