@@ -14,12 +14,18 @@ pipewire                  # sonido
 pipewire-pulseaudio       # compatibilidad con apps de PulseAudio (y la barra)
 pipewire-alsa
 wireplumber               # gestor de sesión de audio (wpctl)
+pipewire-utils            # pw-dump: el menú de audio lo usa para ver las salidas
+pulseaudio-utils          # pactl: el menú de audio lo usa para cambiar de salida
+alsa-sof-firmware         # sonido en portátiles Intel modernos (sin él, mudos)
+alsa-ucm                  # perfiles de las tarjetas de sonido (van con el anterior)
 NetworkManager-wifi       # wifi
+NetworkManager-tui        # nmtui: arreglar el wifi desde la consola si algo falla
 bluez                     # bluetooth
 upower                    # estado de la batería
 tuned-ppd                 # perfiles de energía (ahorro / equilibrado / rendimiento)
 xdg-user-dirs             # crea Descargas, Imágenes, Documentos...
 xdg-utils                 # xdg-open: abrir archivos y enlaces con su app
+flatpak                   # apps de Flathub (la tienda: Mod+Alt+S)
 dconf                     # guarda los ajustes de las apps GTK (gsettings)
 gvfs                      # papelera, unidades USB y red en el gestor de archivos
 gvfs-mtp                  # móviles Android por USB
@@ -38,6 +44,10 @@ xwayland-satellite        # apps X11 (Steam, Discord...). Niri lo arranca solo
 xdg-desktop-portal-gnome  # compartir pantalla, capturas
 xdg-desktop-portal-gtk    # selector de archivos y ajustes para apps
 gnome-keyring             # guarda contraseñas (wifi, navegador...)
+gnome-keyring-pam         # lo desbloquea al iniciar sesión (si no, Brave pide contraseña)
+qt6-qtwayland             # apps Qt (VLC, Telegram...) nativas en Wayland
+qt5-qtwayland
+libva-intel-media-driver  # aceleración de vídeo en gráficas Intel (menos CPU y batería)
 mate-polkit               # ventana que pide la contraseña de administrador
 
 # --- Escritorio --------------------------------------------------------------
@@ -45,7 +55,10 @@ waybar                    # barra superior
 rofi                      # lanzador de apps y menús (wifi, bluetooth...)
 ImageMagick               # miniaturas del selector de fondos
 papirus-icon-theme        # iconos
-flameshot                 # capturas con editor
+adw-gtk3-theme            # tema oscuro para apps GTK3 (LibreOffice, ajustes de red...)
+grim                      # hace la captura (la usa Mod+Shift+S)
+slurp                     # elegir una zona de la pantalla con el ratón
+swappy                    # editor de capturas (flechas, texto, difuminar)
 mako                      # notificaciones
 swaybg                    # fondo de pantalla
 swaylock                  # pantalla de bloqueo
@@ -58,8 +71,10 @@ nautilus                  # gestor de archivos (Mod+E)
 file-roller               # comprimir/descomprimir (integrado en Nautilus)
 loupe                     # visor de imágenes
 mpv                       # vídeo
-papers                    # visor de PDF
+okular                    # visor de PDF (colores oscuros: config/kdeglobals)
 gnome-text-editor         # editor de texto sencillo
+gnome-calculator          # calculadora
+ffmpegthumbnailer         # miniaturas de los vídeos en Nautilus
 gnome-calendar            # calendario con eventos
 pavucontrol               # mezclador de audio
 blueman                   # bluetooth
@@ -71,7 +86,10 @@ cliphist                  # historial del portapapeles
 brightnessctl             # teclas de brillo
 playerctl                 # teclas multimedia
 libnotify                 # notify-send
-htop                      # monitor del sistema
+htop                      # monitor del sistema (clic en la CPU de la barra)
+btop                      # monitor del sistema más completo y bonito
+fastfetch                 # info del sistema con el logo (el clásico de las capturas)
+wget                      # descargar archivos desde la terminal
 fontconfig                # fc-cache
 git
 curl

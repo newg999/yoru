@@ -44,7 +44,7 @@ for i in "${!FONDOS[@]}"; do
 done
 
 tema='
-window   { width: 1140px; }
+columna  { width: 1140px; }
 mainbox  { children: [ listview ]; }
 listview { columns: 5; lines: 3; spacing: 10px; flow: horizontal; }
 element  { orientation: vertical; padding: 6px; spacing: 0; border-radius: 12px; }

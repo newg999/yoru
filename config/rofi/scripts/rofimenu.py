@@ -5,9 +5,20 @@ No se ejecuta solo: los otros scripts lo importan.
 """
 
 import subprocess
+import threading
+
+# Los menús de la barra se abren arriba a la derecha, justo debajo de ella.
+# Son los botones invisibles de tema.rasi los que lo colocan:
+# barra 8 + 36 px + 8 de hueco (el mismo que entre islas) = 52 por arriba,
+# y 12 por la derecha para alinearlo con el borde de la barra.
+# (los botones son cajas de texto: su alto sale de la letra, no de height;
+# por eso tienen letra diminuta en tema.rasi y el alto se da con padding)
+ARRIBA_CENTRO = "button-arriba { expand: false; padding: 50px 0 0 0; } "
+ARRIBA = ARRIBA_CENTRO + "button-derecha { expand: false; width: 12px; } "
 
 # Tamaño de los menús pequeños (se suma al tema tema.rasi)
-TEMA_MENU = "window { width: 460px; } listview { lines: 9; } inputbar { children: [ prompt ]; }"
+TEMA_MENU_CENTRO = "columna { width: 460px; } inputbar { children: [ prompt ]; }"
+TEMA_MENU = ARRIBA + TEMA_MENU_CENTRO
 
 
 def ejecutar(cmd, timeout=None):
@@ -22,7 +33,7 @@ def ejecutar(cmd, timeout=None):
 
 
 def menu(prompt, opciones, mensaje=None, activos=(), urgentes=(), tema=TEMA_MENU,
-         buscar=False, fila=0):
+         buscar=False, fila=0, max_lineas=9):
     """
     Muestra un menú de rofi y devuelve el ÍNDICE elegido (o None si se cancela).
 
@@ -31,9 +42,11 @@ def menu(prompt, opciones, mensaje=None, activos=(), urgentes=(), tema=TEMA_MENU
     activos  : índices que se pintan en verde (conectado, encendido...)
     urgentes : índices que se pintan en rojo
     buscar   : muestra el cuadro de búsqueda
+    max_lineas : filas visibles como mucho (la lista mide justo lo que ocupa)
     """
     cmd = ["rofi", "-dmenu", "-i", "-markup-rows", "-no-custom",
            "-format", "i", "-p", prompt, "-selected-row", str(fila)]
+    tema += f" listview {{ lines: {max(1, min(len(opciones), max_lineas))}; }}"
     if not buscar:
         tema += " inputbar { enabled: false; }"
     cmd += ["-theme-str", tema]
@@ -54,10 +67,58 @@ def menu(prompt, opciones, mensaje=None, activos=(), urgentes=(), tema=TEMA_MENU
         return None
 
 
-def pedir_texto(prompt, mensaje=None, contrasena=False):
-    """Pide un texto (o una contraseña) con rofi. Devuelve None si se cancela."""
+def menu_en_vivo(prompt, fijas, fuente, mensaje=None, tema=TEMA_MENU, lineas=9):
+    """
+    Como menu(), pero la lista se va llenando mientras está abierta.
+
+    fijas  : opciones que salen desde el principio (Volver...)
+    fuente : generador que va dando textos nuevos; se para al cerrar el menú
+    Devuelve (índice, lista de todos los textos mostrados) o (None, lista).
+    """
+    # Ojo: sin -no-custom ni -selected-row. Cualquiera de los dos hace que
+    # rofi espere a leerlo todo antes de enseñar la ventana
+    cmd = ["rofi", "-dmenu", "-i", "-markup-rows", "-format", "i",
+           "-p", prompt, "-theme-str", tema + f" listview {{ lines: {lineas}; }}"
+           " inputbar { enabled: false; }"]
+    if mensaje:
+        cmd += ["-mesg", mensaje]
+    rofi = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+    mostrados = list(fijas)
+
+    def alimentar():
+        try:
+            rofi.stdin.write("".join(t + "\n" for t in fijas))
+            rofi.stdin.flush()
+            for texto in fuente:
+                if rofi.poll() is not None:
+                    break
+                mostrados.append(texto)
+                rofi.stdin.write(texto + "\n")
+                rofi.stdin.flush()
+        except (BrokenPipeError, ValueError):
+            pass
+        finally:
+            try:
+                rofi.stdin.close()
+            except (BrokenPipeError, ValueError):
+                pass
+
+    hilo = threading.Thread(target=alimentar, daemon=True)
+    hilo.start()
+    salida = rofi.stdout.read().strip()
+    rofi.wait()
+    if rofi.returncode != 0 or not salida.isdigit():
+        return None, mostrados
+    return int(salida), mostrados
+
+
+def pedir_texto(prompt, mensaje=None, contrasena=False, posicion=ARRIBA):
+    """
+    Pide un texto (o una contraseña) con rofi. Devuelve None si se cancela.
+    posicion: ARRIBA (bajo la barra) o "" (centrado)
+    """
     cmd = ["rofi", "-dmenu", "-p", prompt, "-theme-str",
-           "window { width: 460px; } listview { enabled: false; } entry { placeholder: \"\"; }"]
+           posicion + " columna { width: 460px; } listview { enabled: false; } entry { placeholder: \"\"; }"]
     if contrasena:
         cmd.append("-password")
     if mensaje:
@@ -74,7 +135,9 @@ def avisar(titulo, texto="", icono=None, urgente=False):
     if icono:
         cmd += ["-i", icono]
     if urgente:
-        cmd += ["-u", "critical"]
+        # Categoría "error": borde rojo pero se va sola (ver mako/config).
+        # "critical" se queda fija hasta hacer clic: solo para la batería y cosas así
+        cmd += ["-c", "error"]
     ejecutar(cmd)
 
 

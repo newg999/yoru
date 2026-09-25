@@ -28,6 +28,11 @@ configuration {
 
     /* Mod+Space otra vez (o Escape) cierra el menú */
     kb-cancel:           "Escape,Control+g,Control+bracketleft,Super+space";
+
+    /* Todo lo que abre rofi pasa por lanzar.sh: si escribes algo que no
+       existe y pulsas Enter, avisa en vez de dejar rofi colgado */
+    /* (va por sh -c porque rofi no expande ~ ni ${HOME} aquí) */
+    run-command:         "sh -c '\"$HOME\"/.config/rofi/scripts/lanzar.sh \"$0\" \"$@\"' {cmd}";
 }
 
 @theme "~/.config/rofi/tema.rasi"

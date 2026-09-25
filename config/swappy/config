@@ -1,0 +1,16 @@
+# ============================================================================
+#  swappy — editor de capturas (Mod+Shift+S)
+#  Atajos dentro de swappy: Ctrl+S guarda, Ctrl+C copia, Ctrl+Z deshace,
+#  Esc cierra. Clic derecho en la paleta elige otro color.
+# ============================================================================
+[Default]
+save_dir=$HOME/Pictures/Screenshots
+save_filename_format=Captura %Y-%m-%d %H-%M-%S.png
+show_panel=true
+line_size=3
+text_size=18
+text_font=sans-serif
+paint_mode=arrow
+early_exit=true
+fill_shape=false
+custom_color=rgba(191,97,106,1)

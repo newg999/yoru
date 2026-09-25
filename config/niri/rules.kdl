@@ -57,11 +57,18 @@ window-rule {
     open-floating true
 }
 
-// Flameshot: que su capa de captura no descoloque las ventanas
+// Terminal de actualizaciones de la tienda (Mod+Alt+S → Actualizar todo)
 window-rule {
-    match app-id="flameshot"
+    match app-id="^tienda$"
     open-floating true
-    open-fullscreen false
+    default-column-width { fixed 900; }
+    default-window-height { fixed 600; }
+}
+
+// Swappy (editor de capturas): flotante, no ocupa una columna
+window-rule {
+    match app-id="^swappy$"
+    open-floating true
 }
 
 // Calendario de GNOME flotante y centrado
@@ -87,14 +94,9 @@ layer-rule {
     place-within-backdrop true
 }
 
-// Rofi (lanzador y menús) con fondo desenfocado
-layer-rule {
-    match namespace="^rofi"
-    geometry-corner-radius 14
-    background-effect {
-        blur true
-    }
-}
+// Rofi (lanzador y menús) SIN desenfoque: ocupa la pantalla entera para
+// poder cerrarse con un clic fuera (ver tema.rasi) y se desenfocaría todo.
+// Para compensar, su fondo es casi opaco.
 
 // Las notificaciones no salen en grabaciones de pantalla
 // (sin blur: mako dibuja todas en una misma capa y el desenfoque

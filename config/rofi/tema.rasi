@@ -5,14 +5,14 @@
    ========================================================================== */
 
 * {
-    fondo:        rgba(26, 27, 30, 72%);     /* oscuro translúcido */
+    fondo:        rgba(26, 27, 30, 90%);     /* oscuro casi opaco (sin desenfoque, ver window) */
     fondo-alt:    rgba(255, 255, 255, 6%);   /* cajas (búsqueda, mensaje) */
     seleccion:    rgba(255, 255, 255, 90%);  /* fila elegida: blanca... */
     texto-sel:    #1a1b1e;                   /* ...con texto oscuro */
     texto:        #e5e9f0;
     texto-tenue:  #8a8f98;
     acento:       #ffffff;
-    borde:        rgba(255, 255, 255, 18%);
+    borde:        rgba(255, 255, 255, 80%);  /* = anillo de foco de las ventanas (niri) */
     activo-fondo: rgba(255, 255, 255, 12%);  /* conectado / en uso */
     urgente:      #bf616a;                   /* rojo  */
 
@@ -21,18 +21,52 @@
     font:             "JetBrainsMono Nerd Font 12";
 }
 
+/* ---------------------------------------------------------------- Posición
+   En Wayland rofi no se cierra al hacer clic fuera. Truco: la ventana ocupa
+   la pantalla entera (invisible) y el recuadro visible es "mainbox". Todo lo
+   que lo rodea son botones transparentes que cierran el menú (kb-cancel).
+
+      button-izquierda | columna          | button-derecha
+                       |   button-arriba  |
+                       |   mainbox  ←──── el menú que se ve
+                       |   button-abajo   |
+
+   Por defecto el menú sale centrado. Para moverlo, los scripts fijan el
+   tamaño de los botones (ver ARRIBA en scripts/rofimenu.py).
+   El ancho del menú se cambia en "columna", no en "window".
+   (Por esto rules.kdl no desenfoca rofi: se desenfocaría toda la pantalla.) */
 window {
-    location:         center;
-    anchor:           center;
-    width:            560px;
-    background-color: @fondo;
-    border:           1px;
-    border-color:     @borde;
-    border-radius:    14px;
-    padding:          16px;
+    fullscreen:       true;
+    background-color: transparent;
+    orientation:      horizontal;
+    spacing:          0;   /* sin esto rofi mete 2 px entre piezas y el menú se descuadra */
+    children:         [ button-izquierda, columna, button-derecha ];
+}
+
+columna {
+    orientation: vertical;
+    expand:      false;
+    spacing:     0;
+    width:       560px;
+    children:    [ button-arriba, mainbox, button-abajo ];
+}
+
+button-izquierda, button-derecha, button-arriba, button-abajo {
+    expand:  true;
+    action:  "kb-cancel";
+    content: "";
+    cursor:  default;
+    /* Letra diminuta: así su tamaño lo marca solo el padding (ver rofimenu.py) */
+    font:    "JetBrainsMono Nerd Font 1";
 }
 
 mainbox {
+    expand:           false;
+    background-color: @fondo;
+    border:           2px;   /* como el anillo de foco de las ventanas */
+    border-color:     @borde;
+    border-radius:    14px;
+    padding:          16px;
     spacing:  12px;
     children: [ inputbar, message, listview ];
 }
@@ -69,7 +103,10 @@ listview {
     lines:        8;
     columns:      1;
     spacing:      4px;
-    fixed-height: false;
+    /* Altura fija = "lines". Hace falta con la ventana a pantalla completa:
+       si no, la lista se queda sin altura. Los menús de scripts/ ajustan
+       "lines" al número de opciones para que no sobren huecos. */
+    fixed-height: true;
     scrollbar:    false;
     cycle:        true;
 }
@@ -121,4 +158,16 @@ element-text {
     vertical-align: 0.5;
     text-color:     inherit;
     highlight:      bold;
+}
+
+/* ------------------------------------------------------- Ventana de error
+   Con la ventana a pantalla completa, los errores de rofi salían en
+   miniatura, sin fondo, arriba a la izquierda (y rofi parecía colgado).
+   Así ocupan la pantalla con un velo oscuro y el texto en el centro.
+   Escape la cierra. */
+error-message {
+    background-color: rgba(26, 27, 30, 85%);
+    /* rofi no centra este texto con horizontal/vertical-align: se empuja
+       con padding hasta el centro de la pantalla */
+    padding:          46% 30% 0 30%;
 }

@@ -15,7 +15,8 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Compositor | `niri` | `config/niri/` |
 | Barra | `waybar` | `config/waybar/` |
 | Lanzador y menús | `rofi` | `config/rofi/` |
-| Capturas con editor | `flameshot` | — |
+| Capturas con editor | `slurp` + `swappy` | `config/swappy/` |
+| Tienda de apps | `rofi` + `flatpak` + `dnf` | `config/rofi/scripts/tienda.py` |
 | Notificaciones | `mako` | `config/mako/` |
 | Terminal | `kitty` | `config/kitty/` |
 | Bloqueo | `swaylock` + `swayidle` | `config/swaylock/` |
@@ -24,8 +25,10 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Inicio de sesión | `greetd` + `tuigreet` | `system/greetd/config.toml` |
 | Archivos | `nautilus` | — |
 | Navegador | `brave-browser` | — |
+| Visor de PDF | `okular` | `config/kdeglobals` (sus colores oscuros) |
+| Tema de las apps | `adw-gtk3-dark` (GTK3) · modo oscuro (GTK4) | `install.sh` → `ajustes_gtk` |
 
-Tema: **blanco sobre oscuro translúcido**, con barra en islas, menús desenfocados y fondos anime. El color se reserva para los avisos. Fuente: **JetBrainsMono Nerd Font**.
+Tema: **blanco sobre oscuro translúcido**, con barra en islas, menús que salen bajo la barra (y se cierran con un clic fuera) y fondos anime. El color se reserva para los avisos. Fuente: **JetBrainsMono Nerd Font**.
 
 ## Instalación
 
@@ -58,6 +61,16 @@ Los mismos comandos (sin el `reboot`). Después cierra la sesión y en la pantal
 | `./install.sh --sin-paquetes` | Solo la fuente y los enlaces, sin usar `dnf` |
 | `./install.sh --deshacer` | Quita los enlaces y restaura tu configuración anterior |
 
+### Si tienes una gráfica NVIDIA
+
+El instalador la detecta solo y te ofrece su driver oficial (desde RPM Fusion). Si tu equipo tiene **Secure Boot** activado, te pedirá inventar una **contraseña de un solo uso** (mejor solo números: en ese momento el teclado es inglés). Al reiniciar saldrá una **pantalla azul** (MOK Manager):
+
+1. Pulsa una tecla antes de 10 segundos.
+2. **Enroll MOK** → **Continue** → **Yes**.
+3. Escribe esa contraseña y elige **Reboot**.
+
+Si se te pasa, el driver no cargará: repite con `sudo mokutil --import /etc/pki/akmods/certs/public_key.der` y reinicia. Para comprobar que va: `nvidia-smi`.
+
 ### Cómo funciona
 
 El script **no copia** archivos: crea *enlaces simbólicos*. `~/.config/niri` apunta a `~/dotfiles/config/niri`, así que cualquier cambio que hagas se guarda en el repositorio y lo ves con `git status`. Si ya tenías configuración, se mueve primero a `~/.local/state/mis-dotfiles/backups/`.
@@ -87,12 +100,13 @@ El script **no copia** archivos: crea *enlaces simbólicos*. `~/.config/niri` ap
 | `Mod+,` / `Mod+.` | Meter la ventana de la derecha en la columna / sacarla |
 | `Mod+-` / `Mod++` | Estrechar / ensanchar la columna |
 | `Print` | Captura rápida (Niri) |
-| `Mod+Shift+S` | Captura con editor (Flameshot) |
+| `Mod+Shift+S` | Captura con editor (swappy) |
 | `Mod+Alt+N` | Menú de wifi |
 | `Mod+Alt+B` | Menú de bluetooth |
 | `Mod+Alt+A` | Menú de audio (salida, micrófono, volumen) |
 | `Mod+Alt+C` | Calendario |
 | `Mod+Alt+V` | Historial del portapapeles |
+| `Mod+Alt+S` | Tienda de apps (buscar, instalar, actualizar) |
 | `Mod+Alt+W` | Elegir fondo de pantalla (con miniaturas) |
 | `Mod+Alt+Shift+W` | Siguiente fondo de pantalla |
 | `Mod+BackSpace` | Bloquear |

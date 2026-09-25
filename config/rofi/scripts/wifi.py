@@ -11,6 +11,7 @@ Atajo: Mod+Alt+N   ·   Clic en el icono de red de la barra
 
 import os
 import re
+import subprocess
 import sys
 import time
 
@@ -134,7 +135,12 @@ def submenu_conectada(red):
 
 
 def main():
-    reescanear = "auto"
+    # "no" = la lista que NetworkManager ya tiene (instantáneo). "auto" obliga
+    # a escanear antes de enseñar nada y tarda ~5 s: solo si no hay nada.
+    reescanear = "no"
+    # Escaneo en segundo plano: la próxima vez que abras el menú estará fresca
+    subprocess.Popen(["nmcli", "device", "wifi", "rescan"],
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     while True:
         if not wifi_encendido():
             i = menu(f"{WIFI_OFF} ", [f"{WIFI_ON}  Encender wifi", f"{AJUSTES}  Ajustes avanzados"],
@@ -148,8 +154,8 @@ def main():
                 ejecutar(["setsid", "-f", "nm-connection-editor"])
             return
 
-        lista = redes(reescanear)
-        reescanear = "auto"
+        lista = redes(reescanear) or redes("auto")
+        reescanear = "no"
         fijas = [f"{BUSCAR}  Buscar redes", f"{WIFI_OFF}  Apagar wifi", f"{AJUSTES}  Ajustes avanzados"]
         filas = []
         activos = []

@@ -43,7 +43,17 @@
     },
     "group/conexion": {
         "orientation": "horizontal",
-        "modules": ["pulseaudio", "network", "bluetooth"]
+        "modules": ["pulseaudio#icono", "group/volumen", "network", "bluetooth"]
+    },
+    // Clic en el porcentaje → se despliega una barrita para el volumen
+    "group/volumen": {
+        "orientation": "horizontal",
+        "drawer": {
+            "click-to-reveal": true,
+            "transition-duration": 250,
+            "transition-left-to-right": true
+        },
+        "modules": ["pulseaudio#porcentaje", "pulseaudio/slider"]
     },
 
     // ------------------------------------------------------------ Módulos
@@ -65,7 +75,7 @@
     //   rueda = mes anterior/siguiente · clic = ver el año entero
     //   clic central = volver a hoy · clic derecho = app Calendario (eventos)
     "clock": {
-        "format": "󰅐  {:%H:%M}",
+        "format": "<span size='larger'>󰅐</span>  {:%H:%M}",
         "locale": "es_ES.UTF-8",
         "tooltip-format": "<span size='15pt' color='#ffffff'><b>{0:%H:%M}</b></span>   <span color='#e5e9f0'>{0:%A, %e de %B de %Y}</span>\n\n<span size='13pt'><tt>{calendar}</tt></span>\n\n<span size='9pt' color='#8a8f98'>rueda: mes · clic: año · clic central: hoy · clic dcho: eventos</span>",
         "calendar": {
@@ -91,13 +101,13 @@
     },
 
     "cpu": {
-        "format": "󰘚  {usage}%",
+        "format": "<span size='larger'>󰘚</span>  {usage}%",
         "interval": 5,
         "on-click": "kitty -e htop"
     },
 
     "memory": {
-        "format": "󰍛  {percentage}%",
+        "format": "<span size='larger'>󰍛</span>  {percentage}%",
         "interval": 10,
         "tooltip-format": "{used:0.1f} / {total:0.1f} GiB"
     },
@@ -122,10 +132,15 @@
     // Música/vídeo que suena (Spotify, YouTube en Brave, mpv...).
     // Se oculta sola si no hay nada. Clic = pausa · Clic derecho = siguiente
     "mpris": {
-        "format": "󰝚  {dynamic}",
-        "format-paused": "󰝚  {dynamic}",
+        "format": "<span size='larger'>󰝚</span>  {dynamic}",
+        "format-paused": "<span size='larger'>󰝚</span>  {dynamic}",
         "dynamic-order": ["artist", "title"],
-        "dynamic-len": 16,
+        // Cada parte se recorta con "…" a su tamaño máximo, y dynamic-len deja
+        // sitio a las dos. (Si una parte no cabe entera en dynamic-len, Waybar
+        // la quita del todo: por eso antes solo salía el artista)
+        "title-len": 16,
+        "artist-len": 10,
+        "dynamic-len": 29,
         // Si no cabe todo, se sacrifica antes el artista que el título
         "dynamic-importance-order": ["title", "artist"],
         "dynamic-separator": " · ",
@@ -137,23 +152,41 @@
 
     // Copias invisibles (ver "group/espejo"): mismo contenido, sin clics
     "custom/anterior#espejo": {
+        "cursor": 68,
         "tooltip": false,
         "exec": "~/.config/waybar/scripts/musica.sh anterior"
     },
     "custom/playpausa#espejo": {
+        "cursor": 68,
         "tooltip": false,
         "exec": "~/.config/waybar/scripts/musica.sh playpausa"
     },
     "custom/siguiente#espejo": {
+        "cursor": 68,
         "tooltip": false,
         "exec": "~/.config/waybar/scripts/musica.sh siguiente"
     },
+    // Acciones vacías a propósito: sin ellas, mpris hace play/pausa/siguiente
+    // por su cuenta y la copia invisible funcionaría como un botón fantasma
+    // "cursor": 68 = la flecha normal. Sin esto, Waybar pone la mano de
+    // "se puede pulsar" en todo módulo con acciones de clic (aunque estén vacías)
     "mpris#espejo": {
         "tooltip": false,
-        "format": "󰝚  {dynamic}",
-        "format-paused": "󰝚  {dynamic}",
+        "cursor": 68,
+        "on-click": "",
+        "on-click-middle": "",
+        "on-click-right": "",
+        "on-click-backward": "",
+        "on-click-forward": "",
+        "format": "<span size='larger'>󰝚</span>  {dynamic}",
+        "format-paused": "<span size='larger'>󰝚</span>  {dynamic}",
         "dynamic-order": ["artist", "title"],
-        "dynamic-len": 16,
+        // Cada parte se recorta con "…" a su tamaño máximo, y dynamic-len deja
+        // sitio a las dos. (Si una parte no cabe entera en dynamic-len, Waybar
+        // la quita del todo: por eso antes solo salía el artista)
+        "title-len": 16,
+        "artist-len": 10,
+        "dynamic-len": 29,
         // Si no cabe todo, se sacrifica antes el artista que el título
         "dynamic-importance-order": ["title", "artist"],
         "dynamic-separator": " · "
@@ -162,28 +195,46 @@
     // Se oculta sola en equipos sin batería
     "battery": {
         "states": { "warning": 25, "critical": 10 },
-        "format": "{icon}  {capacity}%",
-        "format-charging": "󰂄  {capacity}%",
-        "format-plugged": "󰚥  {capacity}%",
-        "format-full": "󰁹  {capacity}%",
+        "format": "<span size='larger'>{icon}</span>  {capacity}%",
+        "format-charging": "<span size='larger'>󰂄</span>  {capacity}%",
+        "format-plugged": "<span size='larger'>󰚥</span>  {capacity}%",
+        "format-full": "<span size='larger'>󰁹</span>  {capacity}%",
         "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
         "tooltip-format": "{timeTo}\n{power:.1f} W · salud {health}%"
     },
 
-    "pulseaudio": {
-        "format": "{icon}  {volume}%",
-        "format-muted": "󰖁  mute",
+    // Audio en dos piezas:
+    //   icono      → clic = elegir salida (altavoces, auriculares, monitor...) y micro
+    //   porcentaje → clic = barrita de volumen (ver "group/volumen")
+    // Rueda = volumen en los dos · en el icono: clic central = silenciar,
+    // clic derecho = mezclador
+    "pulseaudio#icono": {
+        "format": "{icon}",
+        "format-muted": "󰖁",
         "format-icons": {
             "headphone": "󰋋",
+            "headset": "󰋎",
+            "hdmi": "󰍹",
             "default": ["󰕿", "󰖀", "󰕾"]
         },
         "scroll-step": 5,
-        // Clic = elegir salida (altavoces, auriculares, monitor...) y micro
-        // Clic central = silenciar · Clic derecho = mezclador · Rueda = volumen
         "on-click": "~/.config/rofi/scripts/audio.py",
         "on-click-middle": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
         "on-click-right": "pavucontrol",
-        "tooltip-format": "{desc} · {volume}%"
+        "tooltip-format": "{desc}\nclic: elegir salida y micrófono"
+    },
+    // Sin acciones de clic a propósito: si tuviera alguna, Waybar se quedaría
+    // el clic y no llegaría al grupo que despliega la barrita
+    "pulseaudio#porcentaje": {
+        "format": "{volume}%",
+        "format-muted": "mute",
+        "scroll-step": 5,
+        "tooltip-format": "{volume}% · clic: barra de volumen"
+    },
+    "pulseaudio/slider": {
+        "min": 0,
+        "max": 100,
+        "orientation": "horizontal"
     },
 
     "network": {
@@ -204,13 +255,14 @@
         "format-connected": "󰂱 {num_connections}",
         "tooltip-format-connected": "{device_enumerate}",
         "tooltip-format-enumerate-connected": "{device_alias}",
-        "on-click": "~/.config/rofi/scripts/bluetooth.py",
-        "on-click-right": "blueman-manager"
+        "on-click": "~/.config/rofi/scripts/bluetooth.py"
     },
 
     // Bandeja del sistema: iconos de apps en segundo plano (Discord, Steam...)
+    // "cursor": true = la mano de "se puede pulsar" al pasar por encima
     "tray": {
-        "icon-size": 16,
+        "cursor": true,
+        "icon-size": 20,
         "spacing": 10
     }
 }

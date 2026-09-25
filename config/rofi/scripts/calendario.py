@@ -17,7 +17,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
-from rofimenu import ejecutar  # noqa: E402
+from rofimenu import ARRIBA_CENTRO, ejecutar  # noqa: E402
 
 # Colores del tema "blanco"
 ACENTO = "#ffffff"
@@ -68,7 +68,8 @@ def main():
 
     hoy = datetime.date.today()
     anio, mes = hoy.year, hoy.month
-    tema = ("window { width: 420px; } listview { lines: 4; } "
+    # Arriba en el centro, justo debajo del reloj de la barra
+    tema = (ARRIBA_CENTRO + "columna { width: 420px; } listview { lines: 4; } "
             "inputbar { enabled: false; } message { padding: 14px 18px; } "
             "textbox { horizontal-align: 0.5; }")
     # Flechas del teclado para cambiar de mes (-kb-custom-1/2 → código 10/11)

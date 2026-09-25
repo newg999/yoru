@@ -5,7 +5,7 @@
 //  reserva para los avisos (rojo = urgente/error, amarillo = atención).
 //  Si cambias de paleta, cambia también:
 //    waybar/style.css · rofi/tema.rasi · mako/config
-//    kitty/kitty.conf · swaylock/config · flameshot/flameshot.ini
+//    kitty/kitty.conf · swaylock/config · niri/scripts/captura-editor.sh
 // ----------------------------------------------------------------------------
 //  oscuro #1a1b1e   oscuro-2 #26272b   gris #8a8f98
 //  texto  #e5e9f0   blanco   #ffffff
