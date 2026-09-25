@@ -1,6 +1,6 @@
-# Mis dotfiles · Fedora + Niri
+# Yoru 夜 · Fedora + Niri
 
-> Cambia el nombre, el título y esta frase: es tu proyecto.
+> *Yoru* es «noche» en japonés: un escritorio oscuro, ligero y hecho a mano, pensado para usarlo cada día y mejorarlo poco a poco.
 
 Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/niri-wm/niri)**, un gestor de ventanas en mosaico con scroll: las ventanas se colocan en una cinta horizontal infinita. Se instala con un solo script y está pensado para mejorarlo poco a poco (ver la [hoja de ruta](ROADMAP.md)).
 
@@ -43,7 +43,7 @@ Hay dos caminos. Lo ideal es el primero: un sistema limpio con solo lo necesario
 
 ```bash
 sudo dnf install -y git
-git clone https://github.com/TU_USUARIO/mis-dotfiles.git ~/dotfiles
+git clone https://github.com/TU_USUARIO/yoru.git ~/dotfiles
 cd ~/dotfiles
 ./install.sh
 sudo reboot
@@ -73,7 +73,7 @@ Si se te pasa, el driver no cargará: repite con `sudo mokutil --import /etc/pki
 
 ### Cómo funciona
 
-El script **no copia** archivos: crea *enlaces simbólicos*. `~/.config/niri` apunta a `~/dotfiles/config/niri`, así que cualquier cambio que hagas se guarda en el repositorio y lo ves con `git status`. Si ya tenías configuración, se mueve primero a `~/.local/state/mis-dotfiles/backups/`.
+El script **no copia** archivos: crea *enlaces simbólicos*. `~/.config/niri` apunta a `~/dotfiles/config/niri`, así que cualquier cambio que hagas se guarda en el repositorio y lo ves con `git status`. Si ya tenías configuración, se mueve primero a `~/.local/state/yoru/backups/`.
 
 ## Atajos principales
 

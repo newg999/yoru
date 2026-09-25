@@ -13,5 +13,5 @@
 vt = 1
 
 [default_session]
-command = "tuigreet --time --time-format '%A %d de %B · %H:%M' --remember --remember-session --asterisks --greeting 'Fedora · Niri' --window-padding 2 --container-padding 2 --theme 'border=cyan;title=lightcyan;text=white;time=blue;greet=lightblue;prompt=cyan;input=white;action=darkgray;button=cyan' --cmd niri-session"
+command = "tuigreet --time --time-format '%A %d de %B · %H:%M' --remember --remember-session --asterisks --greeting 'Yoru · Fedora + Niri' --window-padding 2 --container-padding 2 --theme 'border=cyan;title=lightcyan;text=white;time=blue;greet=lightblue;prompt=cyan;input=white;action=darkgray;button=cyan' --cmd niri-session"
 user = "greetd"
