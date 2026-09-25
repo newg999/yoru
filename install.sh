@@ -4,11 +4,12 @@
 # ----------------------------------------------------------------------------
 #  Qué hace, en orden:
 #    1. Comprueba que estás en Fedora y que no lo ejecutas como root
-#    2. Añade el repositorio de Brave e instala los paquetes de packages.txt
+#    2. Actualiza el sistema, añade el repositorio de Brave e instala los
+#       paquetes de packages.txt (y, si hay gráfica NVIDIA, su driver)
 #    3. Descarga la fuente JetBrainsMono Nerd Font (iconos de la barra)
 #    4. Hace copia de seguridad de tus configs actuales
 #    5. Enlaza (symlink) las carpetas de config/ en ~/.config/
-#       y pregunta si quieres bajar los fondos anime (~170 MB)
+#       y pregunta si quieres bajar los fondos anime (5, ~20 MB)
 #    6. Activa servicios (bluetooth, energía) y, si no tienes ninguna,
 #       la pantalla de inicio de sesión (greetd + tuigreet)
 #    7. Pone tema oscuro e iconos Papirus en las apps GTK
@@ -60,6 +61,18 @@ comprobar_sistema() {
 }
 
 # ------------------------------------------------------------------ Paquetes
+# Primero, el sistema al día. Si no, un paquete nuevo puede necesitar una
+# biblioteca más reciente que la instalada y no arrancar (pasó con Okular:
+# "undefined symbol ... GLIBCXX" con una libstdc++ antigua).
+actualizar_sistema() {
+    paso "Actualizando el sistema (puede tardar un rato la primera vez)"
+    if sudo dnf upgrade -y --refresh; then
+        ok "Sistema al día"
+    else
+        aviso "No se pudo actualizar. Sigo, pero conviene hacerlo luego: sudo dnf upgrade --refresh"
+    fi
+}
+
 # Brave no está en los repositorios de Fedora: se añade el suyo oficial
 repo_brave() {
     paso "Repositorio de Brave"
@@ -71,6 +84,24 @@ repo_brave() {
         ok "Añadido"
     else
         aviso "No se pudo añadir. Brave no se instalará (el resto sí)."
+    fi
+}
+
+# Flathub completo: Fedora trae una versión filtrada con solo unas pocas apps
+repo_flathub() {
+    paso "Flathub (apps para la tienda)"
+    if ! command -v flatpak >/dev/null; then
+        aviso "flatpak no está instalado. La tienda solo mostrará paquetes de Fedora."
+        return
+    fi
+    if sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo \
+            && sudo flatpak remote-modify --no-filter --enable flathub; then
+        ok "Listo (sin filtro)"
+        # Tema oscuro también para las apps GTK3 instaladas como Flatpak
+        sudo flatpak install -y --noninteractive flathub org.gtk.Gtk3theme.adw-gtk3-dark >/dev/null 2>&1 \
+            && ok "Tema oscuro para apps Flatpak"
+    else
+        aviso "No se pudo configurar Flathub"
     fi
 }
 
@@ -100,6 +131,102 @@ instalar_paquetes() {
         aviso "No se pudieron instalar: ${fallidos[*]}"
         aviso "El resto de la instalación sigue. Revísalos luego a mano."
     fi
+}
+
+# -------------------------------------------------------------------- NVIDIA
+# Si hay una gráfica NVIDIA se instala su driver oficial (RPM Fusion).
+# Con Secure Boot activado, el driver hay que firmarlo con una clave propia
+# que la BIOS debe aceptar: se prepara aquí y se registra al reiniciar.
+NVIDIA_CLAVE_PENDIENTE=0
+CLAVE_AKMODS="/etc/pki/akmods/certs/public_key.der"
+
+tiene_nvidia() {
+    local d
+    for d in /sys/bus/pci/devices/*; do
+        [[ "$(cat "$d/vendor" 2>/dev/null)" == "0x10de" ]] || continue   # 0x10de = NVIDIA
+        # Clase 0x03... = tarjeta gráfica (así no cuenta el audio HDMI de la tarjeta)
+        [[ "$(cat "$d/class" 2>/dev/null)" == 0x03* ]] && return 0
+    done
+    return 1
+}
+
+drivers_nvidia() {
+    tiene_nvidia || return 0
+    paso "Tarjeta gráfica NVIDIA detectada"
+    if rpm -q akmod-nvidia >/dev/null 2>&1; then
+        ok "El driver de NVIDIA ya estaba instalado"
+        return
+    fi
+    echo "  Sin su driver oficial, la tarjeta va lenta y sin aceleración."
+    echo "  Se instala desde RPM Fusion (el repositorio de Fedora para software no libre)."
+    if [[ ! -t 0 ]]; then
+        aviso "Sin terminal para preguntar: me lo salto. Vuelve a ejecutar ./install.sh para instalarlo."
+        return
+    fi
+    local respuesta
+    read -rp "  ¿Instalar el driver de NVIDIA? [S/n] " respuesta
+    if [[ "${respuesta,,}" == n* ]]; then
+        aviso "No se instala. La gráfica NVIDIA funcionará con el driver libre (nouveau), más lento."
+        return
+    fi
+
+    # 1. RPM Fusion (libre y no libre)
+    if ! rpm -q rpmfusion-nonfree-release >/dev/null 2>&1; then
+        local fedora
+        fedora="$(rpm -E %fedora)"
+        if ! sudo dnf install -y \
+                "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$fedora.noarch.rpm" \
+                "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$fedora.noarch.rpm"; then
+            aviso "No se pudo añadir RPM Fusion. Sin él no hay driver de NVIDIA."
+            return
+        fi
+    fi
+    ok "RPM Fusion"
+
+    # 2. Secure Boot: la clave tiene que existir ANTES de compilar el driver,
+    #    para que salga firmado
+    sudo dnf install -y akmods mokutil >/dev/null
+    if mokutil --sb-state 2>/dev/null | grep -qi "enabled"; then
+        paso "Secure Boot está activado: hay que registrar una clave"
+        sudo kmodgenca -a >/dev/null 2>&1 || true
+        if mokutil --test-key "$CLAVE_AKMODS" 2>/dev/null | grep -qi "already enrolled"; then
+            ok "La clave ya estaba registrada"
+        else
+            echo
+            echo "  El driver de NVIDIA se compila en tu equipo, y con Secure Boot la BIOS"
+            echo "  solo carga lo que esté firmado con una clave que ella conozca. Vamos a"
+            echo "  darle la nuestra en dos pasos:"
+            echo "    · Ahora: inventa una contraseña de UN SOLO USO (se usa una vez al"
+            echo "      reiniciar y ya). Consejo: solo números, p. ej. 12345678, porque en"
+            echo "      esa pantalla el teclado es inglés y los símbolos cambian de sitio."
+            echo "    · Al reiniciar: una pantalla azul te pedirá confirmarla (te lo"
+            echo "      recuerdo al final)."
+            echo
+            if sudo mokutil --import "$CLAVE_AKMODS"; then
+                NVIDIA_CLAVE_PENDIENTE=1
+                ok "Clave preparada: se registra al reiniciar"
+            else
+                aviso "No se pudo preparar la clave. Repite luego: sudo mokutil --import $CLAVE_AKMODS"
+            fi
+        fi
+    else
+        ok "Secure Boot desactivado: no hace falta registrar ninguna clave"
+    fi
+
+    # 3. El driver (akmod: se recompila solo con cada kernel nuevo)
+    #    + nvidia-smi y la aceleración de vídeo
+    if ! sudo dnf install -y akmod-nvidia xorg-x11-drv-nvidia-cuda; then
+        aviso "No se pudo instalar el driver de NVIDIA"
+        return
+    fi
+    echo "  Compilando el driver (unos minutos; si no da tiempo, se termina solo al arrancar)..."
+    sudo akmods --force >/dev/null 2>&1 || true
+    ok "Driver de NVIDIA instalado"
+
+    # 4. Ajuste de la documentación de niri: sin él, niri puede acaparar ~1 GB de VRAM
+    sudo install -D -m 644 "$REPO/system/nvidia/50-niri-vram.json" \
+        /etc/nvidia/nvidia-application-profiles-rc.d/50-niri-vram.json
+    ok "Perfil de NVIDIA para niri (memoria de vídeo)"
 }
 
 # -------------------------------------------------------------------- Fuente
@@ -149,6 +276,9 @@ enlazar_todo() {
         enlazar "$carpeta" "$CONFIG_DIR/$(basename "$carpeta")"
     done
 
+    # Colores oscuros para las apps KDE (Okular): es un archivo, no una carpeta
+    enlazar "$REPO/config/kdeglobals" "$CONFIG_DIR/kdeglobals"
+
     paso "Enlazando fondos de pantalla"
     enlazar "$REPO/wallpapers" "$HOME/.local/share/wallpapers"
 
@@ -178,7 +308,7 @@ bajar_fondos() {
         return
     fi
     local respuesta
-    read -rp "  ¿Descargar $faltan fondos (unos 170 MB en total)? [s/N] " respuesta
+    read -rp "  ¿Descargar $faltan fondos (unos 20 MB)? [s/N] " respuesta
     if [[ "${respuesta,,}" == s* ]]; then
         "$REPO/wallpapers/descargar.sh" && ok "Fondos descargados" \
             || aviso "No se pudieron bajar algunos (¿sin internet?). Reintenta con wallpapers/descargar.sh"
@@ -201,6 +331,9 @@ configurar_sistema() {
 
     # Carpetas personales (Descargas, Imágenes...), según el idioma del sistema
     xdg-user-dirs-update 2>/dev/null && ok "Carpetas personales"
+
+    # Los PDF se abren con Okular
+    xdg-mime default org.kde.okular.desktop application/pdf 2>/dev/null && ok "PDF → Okular"
 
     pantalla_login
 }
@@ -259,9 +392,19 @@ ajustes_gtk() {
         return
     fi
     gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'   # GTK4 / libadwaita
-    gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'     # GTK3
+    # GTK3: "Adwaita-dark" ya no existe en GTK 3.24.5x (vuelve en silencio al
+    # tema claro). adw-gtk3-dark además se ve igual que las apps GTK4.
+    gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark'
     gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark'
-    ok "Tema oscuro e iconos Papirus-Dark"
+    # Lo mismo para las apps GTK3 que van por Xwayland (leen este archivo)
+    mkdir -p "$HOME/.config/gtk-3.0"
+    cat > "$HOME/.config/gtk-3.0/settings.ini" <<'INI'
+[Settings]
+gtk-theme-name=adw-gtk3-dark
+gtk-application-prefer-dark-theme=true
+gtk-icon-theme-name=Papirus-Dark
+INI
+    ok "Tema oscuro (adw-gtk3-dark) e iconos Papirus-Dark"
 
     # Blueman sin icono en la bandeja (la barra ya tiene su módulo).
     # El agente que muestra el PIN al emparejar sigue funcionando.
@@ -286,7 +429,7 @@ validar() {
 # ------------------------------------------------------------------ Deshacer
 deshacer() {
     paso "Quitando enlaces que apuntan a $REPO"
-    local destinos=("$HOME/.local/share/wallpapers")
+    local destinos=("$HOME/.local/share/wallpapers" "$CONFIG_DIR/kdeglobals")
     for carpeta in "$REPO"/config/*/; do
         destinos+=("$CONFIG_DIR/$(basename "${carpeta%/}")")
     done
@@ -341,8 +484,11 @@ case "${1:-}" in
         validar ;;
     "")
         comprobar_sistema
+        actualizar_sistema
         repo_brave
         instalar_paquetes
+        repo_flathub
+        drivers_nvidia
         instalar_fuente
         enlazar_todo
         bajar_fondos
@@ -356,6 +502,17 @@ case "${1:-}" in
 esac
 
 echo -e "\n${VERDE}¡Listo!${NC}"
+if (( NVIDIA_CLAVE_PENDIENTE )); then
+    echo -e "\n${AMARILLO}IMPORTANTE (NVIDIA + Secure Boot): al reiniciar saldrá una pantalla azul${NC}"
+    echo "  (MOK Manager). Tienes 10 segundos para pulsar una tecla; si no, se la salta."
+    echo "    1. «Enroll MOK»  →  «Continue»  →  «Yes»"
+    echo "    2. Escribe la contraseña de un solo uso que pusiste"
+    echo "    3. «Reboot»"
+    echo "  Si se te pasa, el driver de NVIDIA no cargará. Se repite con:"
+    echo "    sudo mokutil --import $CLAVE_AKMODS   y reiniciando otra vez."
+    echo "  Para comprobar después que funciona:  nvidia-smi"
+    echo
+fi
 if [[ "$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null)" == */greetd.service ]]; then
     echo "  1. Reinicia el equipo:  sudo reboot"
     echo "  2. En la pantalla de inicio, escribe tu usuario y contraseña: entrarás en Niri."

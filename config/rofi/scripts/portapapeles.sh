@@ -10,7 +10,7 @@ if ! command -v cliphist >/dev/null; then
     exit 1
 fi
 
-TEMA='window { width: 640px; } listview { lines: 10; }'
+TEMA='columna { width: 640px; } listview { lines: 10; }'
 
 while true; do
     # --display-columns 2 oculta el número interno que usa cliphist

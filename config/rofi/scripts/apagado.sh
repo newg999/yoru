@@ -8,7 +8,7 @@
 OPCIONES=$'  Bloquear\n  Suspender\n  Cerrar sesión\n  Reiniciar\n  Apagar'
 OPCIONES="$(printf '%b' "$OPCIONES")"
 
-TEMA='window { width: 320px; } listview { lines: 5; } inputbar { enabled: false; }'
+TEMA='columna { width: 320px; } listview { lines: 5; } inputbar { enabled: false; }'
 
 eleccion="$(printf '%s\n' "$OPCIONES" | rofi -dmenu -i -no-custom -p '' \
     -mesg "Sesión de <b>$(whoami)</b>" \

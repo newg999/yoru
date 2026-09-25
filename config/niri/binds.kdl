@@ -26,6 +26,7 @@ binds {
     Mod+Alt+A           hotkey-overlay-title="Audio"           { spawn-sh "~/.config/rofi/scripts/audio.py"; }
     Mod+Alt+C           hotkey-overlay-title="Calendario"      { spawn-sh "~/.config/rofi/scripts/calendario.py"; }
     Mod+Alt+V           hotkey-overlay-title="Portapapeles"    { spawn-sh "~/.config/rofi/scripts/portapapeles.sh"; }
+    Mod+Alt+S           hotkey-overlay-title="Tienda de apps"  { spawn-sh "~/.config/rofi/scripts/tienda.py"; }
     Mod+Alt+W           hotkey-overlay-title="Elegir fondo"    { spawn-sh "~/.config/rofi/scripts/fondos.sh"; }
     Mod+Alt+Shift+W     hotkey-overlay-title="Fondo siguiente" { spawn-sh "~/.config/niri/scripts/wallpaper.sh next"; }
 
@@ -60,8 +61,8 @@ binds {
     Print      { screenshot; }
     Ctrl+Print { screenshot-screen; }
     Alt+Print  { screenshot-window; }
-    // Flameshot: captura con editor (flechas, texto, difuminar...)
-    Mod+Shift+S hotkey-overlay-title="Captura con editor (Flameshot)" { spawn "flameshot" "gui"; }
+    // Captura con editor: eliges la zona y se abre en swappy (flechas, texto...)
+    Mod+Shift+S hotkey-overlay-title="Captura con editor (swappy)" { spawn-sh "~/.config/niri/scripts/captura-editor.sh"; }
 
     // ------------------------------------------------------------ Ventanas
     Mod+Q repeat=false { close-window; }

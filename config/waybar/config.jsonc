@@ -17,7 +17,7 @@
     {
         "output": "!eDP-1",
         "include": ["~/.config/waybar/modulos.jsonc"],
-        "mpris":        { "dynamic-len": 45 },
-        "mpris#espejo": { "dynamic-len": 45 }
+        "mpris":        { "title-len": 34, "artist-len": 18, "dynamic-len": 55 },
+        "mpris#espejo": { "title-len": 34, "artist-len": 18, "dynamic-len": 55 }
     }
 ]

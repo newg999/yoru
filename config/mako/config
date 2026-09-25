@@ -28,3 +28,8 @@ text-color=#8a8f98
 [urgency=critical]
 border-color=#bf616a
 default-timeout=0
+
+# Errores de los menús (wifi, bluetooth, tienda...): en rojo, pero se van solos
+[category=error]
+border-color=#bf616a
+default-timeout=8000

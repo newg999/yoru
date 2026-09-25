@@ -18,7 +18,7 @@
 
 * {
     font-family: "JetBrainsMono Nerd Font", monospace;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: bold;
     min-height: 0;
     border: none;
@@ -69,17 +69,10 @@ tooltip label { color: @texto; padding: 4px 6px; }
     border-radius: 0 12px 12px 0;
     padding: 0 14px 0 10px;
 }
-#custom-playpausa { font-size: 15px; }
+/* Botones de música: más grandes para acertar al pulsar */
+#custom-anterior, #custom-siguiente { font-size: 17px; }
+#custom-playpausa { font-size: 20px; }
 
-/* Copia invisible de la música a la izquierda del reloj (ver config.jsonc) */
-/* (con "#espejo" delante para ganar a reglas como #mpris.paused) */
-#espejo #custom-anterior, #espejo #custom-playpausa,
-#espejo #custom-siguiente, #espejo #mpris,
-#espejo #mpris.paused, #espejo *:hover {
-    color: transparent;
-    background: transparent;
-    border-color: transparent;
-}
 #custom-anterior:hover, #custom-playpausa:hover,
 #custom-siguiente:hover { color: @blanco; }
 
@@ -100,14 +93,44 @@ window#waybar.empty #window {
 #cpu, #memory, #battery, #pulseaudio, #network, #bluetooth {
     padding: 0 7px;
 }
+/* Icono y porcentaje del audio van juntos, como si fueran uno */
+#pulseaudio.icono      { padding-right: 4px; }
+
+/* Iconos solos (sin texto): más grandes y con más margen, para pulsarlos
+   sin tener que apuntar. (Los que van con texto se agrandan en
+   modulos.jsonc con <span size='larger'>) */
+#pulseaudio.icono, #network, #bluetooth { font-size: 18px; }
+#network, #bluetooth { padding: 0 9px; }
+#pulseaudio.porcentaje { padding-left: 3px; }
+
+/* ------------------------------------------------- Barrita de volumen */
+#pulseaudio-slider { padding: 0 8px 0 2px; }
+#pulseaudio-slider slider {
+    min-height: 12px;
+    min-width: 12px;
+    border-radius: 6px;
+    background: @blanco;
+    box-shadow: none;
+    border: none;
+}
+#pulseaudio-slider trough {
+    min-height: 4px;
+    min-width: 110px;
+    border-radius: 2px;
+    background: alpha(@blanco, 0.18);
+}
+#pulseaudio-slider highlight {
+    border-radius: 2px;
+    background: @blanco;
+}
 
 /* ---------------------------------------------------------- Escritorios */
 #workspaces { padding: 0 6px; }
 #workspaces button {
     color: @tenue;
-    padding: 0 5px;
+    padding: 0 6px;
     background: transparent;
-    font-size: 12px;
+    font-size: 15px;
 }
 #workspaces button.active { color: @blanco; }
 #workspaces button:hover  { color: @blanco; background: transparent; }
@@ -145,3 +168,18 @@ window#waybar.empty #window {
     padding: 4px 0;
 }
 #tray > .needs-attention { color: @red; }
+
+/* ------------------------------------------------ Copia invisible (espejo)
+   La copia de la música a la izquierda del reloj (ver modulos.jsonc) no se
+   ve NUNCA, ni al pasar el ratón. Va al final y con dos # para ganar a las
+   reglas de arriba (#mpris:hover, #mpris.paused...), que la iluminarían. */
+#espejo #custom-anterior, #espejo #custom-anterior:hover,
+#espejo #custom-playpausa, #espejo #custom-playpausa:hover,
+#espejo #custom-siguiente, #espejo #custom-siguiente:hover,
+#espejo #mpris, #espejo #mpris:hover,
+#espejo #mpris.paused, #espejo #mpris.paused:hover {
+    color: transparent;
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
