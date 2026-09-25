@@ -28,7 +28,11 @@
 #    ./install.sh --ayuda
 # ============================================================================
 
-set -euo pipefail
+set -Eeuo pipefail   # -E: el aviso de abajo también salta dentro de las funciones
+
+# Si algo falla, el script se para (set -e). Que al menos se sepa dónde y qué hacer
+trap 'error "La instalación se ha parado en la línea $LINENO de install.sh (mira el mensaje de arriba)."
+      error "Cuando lo arregles, vuelve a ejecutar ./install.sh: lo que ya esté hecho se salta."' ERR
 
 # Carpeta donde está este script (el repositorio), da igual desde dónde lo lances
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -58,6 +62,16 @@ comprobar_sistema() {
         exit 1
     fi
     ok "$(cat /etc/fedora-release)"
+
+    # Si se clonó con "sudo git clone", la carpeta es de root: los enlaces se
+    # crean, pero luego nada se puede modificar (ni tú ni el instalador)
+    if [[ "$(stat -c %U "$REPO")" != "$USER" ]] || \
+            find "$REPO" ! -user "$USER" -print -quit 2>/dev/null | grep -q .; then
+        error "La carpeta $REPO no es tuya (¿la clonaste con sudo?). Arréglalo con:"
+        error "    sudo chown -R $USER: $REPO"
+        error "y vuelve a ejecutar ./install.sh"
+        exit 1
+    fi
 }
 
 # ------------------------------------------------------------------ Paquetes
@@ -110,12 +124,23 @@ instalar_paquetes() {
     # Lee el archivo quitando comentarios y líneas vacías
     mapfile -t PAQUETES < <(sed -e 's/#.*//' -e 's/[[:space:]]*$//' "$REPO/packages.txt" | grep -v '^[[:space:]]*$' | awk '{print $1}')
 
-    # Primero intenta todos de golpe (rápido). Si falla alguno,
-    # los instala uno a uno para saber cuál es el problemático.
-    if sudo dnf install -y "${PAQUETES[@]}"; then
-        ok "Todos los paquetes instalados"
+    # Todos de golpe (rápido). --skip-unavailable: si alguno no existe en esta
+    # versión de Fedora (p. ej. cliphist en Fedora 43), se instala el resto
+    if sudo dnf install -y --skip-unavailable "${PAQUETES[@]}"; then
+        local faltan=()
+        for p in "${PAQUETES[@]}"; do
+            rpm -q --whatprovides "$p" >/dev/null 2>&1 || faltan+=("$p")
+        done
+        if (( ${#faltan[@]} )); then
+            aviso "No están en los repositorios de tu Fedora: ${faltan[*]}"
+        else
+            ok "Todos los paquetes instalados"
+        fi
         return
     fi
+
+    # Si aun así falla (un conflicto, un repositorio caído...), uno a uno
+    # para saber cuál es el problemático
 
     aviso "Algo falló. Instalando uno a uno..."
     local fallidos=()
@@ -131,6 +156,28 @@ instalar_paquetes() {
         aviso "No se pudieron instalar: ${fallidos[*]}"
         aviso "El resto de la instalación sigue. Revísalos luego a mano."
     fi
+}
+
+# cliphist (historial del portapapeles) no está en los repositorios de
+# Fedora 43: en ese caso se baja el programa oficial de su GitHub
+CLIPHIST_VERSION="v0.7.0"
+cliphist_si_falta() {
+    command -v cliphist >/dev/null && return 0
+    if [[ "$(uname -m)" != "x86_64" ]]; then
+        aviso "cliphist no está disponible para $(uname -m): sin historial del portapapeles"
+        return 0
+    fi
+    paso "cliphist (historial del portapapeles) desde GitHub"
+    local tmp
+    tmp="$(mktemp)"
+    if curl -fsSL -o "$tmp" \
+            "https://github.com/sentriz/cliphist/releases/download/$CLIPHIST_VERSION/$CLIPHIST_VERSION-linux-amd64" \
+            && sudo install -m 755 "$tmp" /usr/local/bin/cliphist; then
+        ok "cliphist $CLIPHIST_VERSION en /usr/local/bin"
+    else
+        aviso "No se pudo descargar cliphist: el portapapeles funciona, pero sin historial"
+    fi
+    rm -f "$tmp"
 }
 
 # -------------------------------------------------------------------- NVIDIA
@@ -282,7 +329,9 @@ enlazar_todo() {
     paso "Enlazando fondos de pantalla"
     enlazar "$REPO/wallpapers" "$HOME/.local/share/wallpapers"
 
-    chmod +x "$REPO"/config/niri/scripts/*.sh
+    # Git ya guarda que son ejecutables; esto es solo por si vino en un .zip
+    chmod +x "$REPO"/config/niri/scripts/*.sh "$REPO"/config/rofi/scripts/*.{sh,py} \
+        "$REPO"/wallpapers/descargar.sh 2>/dev/null || true
     mkdir -p "$HOME/Pictures/Screenshots"
 }
 
@@ -487,6 +536,7 @@ case "${1:-}" in
         actualizar_sistema
         repo_brave
         instalar_paquetes
+        cliphist_si_falta
         repo_flathub
         drivers_nvidia
         instalar_fuente
