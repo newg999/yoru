@@ -22,7 +22,7 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Bloqueo | `swaylock` + `swayidle` | `config/swaylock/` |
 | Fondo | `swaybg` | `config/niri/scripts/wallpaper.sh` |
 | Apps X11 | `xwayland-satellite` | automático |
-| Inicio de sesión | `greetd` + `tuigreet` | `system/greetd/config.toml` |
+| Inicio de sesión | `greetd` + `gtkgreet` (dentro de un niri mínimo) | `system/greetd/` |
 | Archivos | `nautilus` | — |
 | Navegador | `brave-browser` | — |
 | Visor de PDF | `okular` | `config/kdeglobals` (sus colores oscuros) |
@@ -49,7 +49,7 @@ cd ~/dotfiles
 sudo reboot
 ```
 
-Al volver verás la pantalla de inicio de **tuigreet**: escribe tu usuario y contraseña y entrarás en Niri.
+Al volver verás la pantalla de inicio de Yoru (tu fondo, el reloj y un recuadro como los menús): escribe tu usuario y contraseña y entrarás en Niri. `Ctrl+Alt+Supr` reinicia y `Ctrl+Alt+Fin` apaga sin entrar.
 
 ### B · Sobre una Fedora con GNOME
 

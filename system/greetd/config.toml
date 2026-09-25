@@ -1,17 +1,17 @@
 # ============================================================================
-#  greetd + tuigreet — pantalla de inicio de sesión (modo texto)
+#  greetd — pantalla de inicio de sesión de Yoru
 # ----------------------------------------------------------------------------
-#  install.sh COPIA este archivo a /etc/greetd/config.toml (no es un enlace:
-#  pertenece a root). Si lo cambias, vuelve a ejecutar ./install.sh o cópialo:
-#    sudo cp system/greetd/config.toml /etc/greetd/config.toml
+#  greetd arranca un niri mínimo (niri-greeter.kdl) que muestra gtkgreet con
+#  el estilo de gtkgreet.css. Los tres archivos los COPIA install.sh a
+#  /etc/greetd/ (no son enlaces: pertenecen a root). Si cambias alguno:
+#    sudo cp system/greetd/{config.toml,niri-greeter.kdl,gtkgreet.css} /etc/greetd/
 #
-#  F2 = elegir sesión (Niri, GNOME si lo tienes...)   F12 = apagar/reiniciar
-#  Opciones:  man tuigreet
+#  Si algo falla y no puedes entrar: Ctrl+Alt+F3 abre una consola de texto.
 # ============================================================================
 
 [terminal]
 vt = 1
 
 [default_session]
-command = "tuigreet --time --time-format '%A %d de %B · %H:%M' --remember --remember-session --asterisks --greeting 'Yoru · Fedora + Niri' --window-padding 2 --container-padding 2 --theme 'border=cyan;title=lightcyan;text=white;time=blue;greet=lightblue;prompt=cyan;input=white;action=darkgray;button=cyan' --cmd niri-session"
+command = "niri -c /etc/greetd/niri-greeter.kdl"
 user = "greetd"

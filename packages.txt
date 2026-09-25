@@ -36,7 +36,8 @@ google-noto-color-emoji-fonts  # emojis 🎉
 # --- Inicio de sesión --------------------------------------------------------
 # Solo se activa si no tienes ya uno (por ejemplo, GDM de GNOME)
 greetd                    # gestor de inicio de sesión
-tuigreet                  # pantalla de login en modo texto
+gtkgreet                  # pantalla de login gráfica (system/greetd/)
+jetbrains-mono-fonts      # su fuente (la Nerd Font va solo en tu usuario)
 
 # --- Núcleo de Niri ----------------------------------------------------------
 niri                      # el compositor

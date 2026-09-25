@@ -11,7 +11,7 @@
 #    5. Enlaza (symlink) las carpetas de config/ en ~/.config/
 #       y pregunta si quieres bajar los fondos anime (5, ~20 MB)
 #    6. Activa servicios (bluetooth, energía) y, si no tienes ninguna,
-#       la pantalla de inicio de sesión (greetd + tuigreet)
+#       la pantalla de inicio de sesión (greetd + gtkgreet, con el estilo de Yoru)
 #    7. Pone tema oscuro e iconos Papirus en las apps GTK
 #    8. Valida la configuración de Niri
 #
@@ -399,24 +399,37 @@ pantalla_login() {
             return
         fi
     fi
-    if ! command -v tuigreet >/dev/null; then
-        aviso "tuigreet no está instalado, me lo salto"
+    if ! command -v gtkgreet >/dev/null || ! command -v greetd >/dev/null; then
+        aviso "greetd o gtkgreet no están instalados, me lo salto"
         return
     fi
 
-    # La config pertenece a root: se copia (guardando la original una vez)
+    # Todo esto es de root (lo usa el usuario "greetd", no tú): se copia.
+    # La config original de greetd se guarda una vez, por si quieres volver
     if [[ -f /etc/greetd/config.toml && ! -f /etc/greetd/config.toml.original ]]; then
         sudo cp /etc/greetd/config.toml /etc/greetd/config.toml.original
     fi
-    sudo install -m 644 "$REPO/system/greetd/config.toml" /etc/greetd/config.toml
+    local f
+    for f in config.toml niri-greeter.kdl gtkgreet.css; do
+        sudo install -m 644 "$REPO/system/greetd/$f" "/etc/greetd/$f"
+    done
 
-    # tuigreet necesita esta carpeta para recordar el último usuario y sesión
-    sudo install -d -m 755 -o greetd -g greetd /var/cache/tuigreet
-    command -v restorecon >/dev/null && sudo restorecon -R /var/cache/tuigreet
+    # Fondo: el que tengas puesto ahora; si no, el primero de la lista
+    local fondo=""
+    [[ -f "$HOME/.cache/wallpaper-actual" ]] && fondo="$(readlink -f "$(cat "$HOME/.cache/wallpaper-actual")" 2>/dev/null || true)"
+    if [[ ! -f "$fondo" ]]; then
+        fondo="$(ls "$REPO"/wallpapers/anime-* 2>/dev/null | head -n1 || true)"
+    fi
+    [[ -f "$fondo" ]] || fondo="$REPO/wallpapers/nord-aurora.png"
+    sudo install -D -m 644 "$fondo" /usr/share/backgrounds/yoru/inicio
+
+    # Lista de sesiones para el desplegable (Niri, y GNOME si lo tienes)
+    [[ -x /usr/libexec/gtkgreet-update-environments ]] \
+        && sudo /usr/libexec/gtkgreet-update-environments --write >/dev/null 2>&1 || true
 
     sudo systemctl enable greetd >/dev/null 2>&1
     sudo systemctl set-default graphical.target >/dev/null 2>&1
-    ok "greetd + tuigreet activado (se verá al reiniciar)"
+    ok "Pantalla de inicio gráfica (greetd + gtkgreet) activada: se verá al reiniciar"
 }
 
 # -------------------------------------------------------------------- Barra
@@ -566,7 +579,7 @@ fi
 if [[ "$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null)" == */greetd.service ]]; then
     echo "  1. Reinicia el equipo:  sudo reboot"
     echo "  2. En la pantalla de inicio, escribe tu usuario y contraseña: entrarás en Niri."
-    echo "     (F2 cambia de sesión, F12 apaga o reinicia)"
+    echo "     (Ctrl+Alt+Supr reinicia y Ctrl+Alt+Fin apaga, sin entrar)"
     echo "  3. Pulsa Super+F1 para ver los atajos."
 else
     echo "  1. Cierra la sesión actual."
