@@ -4,6 +4,7 @@
 //    [apps] [escritorios] [título]    [música] [reloj] [clima]    [bandeja] [recursos] [conexión]
 //
 //  El reloj va siempre en el centro exacto; la música y el clima, a sus lados.
+//  Con el overview abierto (Mod+Tab) la barra sube y desaparece, como en DMS.
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -24,7 +25,19 @@ PanelWindow {
     WlrLayershell.namespace: "yoru-barra"
     WlrLayershell.layer: WlrLayer.Top
 
+    // Escondida: sin zona de clic, para que los clics lleguen al overview
+    mask: Niri.overview ? vacia : null
+    Region { id: vacia }
+
     Item {
+        id: contenido
+        opacity: Niri.overview ? 0 : 1
+        transform: Translate {
+            y: Niri.overview ? -(Tema.altoBarra + Tema.margenBarra) : 0
+            Behavior on y { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
+        }
+        Behavior on opacity { NumberAnimation { duration: Tema.normal } }
+
         anchors {
             fill: parent
             topMargin: Tema.margenBarra

@@ -28,4 +28,13 @@ Singleton {
     function cerrar() {
         abierto = "";
     }
+
+    // Al abrir el overview (Mod+Tab) se cierra cualquier panel
+    Connections {
+        target: Niri
+        function onOverviewChanged() {
+            if (Niri.overview)
+                paneles.cerrar();
+        }
+    }
 }

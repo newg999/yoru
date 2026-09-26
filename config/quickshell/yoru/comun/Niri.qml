@@ -15,6 +15,7 @@ Singleton {
     property var escritorios: []   // [{id, idx, name, output, is_active, is_focused...}]
     property var ventanas: ({})    // id → {id, title, app_id, workspace_id, is_focused...}
     property var enfocada: null    // ventana con el foco (o null)
+    property bool overview: false  // overview abierto (Mod+Tab): la barra se esconde
 
     // Escritorios de una pantalla, en orden
     function escritoriosDe(salida) {
@@ -93,6 +94,8 @@ Singleton {
             ventanas = vs;
             if (enfocada && enfocada.id === ev.WindowClosed.id)
                 enfocada = null;
+        } else if (ev.OverviewOpenedOrClosed) {
+            overview = ev.OverviewOpenedOrClosed.is_open;
         } else if (ev.WindowFocusChanged) {
             _enfocar(ev.WindowFocusChanged.id);
         }
