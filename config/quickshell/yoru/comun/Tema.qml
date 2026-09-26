@@ -32,15 +32,15 @@ Singleton {
 
     // --------------------------------------------------------------- Fuente
     readonly property string fuente: "JetBrainsMono Nerd Font"
-    readonly property int letra: 14        // texto normal de la barra
-    readonly property int icono: 18        // iconos solos (wifi, bluetooth...)
+    readonly property int letra: 13        // texto normal de la barra
+    readonly property int icono: 16        // iconos solos (wifi, bluetooth...)
 
     // --------------------------------------------------------------- Medidas
-    readonly property int altoBarra: 36
-    readonly property int margenBarra: 8     // arriba
-    readonly property int margenLados: 12
-    readonly property int separacion: 8      // entre islas
-    readonly property int radio: 12
+    readonly property int altoBarra: 30
+    readonly property int margenBarra: 4     // arriba
+    readonly property int margenLados: 6
+    readonly property int separacion: 6      // entre islas
+    readonly property int radio: 10
     readonly property int radioPanel: 14
 
     // ----------------------------------------------------------- Animaciones
