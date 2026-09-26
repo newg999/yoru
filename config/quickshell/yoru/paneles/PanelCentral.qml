@@ -1,6 +1,8 @@
 // ============================================================================
 //  Panel central — se abre al pulsar la música, el reloj o el clima
 //
+//  Pestañas: Multimedia · Resumen · Clima
+//
 //    Resumen:  ┌──────┬──────────────┬──────────────┐
 //              │ hora │ clima        │ usuario      │
 //              ├──────┼──────────────┴──┬───────────┤
@@ -40,8 +42,8 @@ Panel {
 
             Repeater {
                 model: [
-                    {id: "resumen", icono: "󰕮", texto: "Resumen"},
                     {id: "multimedia", icono: "󰝚", texto: "Multimedia"},
+                    {id: "resumen", icono: "󰕮", texto: "Resumen"},
                     {id: "clima", icono: "󰖐", texto: "Clima"}
                 ]
                 Rectangle {

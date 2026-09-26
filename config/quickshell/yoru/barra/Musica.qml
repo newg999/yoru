@@ -10,7 +10,7 @@ import qs.comun
 Isla {
     id: isla
     required property var pantalla
-    property int maximo: 300     // ancho máximo del título (la barra lo sube en monitores grandes)
+    property int maximo: 160     // ancho máximo del título (la barra lo sube en monitores grandes)
 
     readonly property var reproductor: Reproductor.actual
     readonly property string cancion: {
@@ -48,19 +48,57 @@ Isla {
         }
     }
 
-    Modulo {
+    // Canción: letra pequeña y, si no cabe, se desplaza sola (como en DMS)
+    Item {
+        id: titulo
         visible: isla.reproductor !== null && isla.cancion !== ""
-        texto: isla.cancion
-        anchoTexto: isla.maximo
-        relleno: 5
-        apagado: !isla.reproductor?.isPlaying
-        onClic: boton => {
-            if (boton === Qt.RightButton)
-                isla.reproductor.next();
-            else if (boton === Qt.MiddleButton)
-                isla.reproductor.togglePlaying();
-            else
-                Paneles.alternar("centro", isla.pantalla, "multimedia");
+        readonly property bool cabe: texto.implicitWidth <= isla.maximo
+        implicitWidth: Math.min(texto.implicitWidth, isla.maximo) + 16
+        implicitHeight: Tema.altoBarra
+        clip: true
+
+        Texto {
+            id: texto
+            x: 5
+            anchors.verticalCenter: parent.verticalCenter
+            text: isla.cancion
+            font.pixelSize: 12
+            font.bold: false
+            color: tituloRaton.containsMouse ? Tema.blanco
+                : isla.reproductor?.isPlaying ? Tema.texto : Tema.tenue
+
+            // Va y vuelve despacio, con una pausa en cada extremo
+            SequentialAnimation on x {
+                running: !titulo.cabe && titulo.visible
+                loops: Animation.Infinite
+                onRunningChanged: if (!running) texto.x = 5
+                PauseAnimation { duration: 2000 }
+                NumberAnimation {
+                    from: 5; to: isla.maximo - texto.implicitWidth + 5
+                    duration: Math.max(1, texto.implicitWidth - isla.maximo) * 25
+                }
+                PauseAnimation { duration: 2000 }
+                NumberAnimation {
+                    from: isla.maximo - texto.implicitWidth + 5; to: 5
+                    duration: Math.max(1, texto.implicitWidth - isla.maximo) * 25
+                }
+            }
+        }
+
+        MouseArea {
+            id: tituloRaton
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+            onClicked: e => {
+                if (e.button === Qt.RightButton)
+                    isla.reproductor.next();
+                else if (e.button === Qt.MiddleButton)
+                    isla.reproductor.togglePlaying();
+                else
+                    Paneles.alternar("centro", isla.pantalla, "multimedia");
+            }
         }
     }
     Modulo {

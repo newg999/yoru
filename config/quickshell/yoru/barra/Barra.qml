@@ -49,7 +49,7 @@ PanelWindow {
         Musica {
             anchors { right: reloj.left; rightMargin: Tema.separacion; verticalCenter: parent.verticalCenter }
             pantalla: barra.modelData
-            maximo: barra.pequena ? 200 : 360
+            maximo: barra.pequena ? 140 : 200
         }
         Reloj {
             id: reloj
