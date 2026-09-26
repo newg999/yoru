@@ -1,5 +1,6 @@
 // ============================================================================
-//  Lanzador de apps — sale por la izquierda, bajo el botón 󰀻 de la barra
+//  Lanzador de apps — sale por la izquierda, bajo el botón 󰀻 de la barra.
+//  Con Mod+Space (sección "medio") sale en mitad de la pantalla.
 //
 //    Escribe para buscar (nombre, descripción o palabras clave)
 //    ↑ ↓ para moverte · Enter para abrir · Esc para cerrar
@@ -16,7 +17,7 @@ import qs.comun
 Panel {
     id: panel
     nombre: "lanzador"
-    lado: "izquierda"
+    lado: Paneles.seccion === "medio" ? "medio" : "izquierda"
     ancho: 480
 
     property var usos: ({})      // id de la app → veces abierta
