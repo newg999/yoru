@@ -14,8 +14,8 @@ binds {
     // ------------------------------------------------------------------ Apps
     Mod+Return hotkey-overlay-title="Terminal (kitty)"       { spawn "kitty"; }
     Mod+T      hotkey-overlay-title=null                     { spawn "kitty"; }
-    Mod+Space  hotkey-overlay-title="Lanzador de apps"       { spawn "rofi" "-show" "drun"; }
-    Mod+D      hotkey-overlay-title=null                     { spawn "rofi" "-show" "drun"; }
+    Mod+Space  hotkey-overlay-title="Lanzador de apps"       { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "lanzador" ""; }
+    Mod+D      hotkey-overlay-title=null                     { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "lanzador" ""; }
     Mod+E      hotkey-overlay-title="Archivos (Nautilus)"    { spawn "nautilus"; }
     Mod+B      hotkey-overlay-title="Navegador (Brave)"      { spawn "brave-browser"; }
 

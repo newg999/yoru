@@ -42,7 +42,10 @@ Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de má
 - [ ] Más menús: perfiles de energía, brillo
 - [x] Pasar la barra de Waybar a **[Quickshell](https://quickshell.org)**: misma estética, con paneles de verdad
 - [x] Centro de control (Quickshell): wifi, bluetooth, volumen, micrófono y salidas de audio
-- [ ] Llevar a Quickshell el resto de menús de rofi: calendario, apagado, portapapeles, fondos
+- [x] Panel central (Quickshell): reloj, calendario, clima de tu zona, música con carátula y uso del sistema
+- [x] Lanzador de apps a la izquierda (Quickshell), con las más usadas primero
+- [x] Visualizador de audio (cava) junto a la canción
+- [ ] Llevar a Quickshell el resto de menús de rofi: apagado, portapapeles, fondos
 - [ ] Tooltips en la barra (calendario al pasar por el reloj, detalles de red...)
 - [ ] Quitar `config/waybar/` cuando ya no haga falta
 
