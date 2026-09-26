@@ -7,7 +7,8 @@
 //
 //    Panel {
 //        nombre: "conexion"     // el que abre Paneles.alternar("conexion", ...)
-//        lado: "derecha"        // "izquierda", "centro" o "derecha"
+//        lado: "derecha"        // "izquierda", "centro", "derecha"
+//                               // o "medio" (en mitad de la pantalla)
 //        MiContenido {}
 //    }
 // ============================================================================
@@ -44,9 +45,12 @@ PanelWindow {
     // Teclado para Esc y para escribir contraseñas
     WlrLayershell.keyboardFocus: abierto ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-    // Desenfoque detrás del recuadro (si el compositor lo permite)
+    // Desenfoque detrás del recuadro (si el compositor lo permite).
+    // Solo con el panel ya abierto del todo: el desenfoque no se puede
+    // desvanecer, y si se deja durante la animación queda un rectángulo
+    // borroso que no encaja con el recuadro y desaparece de golpe al final.
     BackgroundEffect.blurRegion: Region {
-        item: caja
+        item: ventana.abierto && ventana.progreso > 0.97 ? caja : null
         radius: Tema.radioPanel
     }
 
@@ -61,14 +65,17 @@ PanelWindow {
 
         width: ventana.ancho
         height: interior.implicitHeight + 32
+        readonly property bool enMedio: ventana.lado === "medio"
+
         x: ventana.lado === "izquierda" ? Tema.margenLados
-            : ventana.lado === "centro" ? (parent.width - width) / 2
+            : ventana.lado === "centro" || enMedio ? (parent.width - width) / 2
             : parent.width - width - Tema.margenLados
-        y: Tema.margenBarra + Tema.altoBarra + 8 - (1 - ventana.progreso) * 14
+        y: enMedio ? Math.round((parent.height - height) / 2)
+            : Tema.margenBarra + Tema.altoBarra + 8 - (1 - ventana.progreso) * 14
 
         opacity: ventana.progreso
-        scale: 0.96 + 0.04 * ventana.progreso
-        transformOrigin: Item.Top
+        scale: (enMedio ? 0.94 : 0.96) + (enMedio ? 0.06 : 0.04) * ventana.progreso
+        transformOrigin: enMedio ? Item.Center : Item.Top
 
         radius: Tema.radioPanel
         color: Tema.panel
