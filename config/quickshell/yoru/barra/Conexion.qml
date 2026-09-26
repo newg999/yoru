@@ -60,13 +60,6 @@ Isla {
         pulsable: false
         resaltado: isla.hover
     }
-    Modulo {
-        texto: isla.mudo ? "mute" : Math.round(isla.volumen * 100) + "%"
-        relleno: 4
-        apagado: isla.mudo
-        pulsable: false
-        resaltado: isla.hover
-    }
 
     // ----------------------------------------------------------------- Red
     readonly property var dispositivos: Networking.devices.values
