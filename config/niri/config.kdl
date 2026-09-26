@@ -93,9 +93,9 @@ include "colors.kdl"
 // ---------------------------------------------------------------------------
 //  Programas que arrancan con la sesión
 // ---------------------------------------------------------------------------
-// La barra (waybar) NO se lanza aquí: va como servicio de systemd
+// La barra (Quickshell) NO se lanza aquí: va como servicio de systemd
 // (install.sh lo activa) para que se levante sola si se cae.
-// Reiniciarla:  systemctl --user restart waybar
+// Reiniciarla:  systemctl --user restart yoru-shell
 spawn-at-startup "mako"
 spawn-sh-at-startup "~/.config/niri/scripts/wallpaper.sh"
 spawn-sh-at-startup "~/.config/niri/scripts/polkit.sh"

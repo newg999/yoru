@@ -1,0 +1,21 @@
+# ============================================================================
+#  Yoru · barra y paneles (Quickshell)
+#  install.sh lo enlaza en ~/.config/systemd/user/ y lo activa.
+#  Arranca solo con niri (no dentro de GNOME) y, si se cae, se levanta solo.
+#
+#    systemctl --user restart yoru-shell    reiniciarlo
+#    journalctl --user -u yoru-shell -f     ver sus errores
+# ============================================================================
+[Unit]
+Description=Yoru · barra y paneles (Quickshell)
+PartOf=graphical-session.target
+After=graphical-session.target niri.service
+Requisite=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/qs -c yoru
+Restart=on-failure
+RestartSec=1
+
+[Install]
+WantedBy=niri.service

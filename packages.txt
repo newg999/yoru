@@ -52,7 +52,7 @@ libva-intel-media-driver  # aceleración de vídeo en gráficas Intel (menos CPU
 mate-polkit               # ventana que pide la contraseña de administrador
 
 # --- Escritorio --------------------------------------------------------------
-waybar                    # barra superior
+quickshell                # barra y paneles (del COPR avengemedia/danklinux)
 rofi                      # lanzador de apps y menús (wifi, bluetooth...)
 ImageMagick               # miniaturas del selector de fondos
 papirus-icon-theme        # iconos
