@@ -1,6 +1,7 @@
 // ============================================================================
-//  Salida y entrada de audio: altavoces, auriculares, HDMI, bluetooth...
-//  Clic = usar ese dispositivo. La que está en uso va en blanco.
+//  Salidas de audio (altavoces, auriculares, HDMI, bluetooth...) o, con
+//  entrada: true, micrófonos.
+//  Clic = usar ese dispositivo. El que está en uso va en blanco.
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -10,6 +11,8 @@ import qs.comun
 Column {
     id: seccion
     spacing: 4
+
+    property bool entrada: false     // false = salidas · true = micrófonos
 
     readonly property var nodos: Pipewire.nodes.values.filter(n => n.audio && !n.isStream)
     readonly property var salidas: nodos.filter(n => n.isSink)
@@ -30,45 +33,32 @@ Column {
 
     Titular {
         width: parent.width
-        texto: "Salida"
+        texto: seccion.entrada ? "Micrófono" : "Salida"
 
         BotonIcono {
             icono: "󰒓"
             onClic: {
                 Paneles.cerrar();
-                Quickshell.execDetached(["pavucontrol"]);
+                // Abre pavucontrol en su pestaña (3 = salida, 4 = entrada)
+                Quickshell.execDetached(["pavucontrol", "-t", seccion.entrada ? "4" : "3"]);
             }
         }
     }
 
     Repeater {
-        model: seccion.salidas
+        model: seccion.entrada ? seccion.entradas : seccion.salidas
         Fila {
             required property var modelData
             width: seccion.width
             icono: seccion.icono(modelData)
             titulo: seccion.nombre(modelData)
-            seleccionada: Pipewire.defaultAudioSink === modelData
-            onClic: Pipewire.preferredDefaultAudioSink = modelData
-        }
-    }
-
-    Item { width: 1; height: 4 }
-
-    Titular {
-        width: parent.width
-        texto: "Micrófono"
-    }
-
-    Repeater {
-        model: seccion.entradas
-        Fila {
-            required property var modelData
-            width: seccion.width
-            icono: seccion.icono(modelData)
-            titulo: seccion.nombre(modelData)
-            seleccionada: Pipewire.defaultAudioSource === modelData
-            onClic: Pipewire.preferredDefaultAudioSource = modelData
+            seleccionada: (seccion.entrada ? Pipewire.defaultAudioSource : Pipewire.defaultAudioSink) === modelData
+            onClic: {
+                if (seccion.entrada)
+                    Pipewire.preferredDefaultAudioSource = modelData;
+                else
+                    Pipewire.preferredDefaultAudioSink = modelData;
+            }
         }
     }
 }

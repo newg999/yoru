@@ -16,6 +16,9 @@ Isla {
     relleno: 5
     pulsable: true
 
+    // Los tres iconos con el mismo margen, para que queden a la misma distancia
+    readonly property int margenIcono: 6
+
     onClic: boton => {
         if (boton === Qt.MiddleButton)
             salida.audio.muted = !mudo;
@@ -55,7 +58,7 @@ Isla {
 
     Modulo {
         icono: isla.iconoAudio()
-        relleno: 4
+        relleno: isla.margenIcono
         apagado: isla.mudo
         pulsable: false
         resaltado: isla.hover
@@ -74,6 +77,7 @@ Isla {
             : !Networking.wifiEnabled ? "󰤭" : "󰤮"
         colorAviso: !isla.cable && !isla.redWifi && Networking.wifiEnabled ? Tema.rojo : "transparent"
         apagado: !isla.cable && !Networking.wifiEnabled
+        relleno: isla.margenIcono
         pulsable: false
         resaltado: isla.hover
     }
@@ -87,6 +91,7 @@ Isla {
         icono: !isla.adaptador?.enabled ? "󰂲" : isla.conectados > 0 ? "󰂱" : "󰂯"
         texto: isla.conectados > 0 ? String(isla.conectados) : ""
         tamIcono: Tema.icono
+        relleno: isla.margenIcono
         apagado: !isla.adaptador?.enabled
         pulsable: false
         resaltado: isla.hover
