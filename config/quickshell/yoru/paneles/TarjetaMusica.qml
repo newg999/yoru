@@ -4,7 +4,6 @@
 // ============================================================================
 import QtQuick
 import Quickshell.Widgets
-import Quickshell.Services.Mpris
 import qs.comun
 
 Tarjeta {
@@ -12,12 +11,8 @@ Tarjeta {
 
     property bool activa: true       // el panel está abierto (si no, no se refresca)
 
-    readonly property var reproductor: {
-        const lista = Mpris.players.values;
-        return lista.find(p => p.isPlaying)
-            ?? lista.find(p => p.playbackState === MprisPlaybackState.Paused)
-            ?? null;
-    }
+    readonly property var reproductor: Reproductor.actual
+    signal ampliar()     // clic en la carátula = pestaña Multimedia
 
     // Mpris no avisa de la posición: se pregunta cada segundo mientras se ve
     Timer {
@@ -84,6 +79,11 @@ Tarjeta {
                     text: "󰝚"
                     font.pixelSize: 36
                     color: Tema.tenue
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: tarjeta.ampliar()
                 }
             }
         }

@@ -8,7 +8,8 @@
 //              │ temp │                 │           │
 //              │ ram  │                 │           │
 //              └──────┴─────────────────┴───────────┘
-//    Clima:    ahora, próximas horas y los 7 días
+//    Multimedia: lo que suena, en grande (reproductor, salida, volumen)
+//    Clima:      ahora, próximas horas y los 7 días
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -20,7 +21,7 @@ Panel {
     lado: "centro"
     ancho: 780
 
-    readonly property string pestana: Paneles.seccion === "clima" ? "clima" : "resumen"
+    readonly property string pestana: ["multimedia", "clima"].includes(Paneles.seccion) ? Paneles.seccion : "resumen"
     onAbiertoChanged: if (abierto) calendario.volverAHoy()
 
     SystemClock {
@@ -40,13 +41,14 @@ Panel {
             Repeater {
                 model: [
                     {id: "resumen", icono: "󰕮", texto: "Resumen"},
+                    {id: "multimedia", icono: "󰝚", texto: "Multimedia"},
                     {id: "clima", icono: "󰖐", texto: "Clima"}
                 ]
                 Rectangle {
                     id: pestana
                     required property var modelData
                     readonly property bool elegida: panel.pestana === modelData.id
-                    width: 130; height: 36; radius: 10
+                    width: 150; height: 36; radius: 10
                     color: elegida ? Qt.rgba(1, 1, 1, 0.90) : pestanaRaton.containsMouse ? Tema.cajaHover : "transparent"
                     Behavior on color { ColorAnimation { duration: Tema.rapida } }
 
@@ -265,9 +267,17 @@ Panel {
                 TarjetaMusica {
                     width: 250
                     height: parent.height
-                    activa: panel.abierto
+                    activa: panel.abierto && panel.pestana === "resumen"
+                    onAmpliar: Paneles.seccion = "multimedia"
                 }
             }
+        }
+
+        // ---------------------------------------------------- Multimedia
+        PestanaMultimedia {
+            visible: panel.pestana === "multimedia"
+            activa: panel.abierto && visible
+            width: parent.width
         }
 
         // --------------------------------------------------------- Clima

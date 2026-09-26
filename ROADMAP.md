@@ -45,6 +45,8 @@ Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de má
 - [x] Panel central (Quickshell): reloj, calendario, clima de tu zona, música con carátula y uso del sistema
 - [x] Lanzador de apps a la izquierda (Quickshell), con las más usadas primero
 - [x] Visualizador de audio (cava) junto a la canción
+- [x] Pestaña Multimedia: carátula grande, progreso, aleatorio/repetir, elegir reproductor, salida y volumen
+- [x] Bandeja (Telegram, Discord...) junto a CPU y RAM, como en DMS
 - [ ] Llevar a Quickshell el resto de menús de rofi: apagado, portapapeles, fondos
 - [ ] Tooltips en la barra (calendario al pasar por el reloj, detalles de red...)
 - [ ] Quitar `config/waybar/` cuando ya no haga falta

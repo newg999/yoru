@@ -1,7 +1,7 @@
 // ============================================================================
 //  Barra — una por pantalla. La barra en sí es invisible: solo se ven las islas.
 //
-//    [apps] [escritorios] [título]    [música] [reloj] [clima]    [recursos] [conexión] [bandeja]
+//    [apps] [escritorios] [título]    [música] [reloj] [clima]    [bandeja] [recursos] [conexión]
 //
 //  El reloj va siempre en el centro exacto; la música y el clima, a sus lados.
 // ============================================================================
@@ -67,9 +67,9 @@ PanelWindow {
             spacing: Tema.separacion
             layoutDirection: Qt.LeftToRight
 
+            Bandeja { ventana: barra }
             Recursos {}
             Conexion { pantalla: barra.modelData }
-            Bandeja { ventana: barra }
         }
     }
 }

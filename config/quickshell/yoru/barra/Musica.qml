@@ -2,10 +2,9 @@
 //  Música/vídeo que suena (Spotify, YouTube en Brave, mpv...)
 //  Visualizador · canción · anterior · play/pausa · siguiente
 //  Sin reproductor (o parado), la isla desaparece.
-//  En la canción: clic = panel central · clic dcho = siguiente · rueda = volumen
+//  En la canción: clic = pestaña Multimedia · clic dcho = siguiente · clic central = pausa
 // ============================================================================
 import QtQuick
-import Quickshell.Services.Mpris
 import qs.comun
 
 Isla {
@@ -13,13 +12,7 @@ Isla {
     required property var pantalla
     property int maximo: 300     // ancho máximo del título (la barra lo sube en monitores grandes)
 
-    // El que está sonando; si no, el primero que esté en pausa
-    readonly property var reproductor: {
-        const lista = Mpris.players.values;
-        return lista.find(p => p.isPlaying)
-            ?? lista.find(p => p.playbackState === MprisPlaybackState.Paused)
-            ?? null;
-    }
+    readonly property var reproductor: Reproductor.actual
     readonly property string cancion: {
         if (!reproductor)
             return "";
@@ -67,7 +60,7 @@ Isla {
             else if (boton === Qt.MiddleButton)
                 isla.reproductor.togglePlaying();
             else
-                Paneles.alternar("centro", isla.pantalla, "resumen");
+                Paneles.alternar("centro", isla.pantalla, "multimedia");
         }
     }
     Modulo {
