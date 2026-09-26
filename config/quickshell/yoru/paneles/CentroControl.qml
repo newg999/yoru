@@ -4,9 +4,9 @@
 //    ┌──────────────────────────────────┐
 //    │ [󰖩 Wi-Fi     󰅀] [󰂯 Bluetooth 󰅀]│  icono = on/off · resto = su lista
 //    │ 󰕾 ━━━━━━━━━○──────── 45%  󰅀     │  volumen (󰅀 = elegir salida)
-//    │ 󰍬 ━━━━━○──────────── 60%  󰅀     │  micrófono
+//    │ 󰍬 ━━━━━○──────────── 60%  󰅀     │  micrófono (󰅀 = elegir micrófono)
 //    │ ─────────────────────────────── │
-//    │  lista de la sección elegida    │  redes, dispositivos o salidas
+//    │  lista de la sección elegida    │  redes, dispositivos, salidas o micros
 //    └──────────────────────────────────┘
 // ============================================================================
 import QtQuick
@@ -88,8 +88,8 @@ Panel {
                 nodo: Pipewire.defaultAudioSource
                 iconoOn: "󰍬"
                 iconoOff: "󰍭"
-                elegida: panel.seccion === "audio"
-                onElegir: panel.elegir("audio")
+                elegida: panel.seccion === "micro"
+                onElegir: panel.elegir("micro")
             }
         }
 
@@ -107,7 +107,8 @@ Panel {
             visible: panel.seccion !== ""
             implicitHeight: panel.seccion === "wifi" ? secWifi.implicitHeight
                 : panel.seccion === "bluetooth" ? secBt.implicitHeight
-                : panel.seccion === "audio" ? secAudio.implicitHeight : 0
+                : panel.seccion === "audio" ? secAudio.implicitHeight
+                : panel.seccion === "micro" ? secMicro.implicitHeight : 0
             height: implicitHeight
 
             SeccionWifi {
@@ -131,6 +132,14 @@ Panel {
                 width: parent.width
                 visible: opacity > 0
                 opacity: panel.seccion === "audio" ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: Tema.normal } }
+            }
+            SeccionAudio {
+                id: secMicro
+                width: parent.width
+                entrada: true
+                visible: opacity > 0
+                opacity: panel.seccion === "micro" ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: Tema.normal } }
             }
         }
