@@ -37,8 +37,8 @@ Singleton {
 
     // --------------------------------------------------------------- Medidas
     readonly property int altoBarra: 30
-    readonly property int margenBarra: 4     // arriba
-    readonly property int margenLados: 6
+    readonly property int margenBarra: 2     // arriba
+    readonly property int margenLados: 2
     readonly property int separacion: 6      // entre islas
     readonly property int radio: 10
     readonly property int radioPanel: 14

@@ -21,13 +21,12 @@ Singleton {
         return escritorios.filter(e => e.output === salida).sort((a, b) => a.idx - b.idx);
     }
 
-    // Título de la ventana activa en una pantalla (cada barra muestra la suya)
-    function tituloEn(salida) {
+    // Ventana activa en una pantalla (cada barra muestra la suya), o null
+    function ventanaEn(salida) {
         const activo = escritorios.find(e => e.output === salida && e.is_active);
         if (!activo || activo.active_window_id === null)
-            return "";
-        const v = ventanas[activo.active_window_id];
-        return v ? v.title : "";
+            return null;
+        return ventanas[activo.active_window_id] ?? null;
     }
 
     function irA(escritorio) {

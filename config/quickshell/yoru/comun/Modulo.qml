@@ -20,6 +20,7 @@ Item {
     property bool apagado: false        // gris (silenciado, desconectado...)
     property color colorAviso: "transparent"
     property bool pulsable: true
+    property bool resaltado: false      // iluminado desde fuera (isla pulsable)
     property alias hover: raton.containsMouse
     property int anchoTexto: 0          // > 0 = recorta el texto con "…"
 
@@ -27,7 +28,7 @@ Item {
     signal rueda(int pasos)
 
     readonly property color colorActual: colorAviso.a > 0 ? colorAviso
-        : (raton.containsMouse && pulsable) ? Tema.blanco
+        : (raton.containsMouse && pulsable) || resaltado ? Tema.blanco
         : apagado ? Tema.tenue : Tema.texto
 
     implicitWidth: fila.implicitWidth + 2 * relleno
@@ -60,6 +61,7 @@ Item {
     MouseArea {
         id: raton
         anchors.fill: parent
+        enabled: modulo.pulsable
         hoverEnabled: true
         acceptedButtons: modulo.pulsable ? (Qt.LeftButton | Qt.RightButton | Qt.MiddleButton) : Qt.NoButton
         cursorShape: modulo.pulsable ? Qt.PointingHandCursor : Qt.ArrowCursor
