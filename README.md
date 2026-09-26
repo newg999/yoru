@@ -19,6 +19,8 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Tienda de apps | `rofi` + `flatpak` + `dnf` | `config/rofi/scripts/tienda.py` |
 | Notificaciones | `mako` | `config/mako/` |
 | Terminal | `kitty` | `config/kitty/` |
+| Shell | `zsh` + Oh My Zsh (autosugerencias y resaltado) · `eza`, `bat`, `zoxide` | `config/zsh/zshrc` → `~/.zshrc` |
+| Info al abrir la terminal | `fastfetch` (pon tu logo en `config/fastfetch/logo.webp`) | `config/fastfetch/` |
 | Bloqueo | `swaylock` + `swayidle` | `config/swaylock/` |
 | Fondo | `swaybg` | `config/niri/scripts/wallpaper.sh` |
 | Apps X11 | `xwayland-satellite` | automático |

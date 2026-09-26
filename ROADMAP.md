@@ -54,10 +54,10 @@ Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de má
 - [ ] Quitar `config/waybar/` cuando ya no haga falta
 
 ## Fase 5 · Terminal y shell
-- [ ] Cambiar a **zsh** o **fish**
+- [x] Cambiar a **zsh** (con Oh My Zsh)
 - [ ] Prompt con **[Starship](https://starship.rs)**
-- [ ] Autosugerencias y resaltado de sintaxis
-- [ ] `fastfetch` con tu logo al abrir la terminal (el clásico para las capturas)
+- [x] Autosugerencias y resaltado de sintaxis
+- [x] `fastfetch` con tu logo al abrir la terminal (el clásico para las capturas)
 - [ ] Herramientas modernas: `eza`, `bat`, `fzf`, `zoxide`, `btop`
 
 ## Fase 6 · Pulir los detalles

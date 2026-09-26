@@ -92,6 +92,10 @@ libnotify                 # notify-send
 htop                      # monitor del sistema (clic en la CPU de la barra)
 btop                      # monitor del sistema más completo y bonito
 fastfetch                 # info del sistema con el logo (el clásico de las capturas)
+zsh                       # la shell de la terminal (config/zsh/zshrc)
+eza                       # ls con iconos y colores (alias ls / ll)
+bat                       # cat con colores (alias cat)
+zoxide                    # z <carpeta>: saltar a carpetas donde ya estuviste
 wget                      # descargar archivos desde la terminal
 fontconfig                # fc-cache
 git

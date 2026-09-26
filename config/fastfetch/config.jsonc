@@ -1,0 +1,40 @@
+// fastfetch — info del sistema al abrir la terminal (lo lanza config/zsh/zshrc)
+// El logo es una imagen tuya: ponla en ~/.config/fastfetch/logo.webp
+// (no se sube al repo). Si no está, sale el logo de Fedora.
+{
+    "logo": {
+        "type": "kitty",
+        "source": "~/.config/fastfetch/logo.webp",
+        "width": 30,
+        "height": 15,
+        "padding": {
+            "top": 1,
+            "left": 2,
+            "right": 4
+        }
+    },
+    "display": {
+        "separator": " → "
+    },
+    "modules": [
+        "title",
+        "separator",
+        "os",
+        "host",
+        "kernel",
+        "uptime",
+        "packages",
+        "shell",
+        "display",
+        "de",
+        "wm",
+        "theme",
+        "icons",
+        "terminal",
+        "cpu",
+        "gpu",
+        "memory",
+        "disk",
+        "battery",
+    ]
+}
