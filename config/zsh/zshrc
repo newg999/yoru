@@ -1,0 +1,33 @@
+# ============================================================================
+#  zsh — la shell de la terminal (kitty)
+#  install.sh lo enlaza en ~/.zshrc y baja Oh My Zsh y los dos plugins.
+#
+#  Lo que es solo tuyo (claves de API, rutas de este equipo...) va en
+#  ~/.zshrc.local, que no está en el repo y se carga al final.
+# ============================================================================
+
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="robbyrussell"
+
+# git: alias (gst, gco...) · autosuggestions: sugiere en gris lo que ya
+# escribiste antes (→ para aceptarlo) · syntax-highlighting: comandos en
+# verde si existen, en rojo si no
+plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
+
+source "$ZSH/oh-my-zsh.sh"
+
+# --- Alias --------------------------------------------------------------------
+# ls con iconos (eza) y cat con colores (bat)
+alias ls="eza --icons"
+alias ll="eza -la --icons"
+alias cat="bat"
+
+# z <trozo de carpeta>: salta a carpetas en las que ya estuviste (zoxide)
+command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
+
+export PATH="$HOME/.npm-global/bin:$PATH"
+
+# Info del sistema con el logo al abrir la terminal (config/fastfetch)
+command -v fastfetch >/dev/null && fastfetch
+
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local

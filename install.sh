@@ -13,7 +13,8 @@
 #    6. Activa servicios (bluetooth, energía) y, si no tienes ninguna,
 #       la pantalla de inicio de sesión (greetd + gtkgreet, con el estilo de Yoru)
 #    7. Pone tema oscuro e iconos Papirus en las apps GTK
-#    8. Valida la configuración de Niri
+#    8. Deja zsh como shell, con Oh My Zsh y sus plugins (config/zsh/)
+#    9. Valida la configuración de Niri
 #
 #  Funciona tanto en una Fedora MÍNIMA (sin escritorio) como en una con
 #  GNOME. Si ya tienes GNOME, se respeta su pantalla de inicio (GDM).
@@ -336,6 +337,8 @@ enlazar_todo() {
     paso "Enlazando configuraciones en $CONFIG_DIR"
     for carpeta in "$REPO"/config/*/; do
         carpeta="${carpeta%/}"
+        # zsh no lee ~/.config/zsh: su archivo se enlaza en ~/.zshrc (shell_zsh)
+        [[ "$(basename "$carpeta")" == "zsh" ]] && continue
         enlazar "$carpeta" "$CONFIG_DIR/$(basename "$carpeta")"
     done
 
@@ -499,6 +502,58 @@ INI
         && ok "Blueman sin icono en la bandeja"
 }
 
+# ---------------------------------------------------------------------- zsh
+# Oh My Zsh y sus dos plugins se bajan de GitHub (no se usan los paquetes de
+# Fedora: Oh My Zsh los busca en su carpeta custom/plugins)
+OMZ_DIR="$HOME/.oh-my-zsh"
+OMZ_PLUGINS=(
+    "zsh-autosuggestions https://github.com/zsh-users/zsh-autosuggestions"
+    "zsh-syntax-highlighting https://github.com/zsh-users/zsh-syntax-highlighting"
+)
+
+shell_zsh() {
+    paso "Terminal: zsh con Oh My Zsh"
+    if ! command -v zsh >/dev/null; then
+        aviso "zsh no está instalado, me lo salto"
+        return
+    fi
+
+    if [[ -d "$OMZ_DIR" ]]; then
+        ok "Oh My Zsh (ya estaba)"
+    elif git clone -q --depth 1 https://github.com/ohmyzsh/ohmyzsh.git "$OMZ_DIR"; then
+        ok "Oh My Zsh en $OMZ_DIR"
+    else
+        aviso "No se pudo bajar Oh My Zsh: la terminal funcionará, pero sin tema ni plugins"
+    fi
+
+    local linea nombre url
+    for linea in "${OMZ_PLUGINS[@]}"; do
+        read -r nombre url <<<"$linea"
+        # Puede que ya lo tengas en plugins/ en vez de en custom/plugins/
+        if [[ -d "$OMZ_DIR/custom/plugins/$nombre" || -d "$OMZ_DIR/plugins/$nombre" ]]; then
+            ok "$nombre (ya estaba)"
+        elif [[ -d "$OMZ_DIR" ]] && git clone -q --depth 1 "$url" "$OMZ_DIR/custom/plugins/$nombre"; then
+            ok "$nombre"
+        else
+            aviso "No se pudo bajar $nombre"
+        fi
+    done
+
+    enlazar "$REPO/config/zsh/zshrc" "$HOME/.zshrc"
+    # Claves de API y demás cosas tuyas: aquí, fuera del repo
+    [[ -e "$HOME/.zshrc.local" ]] || install -m 600 /dev/null "$HOME/.zshrc.local"
+
+    local zsh_ruta
+    zsh_ruta="$(command -v zsh)"
+    if [[ "$(getent passwd "$USER" | cut -d: -f7)" == "$zsh_ruta" ]]; then
+        ok "zsh ya es tu shell"
+    elif sudo usermod -s "$zsh_ruta" "$USER"; then
+        ok "zsh es ahora tu shell (se nota al volver a entrar)"
+    else
+        aviso "No se pudo cambiar la shell. Hazlo a mano con:  chsh -s $zsh_ruta"
+    fi
+}
+
 # ------------------------------------------------------------------ Validar
 validar() {
     paso "Validando la configuración de Niri"
@@ -517,7 +572,7 @@ validar() {
 deshacer() {
     paso "Quitando enlaces que apuntan a $REPO"
     systemctl --user disable yoru-shell.service >/dev/null 2>&1 || true
-    local destinos=("$HOME/.local/share/wallpapers" "$CONFIG_DIR/kdeglobals"
+    local destinos=("$HOME/.local/share/wallpapers" "$CONFIG_DIR/kdeglobals" "$HOME/.zshrc"
                     "$CONFIG_DIR/systemd/user/yoru-shell.service")
     for carpeta in "$REPO"/config/*/; do
         destinos+=("$CONFIG_DIR/$(basename "${carpeta%/}")")
@@ -536,12 +591,14 @@ deshacer() {
         return
     fi
     paso "Restaurando copia $ultima"
-    for item in "$ultima"*; do
+    for item in "$ultima"* "$ultima".zshrc; do
         [[ -e "$item" ]] || continue
         local nombre destino
         nombre="$(basename "$item")"
         if [[ "$nombre" == "wallpapers" ]]; then
             destino="$HOME/.local/share/wallpapers"
+        elif [[ "$nombre" == ".zshrc" ]]; then
+            destino="$HOME/.zshrc"
         else
             destino="$CONFIG_DIR/$nombre"
         fi
@@ -570,6 +627,7 @@ case "${1:-}" in
         bajar_fondos
         activar_barra
         ajustes_gtk
+        shell_zsh
         validar ;;
     "")
         comprobar_sistema
@@ -586,6 +644,7 @@ case "${1:-}" in
         configurar_sistema
         activar_barra
         ajustes_gtk
+        shell_zsh
         validar ;;
     *)
         error "Opción desconocida: $1  (usa --ayuda)"
