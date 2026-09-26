@@ -66,7 +66,9 @@ binds {
 
     // ------------------------------------------------------------ Ventanas
     Mod+Q repeat=false { close-window; }
-    Mod+O repeat=false { toggle-overview; }
+    // Overview (todas las ventanas en pequeño): la barra se esconde mientras
+    Mod+Tab repeat=false hotkey-overlay-title="Overview" { toggle-overview; }
+    Mod+O   repeat=false { toggle-overview; }
 
     // Mover el foco (flechas o hjkl)
     Mod+Left  { focus-column-left; }
@@ -144,7 +146,8 @@ binds {
     Mod+Shift+7 { move-column-to-workspace 7; }
     Mod+Shift+8 { move-column-to-workspace 8; }
     Mod+Shift+9 { move-column-to-workspace 9; }
-    Mod+Tab     { focus-workspace-previous; }
+    // Escritorio anterior: la tecla º (al lado del 1 en el teclado español)
+    Mod+masculine { focus-workspace-previous; }
 
     Mod+Page_Down { focus-workspace-down; }
     Mod+Page_Up   { focus-workspace-up; }
