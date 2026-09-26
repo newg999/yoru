@@ -130,6 +130,7 @@ El script **no copia** archivos: crea *enlaces simbólicos*. `~/.config/niri` ap
 | Colores, fuente y medidas de la barra y los paneles | `config/quickshell/yoru/comun/Tema.qml` |
 | Centro de control (wifi, bluetooth, audio) | `config/quickshell/yoru/paneles/CentroControl.qml` |
 | Panel central (resumen, multimedia, clima) | `config/quickshell/yoru/paneles/PanelCentral.qml` |
+| Monitor del sistema (clic en CPU/RAM) | `config/quickshell/yoru/paneles/Monitor.qml` y `scripts/monitor.py` |
 | Lanzador de apps (`Mod+Space`, sale por la izquierda) | `config/quickshell/yoru/paneles/Lanzador.qml` |
 | Dónde vives (para el clima) | `config/quickshell/yoru/lugar.json` (copia `lugar.json.example`; sin él, se adivina por tu IP) |
 | Fondos de pantalla | Echa imágenes en `wallpapers/`, o añade uno de wallhaven.cc a `wallpapers/wallhaven.txt` y ejecuta `wallpapers/descargar.sh` |

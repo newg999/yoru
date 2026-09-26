@@ -47,6 +47,7 @@ Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de má
 - [x] Visualizador de audio (cava) junto a la canción
 - [x] Pestaña Multimedia: carátula grande, progreso, aleatorio/repetir, elegir reproductor, salida y volumen
 - [x] Bandeja (Telegram, Discord...) junto a CPU y RAM, como en DMS
+- [x] Monitor del sistema (clic en CPU/RAM): procesos agrupados por app, buscar, ordenar, cerrar; gráficas de CPU, memoria y red
 - [ ] Llevar a Quickshell el resto de menús de rofi: apagado, portapapeles, fondos
 - [ ] Tooltips en la barra (calendario al pasar por el reloj, detalles de red...)
 - [ ] Quitar `config/waybar/` cuando ya no haga falta

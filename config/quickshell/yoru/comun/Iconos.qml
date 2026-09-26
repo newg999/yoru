@@ -37,11 +37,12 @@ Singleton {
     ]
     readonly property string generico: "󰣆"
 
-    function app(appId) {
+    // siNo: el icono si ninguna regla coincide (por defecto, el genérico)
+    function app(appId, siNo) {
         const id = (appId ?? "").toLowerCase();
         for (const [trozos, icono] of reglas)
             if (trozos.some(t => id.includes(t)))
                 return icono;
-        return generico;
+        return siNo ?? generico;
     }
 }

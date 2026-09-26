@@ -17,6 +17,9 @@ Singleton {
     property real memTotal: 0    // GiB
     property int temperatura: 0  // °C de la CPU (0 = no se sabe)
     property int encendido: 0    // segundos desde que arrancó el equipo
+    // Últimos 5 minutos (una lectura cada 5 s), de 0 a 1: gráficas del monitor
+    property var historialCpu: []
+    property var historialMem: []
 
     property var _anterior: null // último "cpu ..." de /proc/stat
 
@@ -52,6 +55,11 @@ Singleton {
             memTotal = totalKb / 1048576;
             memUsada = (totalKb - libreKb) / 1048576;
             memoria = Math.round(100 * (totalKb - libreKb) / totalKb);
+        }
+
+        if (_anterior && n.length) {
+            historialCpu = [...historialCpu, cpu / 100].slice(-60);
+            historialMem = [...historialMem, memoria / 100].slice(-60);
         }
     }
 

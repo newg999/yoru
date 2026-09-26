@@ -40,11 +40,16 @@ ShellRoot {
         model: Quickshell.screens
         Lanzador {}
     }
+    Variants {
+        model: Quickshell.screens
+        Monitor {}
+    }
 
     // Abrir paneles desde fuera (atajos de niri, scripts...):
     //   qs -c yoru ipc call panel alternar conexion wifi     (o bluetooth, audio)
     //   qs -c yoru ipc call panel alternar centro resumen     (o clima)
     //   qs -c yoru ipc call panel alternar lanzador ""
+    //   qs -c yoru ipc call panel alternar monitor procesos   (o rendimiento)
     //   qs -c yoru ipc call panel cerrar
     IpcHandler {
         target: "panel"

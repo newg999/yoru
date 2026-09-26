@@ -50,6 +50,7 @@ qt6-qtwayland             # apps Qt (VLC, Telegram...) nativas en Wayland
 qt5-qtwayland
 libva-intel-media-driver  # aceleración de vídeo en gráficas Intel (menos CPU y batería)
 mate-polkit               # ventana que pide la contraseña de administrador
+python3                   # scripts de los menús y del monitor del sistema
 
 # --- Escritorio --------------------------------------------------------------
 quickshell                # barra y paneles (del COPR avengemedia/danklinux)
