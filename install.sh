@@ -455,8 +455,13 @@ activar_barra() {
     paso "Barra y paneles (Quickshell)"
     enlazar "$REPO/system/systemd/yoru-shell.service" "$CONFIG_DIR/systemd/user/yoru-shell.service"
     systemctl --user daemon-reload >/dev/null 2>&1 || true
-    # La barra antigua (waybar) ya no hace falta: si estaba activa, se apaga
+    # Otras barras ya no hacen falta: si estaban activas, se apagan (no se
+    # desinstalan). Para volver a DMS:  systemctl --user enable dms
     systemctl --user disable waybar.service >/dev/null 2>&1 || true
+    if systemctl --user is-enabled dms.service >/dev/null 2>&1; then
+        systemctl --user disable dms.service >/dev/null 2>&1 \
+            && ok "DankMaterialShell desactivado (sigue instalado)"
+    fi
     if systemctl --user enable yoru-shell.service >/dev/null 2>&1; then
         ok "Servicio yoru-shell activado"
     else
