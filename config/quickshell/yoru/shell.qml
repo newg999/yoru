@@ -1,15 +1,20 @@
+//@ pragma UseQApplication
+//@ pragma IconTheme Papirus-Dark
 // ============================================================================
 //  Yoru 夜 · escritorio en Quickshell
 //
 //  Probar sin instalar:     qs -p ~/dotfiles/config/quickshell/yoru
 //  Instalado (enlazado):    qs -c yoru
 //  Recargar: se recarga solo al guardar cualquier archivo .qml
+//  (si creas un archivo nuevo en comun/, reinicia: systemctl --user restart yoru-shell)
 //
 //    comun/    tema, piezas reutilizables y servicios (niri, cpu...)
 //    barra/    la barra y sus islas
 //    paneles/  lo que se despliega al pulsar la barra
+//
+//  Arriba del todo: menús de la bandeja con estilo Qt y tema de iconos de
+//  las apps (el mismo Papirus que install.sh pone en GTK)
 // ============================================================================
-//@ pragma UseQApplication
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -27,9 +32,19 @@ ShellRoot {
         model: Quickshell.screens
         CentroControl {}
     }
+    Variants {
+        model: Quickshell.screens
+        PanelCentral {}
+    }
+    Variants {
+        model: Quickshell.screens
+        Lanzador {}
+    }
 
     // Abrir paneles desde fuera (atajos de niri, scripts...):
-    //   qs -c yoru ipc call panel alternar conexion wifi
+    //   qs -c yoru ipc call panel alternar conexion wifi     (o bluetooth, audio)
+    //   qs -c yoru ipc call panel alternar centro resumen     (o clima)
+    //   qs -c yoru ipc call panel alternar lanzador ""
     //   qs -c yoru ipc call panel cerrar
     IpcHandler {
         target: "panel"

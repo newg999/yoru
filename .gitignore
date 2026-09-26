@@ -1,5 +1,7 @@
 # Ajustes solo de este equipo (monitores, escala...)
 config/niri/local.kdl
+# Dónde vives, para el clima (copia lugar.json.example)
+config/quickshell/yoru/lugar.json
 
 # Basura habitual
 *.bak

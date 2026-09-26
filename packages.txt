@@ -53,6 +53,7 @@ mate-polkit               # ventana que pide la contraseña de administrador
 
 # --- Escritorio --------------------------------------------------------------
 quickshell                # barra y paneles (del COPR avengemedia/danklinux)
+cava                      # visualizador de audio junto a la canción
 rofi                      # lanzador de apps y menús (wifi, bluetooth...)
 ImageMagick               # miniaturas del selector de fondos
 papirus-icon-theme        # iconos

@@ -1,9 +1,9 @@
 // ============================================================================
 //  Barra — una por pantalla. La barra en sí es invisible: solo se ven las islas.
 //
-//    [escritorios] [título]      [reloj] [música]      [recursos] [conexión] [bandeja]
+//    [apps] [escritorios] [título]    [música] [reloj] [clima]    [recursos] [conexión] [bandeja]
 //
-//  El reloj va siempre en el centro exacto y la música se coloca a su derecha.
+//  El reloj va siempre en el centro exacto; la música y el clima, a sus lados.
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -37,6 +37,7 @@ PanelWindow {
             anchors { left: parent.left; verticalCenter: parent.verticalCenter }
             spacing: Tema.separacion
 
+            BotonApps { pantalla: barra.modelData }
             Escritorios { salida: barra.modelData.name }
             Titulo {
                 salida: barra.modelData.name
@@ -45,13 +46,19 @@ PanelWindow {
         }
 
         // ------------------------------------------------------------- Centro
+        Musica {
+            anchors { right: reloj.left; rightMargin: Tema.separacion; verticalCenter: parent.verticalCenter }
+            pantalla: barra.modelData
+            maximo: barra.pequena ? 200 : 360
+        }
         Reloj {
             id: reloj
             anchors.centerIn: parent
+            pantalla: barra.modelData
         }
-        Musica {
+        Clima {
             anchors { left: reloj.right; leftMargin: Tema.separacion; verticalCenter: parent.verticalCenter }
-            maximo: barra.pequena ? 240 : 480
+            pantalla: barra.modelData
         }
 
         // ------------------------------------------------------------ Derecha
