@@ -68,7 +68,7 @@ PanelWindow {
             layoutDirection: Qt.LeftToRight
 
             Bandeja { ventana: barra }
-            Recursos {}
+            Recursos { pantalla: barra.modelData }
             Conexion { pantalla: barra.modelData }
         }
     }

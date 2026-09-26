@@ -1,12 +1,15 @@
 // CPU, memoria y batería (la batería se oculta en equipos sin ella)
+// Un solo botón: clic = monitor del sistema (procesos y rendimiento)
 import QtQuick
-import Quickshell
 import Quickshell.Services.UPower
 import qs.comun
 
 Isla {
     id: isla
+    required property var pantalla
     relleno: 7
+    pulsable: true
+    onClic: Paneles.alternar("monitor", isla.pantalla, "procesos")
 
     readonly property var bateria: UPower.displayDevice
     readonly property bool hayBateria: bateria && bateria.isLaptopBattery
@@ -18,12 +21,14 @@ Isla {
     Modulo {
         icono: "󰘚"
         texto: Sistema.cpu + "%"
-        onClic: Quickshell.execDetached(["kitty", "-e", "htop"])
+        pulsable: false
+        resaltado: isla.hover
     }
     Modulo {
         icono: "󰍛"
         texto: Sistema.memoria + "%"
         pulsable: false
+        resaltado: isla.hover
     }
     Modulo {
         visible: isla.hayBateria
@@ -32,6 +37,7 @@ Isla {
         icono: isla.cargando ? "󰂄" : iconos[Math.min(9, Math.floor(carga / 10))]
         texto: carga + "%"
         pulsable: false
+        resaltado: isla.hover
         colorAviso: isla.cargando ? "transparent"
             : carga <= 10 ? Tema.rojo
             : carga <= 25 ? Tema.amarillo : "transparent"
