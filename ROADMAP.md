@@ -40,7 +40,11 @@ Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de má
 - [x] Menús con rofi: wifi, bluetooth, calendario, apagado y portapapeles
 - [x] Menú de audio: salida, micrófono y volumen
 - [ ] Más menús: perfiles de energía, brillo
-- [ ] *(Avanzado)* Probar alternativas a Waybar: **[Quickshell](https://quickshell.org)**, **[Ironbar](https://github.com/JakeStanger/ironbar)** o **[eww](https://github.com/elkowar/eww)**
+- [x] Pasar la barra de Waybar a **[Quickshell](https://quickshell.org)**: misma estética, con paneles de verdad
+- [x] Centro de control (Quickshell): wifi, bluetooth, volumen, micrófono y salidas de audio
+- [ ] Llevar a Quickshell el resto de menús de rofi: calendario, apagado, portapapeles, fondos
+- [ ] Tooltips en la barra (calendario al pasar por el reloj, detalles de red...)
+- [ ] Quitar `config/waybar/` cuando ya no haga falta
 
 ## Fase 5 · Terminal y shell
 - [ ] Cambiar a **zsh** o **fish**
@@ -68,6 +72,6 @@ Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de má
 ### Recursos útiles
 - Documentación de Niri: <https://niri-wm.github.io/niri/>
 - Configs de otros usuarios: busca `niri dotfiles` en GitHub
-- Wiki de Waybar: <https://github.com/Alexays/Waybar/wiki>
+- Documentación de Quickshell: <https://quickshell.org/docs/>
 - Iconos Nerd Font: <https://www.nerdfonts.com/cheat-sheet>
 - Inspiración: <https://www.reddit.com/r/unixporn/>

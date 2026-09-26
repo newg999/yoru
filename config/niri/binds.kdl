@@ -21,9 +21,9 @@ binds {
 
     // --------------------------------------------------------- Menús propios
     Mod+Shift+BackSpace hotkey-overlay-title="Menú de apagado" { spawn-sh "~/.config/rofi/scripts/apagado.sh"; }
-    Mod+Alt+N           hotkey-overlay-title="Wifi"            { spawn-sh "~/.config/rofi/scripts/wifi.py"; }
-    Mod+Alt+B           hotkey-overlay-title="Bluetooth"       { spawn-sh "~/.config/rofi/scripts/bluetooth.py"; }
-    Mod+Alt+A           hotkey-overlay-title="Audio"           { spawn-sh "~/.config/rofi/scripts/audio.py"; }
+    Mod+Alt+N           hotkey-overlay-title="Wifi"            { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "conexion" "wifi"; }
+    Mod+Alt+B           hotkey-overlay-title="Bluetooth"       { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "conexion" "bluetooth"; }
+    Mod+Alt+A           hotkey-overlay-title="Audio"           { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "conexion" "audio"; }
     Mod+Alt+C           hotkey-overlay-title="Calendario"      { spawn-sh "~/.config/rofi/scripts/calendario.py"; }
     Mod+Alt+V           hotkey-overlay-title="Portapapeles"    { spawn-sh "~/.config/rofi/scripts/portapapeles.sh"; }
     Mod+Alt+S           hotkey-overlay-title="Tienda de apps"  { spawn-sh "~/.config/rofi/scripts/tienda.py"; }

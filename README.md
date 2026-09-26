@@ -13,7 +13,7 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Pieza | Programa | Configuración |
 |---|---|---|
 | Compositor | `niri` | `config/niri/` |
-| Barra | `waybar` | `config/waybar/` |
+| Barra y paneles | `quickshell` | `config/quickshell/yoru/` |
 | Lanzador y menús | `rofi` | `config/rofi/` |
 | Capturas con editor | `slurp` + `swappy` | `config/swappy/` |
 | Tienda de apps | `rofi` + `flatpak` + `dnf` | `config/rofi/scripts/tienda.py` |
@@ -126,15 +126,16 @@ El script **no copia** archivos: crea *enlaces simbólicos*. `~/.config/niri` ap
 | Monitores y escala | `config/niri/local.kdl` (copia `local.kdl.example`) |
 | Pantalla de inicio de sesión | `system/greetd/config.toml` (se copia a `/etc`, vuelve a ejecutar `./install.sh`) |
 | Paquetes que se instalan | `packages.txt` |
-| Módulos de la barra | `config/waybar/modulos.jsonc` (y `config.jsonc` para lo que cambia en cada pantalla) |
-| Aspecto de la barra | `config/waybar/style.css` |
+| Qué sale en la barra y en qué orden | `config/quickshell/yoru/barra/Barra.qml` |
+| Colores, fuente y medidas de la barra y los paneles | `config/quickshell/yoru/comun/Tema.qml` |
+| Centro de control (wifi, bluetooth, audio) | `config/quickshell/yoru/paneles/CentroControl.qml` |
 | Fondos de pantalla | Echa imágenes en `wallpapers/`, o añade uno de wallhaven.cc a `wallpapers/wallhaven.txt` y ejecuta `wallpapers/descargar.sh` |
 
 Niri recarga su configuración **al guardar**. Para el resto:
 
 ```bash
 niri validate            # comprobar la config de Niri
-systemctl --user restart waybar   # reiniciar la barra
+systemctl --user restart yoru-shell   # reiniciar la barra (se recarga sola al guardar un .qml)
 makoctl reload           # recargar notificaciones
 niri msg windows         # ver el app-id de las ventanas abiertas (para reglas)
 niri msg outputs         # ver tus monitores

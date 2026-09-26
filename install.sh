@@ -101,6 +101,22 @@ repo_brave() {
     fi
 }
 
+# Quickshell (la barra y los paneles) no está en los repositorios de Fedora:
+# viene del COPR de DankLinux, que lo mantiene al día para Fedora
+repo_quickshell() {
+    paso "Repositorio de Quickshell (COPR)"
+    if dnf repolist 2>/dev/null | grep -q "avengemedia:danklinux"; then
+        ok "Ya estaba añadido"
+        return
+    fi
+    sudo dnf install -y dnf5-plugins >/dev/null 2>&1 || true
+    if sudo dnf copr enable -y avengemedia/danklinux >/dev/null 2>&1; then
+        ok "Añadido"
+    else
+        aviso "No se pudo añadir. Sin Quickshell no habrá barra."
+    fi
+}
+
 # Flathub completo: Fedora trae una versión filtrada con solo unas pocas apps
 repo_flathub() {
     paso "Flathub (apps para la tienda)"
@@ -433,14 +449,18 @@ pantalla_login() {
 }
 
 # -------------------------------------------------------------------- Barra
-# Waybar arranca como servicio de usuario: si se cae, systemd la levanta.
-# (el servicio ya viene con waybar y no se activa dentro de GNOME)
+# La barra y los paneles (Quickshell) arrancan como servicio de usuario:
+# si se caen, systemd los levanta. Solo arrancan con niri, no en GNOME.
 activar_barra() {
-    paso "Barra (waybar)"
-    if systemctl --user enable waybar.service >/dev/null 2>&1; then
-        ok "Servicio de usuario activado"
+    paso "Barra y paneles (Quickshell)"
+    enlazar "$REPO/system/systemd/yoru-shell.service" "$CONFIG_DIR/systemd/user/yoru-shell.service"
+    systemctl --user daemon-reload >/dev/null 2>&1 || true
+    # La barra antigua (waybar) ya no hace falta: si estaba activa, se apaga
+    systemctl --user disable waybar.service >/dev/null 2>&1 || true
+    if systemctl --user enable yoru-shell.service >/dev/null 2>&1; then
+        ok "Servicio yoru-shell activado"
     else
-        aviso "No se pudo activar waybar.service (¿está instalado waybar?)"
+        aviso "No se pudo activar yoru-shell.service (¿está instalado quickshell?)"
     fi
 }
 
@@ -491,7 +511,9 @@ validar() {
 # ------------------------------------------------------------------ Deshacer
 deshacer() {
     paso "Quitando enlaces que apuntan a $REPO"
-    local destinos=("$HOME/.local/share/wallpapers" "$CONFIG_DIR/kdeglobals")
+    systemctl --user disable yoru-shell.service >/dev/null 2>&1 || true
+    local destinos=("$HOME/.local/share/wallpapers" "$CONFIG_DIR/kdeglobals"
+                    "$CONFIG_DIR/systemd/user/yoru-shell.service")
     for carpeta in "$REPO"/config/*/; do
         destinos+=("$CONFIG_DIR/$(basename "${carpeta%/}")")
     done
@@ -548,6 +570,7 @@ case "${1:-}" in
         comprobar_sistema
         actualizar_sistema
         repo_brave
+        repo_quickshell
         instalar_paquetes
         cliphist_si_falta
         repo_flathub
