@@ -10,10 +10,9 @@
 #  Escribe en ~/.local/state/yoru/tema/ un archivo por programa. Las configs
 #  del repo los incluyen y, si no existen, usan sus colores de siempre:
 #    niri.kdl    ← config/niri/config.kdl      (include optional=true)
-#    rofi.rasi   ← config/rofi/tema.rasi       (@import)
 #    mako        ← config/mako/config          (include=)
 #    kitty.conf  ← config/kitty/kitty.conf     (include)
-#    colores.json ← Quickshell (comun/Tema.qml) y los menús de rofi
+#    colores.json ← Quickshell (comun/Tema.qml)
 #  Fuera del repo a propósito: cambiar de fondo no deja cambios en git.
 #
 #  En modo fondo, rojo y amarillo no cambian: son los avisos y tienen que
@@ -93,21 +92,6 @@ layout {{
 }}
 overview {{
     backdrop-color "{p['velo']}"
-}}
-""")
-
-    escribir("rofi.rasi", f"""/* Generado por tema/aplicar.py ({modo}). No lo edites: se sobrescribe. */
-* {{
-    fondo:        {alfa(p['fondo'], 0.9)};
-    fondo-alt:    {alfa(a, 0.06)};
-    seleccion:    {alfa(a, 0.9)};
-    texto-sel:    {p['fondo']};
-    texto:        {p['texto']};
-    texto-tenue:  {p['gris']};
-    acento:       {a};
-    borde:        {alfa(a, 0.8)};
-    activo-fondo: {alfa(a, 0.12)};
-    urgente:      {p['rojo']};
 }}
 """)
 

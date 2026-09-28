@@ -56,7 +56,6 @@ python3                   # scripts de los menús y del monitor del sistema
 quickshell                # barra y paneles (del COPR avengemedia/danklinux)
 cava                      # visualizador de audio junto a la canción
 matugen                   # colores sacados del fondo: yoru tema fondo (COPR danklinux)
-rofi                      # lanzador de apps y menús (wifi, bluetooth...)
 ImageMagick               # miniaturas del selector de fondos
 papirus-icon-theme        # iconos
 adw-gtk3-theme            # tema oscuro para apps GTK3 (LibreOffice, ajustes de red...)

@@ -384,6 +384,13 @@ enlazar_todo() {
         [[ "$(basename "$carpeta")" == "zsh" ]] && continue
         enlazar "$carpeta" "$CONFIG_DIR/$(basename "$carpeta")"
     done
+    # Enlaces a carpetas que ya no están en el repo (waybar, rofi...): se quitan
+    local enlace
+    for enlace in "$CONFIG_DIR"/*; do
+        if [[ -L "$enlace" && ! -e "$enlace" && "$(readlink "$enlace")" == "$REPO"/config/* ]]; then
+            rm "$enlace" && ok "Quitado $enlace (ya no se usa)"
+        fi
+    done
 
     # Colores oscuros para las apps KDE (Okular): es un archivo, no una carpeta
     enlazar "$REPO/config/kdeglobals" "$CONFIG_DIR/kdeglobals"
@@ -395,7 +402,7 @@ enlazar_todo() {
     enlazar "$REPO/bin/yoru" "$HOME/.local/bin/yoru"
 
     # Git ya guarda que son ejecutables; esto es solo por si vino en un .zip
-    chmod +x "$REPO"/config/niri/scripts/*.sh "$REPO"/config/rofi/scripts/*.{sh,py} \
+    chmod +x "$REPO"/config/niri/scripts/*.sh "$REPO"/config/quickshell/yoru/scripts/* \
         "$REPO"/wallpapers/descargar.sh "$REPO"/bin/yoru 2>/dev/null || true
     mkdir -p "$HOME/Pictures/Screenshots"
 }
@@ -603,7 +610,7 @@ shell_zsh() {
 
 # -------------------------------------------------------------------- Tema
 # Genera los archivos de colores (~/.local/state/yoru/tema/) que incluyen
-# niri, rofi, mako, kitty y la barra. Respeta el modo que ya tuvieras.
+# niri, mako, kitty y la barra. Respeta el modo que ya tuvieras.
 tema_colores() {
     paso "Colores del tema (yoru tema)"
     if python3 "$REPO/tema/aplicar.py" >/dev/null; then

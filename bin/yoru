@@ -117,7 +117,7 @@ cmd_doctor() {
 
     paso "Programas"
     local p faltan=()
-    for p in niri qs rofi mako swaybg swaylock swayidle kitty grim slurp swappy \
+    for p in niri qs mako swaybg swaylock swayidle kitty grim slurp swappy \
              wl-paste cliphist brightnessctl playerctl xwayland-satellite; do
         command -v "$p" >/dev/null || faltan+=("$p")
     done

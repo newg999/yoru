@@ -94,10 +94,6 @@ layer-rule {
     place-within-backdrop true
 }
 
-// Rofi (lanzador y menús) SIN desenfoque: ocupa la pantalla entera para
-// poder cerrarse con un clic fuera (ver tema.rasi) y se desenfocaría todo.
-// Para compensar, su fondo es casi opaco.
-
 // Las notificaciones no salen en grabaciones de pantalla
 // (sin blur: mako dibuja todas en una misma capa y el desenfoque
 //  se vería como un rectángulo más grande que la notificación)
