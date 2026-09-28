@@ -5,6 +5,7 @@
 //
 //  El reloj va siempre en el centro exacto; la música y el clima, a sus lados.
 //  Con el overview abierto (Mod+Tab) la barra sube y desaparece, como en DMS.
+//  Detrás de cada isla, el fondo se ve desenfocado (como en los paneles).
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -29,6 +30,23 @@ PanelWindow {
     mask: Niri.overview ? vacia : null
     Region { id: vacia }
 
+    // Desenfoque detrás de cada isla (la barra en sí es transparente: si se
+    // desenfocara entera, se vería una franja borrosa de lado a lado).
+    // Fuera durante el overview, que es cuando la barra se esconde.
+    BackgroundEffect.blurRegion: Niri.overview ? null : islas
+    Region {
+        id: islas
+        Region { item: apps; radius: Tema.radio }
+        Region { item: escritorios; radius: Tema.radio }
+        Region { item: titulo; radius: Tema.radio }
+        Region { item: musica; radius: Tema.radio }
+        Region { item: reloj; radius: Tema.radio }
+        Region { item: clima; radius: Tema.radio }
+        Region { item: bandeja; radius: Tema.radio }
+        Region { item: recursos; radius: Tema.radio }
+        Region { item: conexion; radius: Tema.radio }
+    }
+
     Item {
         id: contenido
         opacity: Niri.overview ? 0 : 1
@@ -50,9 +68,10 @@ PanelWindow {
             anchors { left: parent.left; verticalCenter: parent.verticalCenter }
             spacing: Tema.separacion
 
-            BotonApps { pantalla: barra.modelData }
-            Escritorios { salida: barra.modelData.name }
+            BotonApps { id: apps; pantalla: barra.modelData }
+            Escritorios { id: escritorios; salida: barra.modelData.name }
             Titulo {
+                id: titulo
                 salida: barra.modelData.name
                 maximo: barra.pequena ? 300 : 420
             }
@@ -60,6 +79,7 @@ PanelWindow {
 
         // ------------------------------------------------------------- Centro
         Musica {
+            id: musica
             anchors { right: reloj.left; rightMargin: Tema.separacion; verticalCenter: parent.verticalCenter }
             pantalla: barra.modelData
             maximo: barra.pequena ? 140 : 200
@@ -70,6 +90,7 @@ PanelWindow {
             pantalla: barra.modelData
         }
         Clima {
+            id: clima
             anchors { left: reloj.right; leftMargin: Tema.separacion; verticalCenter: parent.verticalCenter }
             pantalla: barra.modelData
         }
@@ -80,9 +101,9 @@ PanelWindow {
             spacing: Tema.separacion
             layoutDirection: Qt.LeftToRight
 
-            Bandeja { ventana: barra }
-            Recursos { pantalla: barra.modelData }
-            Conexion { pantalla: barra.modelData }
+            Bandeja { id: bandeja; ventana: barra }
+            Recursos { id: recursos; pantalla: barra.modelData }
+            Conexion { id: conexion; pantalla: barra.modelData }
         }
     }
 }

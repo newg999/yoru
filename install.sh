@@ -13,7 +13,7 @@
 #       y pregunta si quieres bajar los fondos de pantalla
 #    6. Activa servicios (bluetooth, energía) y, si no tienes ninguna,
 #       la pantalla de inicio de sesión (greetd + gtkgreet, con el estilo de Yoru)
-#    7. Pone tema oscuro e iconos Papirus en las apps GTK
+#    7. Pone tema oscuro, iconos Papirus y cursor Bibata en las apps GTK
 #    8. Deja zsh como shell, con Oh My Zsh y sus plugins (config/zsh/)
 #    9. Genera los colores del tema (yoru tema) y valida la config de Niri
 #
@@ -42,6 +42,11 @@ CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 BACKUP_ROOT="$HOME/.local/state/yoru/backups"
 BACKUP_DIR="$BACKUP_ROOT/$(date +%Y%m%d-%H%M%S)"
 FONT_DIR="$HOME/.local/share/fonts/JetBrainsMonoNerd"
+# Cursor Bibata Modern Ice (blanco, a juego con el tema): no está en los
+# repositorios de Fedora, se baja de su GitHub
+CURSOR_TEMA="Bibata-Modern-Ice"
+CURSOR_URL="https://github.com/ful1e5/Bibata_Cursor/releases/download/v2.0.7/$CURSOR_TEMA.tar.xz"
+CURSOR_DIR="$HOME/.local/share/icons"
 FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz"
 BRAVE_REPO="https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo"
 
@@ -353,6 +358,21 @@ instalar_fuente() {
     fi
 }
 
+# ------------------------------------------------------------------- Cursor
+instalar_cursor() {
+    paso "Cursor $CURSOR_TEMA"
+    if [[ -d "$CURSOR_DIR/$CURSOR_TEMA/cursors" ]]; then
+        ok "Ya estaba instalado"
+        return
+    fi
+    mkdir -p "$CURSOR_DIR"
+    if curl -fL --progress-bar "$CURSOR_URL" | tar -xJ -C "$CURSOR_DIR"; then
+        ok "Instalado en $CURSOR_DIR"
+    else
+        aviso "No se pudo descargar: se queda el cursor de siempre"
+    fi
+}
+
 # ------------------------------------------------------------------- Enlaces
 # enlazar <origen en el repo> <destino en el sistema>
 enlazar() {
@@ -540,15 +560,23 @@ ajustes_gtk() {
     # tema claro). adw-gtk3-dark además se ve igual que las apps GTK4.
     gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark'
     gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark'
+    # El cursor, también en las apps (niri lo pone en config.kdl → cursor)
+    gsettings set org.gnome.desktop.interface cursor-theme "$CURSOR_TEMA"
+    gsettings set org.gnome.desktop.interface cursor-size 24
     # Lo mismo para las apps GTK3 que van por Xwayland (leen este archivo)
     mkdir -p "$HOME/.config/gtk-3.0"
-    cat > "$HOME/.config/gtk-3.0/settings.ini" <<'INI'
+    cat > "$HOME/.config/gtk-3.0/settings.ini" <<INI
 [Settings]
 gtk-theme-name=adw-gtk3-dark
 gtk-application-prefer-dark-theme=true
 gtk-icon-theme-name=Papirus-Dark
+gtk-cursor-theme-name=$CURSOR_TEMA
+gtk-cursor-theme-size=24
 INI
-    ok "Tema oscuro (adw-gtk3-dark) e iconos Papirus-Dark"
+    # Apps X11 antiguas (Xwayland): leen el cursor «default»
+    mkdir -p "$HOME/.icons/default"
+    printf '[Icon Theme]\nInherits=%s\n' "$CURSOR_TEMA" > "$HOME/.icons/default/index.theme"
+    ok "Tema oscuro (adw-gtk3-dark), iconos Papirus-Dark y cursor $CURSOR_TEMA"
 
     # Blueman sin icono en la bandeja (la barra ya tiene su módulo).
     # El agente que muestra el PIN al emparejar sigue funcionando.
@@ -689,6 +717,7 @@ case "${1:-}" in
     --sin-paquetes)
         comprobar_sistema
         instalar_fuente
+        instalar_cursor
         enlazar_todo
         bajar_fondos
         activar_barra
@@ -707,6 +736,7 @@ case "${1:-}" in
         repo_flathub
         drivers_nvidia
         instalar_fuente
+        instalar_cursor
         enlazar_todo
         bajar_fondos
         configurar_sistema
