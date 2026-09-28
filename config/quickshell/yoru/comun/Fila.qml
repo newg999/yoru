@@ -13,6 +13,7 @@ Rectangle {
     property string detalle: ""          // segunda línea, en gris
     property bool seleccionada: false    // en uso / conectada
     property bool ocupada: false         // conectando... (el icono parpadea)
+    property int formato: Text.AutoText  // Text.PlainText si el título es texto ajeno
     default property alias extras: botones.data
     readonly property alias hover: raton.containsMouse
     readonly property color colorTexto: seleccionada ? Tema.oscuro : Tema.texto
@@ -59,6 +60,7 @@ Rectangle {
         Texto {
             width: parent.width
             text: fila.titulo
+            textFormat: fila.formato
             color: fila.colorTexto
             font.bold: fila.seleccionada
             font.pixelSize: 13
