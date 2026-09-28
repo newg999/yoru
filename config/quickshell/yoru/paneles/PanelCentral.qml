@@ -24,7 +24,12 @@ Panel {
     ancho: 780
 
     readonly property string pestana: ["multimedia", "clima"].includes(Paneles.seccion) ? Paneles.seccion : "resumen"
-    onAbiertoChanged: if (abierto) calendario.volverAHoy()
+    onAbiertoChanged: {
+        if (abierto) {
+            calendario.volverAHoy();
+            calendario.forceActiveFocus();
+        }
+    }
 
     SystemClock {
         id: reloj

@@ -1,5 +1,6 @@
 // ============================================================================
-//  Calendario del mes · 󰅁 󰅂 o rueda = cambiar de mes · clic en el título = hoy
+//  Calendario del mes · 󰅁 󰅂, rueda o ← → = cambiar de mes · clic en el
+//  título o Inicio = hoy · 󰃭 abre la app Calendario (eventos)
 //  Hoy va en blanco con el número oscuro, como la fila elegida de los menús.
 // ============================================================================
 import QtQuick
@@ -46,6 +47,19 @@ Item {
         onWheel: e => cal.mover(e.angleDelta.y > 0 ? -1 : 1)
     }
 
+    // Teclado (el panel central le da el foco al abrirse)
+    focus: true
+    Keys.onLeftPressed: mover(-1)
+    Keys.onRightPressed: mover(1)
+    Keys.onUpPressed: mover(-12)
+    Keys.onDownPressed: mover(12)
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Home) {
+            volverAHoy();
+            event.accepted = true;
+        }
+    }
+
     Column {
         anchors.fill: parent
         spacing: 4
@@ -74,9 +88,20 @@ Item {
                 }
             }
             BotonIcono {
+                id: siguiente
                 anchors { right: parent.right; verticalCenter: parent.verticalCenter }
                 icono: "󰅂"
                 onClic: cal.mover(1)
+            }
+            BotonIcono {
+                anchors { right: siguiente.left; verticalCenter: parent.verticalCenter }
+                icono: "󰃭"
+                ayuda: "Abrir Calendario (eventos)"
+                colorIcono: Tema.gris
+                onClic: {
+                    Quickshell.execDetached(["gnome-calendar"]);
+                    Paneles.cerrar();
+                }
             }
         }
 

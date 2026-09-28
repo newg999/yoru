@@ -49,7 +49,7 @@ Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de má
 - [x] Bandeja (Telegram, Discord...) junto a CPU y RAM, como en DMS
 - [x] Monitor del sistema (clic en CPU/RAM): procesos agrupados por app, buscar, ordenar, cerrar; gráficas de CPU, memoria y red
 - [x] Mod+Tab abre el overview y la barra se esconde mientras (como en DMS)
-- [x] Llevar a Quickshell el resto de menús de rofi: apagado, portapapeles, fondos
+- [x] Llevar a Quickshell el resto de menús de rofi: apagado, portapapeles, fondos, calendario y tienda
 - [ ] Tooltips en la barra (calendario al pasar por el reloj, detalles de red...)
 - [x] Quitar `config/waybar/` cuando ya no haga falta
 
