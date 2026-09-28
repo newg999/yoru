@@ -440,7 +440,8 @@ pantalla_login() {
         fondo="$(ls "$REPO"/wallpapers/anime-* 2>/dev/null | head -n1 || true)"
     fi
     [[ -f "$fondo" ]] || fondo="$REPO/wallpapers/nord-aurora.png"
-    sudo install -D -m 644 "$fondo" /usr/share/backgrounds/yoru/inicio
+    # Es tuyo (no de root) para que wallpaper.sh lo cambie al elegir fondo
+    sudo install -D -m 644 -o "$USER" "$fondo" /usr/share/backgrounds/yoru/inicio
 
     # Lista de sesiones para el desplegable (Niri, y GNOME si lo tienes)
     [[ -x /usr/libexec/gtkgreet-update-environments ]] \
