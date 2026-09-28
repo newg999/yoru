@@ -47,6 +47,9 @@ entry {
 }
 entry:focus { border-color: rgba(255, 255, 255, 0.80); }
 
+/* Contraseña: los puntos más separados */
+#input-field { letter-spacing: 4px; }
+
 /* Selector de sesión (Niri, GNOME...): el contenedor no se ve y su campo y
    su flecha forman una sola pieza, igual que los demás campos */
 #command-selector, #command-selector box {

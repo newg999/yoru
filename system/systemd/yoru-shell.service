@@ -13,6 +13,9 @@ After=graphical-session.target niri.service
 Requisite=graphical-session.target
 
 [Service]
+# El mismo cursor que niri (si no, Qt pone el suyo en la barra y el bloqueo)
+Environment=XCURSOR_THEME=Bibata-Modern-Ice
+Environment=XCURSOR_SIZE=24
 ExecStart=/usr/bin/qs -c yoru
 Restart=on-failure
 RestartSec=1

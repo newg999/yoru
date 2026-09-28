@@ -10,15 +10,16 @@
 #  Los fondos se buscan en ~/.local/share/wallpapers (el instalador enlaza
 #  ahí la carpeta wallpapers/ del repositorio).
 #
-#  El mismo fondo se usa en la pantalla de bloqueo (Quickshell y swaylock leen el enlace
-#  ~/.cache/fondo-bloqueo) y en la de inicio de sesión, si install.sh te ha
-#  dado permiso sobre /usr/share/backgrounds/yoru/inicio.
+#  El mismo fondo se usa en la pantalla de bloqueo (swaylock lee el enlace
+#  ~/.cache/fondo-bloqueo) y, desenfocado, en la de inicio de sesión, si
+#  install.sh te ha dado permiso sobre /usr/share/backgrounds/yoru/inicio.
 # ----------------------------------------------------------------------------
 
 DIR="$HOME/.local/share/wallpapers"
 STATE="$HOME/.cache/wallpaper-actual"
 BLOQUEO="$HOME/.cache/fondo-bloqueo"
 INICIO="/usr/share/backgrounds/yoru/inicio"
+INICIO_ORIGEN="$HOME/.cache/fondo-inicio-origen"   # de qué fondo salió
 FALLBACK_COLOR="#2e3440"
 
 mapfile -t FONDOS < <(find -L "$DIR" -maxdepth 1 -type f \
@@ -52,9 +53,13 @@ if [[ -n "$img" && -f "$img" ]]; then
     echo "$img" > "$STATE"
     setsid -f swaybg -m fill -i "$img" >/dev/null 2>&1
     ln -sfn "$(realpath "$img")" "$BLOQUEO"
-    # cmp: no reescribir 4 MB en cada arranque si el fondo no ha cambiado
-    if [[ -w "$INICIO" ]] && ! cmp -s "$img" "$INICIO"; then
-        cp "$img" "$INICIO"
+    # Pantalla de inicio: el fondo desenfocado y algo más oscuro. Solo si ha
+    # cambiado (desenfocar tarda un poco) y en segundo plano
+    if [[ -w "$INICIO" && "$(cat "$INICIO_ORIGEN" 2>/dev/null)" != "$img" ]]; then
+        # (la carpeta es de root: se prepara en ~/.cache y se copia encima)
+        setsid -f sh -c 'magick "$1" -resize 1920x1080^ -blur 0x24 -modulate 70,80 "jpg:$3.jpg" \
+            && cat "$3.jpg" > "$2" && echo "$1" > "$3"; rm -f "$3.jpg"' \
+            _ "$img" "$INICIO" "$INICIO_ORIGEN" >/dev/null 2>&1
     fi
 else
     # Sin imágenes todavía: color sólido
