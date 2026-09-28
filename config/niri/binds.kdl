@@ -31,8 +31,8 @@ binds {
     Mod+Alt+Shift+W     hotkey-overlay-title="Fondo siguiente" { spawn-sh "~/.config/niri/scripts/wallpaper.sh next"; }
 
     // --------------------------------------------------------------- Sesión
-    Mod+BackSpace hotkey-overlay-title="Bloquear pantalla" { spawn "swaylock"; }
-    Super+Alt+L   hotkey-overlay-title=null                { spawn "swaylock"; }
+    Mod+BackSpace hotkey-overlay-title="Bloquear pantalla" { spawn-sh "~/.config/niri/scripts/bloquear.sh"; }
+    Super+Alt+L   hotkey-overlay-title=null                { spawn-sh "~/.config/niri/scripts/bloquear.sh"; }
     Mod+Shift+E   { quit; }
     Ctrl+Alt+Delete { quit; }
     Mod+Shift+P   { power-off-monitors; }

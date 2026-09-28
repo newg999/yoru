@@ -64,7 +64,7 @@ slurp                     # elegir una zona de la pantalla con el ratón
 swappy                    # editor de capturas (flechas, texto, difuminar)
 mako                      # notificaciones
 swaybg                    # fondo de pantalla
-swaylock                  # pantalla de bloqueo
+swaylock                  # bloqueo de reserva (el normal es de Quickshell)
 swayidle                  # bloqueo automático por inactividad
 kitty                     # terminal
 

@@ -19,8 +19,8 @@ Panel {
     ancho: 340
 
     readonly property var opciones: [
-        {icono: "󰌾", titulo: "Bloquear", tecla: "b", orden: ["swaylock"]},
-        {icono: "󰤄", titulo: "Suspender", tecla: "s", orden: ["sh", "-c", "swaylock -f && systemctl suspend"]},
+        {icono: "󰌾", titulo: "Bloquear", tecla: "b", orden: ["sh", "-c", "~/.config/niri/scripts/bloquear.sh"]},
+        {icono: "󰤄", titulo: "Suspender", tecla: "s", orden: ["sh", "-c", "~/.config/niri/scripts/bloquear.sh && systemctl suspend"]},
         {icono: "󰍃", titulo: "Cerrar sesión", tecla: "c", orden: ["niri", "msg", "action", "quit", "--skip-confirmation"]},
         {icono: "󰜉", titulo: "Reiniciar", tecla: "r", orden: ["systemctl", "reboot"]},
         {icono: "󰐥", titulo: "Apagar", tecla: "a", orden: ["systemctl", "poweroff"]},

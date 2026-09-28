@@ -7,8 +7,9 @@
 //  genera «yoru tema» a partir de tema/blanco.json (o del fondo de pantalla)
 //  y se incluyen después, en config.kdl. Para cambiar la paleta de todo el
 //  escritorio, edita tema/blanco.json y ejecuta: yoru tema blanco
-//  (swaylock y la pantalla de inicio de sesión no siguen al tema: sus
-//  colores están en swaylock/config y system/greetd/gtkgreet.css)
+//  (la pantalla de inicio de sesión y el bloqueo de reserva, swaylock, no
+//  siguen al tema: sus colores están en system/greetd/gtkgreet.css y
+//  swaylock/config)
 // ----------------------------------------------------------------------------
 //  oscuro #1a1b1e   oscuro-2 #26272b   gris #8a8f98
 //  texto  #e5e9f0   blanco   #ffffff

@@ -20,7 +20,7 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Terminal | `kitty` | `config/kitty/` |
 | Shell | `zsh` + Oh My Zsh (autosugerencias y resaltado) · `eza`, `bat`, `zoxide` | `config/zsh/zshrc` → `~/.zshrc` |
 | Info al abrir la terminal | `fastfetch` (pon tu logo en `config/fastfetch/logo.webp`) | `config/fastfetch/` |
-| Bloqueo | `swaylock` + `swayidle` | `config/swaylock/` |
+| Bloqueo | `quickshell` (reserva: `swaylock`) + `swayidle` | `config/quickshell/yoru/paneles/Bloqueo.qml` |
 | Fondo | `swaybg` | `config/niri/scripts/wallpaper.sh` |
 | Apps X11 | `xwayland-satellite` | automático |
 | Inicio de sesión | `greetd` + `gtkgreet` (dentro de un niri mínimo) | `system/greetd/` |
