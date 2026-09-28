@@ -1,0 +1,24 @@
+# ============================================================================
+#  Copias del sistema con cada dnf (snapper + plugin "actions" de dnf5)
+#  install.sh lo copia en /etc/dnf/libdnf5-plugins/actions.d/
+#
+#  Antes de cada install/upgrade/remove se crea una copia "pre" y al acabar
+#  una "post", con el comando de dnf como descripción. Se ven con:
+#      yoru copias
+#
+#  Formato: momento:filtro:dirección:opciones:comando (man libdnf5-actions).
+#  Los espacios del comando van escapados con \ porque dnf5 separa los
+#  argumentos por espacios. enabled=host-only: sin copias cuando dnf trabaja
+#  en otra raíz (--installroot, al construir contenedores...).
+#  Las líneas "tmp.x=valor" que imprime un comando guardan variables para los
+#  siguientes; "tmp.x" a secas las borra.
+# ============================================================================
+
+# El comando de dnf que se está ejecutando (para la descripción de la copia)
+pre_transaction:::enabled=host-only:/usr/bin/sh -c echo\ "tmp.cmd=$(ps\ -o\ command\ --no-headers\ -p\ '${pid}')"
+
+# Copia "pre": se guarda su número para enlazarla con la "post"
+pre_transaction:::enabled=host-only:/usr/bin/sh -c echo\ "tmp.snapper_pre_number=$(snapper\ create\ -c\ number\ -t\ pre\ -p\ -d\ '${tmp.cmd}')"
+
+# Copia "post" (solo si la "pre" salió bien) y limpieza de las variables
+post_transaction:::enabled=host-only:/usr/bin/sh -c [\ -n\ "${tmp.snapper_pre_number}"\ ]\ &&\ snapper\ create\ -c\ number\ -t\ post\ --pre-number\ "${tmp.snapper_pre_number}"\ -d\ "${tmp.cmd}"\ ;\ echo\ tmp.snapper_pre_number\ ;\ echo\ tmp.cmd

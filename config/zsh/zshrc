@@ -25,7 +25,8 @@ alias cat="bat"
 # z <trozo de carpeta>: salta a carpetas en las que ya estuviste (zoxide)
 command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
 
-export PATH="$HOME/.npm-global/bin:$PATH"
+# ~/.local/bin: el comando yoru (y lo que instales con pip --user, etc.)
+export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"
 
 # Info del sistema con el logo al abrir la terminal (config/fastfetch)
 command -v fastfetch >/dev/null && fastfetch
