@@ -506,6 +506,12 @@ pantalla_login() {
         sudo install -m 644 "$REPO/system/greetd/$f" "/etc/greetd/$f"
     done
 
+    # Monitores y ratón como en tu sesión, y tu cursor (tu ~/.local no lo ve)
+    [[ -f "$HOME/.config/niri/local.kdl" ]] \
+        && sudo install -m 644 "$HOME/.config/niri/local.kdl" /etc/greetd/local.kdl
+    [[ -d "$CURSOR_DIR/$CURSOR_TEMA/cursors" && ! -d "/usr/share/icons/$CURSOR_TEMA" ]] \
+        && sudo cp -r "$CURSOR_DIR/$CURSOR_TEMA" /usr/share/icons/
+
     # Fondo: el que tengas puesto ahora; si no, el primero de la lista
     local fondo=""
     [[ -f "$HOME/.cache/wallpaper-actual" ]] && fondo="$(readlink -f "$(cat "$HOME/.cache/wallpaper-actual")" 2>/dev/null || true)"
@@ -513,8 +519,12 @@ pantalla_login() {
         fondo="$(ls "$REPO"/wallpapers/anime-* 2>/dev/null | head -n1 || true)"
     fi
     [[ -f "$fondo" ]] || fondo="$REPO/wallpapers/nord-aurora.png"
-    # Es tuyo (no de root) para que wallpaper.sh lo cambie al elegir fondo
+    # Es tuyo (no de root) para que wallpaper.sh lo cambie al elegir fondo.
+    # Desenfocado (wallpaper.sh hace lo mismo al cambiar de fondo)
     sudo install -D -m 644 -o "$USER" "$fondo" /usr/share/backgrounds/yoru/inicio
+    command -v magick >/dev/null \
+        && magick "$fondo" -resize 1920x1080^ -blur 0x24 -modulate 70,80 "jpg:/usr/share/backgrounds/yoru/inicio" \
+        && echo "$fondo" > "$HOME/.cache/fondo-inicio-origen"
 
     # Lista de sesiones para el desplegable (Niri, y GNOME si lo tienes)
     [[ -x /usr/libexec/gtkgreet-update-environments ]] \

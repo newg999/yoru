@@ -5,6 +5,7 @@
 #  el estilo de gtkgreet.css. Los tres archivos los COPIA install.sh a
 #  /etc/greetd/ (no son enlaces: pertenecen a root). Si cambias alguno:
 #    sudo cp system/greetd/{config.toml,niri-greeter.kdl,gtkgreet.css} /etc/greetd/
+#    sudo cp ~/.config/niri/local.kdl /etc/greetd/   (monitores y ratón)
 #
 #  Si algo falla y no puedes entrar: Ctrl+Alt+F3 abre una consola de texto.
 # ============================================================================

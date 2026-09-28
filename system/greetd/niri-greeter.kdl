@@ -15,6 +15,13 @@ input {
     touchpad { tap; }
 }
 
+// El cursor de tu sesión (install.sh lo copia a /usr/share/icons, porque el
+// usuario greetd no ve tu ~/.local)
+cursor {
+    xcursor-theme "Bibata-Modern-Ice"
+    xcursor-size 24
+}
+
 // Nada de chuleta de atajos ni barras de título aquí
 hotkey-overlay { skip-at-startup; }
 prefer-no-csd
@@ -23,12 +30,17 @@ layout {
     background-color "#1a1b1e"
 }
 
-// Fondo: una copia de uno de tus fondos (install.sh la deja aquí)
+// Fondo: tu fondo desenfocado (install.sh lo deja aquí y wallpaper.sh lo
+// actualiza al cambiar de fondo)
 spawn-at-startup "swaybg" "-m" "fill" "-i" "/usr/share/backgrounds/yoru/inicio"
 
 // El recuadro de inicio de sesión. GTK_THEME: campos y botones oscuros aunque
 // el usuario de la pantalla de inicio no tenga ajustes propios
 spawn-sh-at-startup "GTK_THEME=Adwaita:dark gtkgreet --layer-shell --style /etc/greetd/gtkgreet.css --command niri-session; niri msg action quit --skip-confirmation"
+
+// Tus ajustes de este equipo (monitores, velocidad del ratón...): install.sh
+// copia aquí tu ~/.config/niri/local.kdl
+include optional=true "local.kdl"
 
 binds {
     // Apagar y reiniciar sin entrar (el botón de encendido también apaga)
