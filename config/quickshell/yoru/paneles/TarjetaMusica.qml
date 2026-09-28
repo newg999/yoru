@@ -61,9 +61,9 @@ Tarjeta {
                 anchors.centerIn: parent
                 width: 104; height: 104
                 radius: 52
-                color: Qt.rgba(1, 1, 1, 0.08)
+                color: Tema.claro(0.08)
                 border.width: 2
-                border.color: Qt.rgba(1, 1, 1, 0.5)
+                border.color: Tema.claro(0.5)
 
                 Image {
                     id: caratula

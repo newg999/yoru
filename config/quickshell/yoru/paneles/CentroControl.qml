@@ -98,7 +98,7 @@ Panel {
             visible: panel.seccion !== ""
             width: parent.width
             height: 1
-            color: Qt.rgba(1, 1, 1, 0.08)
+            color: Tema.claro(0.08)
         }
 
         Item {

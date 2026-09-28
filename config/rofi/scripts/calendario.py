@@ -17,13 +17,13 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
-from rofimenu import ARRIBA_CENTRO, ejecutar  # noqa: E402
+from rofimenu import ARRIBA_CENTRO, COLORES, ejecutar  # noqa: E402
 
-# Colores del tema "blanco"
-ACENTO = "#ffffff"
-TENUE = "#5c616b"
-FINDE = "#8a8f98"
-FONDO = "#1a1b1e"
+# Colores del tema (los de «yoru tema», ver rofimenu.py)
+ACENTO = COLORES["acento"]
+TENUE = COLORES["gris2"]
+FINDE = COLORES["gris"]
+FONDO = COLORES["fondo"]
 
 ANTERIOR, SIGUIENTE, HOY, APP = "", "", "󰃶", ""
 

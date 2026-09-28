@@ -9,6 +9,8 @@
 #    yoru reload        comprueba la config de Niri y recarga la barra y las
 #                       notificaciones
 #    yoru doctor        revisa que todo esté en su sitio y dice qué falla
+#    yoru tema [modo]   colores: «blanco» (tema/blanco.json) o «fondo»
+#                       (sacados del fondo de pantalla); sin modo, lo reaplica
 #    yoru copias        lista las copias del sistema (se hacen con cada dnf)
 #    yoru volver <n>    deja el sistema como estaba en la copia <n>
 #    yoru ayuda
@@ -155,6 +157,14 @@ cmd_doctor() {
     fi
     systemctl is-enabled -q bluetooth 2>/dev/null && bien "bluetooth" || mal "bluetooth no está activado"
 
+    paso "Tema de colores"
+    local modo_tema="$HOME/.local/state/yoru/tema/modo"
+    if [[ -f "$modo_tema" ]]; then
+        bien "Tema $(cat "$modo_tema") (cámbialo con: yoru tema blanco|fondo)"
+    else
+        mal "Los colores no están generados → yoru tema"
+    fi
+
     paso "Copias del sistema"
     if [[ "$(findmnt -no FSTYPE / 2>/dev/null)" != "btrfs" ]]; then
         aviso "El disco no usa btrfs: no hay copias"
@@ -186,6 +196,12 @@ cmd_doctor() {
         return 1
     fi
     echo -e "${VERDE}Todo en orden${NC}"
+}
+
+# -------------------------------------------------------------------- tema
+cmd_tema() {
+    # Todo el trabajo lo hace tema/aplicar.py (también lo llama wallpaper.sh)
+    python3 "$REPO/tema/aplicar.py" "$@"
 }
 
 # ------------------------------------------------------------------ copias
@@ -246,6 +262,7 @@ case "${1:-ayuda}" in
     update|actualizar)  cmd_update ;;
     reload|recargar)    cmd_reload ;;
     doctor|revisar)     cmd_doctor ;;
+    tema)               shift; cmd_tema "$@" ;;
     copias)             cmd_copias ;;
     volver)             cmd_volver "${2:-}" ;;
     ayuda|-h|--help|help)

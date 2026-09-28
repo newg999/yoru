@@ -49,7 +49,7 @@ Canvas {
         ctx.reset();
 
         // Rejilla suave: 25 %, 50 %, 75 %
-        ctx.strokeStyle = Qt.rgba(1, 1, 1, 0.06);
+        ctx.strokeStyle = Tema.claro(0.06);
         ctx.lineWidth = 1;
         for (const f of [0.25, 0.5, 0.75]) {
             ctx.beginPath();
@@ -58,7 +58,7 @@ Canvas {
             ctx.stroke();
         }
 
-        linea(ctx, valores2, Qt.rgba(1, 1, 1, 0.45), Qt.rgba(1, 1, 1, 0.08));
-        linea(ctx, valores, Tema.blanco, Qt.rgba(1, 1, 1, 0.22));
+        linea(ctx, valores2, Tema.claro(0.45), Tema.claro(0.08));
+        linea(ctx, valores, Tema.blanco, Tema.claro(0.22));
     }
 }

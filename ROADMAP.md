@@ -31,8 +31,8 @@ Marca las casillas conforme avances (`- [x]`).
 
 ## Fase 3 · Centralizar los colores
 Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de más fácil a más potente:
-- [ ] Un script `scripts/tema.sh` que sustituya los colores con `sed` en todos los archivos
-- [ ] Usar **[matugen](https://github.com/InioX/matugen)** o **[wallust](https://codeberg.org/explosion-mental/wallust)**: generan la paleta a partir del fondo de pantalla (como Material You)
+- [x] Una sola paleta (`tema/blanco.json`) que se aplica a todo con `yoru tema`
+- [x] Usar **[matugen](https://github.com/InioX/matugen)** o **[wallust](https://codeberg.org/explosion-mental/wallust)**: generan la paleta a partir del fondo de pantalla (como Material You)
 
 ## Fase 4 · Una barra a tu medida
 - [ ] Decidir qué módulos quieres realmente y en qué orden

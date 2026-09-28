@@ -120,7 +120,7 @@ Item {
                         text: dia.modelData.getDate()
                         font.pixelSize: 12
                         font.bold: dia.esHoy
-                        color: dia.esHoy ? Tema.oscuro : dia.deEsteMes ? Tema.texto : Qt.rgba(1, 1, 1, 0.25)
+                        color: dia.esHoy ? Tema.oscuro : dia.deEsteMes ? Tema.texto : Tema.claro(0.25)
                     }
                 }
             }

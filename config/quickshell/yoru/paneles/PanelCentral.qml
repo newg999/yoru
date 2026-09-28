@@ -51,7 +51,7 @@ Panel {
                     required property var modelData
                     readonly property bool elegida: panel.pestana === modelData.id
                     width: 150; height: 36; radius: 10
-                    color: elegida ? Qt.rgba(1, 1, 1, 0.90) : pestanaRaton.containsMouse ? Tema.cajaHover : "transparent"
+                    color: elegida ? Tema.claro(0.90) : pestanaRaton.containsMouse ? Tema.cajaHover : "transparent"
                     Behavior on color { ColorAnimation { duration: Tema.rapida } }
 
                     Row {
@@ -171,9 +171,9 @@ Panel {
 
                         Rectangle {
                             width: 64; height: 64; radius: 32
-                            color: Qt.rgba(1, 1, 1, 0.10)
+                            color: Tema.claro(0.10)
                             border.width: 2
-                            border.color: Qt.rgba(1, 1, 1, 0.5)
+                            border.color: Tema.claro(0.5)
                             Texto {
                                 anchors.centerIn: parent
                                 text: panel.usuario.charAt(0).toUpperCase()
@@ -237,7 +237,7 @@ Panel {
                                 Rectangle {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: 8; height: 200; radius: 4
-                                    color: Qt.rgba(1, 1, 1, 0.12)
+                                    color: Tema.claro(0.12)
                                     Rectangle {
                                         anchors.bottom: parent.bottom
                                         width: parent.width

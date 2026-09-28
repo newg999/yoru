@@ -60,3 +60,9 @@ else
     # Sin imágenes todavía: color sólido
     setsid -f swaybg -c "$FALLBACK_COLOR" >/dev/null 2>&1
 fi
+
+# Con «yoru tema fondo», los colores siguen al fondo: se recalculan con cada
+# cambio (en segundo plano, para no retrasar el fondo)
+if [[ "$(cat "$HOME/.local/state/yoru/tema/modo" 2>/dev/null)" == "fondo" ]]; then
+    setsid -f python3 "$(dirname "$(realpath "$0")")/../../../tema/aplicar.py" fondo >/dev/null 2>&1
+fi

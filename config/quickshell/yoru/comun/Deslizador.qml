@@ -25,7 +25,7 @@ Item {
         anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter }
         height: 6
         radius: 3
-        color: Qt.rgba(1, 1, 1, 0.18)
+        color: Tema.claro(0.18)
 
         Rectangle {
             width: Math.max(carril.height, deslizador.mostrado * carril.width)

@@ -21,7 +21,7 @@ Rectangle {
 
     implicitHeight: detalle !== "" ? 48 : 40
     radius: 10
-    color: seleccionada ? Qt.rgba(1, 1, 1, 0.90) : raton.containsMouse ? Tema.cajaHover : "transparent"
+    color: seleccionada ? Tema.claro(0.90) : raton.containsMouse ? Tema.cajaHover : "transparent"
     Behavior on color { ColorAnimation { duration: Tema.rapida } }
 
     MouseArea {
@@ -68,7 +68,7 @@ Rectangle {
             width: parent.width
             visible: text !== ""
             text: fila.detalle
-            color: fila.seleccionada ? Qt.rgba(26 / 255, 27 / 255, 30 / 255, 0.6) : Tema.gris
+            color: fila.seleccionada ? Tema.sombra(0.6) : Tema.gris
             font.bold: false
             font.pixelSize: 11
             elide: Text.ElideRight

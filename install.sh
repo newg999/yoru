@@ -15,7 +15,7 @@
 #       la pantalla de inicio de sesión (greetd + gtkgreet, con el estilo de Yoru)
 #    7. Pone tema oscuro e iconos Papirus en las apps GTK
 #    8. Deja zsh como shell, con Oh My Zsh y sus plugins (config/zsh/)
-#    9. Valida la configuración de Niri
+#    9. Genera los colores del tema (yoru tema) y valida la config de Niri
 #
 #  Funciona tanto en una Fedora MÍNIMA (sin escritorio) como en una con
 #  GNOME. Si ya tienes GNOME, se respeta su pantalla de inicio (GDM).
@@ -601,6 +601,18 @@ shell_zsh() {
     fi
 }
 
+# -------------------------------------------------------------------- Tema
+# Genera los archivos de colores (~/.local/state/yoru/tema/) que incluyen
+# niri, rofi, mako, kitty y la barra. Respeta el modo que ya tuvieras.
+tema_colores() {
+    paso "Colores del tema (yoru tema)"
+    if python3 "$REPO/tema/aplicar.py" >/dev/null; then
+        ok "Tema $(cat "$HOME/.local/state/yoru/tema/modo")"
+    else
+        aviso "No se pudieron generar: se usan los colores de cada config. Prueba: yoru tema blanco"
+    fi
+}
+
 # ------------------------------------------------------------------ Validar
 validar() {
     paso "Validando la configuración de Niri"
@@ -675,6 +687,7 @@ case "${1:-}" in
         activar_barra
         ajustes_gtk
         shell_zsh
+        tema_colores
         validar ;;
     "")
         comprobar_sistema
@@ -693,6 +706,7 @@ case "${1:-}" in
         activar_barra
         ajustes_gtk
         shell_zsh
+        tema_colores
         validar ;;
     *)
         error "Opción desconocida: $1  (usa --ayuda)"

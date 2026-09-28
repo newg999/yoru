@@ -22,7 +22,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
-from rofimenu import ejecutar, menu, pedir_texto, avisar, escapar  # noqa: E402
+from rofimenu import COLORES, ejecutar, menu, pedir_texto, avisar, escapar  # noqa: E402
 
 BUSCAR = "\U000f0349"
 INSTALAR = "\U000f01da"
@@ -34,7 +34,7 @@ FLATPAK = "\U000f03d6"
 FEDORA = ""
 VOLVER = "\U000f004d"
 
-TENUE = "#8a8f98"  # texto-tenue de tema.rasi
+TENUE = COLORES["gris"]  # texto-tenue de tema.rasi
 # La tienda no sale de la barra (es un atajo, Mod+Alt+S): va centrada
 TEMA_TIENDA = "columna { width: 720px; }"
 

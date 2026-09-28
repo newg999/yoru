@@ -156,7 +156,7 @@ Panel {
                         required property var modelData
                         readonly property bool elegida: panel.pestana === modelData.id
                         width: 150; height: 36; radius: 10
-                        color: elegida ? Qt.rgba(1, 1, 1, 0.90) : pestanaRaton.containsMouse ? Tema.cajaHover : "transparent"
+                        color: elegida ? Tema.claro(0.90) : pestanaRaton.containsMouse ? Tema.cajaHover : "transparent"
                         Behavior on color { ColorAnimation { duration: Tema.rapida } }
                         Row {
                             anchors.centerIn: parent
@@ -195,7 +195,7 @@ Panel {
                         required property var modelData
                         readonly property bool elegido: panel.filtro === modelData[0]
                         width: chipTexto.implicitWidth + 22; height: 28; radius: 14
-                        color: elegido ? Qt.rgba(1, 1, 1, 0.90) : chipRaton.containsMouse ? Tema.cajaHover : Tema.caja
+                        color: elegido ? Tema.claro(0.90) : chipRaton.containsMouse ? Tema.cajaHover : Tema.caja
                         Texto {
                             id: chipTexto
                             anchors.centerIn: parent
@@ -232,7 +232,7 @@ Panel {
                     radius: 10
                     color: Tema.caja
                     border.width: 1
-                    border.color: busqueda.activeFocus ? Qt.rgba(1, 1, 1, 0.5) : Qt.rgba(1, 1, 1, 0.1)
+                    border.color: busqueda.activeFocus ? Tema.claro(0.5) : Tema.claro(0.1)
 
                     Texto {
                         id: lupa
@@ -245,7 +245,7 @@ Panel {
                         id: busqueda
                         anchors { left: lupa.right; leftMargin: 10; right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter }
                         color: Tema.texto
-                        selectionColor: Qt.rgba(1, 1, 1, 0.3)
+                        selectionColor: Tema.claro(0.3)
                         font.family: Tema.fuente
                         font.pixelSize: 13
                         clip: true
@@ -267,7 +267,7 @@ Panel {
                     width: agruparFila.implicitWidth + 24
                     height: 40
                     radius: 10
-                    color: panel.agrupar ? Qt.rgba(1, 1, 1, 0.90) : agruparRaton.containsMouse ? Tema.cajaHover : Tema.caja
+                    color: panel.agrupar ? Tema.claro(0.90) : agruparRaton.containsMouse ? Tema.cajaHover : Tema.caja
                     Row {
                         id: agruparFila
                         anchors.centerIn: parent
@@ -373,7 +373,7 @@ Panel {
                             width: parent.width - 48 - 340
                             height: parent.height
                             text: fila.p.nombre + (fila.p.pids.length > 1
-                                ? `  <font color="#8a8f98">×${fila.p.pids.length}</font>` : "")
+                                ? `  <font color="${Tema.gris}">×${fila.p.pids.length}</font>` : "")
                             textFormat: Text.StyledText
                             elide: Text.ElideRight
                             font.pixelSize: 13
@@ -383,7 +383,7 @@ Panel {
                         Rectangle {
                             x: parent.width - 310; width: 60; height: 24; radius: 12
                             anchors.verticalCenter: parent.verticalCenter
-                            color: fila.p.cpu > 50 ? Tema.rojo : Qt.rgba(1, 1, 1, 0.05 + Math.min(0.3, fila.p.cpu / 100))
+                            color: fila.p.cpu > 50 ? Tema.rojo : Tema.claro(0.05 + Math.min(0.3, fila.p.cpu / 100))
                             Texto {
                                 anchors.centerIn: parent
                                 text: fila.p.cpu.toFixed(1) + "%"
@@ -394,8 +394,8 @@ Panel {
                             x: parent.width - 220; width: 90; height: 24; radius: 12
                             anchors.verticalCenter: parent.verticalCenter
                             readonly property real parte: panel.datos ? fila.p.mem / panel.datos.memTotal : 0
-                            color: parte > 0.05 ? Qt.rgba(191 / 255, 97 / 255, 106 / 255, 0.7)
-                                : Qt.rgba(1, 1, 1, 0.05 + Math.min(0.3, parte * 10))
+                            color: parte > 0.05 ? Tema.conAlfa(Tema.rojo, 0.7)
+                                : Tema.claro(0.05 + Math.min(0.3, parte * 10))
                             Texto {
                                 anchors.centerIn: parent
                                 text: panel.tamano(fila.p.mem)
@@ -457,7 +457,7 @@ Panel {
                                     width: botonTexto.implicitWidth + 24; height: 30; radius: 8
                                     color: botonRaton.containsMouse
                                         ? (modelData[0] ? Tema.rojo : Tema.blanco)
-                                        : Qt.rgba(1, 1, 1, 0.08)
+                                        : Tema.claro(0.08)
                                     Texto {
                                         id: botonTexto
                                         anchors.centerIn: parent
@@ -589,7 +589,7 @@ Panel {
                             }
                         }
                     }
-                    Rectangle { width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.08) }
+                    Rectangle { width: parent.width; height: 1; color: Tema.claro(0.08) }
                     Item {
                         width: parent.width
                         height: 22

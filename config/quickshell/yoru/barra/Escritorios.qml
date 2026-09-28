@@ -31,8 +31,8 @@ Isla {
                 radius: height / 2
                 color: escritorio.modelData.is_urgent ? Tema.rojo
                     : escritorio.activo || raton.containsMouse ? Tema.blanco
-                    : escritorio.conVentanas ? Qt.rgba(1, 1, 1, 0.5)
-                    : Qt.rgba(1, 1, 1, 0.25)
+                    : escritorio.conVentanas ? Tema.claro(0.5)
+                    : Tema.claro(0.25)
                 Behavior on width { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: Tema.rapida } }
             }

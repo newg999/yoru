@@ -17,3 +17,6 @@ __pycache__/
 # Fondos descargados (obras de otros artistas): no se suben al repo.
 # Se vuelven a bajar con wallpapers/descargar.sh
 wallpapers/anime-*
+
+# Ajustes locales de Claude Code (permisos de este equipo)
+.claude/settings.local.json

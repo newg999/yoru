@@ -20,6 +20,8 @@ background-color=#1a1b1ee6
 text-color=#e5e9f0
 border-color=#ffffff40
 progress-color=over #ffffff26
+# Los colores que genera «yoru tema» sustituyen a los de arriba
+include=~/.local/state/yoru/tema/mako
 
 [urgency=low]
 border-color=#ffffff1a

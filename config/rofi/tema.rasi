@@ -21,6 +21,10 @@
     font:             "JetBrainsMono Nerd Font 12";
 }
 
+/* Los colores que genera «yoru tema» sustituyen a los de arriba.
+   Si el archivo aún no existe, rofi lo ignora y se quedan estos. */
+@import "~/.local/state/yoru/tema/rofi.rasi"
+
 /* ---------------------------------------------------------------- Posición
    En Wayland rofi no se cierra al hacer clic fuera. Truco: la ventana ocupa
    la pantalla entera (invisible) y el recuadro visible es "mainbox". Todo lo
