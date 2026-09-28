@@ -99,9 +99,9 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: 170; height: 170
                 radius: 85
-                color: Qt.rgba(1, 1, 1, 0.08)
+                color: Tema.claro(0.08)
                 border.width: 3
-                border.color: Qt.rgba(1, 1, 1, 0.6)
+                border.color: Tema.claro(0.6)
                 // Suavizado: sin esto el borde se ve dentado al girar
                 layer.enabled: true
                 layer.smooth: true
@@ -265,9 +265,9 @@ Item {
                     required property var modelData
                     readonly property bool elegido: multimedia.menu === modelData.id
                     width: 40; height: 40; radius: 20
-                    color: elegido ? Tema.blanco : lateralRaton.containsMouse ? Qt.rgba(1, 1, 1, 0.18) : Qt.rgba(1, 1, 1, 0.08)
+                    color: elegido ? Tema.blanco : lateralRaton.containsMouse ? Tema.claro(0.18) : Tema.claro(0.08)
                     border.width: 1
-                    border.color: Qt.rgba(1, 1, 1, 0.15)
+                    border.color: Tema.claro(0.15)
                     Behavior on color { ColorAnimation { duration: Tema.rapida } }
                     Texto {
                         anchors.centerIn: parent
@@ -298,7 +298,7 @@ Item {
             radius: 12
             color: Tema.panel
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.25)
+            border.color: Tema.claro(0.25)
 
             // Los clics dentro no cierran nada
             MouseArea { anchors.fill: parent }

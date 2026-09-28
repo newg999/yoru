@@ -20,7 +20,7 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
-from rofimenu import ejecutar, menu, avisar, escapar  # noqa: E402
+from rofimenu import COLORES, ejecutar, menu, avisar, escapar  # noqa: E402
 
 ALTAVOZ = "\U000f04c3"
 AURICULARES = "\U000f02cb"
@@ -244,8 +244,9 @@ def main():
         ]
         activos = [i for i, d in enumerate(salidas) if d["activo"]]
         urgentes = ([n] if mudo else []) + ([n + 2] if micro_mudo else [])
-        mensaje = (f"Sonando por <b>{escapar(salida)}</b> · "
-                   f"{'<span foreground=\"#bf616a\">silenciado</span>' if mudo else f'{vol}%'}")
+        estado = (f"<span foreground=\"{COLORES['rojo']}\">silenciado</span>" if mudo
+                  else f"{vol}%")
+        mensaje = f"Sonando por <b>{escapar(salida)}</b> · {estado}"
 
         i = menu("Audio", opciones, mensaje=mensaje, activos=activos, urgentes=urgentes,
                  fila=activos[0] if activos else 0)

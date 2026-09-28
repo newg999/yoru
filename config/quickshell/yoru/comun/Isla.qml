@@ -22,7 +22,7 @@ Rectangle {
     implicitWidth: vacia ? 0 : fila.implicitWidth + 2 * relleno
     implicitHeight: Tema.altoBarra
     radius: Tema.radio
-    color: pulsable && raton.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Tema.isla
+    color: pulsable && raton.containsMouse ? Tema.claro(0.14) : Tema.isla
     Behavior on color { ColorAnimation { duration: Tema.rapida } }
     border.width: 1
     border.color: Tema.islaBorde

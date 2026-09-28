@@ -87,7 +87,7 @@ Panel {
             radius: 12
             color: Tema.caja
             border.width: 1
-            border.color: busqueda.activeFocus ? Qt.rgba(1, 1, 1, 0.5) : Qt.rgba(1, 1, 1, 0.1)
+            border.color: busqueda.activeFocus ? Tema.claro(0.5) : Tema.claro(0.1)
 
             Texto {
                 id: lupa
@@ -100,7 +100,7 @@ Panel {
                 id: busqueda
                 anchors { left: lupa.right; leftMargin: 12; right: parent.right; rightMargin: 16; verticalCenter: parent.verticalCenter }
                 color: Tema.texto
-                selectionColor: Qt.rgba(1, 1, 1, 0.3)
+                selectionColor: Tema.claro(0.3)
                 font.family: Tema.fuente
                 font.pixelSize: 14
                 focus: true
@@ -136,7 +136,7 @@ Panel {
 
         Texto {
             leftPadding: 4
-            text: "󰀻  Aplicaciones  <font color='#8a8f98'>" + panel.resultados.length + "</font>"
+            text: "󰀻  Aplicaciones  <font color='" + Tema.gris + "'>" + panel.resultados.length + "</font>"
             textFormat: Text.StyledText
             font.pixelSize: 11
             color: Tema.gris
@@ -174,7 +174,7 @@ Panel {
                 width: lista.cellWidth - (panel.columnas > 1 ? 4 : 0)
                 height: 56
                 radius: 10
-                color: elegida ? Qt.rgba(1, 1, 1, 0.90) : "transparent"
+                color: elegida ? Tema.claro(0.90) : "transparent"
 
                 MouseArea {
                     anchors.fill: parent
@@ -212,7 +212,7 @@ Panel {
                         elide: Text.ElideRight
                         font.bold: false
                         font.pixelSize: 11
-                        color: fila.elegida ? Qt.rgba(26 / 255, 27 / 255, 30 / 255, 0.6) : Tema.gris
+                        color: fila.elegida ? Tema.sombra(0.6) : Tema.gris
                     }
                 }
             }

@@ -22,7 +22,7 @@ Rectangle {
     radius: 12
     color: raton.containsMouse ? Tema.cajaHover : Tema.caja
     border.width: 1
-    border.color: elegida ? Qt.rgba(1, 1, 1, 0.55) : Qt.rgba(1, 1, 1, 0.06)
+    border.color: elegida ? Tema.claro(0.55) : Tema.claro(0.06)
     Behavior on color { ColorAnimation { duration: Tema.rapida } }
     Behavior on border.color { ColorAnimation { duration: Tema.normal } }
 
@@ -39,7 +39,7 @@ Rectangle {
         id: circulo
         width: 38; height: 38; radius: 19
         anchors { left: parent.left; leftMargin: 11; verticalCenter: parent.verticalCenter }
-        color: baldosa.encendida ? Tema.blanco : Qt.rgba(1, 1, 1, circuloRaton.containsMouse ? 0.16 : 0.08)
+        color: baldosa.encendida ? Tema.blanco : Tema.claro(circuloRaton.containsMouse ? 0.16 : 0.08)
         Behavior on color { ColorAnimation { duration: Tema.normal } }
 
         Texto {

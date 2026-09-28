@@ -4,8 +4,21 @@ rofimenu.py — Utilidades compartidas por los menús (wifi, bluetooth, audio, c
 No se ejecuta solo: los otros scripts lo importan.
 """
 
+import json
+import os
 import subprocess
 import threading
+
+# Colores para el marcado Pango de los menús: los de «yoru tema» si existen
+# (~/.local/state/yoru/tema/colores.json), si no, los del tema blanco
+COLORES = {"fondo": "#1a1b1e", "texto": "#e5e9f0", "gris": "#8a8f98",
+           "gris2": "#5c616b", "acento": "#ffffff", "rojo": "#bf616a"}
+try:
+    _estado = os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state"))
+    with open(os.path.join(_estado, "yoru/tema/colores.json")) as _f:
+        COLORES.update(json.load(_f))
+except (OSError, ValueError):
+    pass
 
 # Los menús de la barra se abren arriba a la derecha, justo debajo de ella.
 # Son los botones invisibles de tema.rasi los que lo colocan:

@@ -84,6 +84,7 @@ El script **no copia** archivos: crea *enlaces simbólicos*. `~/.config/niri` ap
 | `yoru update` | Baja los cambios del repo, actualiza el sistema y las apps Flatpak y vuelve a pasar el instalador |
 | `yoru reload` | Comprueba la config de Niri y recarga la barra y las notificaciones |
 | `yoru doctor` | Revisa enlaces, programas, servicios, copias y el repo, y dice qué falla y cómo arreglarlo |
+| `yoru tema blanco` / `yoru tema fondo` | Colores monocromos de siempre, o sacados del fondo de pantalla (cambian solos al cambiar de fondo) |
 | `yoru copias` | Lista las copias del sistema |
 | `yoru volver <n>` | Deja el sistema como estaba en la copia `n` |
 
@@ -141,7 +142,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 
 | Quiero cambiar… | Archivo |
 |---|---|
-| Colores de bordes y sombras | `config/niri/colors.kdl` |
+| Colores de todo el escritorio | `tema/blanco.json` y después `yoru tema blanco` |
 | Atajos | `config/niri/binds.kdl` |
 | Separación entre ventanas, anchos | `config/niri/config.kdl` → `layout` |
 | Qué arranca al iniciar | `config/niri/config.kdl` → `spawn-at-startup` |
@@ -150,7 +151,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | Pantalla de inicio de sesión | `system/greetd/config.toml` (se copia a `/etc`, vuelve a ejecutar `./install.sh`) |
 | Paquetes que se instalan | `packages.txt` |
 | Qué sale en la barra y en qué orden | `config/quickshell/yoru/barra/Barra.qml` |
-| Colores, fuente y medidas de la barra y los paneles | `config/quickshell/yoru/comun/Tema.qml` |
+| Fuente y medidas de la barra y los paneles | `config/quickshell/yoru/comun/Tema.qml` |
 | Centro de control (wifi, bluetooth, audio) | `config/quickshell/yoru/paneles/CentroControl.qml` |
 | Panel central (resumen, multimedia, clima) | `config/quickshell/yoru/paneles/PanelCentral.qml` |
 | Monitor del sistema (clic en CPU/RAM) | `config/quickshell/yoru/paneles/Monitor.qml` y `scripts/monitor.py` |

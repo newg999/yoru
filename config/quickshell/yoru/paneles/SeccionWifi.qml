@@ -153,7 +153,7 @@ Column {
                 radius: 10
                 color: Tema.caja
                 border.width: 1
-                border.color: clave.activeFocus ? Qt.rgba(1, 1, 1, 0.5) : Qt.rgba(1, 1, 1, 0.1)
+                border.color: clave.activeFocus ? Tema.claro(0.5) : Tema.claro(0.1)
 
                 TextInput {
                     id: clave
@@ -161,7 +161,7 @@ Column {
                     verticalAlignment: TextInput.AlignVCenter
                     echoMode: verClave.checked ? TextInput.Normal : TextInput.Password
                     color: Tema.texto
-                    selectionColor: Qt.rgba(1, 1, 1, 0.3)
+                    selectionColor: Tema.claro(0.3)
                     font.family: Tema.fuente
                     font.pixelSize: 13
                     clip: true

@@ -177,7 +177,7 @@ Column {
                     }
                     Texto {
                         anchors { right: parent.right; rightMargin: 16; verticalCenter: parent.verticalCenter }
-                        text: fila.modelData.max + "°  " + "<font color='#8a8f98'>" + fila.modelData.min + "°</font>"
+                        text: fila.modelData.max + "°  " + "<font color='" + Tema.gris + "'>" + fila.modelData.min + "°</font>"
                         textFormat: Text.StyledText
                         font.pixelSize: 13
                     }

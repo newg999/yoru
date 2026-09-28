@@ -89,6 +89,9 @@ layout {
 
 // Los colores van DESPUÉS de layout para que lo sobrescriban.
 include "colors.kdl"
+// Y encima, los que genera «yoru tema» (blanco o sacados del fondo).
+// Si aún no existen, se quedan los de colors.kdl.
+include optional=true "~/.local/state/yoru/tema/niri.kdl"
 
 // ---------------------------------------------------------------------------
 //  Programas que arrancan con la sesión

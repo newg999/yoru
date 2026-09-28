@@ -3,9 +3,12 @@
 // ----------------------------------------------------------------------------
 //  Tema "blanco": blanco sobre oscuro neutro, translúcido. El color se
 //  reserva para los avisos (rojo = urgente/error, amarillo = atención).
-//  Si cambias de paleta, cambia también:
-//    quickshell/yoru/comun/Tema.qml · rofi/tema.rasi · mako/config
-//    kitty/kitty.conf · swaylock/config · niri/scripts/captura-editor.sh
+//  Estos son solo los colores de reserva. Los que se usan de verdad los
+//  genera «yoru tema» a partir de tema/blanco.json (o del fondo de pantalla)
+//  y se incluyen después, en config.kdl. Para cambiar la paleta de todo el
+//  escritorio, edita tema/blanco.json y ejecuta: yoru tema blanco
+//  (swaylock y la pantalla de inicio de sesión no siguen al tema: sus
+//  colores están en swaylock/config y system/greetd/gtkgreet.css)
 // ----------------------------------------------------------------------------
 //  oscuro #1a1b1e   oscuro-2 #26272b   gris #8a8f98
 //  texto  #e5e9f0   blanco   #ffffff
