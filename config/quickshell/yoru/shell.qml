@@ -65,9 +65,6 @@ ShellRoot {
         Osd {}
     }
 
-    // Pantalla de bloqueo (una para todas las pantallas)
-    Bloqueo {}
-
     // Abrir paneles desde fuera (atajos de niri, scripts...):
     //   qs -c yoru ipc call panel alternar conexion wifi     (o bluetooth, audio, micro)
     //   qs -c yoru ipc call panel alternar centro resumen     (o clima)
