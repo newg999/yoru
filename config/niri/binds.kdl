@@ -52,8 +52,9 @@ binds {
     XF86AudioNext  allow-when-locked=true { spawn "playerctl" "next"; }
     XF86AudioPrev  allow-when-locked=true { spawn "playerctl" "previous"; }
 
-    XF86MonBrightnessUp   allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "10%-"; }
+    // Brillo: pantalla del portátil y también monitores externos (DDC/CI)
+    XF86MonBrightnessUp   allow-when-locked=true { spawn "qs" "-c" "yoru" "ipc" "call" "brillo" "subir"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "qs" "-c" "yoru" "ipc" "call" "brillo" "bajar"; }
 
     // ------------------------------------------------------------ Capturas
     // Captura de Niri: selecciona zona, Espacio/Enter para guardar

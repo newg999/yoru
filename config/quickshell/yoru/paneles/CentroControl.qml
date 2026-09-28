@@ -5,6 +5,8 @@
 //    │ [󰖩 Wi-Fi     󰅀] [󰂯 Bluetooth 󰅀]│  icono = on/off · resto = su lista
 //    │ 󰕾 ━━━━━━━━━○──────── 45%  󰅀     │  volumen (󰅀 = elegir salida)
 //    │ 󰍬 ━━━━━○──────────── 60%  󰅀     │  micrófono (󰅀 = elegir micrófono)
+//    │ 󰃠 ━━━━━━━━━━━━○───── 80%        │  brillo (portátil o monitor por DDC)
+//    │ [Ahorro] [Equilibrado] [Rendim.]│  perfil de energía
 //    │ ─────────────────────────────── │
 //    │  lista de la sección elegida    │  redes, dispositivos, salidas o micros
 //    └──────────────────────────────────┘
@@ -34,6 +36,9 @@ Panel {
     readonly property var redWifi: wifi?.networks.values.find(r => r.connected) ?? null
     readonly property var adaptador: Bluetooth.defaultAdapter
     readonly property var btConectados: Bluetooth.devices.values.filter(d => d.connected)
+
+    // El brillo puede haber cambiado desde fuera (botones del monitor)
+    onAbiertoChanged: if (abierto) Brillo.leer()
 
     Column {
         width: parent.width
@@ -91,6 +96,22 @@ Panel {
                 elegida: panel.seccion === "micro"
                 onElegir: panel.elegir("micro")
             }
+
+            // Brillo (solo si hay alguna pantalla que lo permita)
+            Repeater {
+                model: Brillo.pantallas
+                FilaBrillo {
+                    required property var modelData
+                    width: parent.width
+                    pantalla: modelData
+                    conNombre: Brillo.pantallas.length > 1
+                }
+            }
+        }
+
+        // ------------------------------------------- Perfil de energía
+        SelectorEnergia {
+            width: parent.width
         }
 
         // ------------------------------------------------ Lista elegida
