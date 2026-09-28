@@ -32,6 +32,11 @@ Singleton {
 
     readonly property color tenue: claro(0.35)         // apagado / silenciado
 
+    // Para textos con formato (las ayudas de la barra): texto en gris, y
+    // texto ajeno (nombres de redes, canciones...) sin que < y & rompan nada
+    function suave(t) { return "<font color='" + gris + "'>" + t + "</font>"; }
+    function html(t) { return String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
     // Islas de la barra: 1.0 = sólidas, 0.0 = invisibles
     readonly property color isla: sombra(0.45)
     readonly property color islaBorde: claro(0.12)

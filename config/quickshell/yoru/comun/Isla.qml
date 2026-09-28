@@ -4,8 +4,11 @@
 //  Si no hay nada visible dentro, la isla se desvanece.
 //  Con pulsable: true, la isla entera es un solo botón (se ilumina al pasar
 //  el ratón y avisa con clic(boton) y rueda(pasos)).
+//  Con ayuda: "...", al dejar el ratón encima sale un recuadro con más
+//  información (ver Ayuda.qml).
 // ============================================================================
 import QtQuick
+import Quickshell
 
 Rectangle {
     id: isla
@@ -16,6 +19,7 @@ Rectangle {
     property bool vacia: fila.implicitWidth <= 0
     property bool pulsable: false
     readonly property alias hover: raton.containsMouse
+    property string ayuda: ""
     signal clic(int boton)
     signal rueda(int pasos)
 
@@ -45,6 +49,35 @@ Rectangle {
             if (e.angleDelta.y !== 0)
                 isla.rueda(e.angleDelta.y > 0 ? 1 : -1);
         }
+    }
+
+    // Ayuda: tras un momento con el ratón encima; se quita al abrir o cerrar
+    // un panel (lo normal después de un clic)
+    HoverHandler { id: sobre }
+    Timer {
+        id: retraso
+        property bool mostrar: false
+        interval: 600
+        running: sobre.hovered && !mostrar
+        onTriggered: mostrar = true
+    }
+    Connections {
+        target: sobre
+        function onHoveredChanged() {
+            if (!sobre.hovered)
+                retraso.mostrar = false;
+        }
+    }
+    Connections {
+        target: Paneles
+        function onAbiertoChanged() {
+            retraso.mostrar = false;
+        }
+    }
+    Ayuda {
+        objetivo: isla
+        texto: isla.ayuda
+        mostrar: retraso.mostrar && Paneles.abierto === "" && !Niri.overview
     }
 
     Row {
