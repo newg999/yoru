@@ -2,7 +2,7 @@
    gtkgreet.css — El recuadro de la pantalla de inicio de Yoru
    Mismo estilo que los menús de rofi (rofi/tema.rasi): oscuro casi opaco,
    borde blanco de 2 px como el foco de las ventanas y esquinas redondeadas.
-   Si cambias la paleta, cambia también rofi/tema.rasi y waybar/style.css.
+   «yoru tema» no cambia estos colores: si tocas tema/blanco.json, cámbialos aquí.
    ========================================================================== */
 
 * {

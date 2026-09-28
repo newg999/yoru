@@ -20,14 +20,14 @@ binds {
     Mod+B      hotkey-overlay-title="Navegador (Brave)"      { spawn "brave-browser"; }
 
     // --------------------------------------------------------- Menús propios
-    Mod+Shift+BackSpace hotkey-overlay-title="Menú de apagado" { spawn-sh "~/.config/rofi/scripts/apagado.sh"; }
+    Mod+Shift+BackSpace hotkey-overlay-title="Menú de apagado" { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "apagado" ""; }
     Mod+Alt+N           hotkey-overlay-title="Wifi"            { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "conexion" "wifi"; }
     Mod+Alt+B           hotkey-overlay-title="Bluetooth"       { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "conexion" "bluetooth"; }
     Mod+Alt+A           hotkey-overlay-title="Audio"           { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "conexion" "audio"; }
     Mod+Alt+C           hotkey-overlay-title="Calendario"      { spawn-sh "~/.config/rofi/scripts/calendario.py"; }
-    Mod+Alt+V           hotkey-overlay-title="Portapapeles"    { spawn-sh "~/.config/rofi/scripts/portapapeles.sh"; }
+    Mod+Alt+V           hotkey-overlay-title="Portapapeles"    { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "portapapeles" ""; }
     Mod+Alt+S           hotkey-overlay-title="Tienda de apps"  { spawn-sh "~/.config/rofi/scripts/tienda.py"; }
-    Mod+Alt+W           hotkey-overlay-title="Elegir fondo"    { spawn-sh "~/.config/rofi/scripts/fondos.sh"; }
+    Mod+Alt+W           hotkey-overlay-title="Elegir fondo"    { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "fondos" ""; }
     Mod+Alt+Shift+W     hotkey-overlay-title="Fondo siguiente" { spawn-sh "~/.config/niri/scripts/wallpaper.sh next"; }
 
     // --------------------------------------------------------------- Sesión

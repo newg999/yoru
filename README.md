@@ -14,7 +14,7 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 |---|---|---|
 | Compositor | `niri` | `config/niri/` |
 | Barra y paneles | `quickshell` | `config/quickshell/yoru/` |
-| Lanzador y menús | `rofi` | `config/rofi/` |
+| Menús que quedan en rofi (calendario, tienda) | `rofi` | `config/rofi/` |
 | Capturas con editor | `slurp` + `swappy` | `config/swappy/` |
 | Tienda de apps | `rofi` + `flatpak` + `dnf` | `config/rofi/scripts/tienda.py` |
 | Notificaciones | `mako` | `config/mako/` |
