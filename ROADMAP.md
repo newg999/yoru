@@ -62,7 +62,7 @@ Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de má
 
 ## Fase 6 · Pulir los detalles
 - [ ] Pantalla de bloqueo más bonita: **hyprlock** o **swaylock-effects** (fondo desenfocado y reloj)
-- [ ] OSD de volumen y brillo (una barra que aparece al pulsar las teclas): **[SwayOSD](https://github.com/ErikReider/SwayOSD)**
+- [x] OSD de volumen, micrófono y brillo (Quickshell, `paneles/Osd.qml`): una barra abajo al cambiarlos
 - [ ] Reglas de ventanas: qué app se abre en qué escritorio (`niri msg windows` para ver el `app-id`)
 - [ ] Escritorios con nombre (`workspace "web"`, `workspace "código"`...) → [docs](https://niri-wm.github.io/niri/Configuration:-Named-Workspaces.html)
 - [ ] Visualizador de audio con **cava** en la barra o en una terminal flotante

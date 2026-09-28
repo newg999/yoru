@@ -36,9 +36,13 @@ Singleton {
         espera.restart();
     }
 
+    // Con las teclas: también avisa al OSD (Osd.qml)
+    signal cambiadoConTecla()
     function cambiar(delta) {
         for (const p of pantallas)
             poner(p.id, Math.round((p.valor + delta) * 20) / 20);
+        if (pantallas.length > 0)
+            cambiadoConTecla();
     }
 
     // Manda el siguiente cambio pendiente (uno cada vez)

@@ -60,6 +60,10 @@ ShellRoot {
         model: Quickshell.screens
         Tienda {}
     }
+    Variants {
+        model: Quickshell.screens
+        Osd {}
+    }
 
     // Abrir paneles desde fuera (atajos de niri, scripts...):
     //   qs -c yoru ipc call panel alternar conexion wifi     (o bluetooth, audio, micro)
