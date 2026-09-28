@@ -22,12 +22,12 @@ Marca las casillas conforme avances (`- [x]`).
 
 ## Fase 2 · Tu identidad visual
 - [x] Elegir **tu** paleta: tema "blanco" (monocromo translúcido)
-- [ ] Buscar fondos de pantalla que encajen y echarlos en `wallpapers/`
-- [ ] Ajustar `gaps`, anchura del `focus-ring`, sombras y radio de esquinas
-- [ ] Probar **desenfoque** (blur) en la barra con un `layer-rule` y `background-effect` → [docs](https://niri-wm.github.io/niri/Configuration:-Layer-Rules.html)
-- [ ] Probar las **animaciones** y encontrar la velocidad que te guste → [docs](https://niri-wm.github.io/niri/Configuration:-Animations.html)
+- [x] Buscar fondos de pantalla que encajen y echarlos en `wallpapers/` (naturaleza y paisajes anime, con `wallpapers/descargar.sh`)
+- [x] Ajustar `gaps`, anchura del `focus-ring`, sombras y radio de esquinas (huecos 12, anillo 2, esquinas 10, sombra suave)
+- [x] **Desenfoque** (blur) detrás de cada isla de la barra y de los paneles (Quickshell pide la zona exacta a niri)
+- [x] **Animaciones** un 20 % más rápidas (`slowdown 0.8` en `config.kdl`) → [docs](https://niri-wm.github.io/niri/Configuration:-Animations.html)
 - [x] Tema oscuro para apps GTK: `gsettings set org.gnome.desktop.interface color-scheme prefer-dark`
-- [ ] Tema de iconos y cursor (por ejemplo, Papirus y Bibata)
+- [x] Tema de iconos y cursor: Papirus-Dark y Bibata Modern Ice
 
 ## Fase 3 · Centralizar los colores
 Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de más fácil a más potente:

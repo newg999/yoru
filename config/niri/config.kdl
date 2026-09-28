@@ -120,6 +120,15 @@ spawn-sh-at-startup "command -v blueman-applet && blueman-applet"
 // Pide a las apps que no dibujen su propia barra de título
 prefer-no-csd
 
+// Cursor (install.sh baja Bibata a ~/.local/share/icons; si no está, niri
+// usa el de siempre). Las apps GTK lo leen de gsettings (ajustes_gtk).
+cursor {
+    xcursor-theme "Bibata-Modern-Ice"
+    xcursor-size 24
+    // Descomenta para esconderlo mientras escribes:
+    // hide-when-typing
+}
+
 // Mostrar la chuleta de atajos al entrar (Mod+Shift+/ la abre cuando quieras).
 // Cuando te sepas los atajos, descomenta esto:
 // hotkey-overlay { skip-at-startup; }
@@ -135,9 +144,11 @@ blur {
     saturation 1.5
 }
 
+// Velocidad de las animaciones: 1 = la de niri; menos = más rápidas.
+// «off» las quita todas.
 animations {
+    slowdown 0.8
     // off
-    // slowdown 1.5
 }
 
 // Por defecto, llevar el ratón a la esquina superior izquierda abre el
