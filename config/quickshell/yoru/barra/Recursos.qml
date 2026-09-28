@@ -9,6 +9,8 @@ Isla {
     required property var pantalla
     relleno: 7
     pulsable: true
+    // Iluminada también con su panel abierto (ver Paneles.esta)
+    readonly property bool iluminada: hover || Paneles.esta("monitor", pantalla)
     onClic: Paneles.alternar("monitor", isla.pantalla, "procesos")
 
     function duracion(s) {
@@ -31,13 +33,13 @@ Isla {
         icono: "󰘚"
         texto: Sistema.cpu + "%"
         pulsable: false
-        resaltado: isla.hover
+        resaltado: isla.iluminada
     }
     Modulo {
         icono: "󰍛"
         texto: Sistema.memoria + "%"
         pulsable: false
-        resaltado: isla.hover
+        resaltado: isla.iluminada
     }
     Modulo {
         visible: isla.hayBateria
@@ -46,7 +48,7 @@ Isla {
         icono: isla.cargando ? "󰂄" : iconos[Math.min(9, Math.floor(carga / 10))]
         texto: carga + "%"
         pulsable: false
-        resaltado: isla.hover
+        resaltado: isla.iluminada
         colorAviso: isla.cargando ? "transparent"
             : carga <= 10 ? Tema.rojo
             : carga <= 25 ? Tema.amarillo : "transparent"

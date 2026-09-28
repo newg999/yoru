@@ -15,6 +15,8 @@ Isla {
     required property var pantalla
     relleno: 5
     pulsable: true
+    // Iluminada también con su panel abierto (ver Paneles.esta)
+    readonly property bool iluminada: hover || Paneles.esta("conexion", pantalla)
 
     // Los tres iconos con el mismo margen, para que queden a la misma distancia
     readonly property int margenIcono: 6
@@ -79,7 +81,7 @@ Isla {
         relleno: isla.margenIcono
         apagado: isla.mudo
         pulsable: false
-        resaltado: isla.hover
+        resaltado: isla.iluminada
     }
 
     // ----------------------------------------------------------------- Red
@@ -97,7 +99,7 @@ Isla {
         apagado: !isla.cable && !Networking.wifiEnabled
         relleno: isla.margenIcono
         pulsable: false
-        resaltado: isla.hover
+        resaltado: isla.iluminada
     }
 
     // ----------------------------------------------------------- Bluetooth
@@ -112,6 +114,6 @@ Isla {
         relleno: isla.margenIcono
         apagado: !isla.adaptador?.enabled
         pulsable: false
-        resaltado: isla.hover
+        resaltado: isla.iluminada
     }
 }

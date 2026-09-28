@@ -9,7 +9,9 @@
 //    │ [Ahorro] [Equilibrado] [Rendim.]│  perfil de energía
 //    │ ─────────────────────────────── │
 //    │  lista de la sección elegida    │  redes, dispositivos, salidas o micros
-//    └──────────────────────────────────┘
+//    │ ─────────────────────────────── │
+//    │ Sesión de don    󰌾 󰤄 󰍃 󰜉 󰐥    │  bloquear, suspender, salir, reiniciar,
+//    └──────────────────────────────────┘  apagar (los 3 últimos: dos clics)
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -38,7 +40,40 @@ Panel {
     readonly property var btConectados: Bluetooth.devices.values.filter(d => d.connected)
 
     // El brillo puede haber cambiado desde fuera (botones del monitor)
-    onAbiertoChanged: if (abierto) Brillo.leer()
+    onAbiertoChanged: {
+        if (abierto)
+            Brillo.leer();
+        else
+            confirmar = "";
+    }
+
+    // ------------------------------------------------------------ Sesión
+    // Cerrar sesión, reiniciar y apagar piden un segundo clic (el botón se
+    // pone rojo 3 s): un clic sin querer no te cierra todo
+    readonly property var sesion: [
+        {icono: "󰌾", titulo: "Bloquear", orden: ["sh", "-c", "~/.config/niri/scripts/bloquear.sh"]},
+        {icono: "󰤄", titulo: "Suspender", orden: ["sh", "-c", "~/.config/niri/scripts/bloquear.sh && systemctl suspend"]},
+        {icono: "󰍃", titulo: "Cerrar sesión", seguro: true, orden: ["niri", "msg", "action", "quit", "--skip-confirmation"]},
+        {icono: "󰜉", titulo: "Reiniciar", seguro: true, orden: ["systemctl", "reboot"]},
+        {icono: "󰐥", titulo: "Apagar", seguro: true, orden: ["systemctl", "poweroff"]},
+    ]
+    property string confirmar: ""      // título de la opción esperando el 2.º clic
+
+    function sesionElegir(o) {
+        if (o.seguro && confirmar !== o.titulo) {
+            confirmar = o.titulo;
+            espera.restart();
+            return;
+        }
+        confirmar = "";
+        Paneles.cerrar();
+        Quickshell.execDetached(o.orden);
+    }
+    Timer {
+        id: espera
+        interval: 3000
+        onTriggered: panel.confirmar = ""
+    }
 
     Column {
         width: parent.width
@@ -162,6 +197,29 @@ Panel {
                 visible: opacity > 0
                 opacity: panel.seccion === "micro" ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: Tema.normal } }
+            }
+        }
+
+        // ------------------------------------------------------- Sesión
+        Rectangle {
+            width: parent.width
+            height: 1
+            color: Tema.claro(0.08)
+        }
+
+        Titular {
+            width: parent.width
+            texto: panel.confirmar !== "" ? panel.confirmar + ": pulsa otra vez"
+                : "Sesión de " + Quickshell.env("USER")
+
+            Repeater {
+                model: panel.sesion
+                BotonIcono {
+                    required property var modelData
+                    icono: modelData.icono
+                    alerta: panel.confirmar === modelData.titulo
+                    onClic: panel.sesionElegir(modelData)
+                }
             }
         }
     }

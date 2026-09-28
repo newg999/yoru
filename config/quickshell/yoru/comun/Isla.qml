@@ -2,8 +2,9 @@
 //  Isla — recuadro translúcido de la barra que agrupa uno o varios módulos
 //  Los módulos se ponen dentro y se colocan en fila.
 //  Si no hay nada visible dentro, la isla se desvanece.
-//  Con pulsable: true, la isla entera es un solo botón (se ilumina al pasar
-//  el ratón y avisa con clic(boton) y rueda(pasos)).
+//  Con pulsable: true, la isla entera es un solo botón (avisa con clic(boton)
+//  y rueda(pasos)); al pasar el ratón se iluminan sus módulos, como los demás
+//  (resaltado: isla.hover), sin cambiar el fondo.
 //  Con ayuda: "...", al dejar el ratón encima sale un recuadro con más
 //  información (ver Ayuda.qml).
 // ============================================================================
@@ -26,8 +27,7 @@ Rectangle {
     implicitWidth: vacia ? 0 : fila.implicitWidth + 2 * relleno
     implicitHeight: Tema.altoBarra
     radius: Tema.radio
-    color: pulsable && raton.containsMouse ? Tema.claro(0.14) : Tema.isla
-    Behavior on color { ColorAnimation { duration: Tema.rapida } }
+    color: Tema.isla
     border.width: 1
     border.color: Tema.islaBorde
     clip: true

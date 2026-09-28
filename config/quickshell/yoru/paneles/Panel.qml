@@ -45,14 +45,9 @@ PanelWindow {
     // Teclado para Esc y para escribir contraseñas
     WlrLayershell.keyboardFocus: abierto ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-    // Desenfoque detrás del recuadro (si el compositor lo permite).
-    // Solo con el panel ya abierto del todo: el desenfoque no se puede
-    // desvanecer, y si se deja durante la animación queda un rectángulo
-    // borroso que no encaja con el recuadro y desaparece de golpe al final.
-    BackgroundEffect.blurRegion: Region {
-        item: ventana.abierto && ventana.progreso > 0.97 ? caja : null
-        radius: Tema.radioPanel
-    }
+    // Sin desenfoque detrás del recuadro (las islas de la barra sí lo
+    // tienen): el de niri no se puede desvanecer, y al ponerse al final de
+    // la animación el panel cambiaba de golpe de tono (parecía un parpadeo).
 
     // Clic fuera = cerrar
     MouseArea {

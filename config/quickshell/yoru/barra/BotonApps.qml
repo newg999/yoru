@@ -11,6 +11,7 @@ Isla {
     Modulo {
         icono: "󰀻"
         relleno: 8
+        resaltado: Paneles.esta("lanzador", isla.pantalla)
         onClic: Paneles.alternar("lanzador", isla.pantalla, "")
     }
 }
