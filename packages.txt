@@ -86,7 +86,8 @@ network-manager-applet    # icono de red y editor de conexiones
 # --- Utilidades --------------------------------------------------------------
 wl-clipboard              # copiar/pegar desde la terminal (wl-copy, wl-paste)
 cliphist                  # historial del portapapeles
-brightnessctl             # teclas de brillo
+brightnessctl             # brillo de la pantalla del portátil
+ddcutil                   # brillo de monitores externos (DDC/CI)
 playerctl                 # teclas multimedia
 libnotify                 # notify-send
 htop                      # monitor del sistema (clic en la CPU de la barra)

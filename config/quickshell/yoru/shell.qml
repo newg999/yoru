@@ -81,4 +81,16 @@ ShellRoot {
             Paneles.cerrar();
         }
     }
+
+    // Teclas de brillo (binds.kdl):  qs -c yoru ipc call brillo subir   (o bajar)
+    IpcHandler {
+        target: "brillo"
+
+        function subir(): void {
+            Brillo.cambiar(0.1);
+        }
+        function bajar(): void {
+            Brillo.cambiar(-0.1);
+        }
+    }
 }

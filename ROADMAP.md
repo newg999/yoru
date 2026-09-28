@@ -39,7 +39,7 @@ Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de má
 - [ ] Crear tu primer módulo `custom/` con un script (por ejemplo, la temperatura o la canción que suena con `playerctl`)
 - [x] Menús con rofi: wifi, bluetooth, calendario, apagado y portapapeles (ya todos en Quickshell; rofi quitado)
 - [x] Menú de audio: salida, micrófono y volumen
-- [ ] Más menús: perfiles de energía, brillo
+- [x] Perfiles de energía y brillo en el centro de control (el brillo también para monitores externos, por DDC/CI)
 - [x] Pasar la barra de Waybar a **[Quickshell](https://quickshell.org)**: misma estética, con paneles de verdad
 - [x] Centro de control (Quickshell): wifi, bluetooth, volumen, micrófono y salidas de audio
 - [x] Panel central (Quickshell): reloj, calendario, clima de tu zona, música con carátula y uso del sistema

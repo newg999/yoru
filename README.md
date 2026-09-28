@@ -151,7 +151,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | Paquetes que se instalan | `packages.txt` |
 | Qué sale en la barra y en qué orden | `config/quickshell/yoru/barra/Barra.qml` |
 | Fuente y medidas de la barra y los paneles | `config/quickshell/yoru/comun/Tema.qml` |
-| Centro de control (wifi, bluetooth, audio) | `config/quickshell/yoru/paneles/CentroControl.qml` |
+| Centro de control (wifi, bluetooth, audio, brillo y perfil de energía) | `config/quickshell/yoru/paneles/CentroControl.qml` |
 | Panel central (resumen, multimedia, clima) | `config/quickshell/yoru/paneles/PanelCentral.qml` |
 | Monitor del sistema (clic en CPU/RAM) | `config/quickshell/yoru/paneles/Monitor.qml` y `scripts/monitor.py` |
 | Lanzador de apps (`Mod+Space`, sale por la izquierda) | `config/quickshell/yoru/paneles/Lanzador.qml` |
