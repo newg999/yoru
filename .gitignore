@@ -10,7 +10,7 @@ config/fastfetch/logo.*
 *~
 .DS_Store
 
-# Caché de Python (scripts de rofi)
+# Caché de Python (scripts de Quickshell y del tema)
 __pycache__/
 *.pyc
 

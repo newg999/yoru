@@ -2,7 +2,7 @@
 //  Panel — recuadro que se despliega bajo la barra (como los de DMS)
 //
 //  La ventana ocupa la pantalla entera pero es invisible: así un clic fuera
-//  del recuadro lo cierra (igual que el truco de los menús de rofi).
+//  del recuadro lo cierra.
 //  Esc también lo cierra.
 //
 //    Panel {

@@ -1,6 +1,6 @@
 /* ============================================================================
    gtkgreet.css — El recuadro de la pantalla de inicio de Yoru
-   Mismo estilo que los menús de rofi (rofi/tema.rasi): oscuro casi opaco,
+   Mismo estilo que los paneles de Quickshell: oscuro casi opaco,
    borde blanco de 2 px como el foco de las ventanas y esquinas redondeadas.
    «yoru tema» no cambia estos colores: si tocas tema/blanco.json, cámbialos aquí.
    ========================================================================== */
@@ -35,7 +35,7 @@ window, window.background {
     margin-bottom: 18px;
 }
 
-/* Campos de texto: como el buscador de rofi */
+/* Campos de texto: como el buscador del lanzador */
 entry {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -65,7 +65,7 @@ entry:focus { border-color: rgba(255, 255, 255, 0.80); }
 }
 entry placeholder, entry text selection { color: #8a8f98; }
 
-/* Botones: el principal blanco con texto oscuro, como la fila elegida de rofi */
+/* Botones: el principal blanco con texto oscuro, como la fila elegida de los paneles */
 button {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);

@@ -37,7 +37,7 @@ Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de má
 ## Fase 4 · Una barra a tu medida
 - [ ] Decidir qué módulos quieres realmente y en qué orden
 - [ ] Crear tu primer módulo `custom/` con un script (por ejemplo, la temperatura o la canción que suena con `playerctl`)
-- [x] Menús con rofi: wifi, bluetooth, calendario, apagado y portapapeles
+- [x] Menús con rofi: wifi, bluetooth, calendario, apagado y portapapeles (ya todos en Quickshell; rofi quitado)
 - [x] Menú de audio: salida, micrófono y volumen
 - [ ] Más menús: perfiles de energía, brillo
 - [x] Pasar la barra de Waybar a **[Quickshell](https://quickshell.org)**: misma estética, con paneles de verdad

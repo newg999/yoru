@@ -36,7 +36,7 @@ Singleton {
     readonly property color isla: sombra(0.45)
     readonly property color islaBorde: claro(0.12)
 
-    // Paneles (como los menús de rofi)
+    // Paneles
     readonly property color panel: sombra(0.90)
     readonly property color panelBorde: claro(0.80)    // = anillo de foco de niri
     readonly property color caja: claro(0.06)          // fondos de filas y botones

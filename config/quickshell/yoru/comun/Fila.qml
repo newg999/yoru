@@ -1,6 +1,6 @@
 // ============================================================================
 //  Fila — un elemento de las listas de los paneles (red wifi, dispositivo...)
-//  Igual que en los menús de rofi: la elegida (seleccionada) va en blanco
+//  La elegida (seleccionada) va en blanco
 //  con el texto oscuro. Los botones extra van a la derecha (contenido).
 // ============================================================================
 import QtQuick
