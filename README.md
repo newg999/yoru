@@ -30,7 +30,7 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Visor de PDF | `okular` | `config/kdeglobals` (sus colores oscuros) |
 | Tema de las apps | `adw-gtk3-dark` (GTK3) · modo oscuro (GTK4) | `install.sh` → `ajustes_gtk` |
 
-Tema: **blanco sobre oscuro translúcido**, con barra en islas, menús que salen bajo la barra (y se cierran con un clic fuera) y fondos anime. El color se reserva para los avisos. Fuente: **JetBrainsMono Nerd Font**.
+Tema: **blanco sobre oscuro translúcido**, con barra en islas, menús que salen bajo la barra (y se cierran con un clic fuera) y fondos de naturaleza y paisajes anime sin personajes. El color se reserva para los avisos. Fuente: **JetBrainsMono Nerd Font**.
 
 ## Instalación
 
@@ -76,6 +76,27 @@ Si se te pasa, el driver no cargará: repite con `sudo mokutil --import /etc/pki
 ### Cómo funciona
 
 El script **no copia** archivos: crea *enlaces simbólicos*. `~/.config/niri` apunta a `~/dotfiles/config/niri`, así que cualquier cambio que hagas se guarda en el repositorio y lo ves con `git status`. Si ya tenías configuración, se mueve primero a `~/.local/state/yoru/backups/`.
+
+## Mantenimiento: el comando `yoru`
+
+| Comando | Qué hace |
+|---|---|
+| `yoru update` | Baja los cambios del repo, actualiza el sistema y las apps Flatpak y vuelve a pasar el instalador |
+| `yoru reload` | Comprueba la config de Niri y recarga la barra y las notificaciones |
+| `yoru doctor` | Revisa enlaces, programas, servicios, copias y el repo, y dice qué falla y cómo arreglarlo |
+| `yoru copias` | Lista las copias del sistema |
+| `yoru volver <n>` | Deja el sistema como estaba en la copia `n` |
+
+### Copias del sistema
+
+Si tu disco es btrfs (lo normal en Fedora), el instalador activa **snapper**: cada `dnf install`, `upgrade` o `remove` guarda una copia del sistema antes y otra después. Se guardan las 10 últimas. Si una actualización rompe algo:
+
+```bash
+yoru copias          # busca la copia «pre» de esa actualización
+yoru volver 42       # y vuelve a ella; después, sudo reboot
+```
+
+Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no se tocan. Si la actualización traía un kernel nuevo y al reiniciar no arranca, elige el kernel anterior en el menú del principio.
 
 ## Atajos principales
 

@@ -1,0 +1,256 @@
+#!/usr/bin/env bash
+# ============================================================================
+#  yoru — el mantenimiento de Yoru en un solo comando
+# ----------------------------------------------------------------------------
+#  install.sh lo enlaza en ~/.local/bin/yoru: funciona desde cualquier carpeta.
+#
+#    yoru update        baja los cambios del repo, actualiza el sistema y las
+#                       apps Flatpak y vuelve a pasar el instalador
+#    yoru reload        comprueba la config de Niri y recarga la barra y las
+#                       notificaciones
+#    yoru doctor        revisa que todo esté en su sitio y dice qué falla
+#    yoru copias        lista las copias del sistema (se hacen con cada dnf)
+#    yoru volver <n>    deja el sistema como estaba en la copia <n>
+#    yoru ayuda
+# ============================================================================
+
+set -uo pipefail
+
+# Carpeta del repositorio, aunque se llame a través del enlace de ~/.local/bin
+REPO="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd -P)"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+ACCIONES_SNAPPER="/etc/dnf/libdnf5-plugins/actions.d/snapper.actions"
+
+# ---------------------------------------------------------------- Mensajes
+AZUL='\033[1;34m'; VERDE='\033[1;32m'; AMARILLO='\033[1;33m'; ROJO='\033[1;31m'; NC='\033[0m'
+paso()  { echo -e "\n${AZUL}==>${NC} $*"; }
+ok()    { echo -e "  ${VERDE}✔${NC} $*"; }
+aviso() { echo -e "  ${AMARILLO}!${NC} $*"; }
+error() { echo -e "  ${ROJO}✘${NC} $*" >&2; }
+
+# ------------------------------------------------------------------ update
+cmd_update() {
+    paso "Cambios del repositorio"
+    # --autostash: si tienes cambios sin commitear, se apartan, se baja lo
+    # nuevo y se vuelven a poner encima
+    if git -C "$REPO" pull --ff-only --autostash -q; then
+        ok "Repositorio al día ($(git -C "$REPO" log -1 --format='%h %s'))"
+    else
+        aviso "No se pudo hacer git pull (¿sin internet, o tu rama y la de GitHub han divergido?)"
+        aviso "Sigo con la actualización del sistema"
+    fi
+
+    # El instalador actualiza el sistema (con copia de snapper antes y
+    # después), instala lo nuevo de packages.txt y rehace los enlaces.
+    # Lo que ya esté hecho se lo salta.
+    "$REPO/install.sh" || { error "El instalador se ha parado (mira arriba)"; return 1; }
+
+    if command -v flatpak >/dev/null; then
+        paso "Apps Flatpak"
+        flatpak update -y --noninteractive && ok "Flatpak al día" \
+            || aviso "No se pudieron actualizar las apps Flatpak"
+    fi
+
+    # Kernel nuevo instalado pero no en uso: hace falta reiniciar
+    local nuevo
+    nuevo="$(rpm -q kernel-core --qf '%{VERSION}-%{RELEASE}.%{ARCH}\n' 2>/dev/null | sort -V | tail -n1)"
+    if [[ -n "$nuevo" && "$nuevo" != "$(uname -r)" ]]; then
+        echo
+        aviso "Hay un kernel nuevo ($nuevo). Reinicia cuando puedas: sudo reboot"
+    fi
+}
+
+# ------------------------------------------------------------------ reload
+cmd_reload() {
+    paso "Recargando Yoru"
+    # Niri ya recarga su config al guardar; aquí solo se comprueba que es válida
+    if niri validate -c "$CONFIG_DIR/niri/config.kdl" >/dev/null 2>&1; then
+        ok "Config de Niri correcta"
+    else
+        error "La config de Niri tiene errores:"
+        niri validate -c "$CONFIG_DIR/niri/config.kdl"
+    fi
+
+    systemctl --user daemon-reload
+    if systemctl --user restart yoru-shell.service; then
+        ok "Barra y paneles reiniciados"
+    else
+        error "La barra no arranca. Mira por qué con: journalctl --user -u yoru-shell -e"
+    fi
+
+    makoctl reload 2>/dev/null && ok "Notificaciones recargadas" \
+        || aviso "mako no está en marcha"
+}
+
+# ------------------------------------------------------------------ doctor
+PROBLEMAS=0
+bien() { ok "$*"; }
+mal()  { error "$*"; PROBLEMAS=$((PROBLEMAS + 1)); }
+
+# enlace_ok <destino> <origen en el repo>
+enlace_ok() {
+    local destino="$1" origen="$2" nombre="${1/#$HOME/\~}"
+    if [[ -L "$destino" && "$(readlink -f "$destino")" == "$(readlink -f "$origen")" ]]; then
+        bien "$nombre"
+    elif [[ -e "$destino" ]]; then
+        mal "$nombre existe pero no apunta al repo → ./install.sh --sin-paquetes"
+    else
+        mal "$nombre no existe → ./install.sh --sin-paquetes"
+    fi
+}
+
+cmd_doctor() {
+    paso "Enlaces al repositorio ($REPO)"
+    local carpeta
+    for carpeta in "$REPO"/config/*/; do
+        carpeta="${carpeta%/}"
+        [[ "$(basename "$carpeta")" == "zsh" ]] && continue
+        enlace_ok "$CONFIG_DIR/$(basename "$carpeta")" "$carpeta"
+    done
+    enlace_ok "$CONFIG_DIR/kdeglobals" "$REPO/config/kdeglobals"
+    enlace_ok "$HOME/.zshrc" "$REPO/config/zsh/zshrc"
+    enlace_ok "$HOME/.local/share/wallpapers" "$REPO/wallpapers"
+    enlace_ok "$CONFIG_DIR/systemd/user/yoru-shell.service" "$REPO/system/systemd/yoru-shell.service"
+    enlace_ok "$HOME/.local/bin/yoru" "$REPO/bin/yoru"
+
+    paso "Programas"
+    local p faltan=()
+    for p in niri qs rofi mako swaybg swaylock swayidle kitty grim slurp swappy \
+             wl-paste cliphist brightnessctl playerctl xwayland-satellite; do
+        command -v "$p" >/dev/null || faltan+=("$p")
+    done
+    if (( ${#faltan[@]} )); then
+        mal "Faltan: ${faltan[*]} → ./install.sh"
+    else
+        bien "Están todos"
+    fi
+    # Sin -q: grep -q sale al primer resultado, fc-list recibe SIGPIPE y, con
+    # pipefail, la comprobación fallaría aunque la fuente esté
+    if fc-list 2>/dev/null | grep -i "JetBrainsMono Nerd Font" >/dev/null; then
+        bien "Fuente JetBrainsMono Nerd Font"
+    else
+        mal "Falta la Nerd Font (iconos como cuadrados) → ./install.sh --sin-paquetes"
+    fi
+
+    paso "Configuración de Niri"
+    if niri validate -c "$CONFIG_DIR/niri/config.kdl" >/dev/null 2>&1; then
+        bien "config.kdl correcta"
+    else
+        mal "config.kdl tiene errores → niri validate"
+    fi
+
+    paso "Servicios"
+    local s
+    for s in pipewire wireplumber; do
+        systemctl --user is-active -q "$s" && bien "$s (sonido)" || mal "$s no está en marcha"
+    done
+    # La barra y los portales solo corren dentro de una sesión de niri
+    if [[ -n "${NIRI_SOCKET:-}" ]]; then
+        systemctl --user is-active -q yoru-shell && bien "yoru-shell (barra)" \
+            || mal "La barra no está en marcha → yoru reload"
+        systemctl --user is-active -q xdg-desktop-portal && bien "xdg-desktop-portal (compartir pantalla)" \
+            || mal "Los portales no están en marcha: ¿entraste desde la pantalla de inicio?"
+    else
+        aviso "No estás dentro de niri: me salto la barra y los portales"
+    fi
+    systemctl is-enabled -q bluetooth 2>/dev/null && bien "bluetooth" || mal "bluetooth no está activado"
+
+    paso "Copias del sistema"
+    if [[ "$(findmnt -no FSTYPE / 2>/dev/null)" != "btrfs" ]]; then
+        aviso "El disco no usa btrfs: no hay copias"
+    elif ! command -v snapper >/dev/null; then
+        mal "snapper no está instalado → ./install.sh"
+    elif [[ ! -f "$ACCIONES_SNAPPER" ]]; then
+        mal "dnf no está creando copias → ./install.sh"
+    else
+        local lista
+        if lista="$(snapper -c root --csvout list --columns number 2>/dev/null)"; then
+            # Sin la cabecera ni la 0 (que es el sistema actual, no una copia)
+            bien "Activadas: $(tail -n +2 <<<"$lista" | grep -vc '^0$') copias guardadas (yoru copias)"
+        else
+            mal "No se pueden leer las copias (¿snapper configurado?) → ./install.sh"
+        fi
+    fi
+
+    paso "Repositorio"
+    local cambios sin_subir
+    cambios="$(git -C "$REPO" status --porcelain | wc -l)"
+    (( cambios )) && aviso "$cambios archivos con cambios sin commitear" || bien "Sin cambios pendientes"
+    if sin_subir="$(git -C "$REPO" rev-list --count '@{u}..HEAD' 2>/dev/null)"; then
+        (( sin_subir )) && aviso "$sin_subir commits sin subir → git push" || bien "Todo subido a GitHub"
+    fi
+
+    echo
+    if (( PROBLEMAS )); then
+        error "$PROBLEMAS problemas encontrados"
+        return 1
+    fi
+    echo -e "${VERDE}Todo en orden${NC}"
+}
+
+# ------------------------------------------------------------------ copias
+cmd_copias() {
+    if ! command -v snapper >/dev/null; then
+        error "snapper no está instalado. Ejecuta ./install.sh para activar las copias"
+        return 1
+    fi
+    # Sin sudo gracias a ALLOW_USERS (install.sh); si no, con sudo
+    snapper -c root list 2>/dev/null || sudo snapper -c root list
+    echo
+    echo "  Las copias van en parejas: «pre» (antes de dnf) y «post» (después)."
+    echo "  Para dejar el sistema como estaba ANTES de una actualización, usa el"
+    echo "  número de su copia «pre»:   yoru volver <número>"
+}
+
+# ------------------------------------------------------------------ volver
+cmd_volver() {
+    local n="${1:-}"
+    if [[ ! "$n" =~ ^[1-9][0-9]*$ ]]; then
+        error "Dime el número de la copia: yoru volver <número>  (míralos con: yoru copias)"
+        return 1
+    fi
+
+    paso "Cambios desde la copia $n"
+    local cambios
+    cambios="$(sudo snapper -c root status "$n..0")" || { error "No existe la copia $n"; return 1; }
+    local total
+    total="$(grep -c . <<<"$cambios")"
+    if (( total == 0 )); then
+        ok "El sistema ya está igual que en la copia $n"
+        return
+    fi
+    echo "$cambios" | head -n 15
+    (( total > 15 )) && echo "  ... y $((total - 15)) más"
+
+    echo
+    echo "  Se deshacen $total cambios del sistema (/). Tus archivos de /home no se tocan."
+    if grep -q '/usr/lib/modules/' <<<"$cambios"; then
+        aviso "Entre los cambios hay un kernel. Al reiniciar, si no arranca, elige en el"
+        aviso "menú del principio el kernel anterior (flechas y Enter)."
+    fi
+    local respuesta
+    read -rp "  ¿Volver a la copia $n? [s/N] " respuesta
+    [[ "${respuesta,,}" == s* ]] || { aviso "Cancelado"; return; }
+
+    if sudo snapper -c root undochange "$n..0"; then
+        ok "Sistema devuelto a la copia $n"
+        aviso "Reinicia para que todo cargue la versión anterior: sudo reboot"
+    else
+        error "snapper no pudo deshacer todos los cambios (mira el mensaje de arriba)"
+        return 1
+    fi
+}
+
+# ---------------------------------------------------------------------- Main
+case "${1:-ayuda}" in
+    update|actualizar)  cmd_update ;;
+    reload|recargar)    cmd_reload ;;
+    doctor|revisar)     cmd_doctor ;;
+    copias)             cmd_copias ;;
+    volver)             cmd_volver "${2:-}" ;;
+    ayuda|-h|--help|help)
+        awk 'NR > 1 && !/^#/ { exit } NR > 1' "$0" | sed 's/^# \{0,1\}//' ;;
+    *)
+        error "No conozco «$1». Usa: yoru ayuda"
+        exit 1 ;;
+esac

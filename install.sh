@@ -4,12 +4,13 @@
 # ----------------------------------------------------------------------------
 #  Qué hace, en orden:
 #    1. Comprueba que estás en Fedora y que no lo ejecutas como root
+#       y, si el disco es btrfs, activa las copias del sistema con cada dnf
 #    2. Actualiza el sistema, añade el repositorio de Brave e instala los
 #       paquetes de packages.txt (y, si hay gráfica NVIDIA, su driver)
 #    3. Descarga la fuente JetBrainsMono Nerd Font (iconos de la barra)
 #    4. Hace copia de seguridad de tus configs actuales
 #    5. Enlaza (symlink) las carpetas de config/ en ~/.config/
-#       y pregunta si quieres bajar los fondos anime (5, ~20 MB)
+#       y pregunta si quieres bajar los fondos de pantalla
 #    6. Activa servicios (bluetooth, energía) y, si no tienes ninguna,
 #       la pantalla de inicio de sesión (greetd + gtkgreet, con el estilo de Yoru)
 #    7. Pone tema oscuro e iconos Papirus en las apps GTK
@@ -73,6 +74,48 @@ comprobar_sistema() {
         error "y vuelve a ejecutar ./install.sh"
         exit 1
     fi
+}
+
+# ------------------------------------------------------- Copias del sistema
+# Con btrfs (el sistema de archivos que Fedora usa por defecto), snapper guarda
+# una "foto" del sistema antes y después de cada dnf install/upgrade/remove.
+# Si una actualización rompe algo:  yoru copias  y  yoru volver <número>
+# Solo copia el sistema (/), no /home: al volver atrás, tus archivos no se tocan.
+# Va antes de actualizar para que esa primera actualización ya tenga copia.
+copias_sistema() {
+    paso "Copias del sistema antes de cada actualización (snapper)"
+    if [[ "$(findmnt -no FSTYPE / 2>/dev/null)" != "btrfs" ]]; then
+        aviso "Tu disco no usa btrfs: sin copias automáticas (todo lo demás funciona igual)"
+        return
+    fi
+    if ! rpm -q dnf5 >/dev/null 2>&1; then
+        aviso "Esta Fedora no usa dnf5: me salto las copias automáticas"
+        return
+    fi
+    if ! sudo dnf install -y snapper libdnf5-plugin-actions >/dev/null; then
+        aviso "No se pudo instalar snapper: sin copias automáticas"
+        return
+    fi
+
+    if sudo snapper -c root get-config >/dev/null 2>&1; then
+        ok "snapper ya estaba configurado para /"
+    elif sudo snapper -c root create-config /; then
+        ok "snapper configurado para /"
+    else
+        aviso "No se pudo configurar snapper para /: sin copias automáticas"
+        return
+    fi
+
+    # Solo las copias de dnf (sin las de cada hora) y como mucho 10: no llenan
+    # el disco. ALLOW_USERS: puedes verlas sin sudo (yoru copias)
+    sudo snapper -c root set-config TIMELINE_CREATE=no NUMBER_LIMIT=10 \
+            NUMBER_LIMIT_IMPORTANT=5 ALLOW_USERS="$USER" SYNC_ACL=yes \
+        || aviso "No se pudieron ajustar los límites de snapper"
+    sudo systemctl enable --now snapper-cleanup.timer >/dev/null 2>&1 || true
+
+    sudo install -D -m 644 "$REPO/system/snapper/snapper.actions" \
+        /etc/dnf/libdnf5-plugins/actions.d/snapper.actions
+    ok "Cada cambio con dnf guardará una copia antes y otra después"
 }
 
 # ------------------------------------------------------------------ Paquetes
@@ -348,17 +391,20 @@ enlazar_todo() {
     paso "Enlazando fondos de pantalla"
     enlazar "$REPO/wallpapers" "$HOME/.local/share/wallpapers"
 
+    paso "Comando yoru (mantenimiento)"
+    enlazar "$REPO/bin/yoru" "$HOME/.local/bin/yoru"
+
     # Git ya guarda que son ejecutables; esto es solo por si vino en un .zip
     chmod +x "$REPO"/config/niri/scripts/*.sh "$REPO"/config/rofi/scripts/*.{sh,py} \
-        "$REPO"/wallpapers/descargar.sh 2>/dev/null || true
+        "$REPO"/wallpapers/descargar.sh "$REPO"/bin/yoru 2>/dev/null || true
     mkdir -p "$HOME/Pictures/Screenshots"
 }
 
 # ------------------------------------------------------------------- Fondos
-# Los fondos anime no están en el repo (son de sus autores): se descargan de
+# Los fondos no están en el repo (son de sus autores): se descargan de
 # wallhaven.cc. Son bastantes MB, así que se pregunta antes.
 bajar_fondos() {
-    paso "Fondos de pantalla anime"
+    paso "Fondos de pantalla"
     local total faltan
     total=$(grep -cv '^[[:space:]]*\(#\|$\)' "$REPO/wallpapers/wallhaven.txt" || true)
     faltan=0
@@ -376,7 +422,7 @@ bajar_fondos() {
         return
     fi
     local respuesta
-    read -rp "  ¿Descargar $faltan fondos (unos 20 MB)? [s/N] " respuesta
+    read -rp "  ¿Descargar $faltan fondos de pantalla? [s/N] " respuesta
     if [[ "${respuesta,,}" == s* ]]; then
         "$REPO/wallpapers/descargar.sh" && ok "Fondos descargados" \
             || aviso "No se pudieron bajar algunos (¿sin internet?). Reintenta con wallpapers/descargar.sh"
@@ -574,7 +620,7 @@ deshacer() {
     paso "Quitando enlaces que apuntan a $REPO"
     systemctl --user disable yoru-shell.service >/dev/null 2>&1 || true
     local destinos=("$HOME/.local/share/wallpapers" "$CONFIG_DIR/kdeglobals" "$HOME/.zshrc"
-                    "$CONFIG_DIR/systemd/user/yoru-shell.service")
+                    "$CONFIG_DIR/systemd/user/yoru-shell.service" "$HOME/.local/bin/yoru")
     for carpeta in "$REPO"/config/*/; do
         destinos+=("$CONFIG_DIR/$(basename "${carpeta%/}")")
     done
@@ -632,6 +678,7 @@ case "${1:-}" in
         validar ;;
     "")
         comprobar_sistema
+        copias_sistema
         actualizar_sistema
         repo_brave
         repo_quickshell

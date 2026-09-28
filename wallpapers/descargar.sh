@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ----------------------------------------------------------------------------
-#  descargar.sh — Baja los fondos anime listados en wallhaven.txt
+#  descargar.sh — Baja los fondos listados en wallhaven.txt
 #
 #  Las imágenes son de sus autores (ver wallhaven.cc/w/<id>), así que no se
 #  guardan en git: este script las descarga en esta misma carpeta.
