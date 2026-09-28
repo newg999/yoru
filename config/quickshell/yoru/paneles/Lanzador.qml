@@ -1,9 +1,10 @@
 // ============================================================================
 //  Lanzador de apps — sale por la izquierda, bajo el botón 󰀻 de la barra.
-//  Con Mod+Space (sección "medio") sale en mitad de la pantalla.
+//  Con Mod+Space (sección "medio") sale en mitad de la pantalla, más ancho
+//  y con las apps en dos columnas.
 //
 //    Escribe para buscar (nombre, descripción o palabras clave)
-//    ↑ ↓ para moverte · Enter para abrir · Esc para cerrar
+//    ↑ ↓ ← → para moverte · Enter para abrir · Esc para cerrar
 //
 //  Las apps que más abres salen primero (se cuentan en usos.json, en
 //  ~/.local/state/quickshell/.../).
@@ -18,13 +19,17 @@ Panel {
     id: panel
     nombre: "lanzador"
     lado: Paneles.seccion === "medio" ? "medio" : "izquierda"
-    ancho: 480
+    ancho: medio ? 820 : 480
+
+    readonly property bool medio: Paneles.seccion === "medio"
+    readonly property int columnas: medio ? 2 : 1
 
     property var usos: ({})      // id de la app → veces abierta
 
     onAbiertoChanged: {
         if (abierto) {
             busqueda.text = "";
+            lista.forceLayout();
             lista.currentIndex = 0;
             busqueda.forceActiveFocus();
         }
@@ -102,8 +107,17 @@ Panel {
                 clip: true
                 onTextChanged: lista.currentIndex = 0
 
-                Keys.onDownPressed: lista.incrementCurrentIndex()
-                Keys.onUpPressed: lista.decrementCurrentIndex()
+                Keys.onDownPressed: lista.moveCurrentIndexDown()
+                Keys.onUpPressed: lista.moveCurrentIndexUp()
+                // Con dos columnas, ← → cambian de columna; con una, mueven el cursor del texto
+                Keys.onLeftPressed: event => {
+                    if (panel.columnas > 1) lista.moveCurrentIndexLeft();
+                    else event.accepted = false;
+                }
+                Keys.onRightPressed: event => {
+                    if (panel.columnas > 1) lista.moveCurrentIndexRight();
+                    else event.accepted = false;
+                }
                 Keys.onTabPressed: lista.incrementCurrentIndex()
                 Keys.onReturnPressed: panel.abrir(panel.resultados[lista.currentIndex])
                 Keys.onEnterPressed: panel.abrir(panel.resultados[lista.currentIndex])
@@ -129,12 +143,16 @@ Panel {
         }
 
         // --------------------------------------------------------- Lista
-        ListView {
+        GridView {
             id: lista
             width: parent.width
             height: 560
             clip: true
-            spacing: 2
+            cellWidth: Math.floor(width / panel.columnas)
+            cellHeight: 58
+            // Al pasar de 1 a 2 columnas (o al revés) GridView no siempre
+            // recoloca las filas que ya existían y se quedan unas encima de otras
+            onCellWidthChanged: forceLayout()
             model: panel.resultados
             boundsBehavior: Flickable.StopAtBounds
             highlightMoveDuration: 0
@@ -152,8 +170,8 @@ Panel {
                 id: fila
                 required property var modelData
                 required property int index
-                readonly property bool elegida: ListView.isCurrentItem
-                width: lista.width
+                readonly property bool elegida: GridView.isCurrentItem
+                width: lista.cellWidth - (panel.columnas > 1 ? 4 : 0)
                 height: 56
                 radius: 10
                 color: elegida ? Qt.rgba(1, 1, 1, 0.90) : "transparent"

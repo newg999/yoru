@@ -10,6 +10,10 @@ ignore-empty-password
 show-failed-attempts
 indicator-caps-lock
 
+# El fondo que tengas puesto (wallpaper.sh mantiene este enlace al día).
+# Si no existe, se queda el color liso
+image=~/.cache/fondo-bloqueo
+scaling=fill
 color=1a1b1e
 indicator-radius=110
 indicator-thickness=8
