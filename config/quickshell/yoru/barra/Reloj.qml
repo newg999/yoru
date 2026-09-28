@@ -34,6 +34,7 @@ Isla {
     Modulo {
         texto: Qt.formatDateTime(reloj.date, "HH:mm")
         relleno: 7
+        resaltado: Paneles.esta("centro", isla.pantalla, "resumen")
         onClic: Paneles.alternar("centro", isla.pantalla, "resumen")
     }
     Texto {
@@ -44,6 +45,7 @@ Isla {
     Modulo {
         texto: isla.diasSemana[reloj.date.getDay()] + " " + reloj.date.getDate()
         relleno: 7
+        resaltado: Paneles.esta("centro", isla.pantalla, "resumen")
         onClic: Paneles.alternar("centro", isla.pantalla, "resumen")
     }
 }
