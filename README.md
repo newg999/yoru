@@ -14,9 +14,8 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 |---|---|---|
 | Compositor | `niri` | `config/niri/` |
 | Barra y paneles | `quickshell` | `config/quickshell/yoru/` |
-| Menús que quedan en rofi (calendario, tienda) | `rofi` | `config/rofi/` |
 | Capturas con editor | `slurp` + `swappy` | `config/swappy/` |
-| Tienda de apps | `rofi` + `flatpak` + `dnf` | `config/rofi/scripts/tienda.py` |
+| Tienda de apps | `quickshell` + `flatpak` + `dnf` | `config/quickshell/yoru/paneles/Tienda.qml` |
 | Notificaciones | `mako` | `config/mako/` |
 | Terminal | `kitty` | `config/kitty/` |
 | Shell | `zsh` + Oh My Zsh (autosugerencias y resaltado) · `eza`, `bat`, `zoxide` | `config/zsh/zshrc` → `~/.zshrc` |
@@ -128,7 +127,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | `Mod+Alt+N` | Menú de wifi |
 | `Mod+Alt+B` | Menú de bluetooth |
 | `Mod+Alt+A` | Menú de audio (salida, micrófono, volumen) |
-| `Mod+Alt+C` | Calendario |
+| `Mod+Alt+C` | Calendario (panel central; ← → cambian de mes) |
 | `Mod+Alt+V` | Historial del portapapeles |
 | `Mod+Alt+S` | Tienda de apps (buscar, instalar, actualizar) |
 | `Mod+Alt+W` | Elegir fondo de pantalla (con miniaturas) |
