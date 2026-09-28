@@ -104,8 +104,9 @@ spawn-sh-at-startup "~/.config/niri/scripts/wallpaper.sh"
 spawn-sh-at-startup "~/.config/niri/scripts/polkit.sh"
 
 // Bloqueo automático: a los 5 min bloquea, a los 10 apaga la pantalla,
-// y bloquea siempre antes de suspender.
-spawn-at-startup "swayidle" "-w" "timeout" "300" "swaylock -f" "timeout" "600" "niri msg action power-off-monitors" "before-sleep" "swaylock -f"
+// y bloquea siempre antes de suspender (y con «loginctl lock-session»).
+// bloquear.sh usa la pantalla de bloqueo de Yoru, o swaylock si falla.
+spawn-at-startup "swayidle" "-w" "timeout" "300" "~/.config/niri/scripts/bloquear.sh" "timeout" "600" "niri msg action power-off-monitors" "before-sleep" "~/.config/niri/scripts/bloquear.sh" "lock" "~/.config/niri/scripts/bloquear.sh"
 
 // Historial del portapapeles (requiere cliphist; si no está, no pasa nada)
 spawn-sh-at-startup "command -v cliphist && wl-paste --watch cliphist store"

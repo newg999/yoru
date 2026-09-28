@@ -10,7 +10,7 @@
 #  Los fondos se buscan en ~/.local/share/wallpapers (el instalador enlaza
 #  ahí la carpeta wallpapers/ del repositorio).
 #
-#  El mismo fondo se usa en la pantalla de bloqueo (swaylock lee el enlace
+#  El mismo fondo se usa en la pantalla de bloqueo (Quickshell y swaylock leen el enlace
 #  ~/.cache/fondo-bloqueo) y en la de inicio de sesión, si install.sh te ha
 #  dado permiso sobre /usr/share/backgrounds/yoru/inicio.
 # ----------------------------------------------------------------------------

@@ -1,8 +1,9 @@
 # ============================================================================
-#  swaylock — pantalla de bloqueo (Mod+BackSpace)
+#  swaylock — bloqueo DE RESERVA
+#  La pantalla de bloqueo normal es la de Quickshell (paneles/Bloqueo.qml).
+#  swaylock solo sale si Quickshell no está funcionando (ver
+#  niri/scripts/bloquear.sh), para que la pantalla se bloquee siempre.
 #  Referencia: man swaylock
-#  Truco: para un bloqueo con fondo desenfocado y reloj, mira "swaylock-effects"
-#  o "hyprlock" en la hoja de ruta (ROADMAP.md).
 # ============================================================================
 
 daemonize
