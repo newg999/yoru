@@ -23,6 +23,20 @@ Isla {
 
     relleno: 7
 
+    ayuda: {
+        const r = reproductor;
+        if (!r)
+            return "";
+        const lineas = [`<b>${Tema.html(r.trackTitle || "Sin título")}</b>`];
+        if (r.trackArtist)
+            lineas.push(Tema.html(r.trackArtist));
+        if (r.trackAlbum)
+            lineas.push(Tema.suave(Tema.html(r.trackAlbum)));
+        lineas.push(Tema.suave((r.isPlaying ? "󰐊 " : "󰏤 ") + Tema.html(r.identity)
+            + "  ·  clic: multimedia · clic central: pausa"));
+        return lineas.join("<br>");
+    }
+
     // Visualizador: barritas que bailan con el audio
     Item {
         visible: isla.reproductor !== null

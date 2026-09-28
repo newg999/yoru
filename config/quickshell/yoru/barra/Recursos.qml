@@ -11,6 +11,15 @@ Isla {
     pulsable: true
     onClic: Paneles.alternar("monitor", isla.pantalla, "procesos")
 
+    function duracion(s) {
+        const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+        return d > 0 ? `${d} d ${h} h` : h > 0 ? `${h} h ${m} min` : `${m} min`;
+    }
+    ayuda: `CPU <b>${Sistema.cpu}%</b>` + (Sistema.temperatura > 0 ? `  ·  ${Sistema.temperatura}°C` : "")
+        + `<br>Memoria <b>${Sistema.memUsada.toFixed(1)}</b> de ${Sistema.memTotal.toFixed(1)} GiB`
+        + (hayBateria ? `<br>Batería <b>${carga}%</b>` + (cargando ? " · cargando" : "") : "")
+        + `<br>` + Tema.suave(`Encendido hace ${duracion(Sistema.encendido)}  ·  clic: monitor`)
+
     readonly property var bateria: UPower.displayDevice
     readonly property bool hayBateria: bateria && bateria.isLaptopBattery
     // UPower da la carga de 0 a 1

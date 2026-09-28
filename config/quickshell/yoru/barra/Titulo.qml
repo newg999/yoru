@@ -15,6 +15,10 @@ Isla {
     relleno: 12
     espacio: 9
 
+    // Ayuda: el título entero (si se ha cortado) y de qué app es
+    ayuda: !ventana ? ""
+        : (textoTitulo.truncated ? Tema.html(ventana.title) + "<br>" : "") + Tema.suave(Tema.html(ventana.app_id))
+
     Texto {
         visible: isla.ventana !== null
         text: Iconos.app(isla.ventana?.app_id)
@@ -24,6 +28,7 @@ Isla {
     }
 
     Texto {
+        id: textoTitulo
         text: isla.ventana?.title ?? ""
         visible: text !== ""
         font.bold: false

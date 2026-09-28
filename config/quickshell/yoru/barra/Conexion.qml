@@ -29,6 +29,24 @@ Isla {
     }
     onRueda: pasos => cambiarVolumen(pasos)
 
+    ayuda: {
+        const lineas = [];
+        lineas.push(!salida ? "󰖁  Sin salida de audio"
+            : `${iconoAudio()}  ${Tema.html(salida.description || salida.name)}  <b>${Math.round(volumen * 100)}%</b>`
+                + (mudo ? Tema.suave(" · silenciado") : ""));
+        lineas.push(cable ? "󰈀  Por cable" + Tema.suave("  ·  " + Tema.html(cable.name))
+            : redWifi ? `󰖩  ${Tema.html(redWifi.name)}  <b>${Math.round(redWifi.signalStrength * 100)}%</b>`
+            : Networking.wifiEnabled ? "󰤮  Sin conexión" : "󰤭  Wi-Fi apagado");
+        if (adaptador) {
+            const bt = Bluetooth.devices.values.filter(d => d.connected);
+            lineas.push(!adaptador.enabled ? "󰂲  Bluetooth apagado"
+                : bt.length === 0 ? "󰂯  Bluetooth sin dispositivos"
+                : "󰂱  " + bt.map(d => Tema.html(d.name) + (d.batteryAvailable ? ` ${Math.round(d.battery * 100)}%` : "")).join(", "));
+        }
+        lineas.push(Tema.suave("Rueda: volumen · clic central: silenciar · clic dcho: mezclador"));
+        return lineas.join("<br>");
+    }
+
     // ---------------------------------------------------------------- Audio
     readonly property var salida: Pipewire.defaultAudioSink
     PwObjectTracker { objects: [isla.salida] }

@@ -50,7 +50,7 @@ Ahora mismo, si cambias de tema tienes que editar 6 archivos. Soluciones, de má
 - [x] Monitor del sistema (clic en CPU/RAM): procesos agrupados por app, buscar, ordenar, cerrar; gráficas de CPU, memoria y red
 - [x] Mod+Tab abre el overview y la barra se esconde mientras (como en DMS)
 - [x] Llevar a Quickshell el resto de menús de rofi: apagado, portapapeles, fondos, calendario y tienda
-- [ ] Tooltips en la barra (calendario al pasar por el reloj, detalles de red...)
+- [x] Tooltips en la barra: fecha completa, red y audio, CPU y memoria, clima, canción y título entero
 - [x] Quitar `config/waybar/` cuando ya no haga falta
 
 ## Fase 5 · Terminal y shell

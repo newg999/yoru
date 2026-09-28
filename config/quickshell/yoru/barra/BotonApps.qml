@@ -6,6 +6,7 @@ Isla {
     id: isla
     required property var pantalla
     relleno: 3
+    ayuda: "Aplicaciones  " + Tema.suave("Mod+Espacio")
 
     Modulo {
         icono: "󰀻"
