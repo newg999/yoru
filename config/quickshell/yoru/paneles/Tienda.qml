@@ -89,7 +89,7 @@ Panel {
     }
 
     function abrir(app) {
-        Quickshell.execDetached(["python3", script, "abrir", app.tipo, app.id, app.nombre]);
+        Niri.lanzar(["python3", script, "abrir", app.tipo, app.id, app.nombre]);
         Paneles.cerrar();
     }
 
@@ -268,7 +268,7 @@ Panel {
                 icono: "󰚰"
                 texto: "Actualizar todo"
                 onClic: {
-                    Quickshell.execDetached(["python3", panel.script, "actualizar"]);
+                    Niri.lanzar(["python3", panel.script, "actualizar"]);
                     Paneles.cerrar();
                 }
             }

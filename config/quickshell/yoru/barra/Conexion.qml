@@ -25,7 +25,7 @@ Isla {
         if (boton === Qt.MiddleButton)
             salida.audio.muted = !mudo;
         else if (boton === Qt.RightButton)
-            Quickshell.execDetached(["pavucontrol"]);
+            Niri.lanzar(["pavucontrol"]);
         else
             Paneles.alternar("conexion", isla.pantalla, "");
     }

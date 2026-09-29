@@ -40,7 +40,7 @@ Column {
             onClic: {
                 Paneles.cerrar();
                 // Abre pavucontrol en su pestaña (3 = salida, 4 = entrada)
-                Quickshell.execDetached(["pavucontrol", "-t", seccion.entrada ? "4" : "3"]);
+                Niri.lanzar(["pavucontrol", "-t", seccion.entrada ? "4" : "3"]);
             }
         }
     }

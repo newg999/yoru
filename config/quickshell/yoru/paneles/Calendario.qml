@@ -99,7 +99,7 @@ Item {
                 ayuda: "Abrir Calendario (eventos)"
                 colorIcono: Tema.gris
                 onClic: {
-                    Quickshell.execDetached(["gnome-calendar"]);
+                    Niri.lanzar(["gnome-calendar"]);
                     Paneles.cerrar();
                 }
             }
