@@ -40,7 +40,7 @@ Panel {
         if (!fondo)
             return;
         actual = fondo.ruta;
-        Quickshell.execDetached([casa + "/.config/niri/scripts/wallpaper.sh", fondo.ruta]);
+        Niri.lanzar([casa + "/.config/niri/scripts/wallpaper.sh", fondo.ruta]);
         Paneles.cerrar();
     }
 

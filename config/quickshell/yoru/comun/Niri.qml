@@ -39,6 +39,14 @@ Singleton {
         Quickshell.execDetached(["niri", "msg", "action", ...args]);
     }
 
+    // Abrir apps y programas que deben seguir vivos aunque se reinicie la
+    // barra: los lanza niri, cada uno en su propio grupo de systemd. Con
+    // execDetached quedarían dentro de yoru-shell.service y se cerrarían al
+    // reiniciarlo (systemctl --user restart yoru-shell, yoru reload...).
+    function lanzar(orden) {
+        Quickshell.execDetached(["niri", "msg", "action", "spawn", "--", ...orden]);
+    }
+
     // ---------------------------------------------------------- Eventos
     function _enfocar(id) {
         const vs = ventanas;

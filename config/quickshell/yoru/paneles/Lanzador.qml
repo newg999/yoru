@@ -62,7 +62,11 @@ Panel {
         u[app.id] = (u[app.id] ?? 0) + 1;
         usos = u;
         archivoUsos.setText(JSON.stringify(u));
-        app.execute();
+        // Como app.execute(), pero lanzada por niri (ver Niri.lanzar)
+        const orden = app.runInTerminal ? ["kitty", "--", ...app.command] : app.command;
+        Niri.lanzar(app.workingDirectory
+            ? ["sh", "-c", 'cd "$1" && shift && exec "$@"', "_", app.workingDirectory, ...orden]
+            : orden);
         Paneles.cerrar();
     }
 

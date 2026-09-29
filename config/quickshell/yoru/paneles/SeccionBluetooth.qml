@@ -67,7 +67,7 @@ Column {
             icono: "󰒓"
             onClic: {
                 Paneles.cerrar();
-                Quickshell.execDetached(["blueman-manager"]);
+                Niri.lanzar(["blueman-manager"]);
             }
         }
     }

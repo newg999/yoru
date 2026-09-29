@@ -66,7 +66,7 @@ Column {
             icono: "󰒓"
             onClic: {
                 Paneles.cerrar();
-                Quickshell.execDetached(["nm-connection-editor"]);
+                Niri.lanzar(["nm-connection-editor"]);
             }
         }
     }
