@@ -39,7 +39,8 @@ Panel {
     readonly property var adaptador: Bluetooth.defaultAdapter
     readonly property var btConectados: Bluetooth.devices.values.filter(d => d.connected)
 
-    // El brillo puede haber cambiado desde fuera (botones del monitor)
+    // El brillo puede haber cambiado desde fuera (botones del monitor);
+    // Brillo.leer() solo relee si hace más de 10 min
     onAbiertoChanged: {
         if (abierto)
             Brillo.leer();
