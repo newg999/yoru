@@ -1,0 +1,10 @@
+# ============================================================================
+#  Notificaciones → la barra de Yoru (Quickshell)
+#  install.sh lo enlaza en ~/.local/share/dbus-1/services/. Si una app manda
+#  una notificación antes de que arranque la barra, D-Bus la arranca a ella
+#  (y no a mako o a las de Plasma, que también se ofrecen).
+# ============================================================================
+[D-BUS Service]
+Name=org.freedesktop.Notifications
+Exec=/usr/bin/systemctl --user start yoru-shell.service
+SystemdService=yoru-shell.service

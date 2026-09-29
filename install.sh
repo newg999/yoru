@@ -541,6 +541,10 @@ pantalla_login() {
 activar_barra() {
     paso "Barra y paneles (Quickshell)"
     enlazar "$REPO/system/systemd/yoru-shell.service" "$CONFIG_DIR/systemd/user/yoru-shell.service"
+    # Las notificaciones también son cosa de la barra (antes, mako)
+    enlazar "$REPO/system/dbus/org.freedesktop.Notifications.service" \
+        "$HOME/.local/share/dbus-1/services/org.freedesktop.Notifications.service"
+    pkill -x mako 2>/dev/null || true
     systemctl --user daemon-reload >/dev/null 2>&1 || true
     # Otras barras ya no hacen falta: si estaban activas, se apagan (no se
     # desinstalan). Para volver a DMS:  systemctl --user enable dms
@@ -648,7 +652,7 @@ shell_zsh() {
 
 # -------------------------------------------------------------------- Tema
 # Genera los archivos de colores (~/.local/state/yoru/tema/) que incluyen
-# niri, mako, kitty y la barra. Respeta el modo que ya tuvieras.
+# niri, kitty y la barra. Respeta el modo que ya tuvieras.
 tema_colores() {
     paso "Colores del tema (yoru tema)"
     if python3 "$REPO/tema/aplicar.py" >/dev/null; then
@@ -677,7 +681,8 @@ deshacer() {
     paso "Quitando enlaces que apuntan a $REPO"
     systemctl --user disable yoru-shell.service >/dev/null 2>&1 || true
     local destinos=("$HOME/.local/share/wallpapers" "$CONFIG_DIR/kdeglobals" "$HOME/.zshrc"
-                    "$CONFIG_DIR/systemd/user/yoru-shell.service" "$HOME/.local/bin/yoru")
+                    "$CONFIG_DIR/systemd/user/yoru-shell.service" "$HOME/.local/bin/yoru"
+                    "$HOME/.local/share/dbus-1/services/org.freedesktop.Notifications.service")
     for carpeta in "$REPO"/config/*/; do
         destinos+=("$CONFIG_DIR/$(basename "${carpeta%/}")")
     done

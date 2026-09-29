@@ -26,6 +26,7 @@ binds {
     Mod+Alt+A           hotkey-overlay-title="Audio"           { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "conexion" "audio"; }
     Mod+Alt+C           hotkey-overlay-title="Calendario"      { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "centro" "resumen"; }
     Mod+Alt+V           hotkey-overlay-title="Portapapeles"    { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "portapapeles" ""; }
+    Mod+Alt+M           hotkey-overlay-title="Notificaciones"  { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "notificaciones" ""; }
     Mod+Alt+S           hotkey-overlay-title="Tienda de apps"  { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "tienda" ""; }
     Mod+Alt+W           hotkey-overlay-title="Elegir fondo"    { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "fondos" ""; }
     Mod+Alt+Shift+W     hotkey-overlay-title="Fondo siguiente" { spawn-sh "~/.config/niri/scripts/wallpaper.sh next"; }

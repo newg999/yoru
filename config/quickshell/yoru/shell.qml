@@ -64,13 +64,22 @@ ShellRoot {
         model: Quickshell.screens
         Osd {}
     }
+    // Notificaciones: los avisos que llegan y el panel de la campana
+    Variants {
+        model: Quickshell.screens
+        Avisos {}
+    }
+    Variants {
+        model: Quickshell.screens
+        PanelNotificaciones {}
+    }
 
     // Abrir paneles desde fuera (atajos de niri, scripts...):
     //   qs -c yoru ipc call panel alternar conexion wifi     (o bluetooth, audio, micro)
     //   qs -c yoru ipc call panel alternar centro resumen     (o clima)
     //   qs -c yoru ipc call panel alternar lanzador ""        (o medio: en mitad de la pantalla)
     //   qs -c yoru ipc call panel alternar monitor procesos   (o rendimiento)
-    //   qs -c yoru ipc call panel alternar apagado ""         (o portapapeles, fondos, tienda)
+    //   qs -c yoru ipc call panel alternar apagado ""         (o portapapeles, notificaciones, fondos, tienda)
     //   qs -c yoru ipc call panel cerrar
     IpcHandler {
         target: "panel"

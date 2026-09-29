@@ -1,7 +1,7 @@
 // ============================================================================
 //  Barra — una por pantalla. La barra en sí es invisible: solo se ven las islas.
 //
-//    [apps] [escritorios] [título]    [música] [reloj] [clima]    [bandeja] [recursos] [conexión]
+//    [apps] [escritorios] [título]    [música] [reloj] [clima]    [bandeja] [recursos] [conexión] [campana]
 //
 //  El reloj va siempre en el centro exacto; la música y el clima, a sus lados.
 //  Con el overview abierto (Mod+Tab) la barra sube y desaparece, como en DMS.
@@ -45,6 +45,7 @@ PanelWindow {
         Region { item: bandeja; radius: Tema.radio }
         Region { item: recursos; radius: Tema.radio }
         Region { item: conexion; radius: Tema.radio }
+        Region { item: campana; radius: Tema.radio }
     }
 
     Item {
@@ -104,6 +105,7 @@ PanelWindow {
             Bandeja { id: bandeja; ventana: barra }
             Recursos { id: recursos; pantalla: barra.modelData }
             Conexion { id: conexion; pantalla: barra.modelData }
+            Campana { id: campana; pantalla: barra.modelData }
         }
     }
 }

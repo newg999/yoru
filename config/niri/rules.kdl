@@ -95,9 +95,7 @@ layer-rule {
 }
 
 // Las notificaciones no salen en grabaciones de pantalla
-// (sin blur: mako dibuja todas en una misma capa y el desenfoque
-//  se vería como un rectángulo más grande que la notificación)
 layer-rule {
-    match namespace="^notifications$"
+    match namespace="^yoru-avisos$"
     block-out-from "screencast"
 }
