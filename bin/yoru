@@ -79,9 +79,6 @@ cmd_reload() {
     else
         error "La barra no arranca. Mira por qué con: journalctl --user -u yoru-shell -e"
     fi
-
-    makoctl reload 2>/dev/null && ok "Notificaciones recargadas" \
-        || aviso "mako no está en marcha"
 }
 
 # ------------------------------------------------------------------ doctor
@@ -114,10 +111,12 @@ cmd_doctor() {
     enlace_ok "$HOME/.local/share/wallpapers" "$REPO/wallpapers"
     enlace_ok "$CONFIG_DIR/systemd/user/yoru-shell.service" "$REPO/system/systemd/yoru-shell.service"
     enlace_ok "$HOME/.local/bin/yoru" "$REPO/bin/yoru"
+    enlace_ok "$HOME/.local/share/dbus-1/services/org.freedesktop.Notifications.service" \
+        "$REPO/system/dbus/org.freedesktop.Notifications.service"
 
     paso "Programas"
     local p faltan=()
-    for p in niri qs mako swaybg swaylock swayidle kitty grim slurp swappy \
+    for p in niri qs swaybg swaylock swayidle kitty grim slurp swappy \
              wl-paste cliphist brightnessctl playerctl xwayland-satellite; do
         command -v "$p" >/dev/null || faltan+=("$p")
     done
@@ -150,6 +149,12 @@ cmd_doctor() {
     if [[ -n "${NIRI_SOCKET:-}" ]]; then
         systemctl --user is-active -q yoru-shell && bien "yoru-shell (barra)" \
             || mal "La barra no está en marcha → yoru reload"
+        # Las notificaciones las muestra la barra; si las coge otro (mako,
+        # las de Plasma...), la barra no puede
+        local notif
+        notif="$(busctl --user status org.freedesktop.Notifications 2>/dev/null | sed -n 's/^Comm=//p')"
+        [[ "$notif" == "qs" ]] && bien "Notificaciones (en la barra)" \
+            || mal "Las notificaciones las tiene ${notif:-nadie}, no la barra → pkill ${notif:-mako}; yoru reload"
         systemctl --user is-active -q xdg-desktop-portal && bien "xdg-desktop-portal (compartir pantalla)" \
             || mal "Los portales no están en marcha: ¿entraste desde la pantalla de inicio?"
     else

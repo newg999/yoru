@@ -16,7 +16,7 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Barra y paneles | `quickshell` | `config/quickshell/yoru/` |
 | Capturas con editor | `slurp` + `swappy` | `config/swappy/` |
 | Tienda de apps | `quickshell` + `flatpak` + `dnf` | `config/quickshell/yoru/paneles/Tienda.qml` |
-| Notificaciones | `mako` | `config/mako/` |
+| Notificaciones | `quickshell` | `config/quickshell/yoru/comun/Notificaciones.qml` |
 | Terminal | `kitty` | `config/kitty/` |
 | Shell | `zsh` + Oh My Zsh (autosugerencias y resaltado) · `eza`, `bat`, `zoxide` | `config/zsh/zshrc` → `~/.zshrc` |
 | Info al abrir la terminal | `fastfetch` (pon tu logo en `config/fastfetch/logo.webp`) | `config/fastfetch/` |
@@ -163,7 +163,6 @@ Niri recarga su configuración **al guardar**. Para el resto:
 ```bash
 niri validate            # comprobar la config de Niri
 systemctl --user restart yoru-shell   # reiniciar la barra (se recarga sola al guardar un .qml)
-makoctl reload           # recargar notificaciones
 niri msg windows         # ver el app-id de las ventanas abiertas (para reglas)
 niri msg outputs         # ver tus monitores
 ```

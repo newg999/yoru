@@ -62,7 +62,6 @@ adw-gtk3-theme            # tema oscuro para apps GTK3 (LibreOffice, ajustes de 
 grim                      # hace la captura (la usa Mod+Shift+S)
 slurp                     # elegir una zona de la pantalla con el ratón
 swappy                    # editor de capturas (flechas, texto, difuminar)
-mako                      # notificaciones
 swaybg                    # fondo de pantalla
 swaylock                  # pantalla de bloqueo
 swayidle                  # bloqueo automático por inactividad

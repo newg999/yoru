@@ -10,7 +10,6 @@
 #  Escribe en ~/.local/state/yoru/tema/ un archivo por programa. Las configs
 #  del repo los incluyen y, si no existen, usan sus colores de siempre:
 #    niri.kdl    ← config/niri/config.kdl      (include optional=true)
-#    mako        ← config/mako/config          (include=)
 #    kitty.conf  ← config/kitty/kitty.conf     (include)
 #    colores.json ← Quickshell (comun/Tema.qml)
 #  Fuera del repo a propósito: cambiar de fondo no deja cambios en git.
@@ -95,13 +94,6 @@ overview {{
 }}
 """)
 
-    escribir("mako", f"""# Generado por tema/aplicar.py ({modo}). No lo edites: se sobrescribe.
-background-color={alfa(p['fondo'], 0.9)}
-text-color={p['texto']}
-border-color={alfa(a, 0.25)}
-progress-color=over {alfa(a, 0.15)}
-""")
-
     escribir("kitty.conf", f"""# Generado por tema/aplicar.py ({modo}). No lo edites: se sobrescribe.
 foreground              {p['texto']}
 background              {p['fondo']}
@@ -125,7 +117,6 @@ def recargar(primera_vez):
     # La barra solo vigila colores.json si ya existía al arrancar
     if primera_vez:
         callado("systemctl", "--user", "try-restart", "yoru-shell.service")
-    callado("makoctl", "reload")
     callado("pkill", "-USR1", "-x", "kitty")   # kitty relee su config
     # Por si niri aún no vigilaba niri.kdl (la primera vez que se crea)
     callado("niri", "msg", "action", "load-config-file")
