@@ -418,6 +418,13 @@ enlazar_todo() {
     paso "Enlazando fondos de pantalla"
     enlazar "$REPO/wallpapers" "$HOME/.local/share/wallpapers"
 
+    # Apps propias de Yoru (test de velocidad...): salen en el lanzador
+    paso "Apps de Yoru en el lanzador"
+    local app
+    for app in "$REPO"/system/applications/*.desktop; do
+        enlazar "$app" "$HOME/.local/share/applications/$(basename "$app")"
+    done
+
     paso "Comando yoru (mantenimiento)"
     enlazar "$REPO/bin/yoru" "$HOME/.local/bin/yoru"
 

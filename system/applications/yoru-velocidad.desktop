@@ -1,0 +1,13 @@
+# Test de velocidad de Yoru: abre el panel de Quickshell (paneles/Velocidad.qml)
+# install.sh lo enlaza en ~/.local/share/applications para que salga en el lanzador
+# (la sección va con nombre y no vacía: el lanzador se come las comillas "")
+[Desktop Entry]
+Type=Application
+Name=Test de velocidad
+GenericName=Velocidad de internet
+Comment=Mide la bajada, la subida y la latencia de tu conexión
+Keywords=speedtest;internet;red;wifi;bajada;subida;ping;
+Icon=gnome-networktool
+Exec=qs -c yoru ipc call panel alternar velocidad app
+Terminal=false
+Categories=Network;Utility;

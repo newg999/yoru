@@ -2,6 +2,7 @@
 //  Bandeja del sistema: iconos de apps en segundo plano (Discord, Telegram...)
 //  Clic = abrir su ventana · Clic derecho = su menú · Clic central = acción 2
 //  Al pasar el ratón crecen un poco y se iluminan.
+//  Los que están en reposo (Passive, p. ej. mate-polkit) no se muestran.
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -20,6 +21,7 @@ Isla {
         Item {
             id: elemento
             required property SystemTrayItem modelData
+            visible: modelData.status !== Status.Passive
             implicitWidth: 30
             implicitHeight: Tema.altoBarra
 
