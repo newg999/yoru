@@ -16,6 +16,7 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Barra y paneles | `quickshell` | `config/quickshell/yoru/` |
 | Capturas con editor | `slurp` + `swappy` | `config/swappy/` |
 | Tienda de apps | `quickshell` + `flatpak` + `dnf` | `config/quickshell/yoru/paneles/Tienda.qml` |
+| Test de velocidad | `quickshell` + Cloudflare | `config/quickshell/yoru/paneles/Velocidad.qml` |
 | Notificaciones | `quickshell` | `config/quickshell/yoru/comun/Notificaciones.qml` |
 | Terminal | `kitty` | `config/kitty/` |
 | Shell | `zsh` + Oh My Zsh (autosugerencias y resaltado) · `eza`, `bat`, `zoxide` | `config/zsh/zshrc` → `~/.zshrc` |
@@ -130,6 +131,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | `Mod+Alt+C` | Calendario (panel central; ← → cambian de mes) |
 | `Mod+Alt+V` | Historial del portapapeles |
 | `Mod+Alt+S` | Tienda de apps (buscar, instalar, actualizar) |
+| `Mod+Alt+I` | Test de velocidad de internet (también en el lanzador) |
 | `Mod+Alt+W` | Elegir fondo de pantalla (con miniaturas) |
 | `Mod+Alt+Shift+W` | Siguiente fondo de pantalla |
 | `Mod+BackSpace` | Bloquear |
