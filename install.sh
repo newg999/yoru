@@ -11,14 +11,16 @@
 #    4. Hace copia de seguridad de tus configs actuales
 #    5. Enlaza (symlink) las carpetas de config/ en ~/.config/
 #       y pregunta si quieres bajar los fondos de pantalla
-#    6. Activa servicios (bluetooth, energía) y, si no tienes ninguna,
-#       la pantalla de inicio de sesión (greetd + gtkgreet, con el estilo de Yoru)
+#    6. Activa servicios (bluetooth, energía) y la pantalla de inicio de
+#       sesión (greetd + gtkgreet, con el estilo de Yoru); si ya tienes otra,
+#       como la de GNOME, pregunta si cambiarla
 #    7. Pone tema oscuro, iconos Papirus y cursor Bibata en las apps GTK
 #    8. Deja zsh como shell, con Oh My Zsh y sus plugins (config/zsh/)
 #    9. Genera los colores del tema (yoru tema) y valida la config de Niri
 #
 #  Funciona tanto en una Fedora MÍNIMA (sin escritorio) como en una con
-#  GNOME. Si ya tienes GNOME, se respeta su pantalla de inicio (GDM).
+#  GNOME. Si ya tienes GNOME, eliges si quedarte con su pantalla de inicio
+#  (GDM) o usar la de Yoru; GNOME sigue disponible en ambos casos.
 #
 #  Como usa enlaces simbólicos, cualquier cambio que hagas en ~/.config/niri
 #  se está haciendo en realidad dentro de este repositorio → git lo ve.
@@ -486,21 +488,41 @@ configurar_sistema() {
     pantalla_login
 }
 
-# Pantalla de inicio de sesión: solo si el sistema no tiene ya una.
-# En una Fedora con GNOME ya existe GDM y no se toca.
+# Pantalla de inicio de sesión. Si el sistema ya tiene otra (GDM en una
+# Fedora con GNOME), se pregunta si cambiarla; si dices que no, se recuerda
+# y no se vuelve a preguntar (borra el archivo de MANTENER_LOGIN para que sí)
+MANTENER_LOGIN="$HOME/.local/state/yoru/mantener-login"
 pantalla_login() {
     paso "Pantalla de inicio de sesión"
-    if [[ -e /etc/systemd/system/display-manager.service ]]; then
-        local actual
-        actual="$(basename "$(readlink -f /etc/systemd/system/display-manager.service)" .service)"
-        if [[ "$actual" != "greetd" ]]; then
-            ok "Ya tienes una ($actual). No la cambio."
-            return
-        fi
-    fi
     if ! command -v gtkgreet >/dev/null || ! command -v greetd >/dev/null; then
         aviso "greetd o gtkgreet no están instalados, me lo salto"
         return
+    fi
+    local actual=""
+    [[ -e /etc/systemd/system/display-manager.service ]] \
+        && actual="$(basename "$(readlink -f /etc/systemd/system/display-manager.service)" .service)"
+    if [[ -n "$actual" && "$actual" != "greetd" ]]; then
+        if [[ -f "$MANTENER_LOGIN" ]]; then
+            ok "Sigues con la tuya ($actual), como elegiste"
+            return
+        fi
+        if [[ ! -t 0 ]]; then
+            ok "Ya tienes una ($actual). Sin terminal para preguntar: no la cambio"
+            return
+        fi
+        echo "  Ya tienes una pantalla de inicio: $actual."
+        echo "  La de Yoru lleva tu fondo y el estilo de los menús; desde ella podrás"
+        echo "  seguir entrando en GNOME. Para volver a $actual más adelante:"
+        echo "    sudo systemctl disable greetd && sudo systemctl enable $actual"
+        local respuesta
+        read -rp "  ¿Cambiarla por la de Yoru? [s/N] " respuesta
+        if [[ "${respuesta,,}" != s* ]]; then
+            mkdir -p "$(dirname "$MANTENER_LOGIN")"
+            echo "$actual" > "$MANTENER_LOGIN"
+            ok "Sigues con $actual (no te lo vuelvo a preguntar; borra $MANTENER_LOGIN para que sí)"
+            return
+        fi
+        sudo systemctl disable "$actual" >/dev/null 2>&1
     fi
 
     # Todo esto es de root (lo usa el usuario "greetd", no tú): se copia.

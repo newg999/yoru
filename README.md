@@ -55,7 +55,12 @@ Al volver verás la pantalla de inicio de Yoru (tu fondo, el reloj y un recuadro
 
 ### B · Sobre una Fedora con GNOME
 
-Los mismos comandos (sin el `reboot`). Después cierra la sesión y en la pantalla de inicio pulsa el engranaje ⚙ (abajo a la derecha), elige **Niri** y entra. **GNOME no se toca**: el instalador respeta su pantalla de inicio (GDM) y puedes volver a él desde el mismo menú.
+Los mismos comandos. El instalador verá que ya tienes la pantalla de inicio de GNOME (GDM) y te preguntará si cambiarla por la de Yoru:
+
+- **Sí**: reinicia (`sudo reboot`) y entrarás por la de Yoru. GNOME sigue en su desplegable de sesiones.
+- **No** (lo que pasa si solo pulsas Intro): cierra la sesión, pulsa el engranaje ⚙ (abajo a la derecha), elige **Niri** y entra. No te lo volverá a preguntar; si cambias de idea, borra `~/.local/state/yoru/mantener-login` y vuelve a ejecutar `./install.sh`.
+
+**GNOME no se desinstala** en ningún caso. Para volver a su pantalla de inicio: `sudo systemctl disable greetd && sudo systemctl enable gdm`.
 
 | Comando | Qué hace |
 |---|---|
