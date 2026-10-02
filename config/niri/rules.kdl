@@ -64,6 +64,14 @@ window-rule {
     open-floating true
 }
 
+// Ventanas que piden contraseña (administrador y llavero): flotantes y
+// centradas, como un diálogo, no como una columna de media pantalla
+window-rule {
+    match app-id=r#"(?i)(polkit|policykit|gcr-prompter)"#
+    open-floating true
+    opacity 1.0
+}
+
 // Terminal de actualizaciones de la tienda (Mod+Alt+S → Actualizar todo)
 window-rule {
     match app-id="^tienda$"

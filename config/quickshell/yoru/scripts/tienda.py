@@ -3,6 +3,8 @@
 tienda.py — Lo que hay detrás del panel Tienda (paneles/Tienda.qml)
 
   tienda.py instaladas               → JSON: Flatpaks + RPM con icono en el lanzador
+  tienda.py explorar <categoría>     → JSON: apps de Flathub para descubrir, las más
+                                       descargadas primero («destacadas» o Game, Office...)
   tienda.py buscar <texto>           → una línea JSON por origen, según van llegando:
                                        {"origen": "flatpak", "apps": [...]}, luego "rpm"
   tienda.py instalar <tipo> <id> <remoto> <nombre>
@@ -19,12 +21,16 @@ aunque se recargue Quickshell a medias.
 """
 
 import glob
+import gzip
 import json
 import os
 import re
 import signal
 import subprocess
 import sys
+import time
+import urllib.request
+import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Paquetes de dnf que no son apps: librerías, cabeceras, módulos de lenguajes...
@@ -40,6 +46,21 @@ DIRS_FLATPAK = ["/var/lib/flatpak/exports/share/applications",
                 os.path.expanduser("~/.local/share/flatpak/exports/share/applications")]
 ICONOS_FLATHUB = ["/var/lib/flatpak/appstream/{}/x86_64/active/icons/128x128/{}.png",
                   "/var/lib/flatpak/appstream/{}/x86_64/active/icons/64x64/{}.png"]
+
+# Explorar: catálogo local de Flathub (lo descarga flatpak) y orden por
+# descargas de la API de Flathub, guardado un día
+APPSTREAM = "/var/lib/flatpak/appstream/flathub/x86_64/active/appstream.xml.gz"
+API_FLATHUB = "https://flathub.org/api/v2/collection/"
+CACHE = os.path.expanduser("~/.cache/yoru/tienda")
+UN_DIA = 24 * 3600
+MAX_EXPLORAR = 48
+# Si no hay internet ni nada guardado, «destacadas» son estas
+DESTACADAS = ["org.mozilla.firefox", "com.discordapp.Discord", "com.spotify.Client",
+              "org.videolan.VLC", "com.valvesoftware.Steam", "com.obsproject.Studio",
+              "org.telegram.desktop", "org.gimp.GIMP", "org.libreoffice.LibreOffice",
+              "md.obsidian.Obsidian", "org.localsend.localsend_app", "com.github.tchx84.Flatseal",
+              "org.qbittorrent.qBittorrent", "com.usebottles.bottles", "org.inkscape.Inkscape",
+              "org.kde.kdenlive", "org.blender.Blender", "com.visualstudio.code"]
 
 
 def ejecutar(cmd, timeout=30):
@@ -192,6 +213,98 @@ def buscar_dnf(texto):
     return ordenar(list(vistos.values()), texto)[:MAX_FEDORA]
 
 
+# ------------------------------------------------------------- Explorar
+def _texto_es(el, etiqueta):
+    """El texto de <etiqueta> en español si lo hay; si no, el original."""
+    lang = "{http://www.w3.org/XML/1998/namespace}lang"
+    original = None
+    for e in el.findall(etiqueta):
+        idioma = e.get(lang)
+        if idioma in (IDIOMA.replace("_", "-"), IDIOMA.split("_")[0]):
+            return (e.text or "").strip()
+        if idioma is None:
+            original = (e.text or "").strip()
+    return original or ""
+
+
+def indice_flathub():
+    """id → {nombre, desc, cats} del catálogo local. Se guarda en caché hasta
+    que flatpak descargue uno nuevo (leer el XML entero tarda unos segundos)."""
+    try:
+        fecha = os.path.getmtime(APPSTREAM)
+    except OSError:
+        return {}
+    ruta = os.path.join(CACHE, "indice.json")
+    try:
+        with open(ruta) as f:
+            guardado = json.load(f)
+        if guardado.get("fecha") == fecha:
+            return guardado["apps"]
+    except (OSError, ValueError, KeyError):
+        pass
+
+    apps = {}
+    with gzip.open(APPSTREAM) as f:
+        for _, el in ET.iterparse(f):
+            if el.tag != "component":
+                continue
+            if el.get("type") in ("desktop", "desktop-application"):
+                ident = el.findtext("id", "").removesuffix(".desktop")
+                apps[ident] = {"nombre": _texto_es(el, "name"), "desc": _texto_es(el, "summary"),
+                               "cats": [c.text for c in el.iterfind("categories/category")]}
+            el.clear()
+    os.makedirs(CACHE, exist_ok=True)
+    with open(ruta, "w") as f:
+        json.dump({"fecha": fecha, "apps": apps}, f, ensure_ascii=False)
+    return apps
+
+
+def orden_flathub(categoria):
+    """app_ids de la categoría, de más a menos descargadas (None si no se sabe)."""
+    ruta = os.path.join(CACHE, f"{categoria}.json")
+    try:
+        if time.time() - os.path.getmtime(ruta) < UN_DIA:
+            with open(ruta) as f:
+                return json.load(f)
+    except (OSError, ValueError):
+        pass
+
+    url = API_FLATHUB + ("popular" if categoria == "destacadas" else f"category/{categoria}")
+    try:
+        with urllib.request.urlopen(f"{url}?page=1&per_page={MAX_EXPLORAR}", timeout=8) as r:
+            ids = [h["app_id"] for h in json.load(r)["hits"]]
+        os.makedirs(CACHE, exist_ok=True)
+        with open(ruta, "w") as f:
+            json.dump(ids, f)
+        return ids
+    except Exception:
+        # Sin internet: lo último que se guardó, aunque sea viejo
+        try:
+            with open(ruta) as f:
+                return json.load(f)
+        except (OSError, ValueError):
+            return None
+
+
+def explorar(categoria):
+    indice = indice_flathub()
+    ids = orden_flathub(categoria)
+    if ids is None:
+        ids = DESTACADAS if categoria == "destacadas" else sorted(
+            (i for i, a in indice.items() if categoria in a["cats"]),
+            key=lambda i: indice[i]["nombre"].lower())
+    instalados = flatpaks_instalados()
+    apps = []
+    for ident in ids:
+        a = indice.get(ident)
+        if not a:  # aún no está en el catálogo local (o ya no está en Flathub)
+            continue
+        apps.append({"tipo": "flatpak", "id": ident, "nombre": a["nombre"] or ident,
+                     "desc": a["desc"], "remoto": "flathub", "icono": icono_flathub(ident),
+                     "instalada": ident in instalados})
+    return apps[:MAX_EXPLORAR]
+
+
 # ------------------------------------------------------------- Acciones
 def trabajar(cmd, hecho, fallo):
     # Si Quickshell se recarga mientras tanto, esto sigue hasta el final
@@ -267,6 +380,8 @@ def main():
     orden, args = (sys.argv[1], sys.argv[2:]) if len(sys.argv) > 1 else ("", [])
     if orden == "instaladas":
         print(json.dumps(apps_instaladas(), ensure_ascii=False))
+    elif orden == "explorar" and len(args) == 1:
+        print(json.dumps(explorar(args[0]), ensure_ascii=False))
     elif orden == "buscar" and args:
         texto = " ".join(args)
         with ThreadPoolExecutor() as hilos:

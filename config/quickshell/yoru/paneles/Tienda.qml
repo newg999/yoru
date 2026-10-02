@@ -2,7 +2,10 @@
 //  Tienda — apps de Flathub y de Fedora (dnf), en mitad de la pantalla
 //  Atajo: Mod+Alt+S
 //
-//    Buscar:     escribe y pulsa Enter (nombre o lo que hace: «editor de fotos»)
+//    Explorar:   apps de Flathub por categorías, las más descargadas primero
+//                (Ctrl+← → cambia de categoría)
+//    Buscar:     escribe y pulsa Enter (nombre o lo que hace: «editor de fotos»);
+//                borra el texto para volver a explorar
 //    Instaladas: escribe para filtrar
 //    ↑ ↓ para moverte · Enter instala o abre la elegida · Tab cambia de vista
 //    Esc para cerrar
@@ -25,7 +28,7 @@ Panel {
 
     readonly property string script: Quickshell.shellPath("scripts/tienda.py")
 
-    property string vista: "buscar"          // "buscar" · "instaladas"
+    property string vista: "buscar"          // "buscar" (y explorar) · "instaladas"
     property var instaladas: []
     property var deFlathub: []
     property var deFedora: []
@@ -34,7 +37,42 @@ Panel {
     property var trabajando: ({})            // tipo:id → "Instalando…" / "Desinstalando…"
     property string confirmar: ""            // tipo:id a punto de desinstalar
 
+    // Explorar: lo que se ve en Buscar mientras no se ha buscado nada
+    readonly property bool explorando: vista === "buscar" && buscado === ""
+    property string categoria: "destacadas"
+    property var catalogo: ({})              // categoría → [apps]
+    property string cargando: ""             // categoría que se está pidiendo
+    readonly property var categorias: [
+        {id: "destacadas", icono: "󰓎", texto: "Destacadas"},
+        {id: "Game", icono: "󰊗", texto: "Juegos"},
+        {id: "Network", icono: "󰖟", texto: "Internet"},
+        {id: "AudioVideo", icono: "󰝚", texto: "Multimedia"},
+        {id: "Graphics", icono: "󰏘", texto: "Gráficos"},
+        {id: "Office", icono: "󰈙", texto: "Oficina"},
+        {id: "Development", icono: "󰅩", texto: "Desarrollo"},
+        {id: "Utility", icono: "󰖷", texto: "Utilidades"},
+        {id: "Education", icono: "󰑴", texto: "Educación"},
+        {id: "Science", icono: "󰂓", texto: "Ciencia"},
+        {id: "System", icono: "󰒓", texto: "Sistema"}
+    ]
+    // Lo instalado, por tipo:id y por nombre, para marcar las apps de explorar
+    // (Discord de Fedora cuenta como instalado aunque el de Flathub no lo esté)
+    readonly property var yaInstaladas: {
+        const m = {};
+        for (const a of instaladas) {
+            m[clave(a)] = a;
+            m["nombre:" + a.nombre.toLowerCase()] = a;
+        }
+        return m;
+    }
+
     readonly property var lista: {
+        if (explorando)
+            return (catalogo[categoria] ?? []).map(a => {
+                const ya = yaInstaladas[clave(a)] ?? yaInstaladas["nombre:" + a.nombre.toLowerCase()];
+                return ya ? Object.assign({}, a, {instalada: true, tipo: ya.tipo, id: ya.id})
+                    : Object.assign({}, a, {instalada: false});
+            });
         if (vista === "buscar")
             return [...deFlathub, ...deFedora];
         const q = campo.text.trim().toLowerCase();
@@ -49,12 +87,15 @@ Panel {
             vista = Paneles.seccion === "instaladas" ? "instaladas" : "buscar";
             confirmar = "";
             leerInstaladas.running = true;
+            if (explorando)
+                explorar(categoria);
             campo.selectAll();
             campo.forceActiveFocus();
         }
     }
     onVistaChanged: {
         lista_.currentIndex = 0;
+        rejilla.currentIndex = 0;
         confirmar = "";
         campo.text = vista === "buscar" ? buscado : "";
     }
@@ -76,7 +117,23 @@ Panel {
         if (vista === "buscar" && campo.text.trim() !== buscado)
             buscar();
         else
-            principal(lista[lista_.currentIndex]);
+            principal(lista[explorando ? rejilla.currentIndex : lista_.currentIndex]);
+    }
+
+    // Pide las apps de una categoría (la primera vez; luego ya están)
+    function explorar(cat) {
+        categoria = cat;
+        rejilla.currentIndex = 0;
+        rejilla.positionViewAtBeginning();
+        if (catalogo[cat] === undefined && !explorador.running) {
+            cargando = cat;
+            explorador.exec(["python3", script, "explorar", cat]);
+        }
+    }
+
+    function categoriaVecina(paso) {
+        const i = categorias.findIndex(c => c.id === categoria);
+        explorar(categorias[(i + paso + categorias.length) % categorias.length].id);
     }
 
     function principal(app) {
@@ -140,6 +197,25 @@ Panel {
                     panel.instaladas = JSON.parse(text);
                 } catch (e) {}
             }
+        }
+    }
+
+    Process {
+        id: explorador
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const c = Object.assign({}, panel.catalogo);
+                    c[panel.cargando] = JSON.parse(text);
+                    panel.catalogo = c;
+                } catch (e) {}
+            }
+        }
+        onExited: {
+            panel.cargando = "";
+            // Si se cambió de categoría mientras tanto, ahora le toca a esa
+            if (panel.catalogo[panel.categoria] === undefined)
+                panel.explorar(panel.categoria);
         }
     }
 
@@ -221,7 +297,7 @@ Panel {
 
                 Repeater {
                     model: [
-                        {id: "buscar", icono: "󰍉", texto: "Buscar"},
+                        {id: "buscar", icono: "󰀶", texto: "Explorar"},
                         {id: "instaladas", icono: "󰀻", texto: "Instaladas"}
                     ]
                     Rectangle {
@@ -302,11 +378,33 @@ Panel {
                 onTextChanged: {
                     if (panel.vista === "instaladas")
                         lista_.currentIndex = 0;
+                    // Texto borrado: se vuelve a explorar
+                    if (panel.vista === "buscar" && text.trim() === "" && panel.buscado !== "") {
+                        panel.buscado = "";
+                        panel.explorar(panel.categoria);
+                    }
                     panel.confirmar = "";
                 }
 
-                Keys.onDownPressed: lista_.incrementCurrentIndex()
-                Keys.onUpPressed: lista_.decrementCurrentIndex()
+                Keys.onDownPressed: panel.explorando ? rejilla.moveCurrentIndexDown() : lista_.incrementCurrentIndex()
+                Keys.onUpPressed: panel.explorando ? rejilla.moveCurrentIndexUp() : lista_.decrementCurrentIndex()
+                // En explorar: ← → por la rejilla (con el campo vacío) y Ctrl+← → de categoría
+                Keys.onLeftPressed: e => {
+                    if (panel.explorando && e.modifiers & Qt.ControlModifier)
+                        panel.categoriaVecina(-1);
+                    else if (panel.explorando && text === "")
+                        rejilla.moveCurrentIndexLeft();
+                    else
+                        e.accepted = false;
+                }
+                Keys.onRightPressed: e => {
+                    if (panel.explorando && e.modifiers & Qt.ControlModifier)
+                        panel.categoriaVecina(1);
+                    else if (panel.explorando && text === "")
+                        rejilla.moveCurrentIndexRight();
+                    else
+                        e.accepted = false;
+                }
                 Keys.onTabPressed: panel.vista = panel.vista === "buscar" ? "instaladas" : "buscar"
                 Keys.onReturnPressed: panel.aceptar()
                 Keys.onEnterPressed: panel.aceptar()
@@ -323,7 +421,54 @@ Panel {
             }
         }
 
+        // ------------------------------------- Categorías (en explorar)
+        Flow {
+            visible: panel.explorando
+            width: parent.width
+            spacing: 6
+
+            Repeater {
+                model: panel.categorias
+                Rectangle {
+                    id: chip
+                    required property var modelData
+                    readonly property bool elegida: panel.categoria === modelData.id
+                    width: chipTexto.implicitWidth + 22
+                    height: 28
+                    radius: 14
+                    color: elegida ? Tema.claro(0.90) : chipRaton.containsMouse ? Tema.cajaHover : Tema.caja
+
+                    Row {
+                        id: chipTexto
+                        anchors.centerIn: parent
+                        spacing: 6
+                        Texto {
+                            text: chip.modelData.icono
+                            font.pixelSize: 13
+                            color: chip.elegida ? Tema.oscuro : Tema.texto
+                        }
+                        Texto {
+                            text: chip.modelData.texto
+                            font.pixelSize: 12
+                            color: chip.elegida ? Tema.oscuro : Tema.texto
+                        }
+                    }
+                    MouseArea {
+                        id: chipRaton
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            panel.explorar(chip.modelData.id);
+                            campo.forceActiveFocus();
+                        }
+                    }
+                }
+            }
+        }
+
         Titular {
+            visible: !panel.explorando
             width: parent.width
             texto: panel.vista === "instaladas" ? panel.lista.length + " apps · Flatpak y Fedora"
                 : panel.buscado === "" ? "Flathub y Fedora"
@@ -338,9 +483,130 @@ Panel {
             }
         }
 
+        // ------------------------------------------- Rejilla (explorar)
+        GridView {
+            id: rejilla
+            visible: panel.explorando
+            width: parent.width
+            height: 446
+            clip: true
+            cellWidth: width / 3
+            cellHeight: 92
+            model: panel.explorando ? panel.lista : []
+            boundsBehavior: Flickable.StopAtBounds
+            highlightMoveDuration: 0
+            keyNavigationWraps: true
+
+            Column {
+                visible: panel.lista.length === 0
+                anchors.centerIn: parent
+                spacing: 10
+                BotonIcono {
+                    visible: panel.cargando !== ""
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    icono: "󰑓"
+                    girando: true
+                    colorIcono: Tema.gris
+                }
+                Texto {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: panel.cargando !== "" ? "Cargando apps de Flathub…"
+                        : "No hay apps que enseñar (¿está Flathub añadido?)"
+                    font.bold: false
+                    color: Tema.gris
+                }
+            }
+
+            delegate: Item {
+                id: baldosa
+                required property var modelData
+                required property int index
+                readonly property bool elegida: GridView.isCurrentItem
+                readonly property string estado: panel.trabajando[panel.clave(modelData)] ?? ""
+                width: rejilla.cellWidth
+                height: rejilla.cellHeight
+
+                Rectangle {
+                    anchors { fill: parent; margins: 4 }
+                    radius: 12
+                    color: baldosa.elegida ? Tema.cajaHover : Tema.caja
+                    border.width: baldosa.elegida ? 1 : 0
+                    border.color: Tema.claro(0.25)
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onEntered: rejilla.currentIndex = baldosa.index
+                        onDoubleClicked: panel.principal(baldosa.modelData)
+                    }
+
+                    IconImage {
+                        id: iconoBaldosa
+                        anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
+                        implicitSize: 44
+                        readonly property string i: baldosa.modelData.icono ?? ""
+                        source: i.startsWith("/") ? "file://" + i
+                            : Quickshell.iconPath(i, true) || Quickshell.iconPath("application-x-executable")
+                        asynchronous: true
+                    }
+
+                    Column {
+                        anchors {
+                            left: iconoBaldosa.right; leftMargin: 12
+                            right: accion.left; rightMargin: 8
+                            verticalCenter: parent.verticalCenter
+                        }
+                        spacing: 3
+                        Texto {
+                            width: parent.width
+                            text: baldosa.modelData.nombre
+                            elide: Text.ElideRight
+                            textFormat: Text.PlainText
+                            font.pixelSize: 13
+                        }
+                        Texto {
+                            width: parent.width
+                            text: baldosa.modelData.instalada ? "󰄬 Instalada" : baldosa.modelData.desc
+                            wrapMode: Text.WordWrap
+                            maximumLineCount: 2
+                            elide: Text.ElideRight
+                            textFormat: Text.PlainText
+                            font.bold: false
+                            font.pixelSize: 11
+                            color: Tema.gris
+                        }
+                    }
+
+                    // Instalar, abrir o trabajando
+                    Item {
+                        id: accion
+                        anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
+                        width: 30
+                        height: 30
+
+                        BotonIcono {
+                            visible: baldosa.estado !== ""
+                            anchors.centerIn: parent
+                            icono: "󰑓"
+                            girando: true
+                            colorIcono: Tema.gris
+                        }
+                        Pastilla {
+                            visible: baldosa.estado === ""
+                            icono: baldosa.modelData.instalada ? "󰏌" : "󰇚"
+                            fuerte: !baldosa.modelData.instalada
+                            onClic: baldosa.modelData.instalada ? panel.abrir(baldosa.modelData)
+                                : panel.hacer(baldosa.modelData, "instalar")
+                        }
+                    }
+                }
+            }
+        }
+
         // --------------------------------------------------------- Lista
         ListView {
             id: lista_
+            visible: !panel.explorando
             width: parent.width
             height: 480
             clip: true
@@ -480,7 +746,8 @@ Panel {
 
         Texto {
             leftPadding: 4
-            text: panel.vista === "buscar" ? "Enter busca, luego instala o abre la elegida  ·  Tab: instaladas  ·  Esc cierra"
+            text: panel.explorando ? "Escribe y Enter para buscar  ·  ↑↓←→ elegir, Enter instala  ·  Ctrl+← → categoría  ·  Tab: instaladas"
+                : panel.vista === "buscar" ? "Enter busca, luego instala o abre la elegida  ·  Borrar: volver a explorar  ·  Tab: instaladas"
                 : "Enter abre la elegida  ·  Tab: buscar  ·  Esc cierra"
             font.bold: false
             font.pixelSize: 11

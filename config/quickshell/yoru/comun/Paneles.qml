@@ -44,5 +44,12 @@ Singleton {
             if (Niri.overview)
                 paneles.cerrar();
         }
+
+        // Al abrirse una ventana se cierra el panel: si no, la tapa y se queda
+        // con el teclado (p. ej. la contraseña de administrador al instalar
+        // desde la Tienda salía debajo y no se podía escribir)
+        function onVentanaNueva() {
+            paneles.cerrar();
+        }
     }
 }

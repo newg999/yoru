@@ -17,6 +17,9 @@ Singleton {
     property var enfocada: null    // ventana con el foco (o null)
     property bool overview: false  // overview abierto (Mod+Tab): la barra se esconde
 
+    // Se ha abierto una ventana nueva (no un cambio de título o de foco)
+    signal ventanaNueva(var ventana)
+
     // Escritorios de una pantalla, en orden
     function escritoriosDe(salida) {
         return escritorios.filter(e => e.output === salida).sort((a, b) => a.idx - b.idx);
@@ -90,12 +93,15 @@ Singleton {
         } else if (ev.WindowOpenedOrChanged) {
             const v = ev.WindowOpenedOrChanged.window;
             const vs = ventanas;
+            const nueva = !(v.id in vs);
             vs[v.id] = v;
             ventanas = vs;
             if (v.is_focused)
                 _enfocar(v.id);
             else
                 ventanasChanged();
+            if (nueva)
+                ventanaNueva(v);
         } else if (ev.WindowClosed) {
             const vs = ventanas;
             delete vs[ev.WindowClosed.id];
