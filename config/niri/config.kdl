@@ -62,8 +62,10 @@ layout {
         proportion 0.33333
         proportion 0.5
         proportion 0.66667
+        proportion 1.0
     }
 
+    // El navegador y la terminal se abren a todo el ancho (rules.kdl)
     default-column-width { proportion 0.5; }
 
     // Anillo de foco alrededor de la ventana activa (los colores, en colors.kdl)
