@@ -107,6 +107,7 @@ cmd_doctor() {
         enlace_ok "$CONFIG_DIR/$(basename "$carpeta")" "$carpeta"
     done
     enlace_ok "$CONFIG_DIR/kdeglobals" "$REPO/config/kdeglobals"
+    enlace_ok "$CONFIG_DIR/environment.d/yoru.conf" "$REPO/system/environment.d/yoru.conf"
     enlace_ok "$HOME/.zshrc" "$REPO/config/zsh/zshrc"
     enlace_ok "$HOME/.local/share/wallpapers" "$REPO/wallpapers"
     enlace_ok "$CONFIG_DIR/systemd/user/yoru-shell.service" "$REPO/system/systemd/yoru-shell.service"

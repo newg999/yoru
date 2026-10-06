@@ -27,6 +27,7 @@ Marca las casillas conforme avances (`- [x]`).
 - [x] **Desenfoque** (blur) detrás de cada isla de la barra y de los paneles (Quickshell pide la zona exacta a niri)
 - [x] **Animaciones** un 20 % más rápidas (`slowdown 0.8` en `config.kdl`) → [docs](https://niri-wm.github.io/niri/Configuration:-Animations.html)
 - [x] Tema oscuro para apps GTK: `gsettings set org.gnome.desktop.interface color-scheme prefer-dark`
+- [x] Tema oscuro para apps Qt (VirtualBox, VLC...): `QT_QPA_PLATFORMTHEME=kde` + `kdeglobals` (Breeze Dark)
 - [x] Tema de iconos y cursor: Papirus-Dark y Bibata Modern Ice
 
 ## Fase 3 · Centralizar los colores

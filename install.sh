@@ -414,8 +414,10 @@ enlazar_todo() {
         fi
     done
 
-    # Colores oscuros para las apps KDE (Okular): es un archivo, no una carpeta
+    # Colores oscuros para las apps Qt y KDE: es un archivo, no una carpeta
     enlazar "$REPO/config/kdeglobals" "$CONFIG_DIR/kdeglobals"
+    # Variables de la sesión (las apps Qt usan esos colores). Al volver a entrar
+    enlazar "$REPO/system/environment.d/yoru.conf" "$CONFIG_DIR/environment.d/yoru.conf"
 
     paso "Enlazando fondos de pantalla"
     enlazar "$REPO/wallpapers" "$HOME/.local/share/wallpapers"
@@ -710,6 +712,7 @@ deshacer() {
     paso "Quitando enlaces que apuntan a $REPO"
     systemctl --user disable yoru-shell.service >/dev/null 2>&1 || true
     local destinos=("$HOME/.local/share/wallpapers" "$CONFIG_DIR/kdeglobals" "$HOME/.zshrc"
+                    "$CONFIG_DIR/environment.d/yoru.conf"
                     "$CONFIG_DIR/systemd/user/yoru-shell.service" "$HOME/.local/bin/yoru"
                     "$HOME/.local/share/dbus-1/services/org.freedesktop.Notifications.service")
     for carpeta in "$REPO"/config/*/; do

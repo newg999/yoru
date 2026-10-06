@@ -29,6 +29,7 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Navegador | `brave-browser` | — |
 | Visor de PDF | `okular` | `config/kdeglobals` (sus colores oscuros) |
 | Tema de las apps | `adw-gtk3-dark` (GTK3) · modo oscuro (GTK4) | `install.sh` → `ajustes_gtk` |
+| Tema de las apps Qt | Breeze Dark (`plasma-integration`) | `config/kdeglobals` · `system/environment.d/yoru.conf` |
 
 Tema: **blanco sobre oscuro translúcido**, con barra en islas, menús que salen bajo la barra (y se cierran con un clic fuera) y fondos de naturaleza y paisajes anime sin personajes. El color se reserva para los avisos. Fuente: **JetBrainsMono Nerd Font**.
 

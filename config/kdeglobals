@@ -1,9 +1,11 @@
 # ============================================================================
-#  kdeglobals — Modo oscuro para las apps de KDE (Okular) fuera de Plasma
+#  kdeglobals — Modo oscuro para las apps Qt y KDE fuera de Plasma
 # ----------------------------------------------------------------------------
-#  Las apps KDE no miran el tema GTK: leen sus colores de este archivo.
-#  Son los colores de "Breeze Dark" (copiados de plasma-breeze-common, para
-#  no tener que instalar nada de Plasma). install.sh lo enlaza en ~/.config.
+#  Las apps Qt no miran el tema GTK: leen sus colores de este archivo.
+#  Las de KDE (Okular) lo hacen solas; las demás (VirtualBox, VLC...) gracias
+#  a QT_QPA_PLATFORMTHEME=kde (system/environment.d/yoru.conf). Las Flatpak
+#  de KDE también lo ven. Son los colores de "Breeze Dark" (copiados de
+#  plasma-breeze-common). install.sh lo enlaza en ~/.config.
 # ============================================================================
 
 [Icons]

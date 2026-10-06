@@ -48,6 +48,7 @@ gnome-keyring             # guarda contraseñas (wifi, navegador...)
 gnome-keyring-pam         # lo desbloquea al iniciar sesión (si no, Brave pide contraseña)
 qt6-qtwayland             # apps Qt (VLC, Telegram...) nativas en Wayland
 qt5-qtwayland
+plasma-integration        # apps Qt en oscuro fuera de Plasma (system/environment.d)
 libva-intel-media-driver  # aceleración de vídeo en gráficas Intel (menos CPU y batería)
 mate-polkit               # ventana que pide la contraseña de administrador
 python3                   # scripts de los menús y del monitor del sistema
