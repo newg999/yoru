@@ -95,6 +95,16 @@ window-rule {
     default-window-height { fixed 650; }
 }
 
+// VirtualBox abre una ventana vacía un instante al arrancar (antes que el
+// administrador o la máquina). Invisible y flotante: así no parpadea ni
+// ocupa una columna
+window-rule {
+    match app-id="^VirtualBox$" title="^VirtualBox$"
+    open-floating true
+    open-focused false
+    opacity 0.0
+}
+
 // --- Privacidad --------------------------------------------------------------
 window-rule {
     match app-id=r#"^org\.keepassxc\.KeePassXC$"#
