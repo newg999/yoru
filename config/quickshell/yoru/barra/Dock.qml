@@ -24,10 +24,10 @@ PanelWindow {
     screen: modelData
 
     // Medidas
-    readonly property int celda: 52          // hueco de cada app
-    readonly property int icono: 38
-    readonly property int alto: 60           // alto de la isla
-    readonly property int margen: 6          // hasta el borde de la pantalla
+    readonly property int celda: 40          // hueco de cada app
+    readonly property int icono: 28
+    readonly property int alto: 44           // alto de la isla
+    readonly property int margen: Tema.margenBarra   // hasta el borde, como la barra
 
     // La ventana es más alta que el dock (para el nombre y el menú que salen
     // encima), pero solo reserva el alto del dock y solo recibe clics en él
@@ -114,9 +114,9 @@ PanelWindow {
     Rectangle {
         id: isla
         anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: dock.margen }
-        width: fila.implicitWidth + 16
+        width: fila.implicitWidth + 12
         height: dock.alto
-        radius: 16
+        radius: Tema.radio + 2
         color: Tema.isla
         border.width: 1
         border.color: Tema.islaBorde
@@ -141,11 +141,11 @@ PanelWindow {
                     Rectangle {
                         visible: hueco.index === dock.fijas && dock.fijas > 0
                         width: 1
-                        height: dock.icono - 6
+                        height: dock.icono - 4
                         anchors.verticalCenter: parent.verticalCenter
                         color: Tema.claro(0.15)
                     }
-                    Item { visible: hueco.index === dock.fijas && dock.fijas > 0; width: 8; height: 1 }
+                    Item { visible: hueco.index === dock.fijas && dock.fijas > 0; width: 6; height: 1 }
 
                     Item {
                         id: elemento
@@ -155,8 +155,8 @@ PanelWindow {
                         // Brillo al pasar el ratón
                         Rectangle {
                             anchors.centerIn: imagen
-                            width: dock.icono + 10; height: width
-                            radius: 12
+                            width: dock.icono + 8; height: width
+                            radius: 9
                             color: Tema.blanco
                             opacity: raton.containsMouse ? 0.08 : 0
                             Behavior on opacity { NumberAnimation { duration: Tema.rapida } }
@@ -164,7 +164,7 @@ PanelWindow {
 
                         IconImage {
                             id: imagen
-                            anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 6 }
+                            anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 5 }
                             implicitSize: dock.icono
                             source: Quickshell.iconPath(hueco.app.entrada?.icon ?? hueco.app.appId, true)
                                 || Quickshell.iconPath("application-x-executable")
@@ -178,15 +178,15 @@ PanelWindow {
                         // Ventanas abiertas: hasta 3 puntitos; el de la app con el
                         // foco es alargado, como el escritorio activo de la barra
                         Row {
-                            anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 5 }
+                            anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 3 }
                             spacing: 3
                             Repeater {
                                 model: Math.min(3, hueco.app.ventanas.length)
                                 Rectangle {
                                     required property int index
-                                    height: 4
-                                    width: hueco.enfocada && index === 0 ? 12 : 4
-                                    radius: 2
+                                    height: 3
+                                    width: hueco.enfocada && index === 0 ? 10 : 3
+                                    radius: 1.5
                                     color: hueco.enfocada ? Tema.blanco : Tema.claro(0.55)
                                     Behavior on width { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
                                 }
@@ -223,7 +223,7 @@ PanelWindow {
                             opacity: raton.containsMouse && !retraso.running && !menu.visible ? 1 : 0
                             Behavior on opacity { NumberAnimation { duration: Tema.rapida } }
                             parent: dock.contentItem
-                            x: isla.x + fila.x + 8 + hueco.x + elemento.x + (elemento.width - width) / 2
+                            x: isla.x + fila.x + hueco.x + elemento.x + (elemento.width - width) / 2
                             y: isla.y - height - 10
                             width: etiqueta.implicitWidth + 24
                             height: etiqueta.implicitHeight + 14
