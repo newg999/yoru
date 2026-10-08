@@ -28,6 +28,11 @@ ShellRoot {
         model: Quickshell.screens
         Barra {}
     }
+    // Dock de apps abajo (barra/Dock.qml)
+    Variants {
+        model: Quickshell.screens
+        Dock {}
+    }
     Variants {
         model: Quickshell.screens
         CentroControl {}

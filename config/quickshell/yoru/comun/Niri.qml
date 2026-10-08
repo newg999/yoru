@@ -51,10 +51,13 @@ Singleton {
     }
 
     // ---------------------------------------------------------- Eventos
+    // Siempre se asigna un objeto NUEVO a «ventanas»: si se modifica el mismo
+    // y se vuelve a asignar, QML no avisa del cambio (y el dock, por ejemplo,
+    // no veía las ventanas nuevas ni las cerradas)
     function _enfocar(id) {
-        const vs = ventanas;
-        for (const k in vs)
-            vs[k].is_focused = (vs[k].id === id);
+        const vs = {};
+        for (const k in ventanas)
+            vs[k] = Object.assign({}, ventanas[k], {is_focused: ventanas[k].id === id});
         ventanas = vs;
         enfocada = id !== null && vs[id] ? vs[id] : null;
     }
@@ -92,18 +95,14 @@ Singleton {
             enfocada = ev.WindowsChanged.windows.find(v => v.is_focused) ?? null;
         } else if (ev.WindowOpenedOrChanged) {
             const v = ev.WindowOpenedOrChanged.window;
-            const vs = ventanas;
-            const nueva = !(v.id in vs);
-            vs[v.id] = v;
-            ventanas = vs;
+            const nueva = !(v.id in ventanas);
+            ventanas = Object.assign({}, ventanas, {[v.id]: v});
             if (v.is_focused)
                 _enfocar(v.id);
-            else
-                ventanasChanged();
             if (nueva)
                 ventanaNueva(v);
         } else if (ev.WindowClosed) {
-            const vs = ventanas;
+            const vs = Object.assign({}, ventanas);
             delete vs[ev.WindowClosed.id];
             ventanas = vs;
             if (enfocada && enfocada.id === ev.WindowClosed.id)
