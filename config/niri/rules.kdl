@@ -65,6 +65,20 @@ window-rule {
     open-floating true
 }
 
+// Apps pequeñas (calculadora, mapa de caracteres...): flotantes, con su
+// tamaño normal y centradas, en vez de ocupar media pantalla. Se mueven
+// arrastrándolas con Mod pulsado (o por su barra de título, si tienen).
+// ¿Quieres otra? Mira su app-id con «niri msg windows» y añade un match.
+// Cualquier ventana se puede hacer flotante (o volver a columna) con Mod+V.
+window-rule {
+    match app-id="^org.gnome.Calculator$"
+    match app-id="^org.kde.kcalc$"
+    match app-id="^org.kde.kcharselect$"
+    match app-id="^org.gnome.Characters$"
+    open-floating true
+    opacity 1.0
+}
+
 // Ventanas que piden contraseña (administrador y llavero): flotantes y
 // centradas, como un diálogo, no como una columna de media pantalla
 window-rule {
