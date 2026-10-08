@@ -39,12 +39,10 @@ Panel {
     readonly property var adaptador: Bluetooth.defaultAdapter
     readonly property var btConectados: Bluetooth.devices.values.filter(d => d.connected)
 
-    // El brillo puede haber cambiado desde fuera (botones del monitor);
-    // Brillo.leer() solo relee si hace más de 10 min
+    // (El brillo no se relee al abrir: ddcutil congela el ratón con NVIDIA,
+    // ver comun/Brillo.qml)
     onAbiertoChanged: {
-        if (abierto)
-            Brillo.leer();
-        else
+        if (!abierto)
             confirmar = "";
     }
 

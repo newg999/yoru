@@ -7,14 +7,14 @@ pragma Singleton
 //    Brillo.pantallas       [{id, nombre, valor}]   valor de 0 a 1
 //    Brillo.poner(id, v)    cambia una pantalla
 //    Brillo.cambiar(0.1)    sube (o baja, con negativo) todas a la vez
-//    Brillo.leer()          vuelve a mirar el brillo real (como mucho cada 10 min)
 //
 //  ddcutil tarda ~1 s por orden: los cambios seguidos (arrastrar la barra,
 //  pulsar varias veces la tecla) se juntan y solo se manda el último.
 //  Leer también es caro: ddcutil recorre los buses I2C de la gráfica y, con
-//  NVIDIA, el ratón va a tirones mientras tanto. Por eso no se relee cada vez
-//  que se abre el centro de control, solo si hace rato de la última lectura
-//  (el brillo que ponemos nosotros ya lo sabemos).
+//  NVIDIA, el ratón se congela casi un segundo mientras tanto. Por eso solo
+//  se lee al arrancar la barra: el brillo que ponemos nosotros ya lo sabemos.
+//  (Si lo cambias con los botones del monitor, la barra no se entera hasta
+//  que se reinicia: systemctl --user restart yoru-shell)
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -25,15 +25,6 @@ Singleton {
 
     property var pantallas: []
     property var _pendiente: ({})     // id → % que falta mandar
-
-    property real _leidoEn: Date.now()   // el lector arranca solo al iniciar
-
-    function leer() {
-        if (lector.running || Date.now() - _leidoEn < 10 * 60 * 1000)
-            return;
-        _leidoEn = Date.now();
-        lector.running = true;
-    }
 
     function poner(id, valor) {
         const v = Math.max(0.01, Math.min(1, valor));
