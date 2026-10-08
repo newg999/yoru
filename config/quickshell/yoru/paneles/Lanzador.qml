@@ -150,7 +150,8 @@ Panel {
         GridView {
             id: lista
             width: parent.width
-            height: 560
+            // 560, o menos si la pantalla es pequeña (117 = resto del panel)
+            height: Math.min(560, panel.altoMax - 117)
             clip: true
             cellWidth: Math.floor(width / panel.columnas)
             cellHeight: 58

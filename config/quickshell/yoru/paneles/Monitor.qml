@@ -322,7 +322,8 @@ Panel {
             ListView {
                 id: lista
                 width: parent.width
-                height: 620
+                // 620, o menos si la pantalla es pequeña (193 = resto del panel)
+                height: Math.min(620, panel.altoMax - 193)
                 clip: true
                 spacing: 2
                 model: panel.filas

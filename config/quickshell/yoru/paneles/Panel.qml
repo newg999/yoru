@@ -28,6 +28,11 @@ PanelWindow {
 
     readonly property bool abierto: Paneles.abierto === nombre && Paneles.pantalla === modelData
 
+    // Alto máximo del recuadro en ESTA pantalla (bajo la barra, con margen).
+    // Los paneles con listas largas las acortan con esto para caber también
+    // en monitores pequeños (1080p, portátiles de 768...)
+    readonly property int altoMax: modelData.height - (Tema.margenBarra + Tema.altoBarra + 8) - 12
+
     // 0 = cerrado · 1 = abierto. La ventana sigue visible hasta que termina
     // la animación de cierre.
     property real progreso: abierto ? 1 : 0

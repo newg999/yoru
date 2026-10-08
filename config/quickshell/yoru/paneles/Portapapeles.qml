@@ -140,7 +140,8 @@ Panel {
         Lista {
             id: lista
             width: parent.width
-            maximo: 480
+            // 480, o menos si la pantalla es pequeña (159 = resto del panel)
+            maximo: Math.min(480, panel.altoMax - 159)
             height: Math.max(implicitHeight, 60)
             model: panel.resultados
             highlightMoveDuration: 0

@@ -488,7 +488,8 @@ Panel {
             id: rejilla
             visible: panel.explorando
             width: parent.width
-            height: 446
+            // 446, o menos si la pantalla es pequeña (237 = resto del panel)
+            height: Math.min(446, panel.altoMax - 237)
             clip: true
             cellWidth: width / 3
             cellHeight: 92
@@ -608,7 +609,8 @@ Panel {
             id: lista_
             visible: !panel.explorando
             width: parent.width
-            height: 480
+            // 480, o menos si la pantalla es pequeña (203 = resto del panel)
+            height: Math.min(480, panel.altoMax - 203)
             clip: true
             spacing: 2
             model: panel.lista

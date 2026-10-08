@@ -40,6 +40,17 @@ window-rule {
     default-column-width { proportion 1.0; }
 }
 
+// Máquinas virtuales de VirtualBox: se abren maximizadas hasta los bordes
+// (toda la pantalla bajo la barra) y siempre opacas. La máquina adapta su
+// resolución al tamaño de la ventana: si la ventana cambiaba de tamaño, la
+// pantalla de la máquina se reajustaba sola y quedaba rara (p. ej. 1262x1340).
+// Mod+M quita o vuelve a poner el maximizado.
+window-rule {
+    match app-id="^VirtualBox Machine$"
+    open-maximized-to-edges true
+    opacity 1.0
+}
+
 // Terminal: transparente y con el fondo desenfocado
 window-rule {
     match app-id="^kitty$"
