@@ -667,6 +667,7 @@ shell_zsh() {
     done
 
     enlazar "$REPO/config/zsh/zshrc" "$HOME/.zshrc"
+    enlazar "$REPO/config/zsh/zshenv" "$HOME/.zshenv"
     # Claves de API y demás cosas tuyas: aquí, fuera del repo
     [[ -e "$HOME/.zshrc.local" ]] || install -m 600 /dev/null "$HOME/.zshrc.local"
 
@@ -711,7 +712,7 @@ validar() {
 deshacer() {
     paso "Quitando enlaces que apuntan a $REPO"
     systemctl --user disable yoru-shell.service >/dev/null 2>&1 || true
-    local destinos=("$HOME/.local/share/wallpapers" "$CONFIG_DIR/kdeglobals" "$HOME/.zshrc"
+    local destinos=("$HOME/.local/share/wallpapers" "$CONFIG_DIR/kdeglobals" "$HOME/.zshrc" "$HOME/.zshenv"
                     "$CONFIG_DIR/environment.d/yoru.conf"
                     "$CONFIG_DIR/systemd/user/yoru-shell.service" "$HOME/.local/bin/yoru"
                     "$HOME/.local/share/dbus-1/services/org.freedesktop.Notifications.service")

@@ -1,0 +1,5 @@
+# zsh lee este archivo siempre, también en shells no interactivos (scripts,
+# comandos lanzados desde otros programas), al contrario que ~/.zshrc.
+# install.sh lo enlaza en ~/.zshenv
+typeset -U path
+path=("$HOME/.local/bin" $path)
