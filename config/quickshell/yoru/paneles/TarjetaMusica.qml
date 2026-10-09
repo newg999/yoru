@@ -94,7 +94,7 @@ Tarjeta {
             Texto {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
-                text: tarjeta.reproductor?.trackTitle || "Sin título"
+                text: Reproductor.titulo(tarjeta.reproductor) || "Sin título"
                 elide: Text.ElideRight
                 font.pixelSize: 13
                 color: Tema.blanco

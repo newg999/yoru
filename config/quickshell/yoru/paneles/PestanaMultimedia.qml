@@ -137,7 +137,7 @@ Item {
                 Texto {
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    text: multimedia.reproductor?.trackTitle || "Sin título"
+                    text: Reproductor.titulo(multimedia.reproductor) || "Sin título"
                     elide: Text.ElideRight
                     font.pixelSize: 16
                     color: Tema.blanco
@@ -316,7 +316,7 @@ Item {
                         width: contenidoMenu.width
                         icono: modelData.isPlaying ? "󰏤" : "󰐊"
                         titulo: Reproductor.nombre(modelData)
-                        detalle: modelData.trackTitle ?? ""
+                        detalle: Reproductor.titulo(modelData)
                         seleccionada: modelData === multimedia.reproductor
                         onClic: {
                             Reproductor.elegido = modelData;

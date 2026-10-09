@@ -76,7 +76,7 @@ window-rule {
     open-floating true
 }
 
-// Apps pequeñas (calculadora, mapa de caracteres...): flotantes, con su
+// Apps pequeñas (calculadora, mapa de caracteres, Elisa...): flotantes, con su
 // tamaño normal y centradas, en vez de ocupar media pantalla. Se mueven
 // arrastrándolas con Mod pulsado (o por su barra de título, si tienen).
 // ¿Quieres otra? Mira su app-id con «niri msg windows» y añade un match.
@@ -86,8 +86,17 @@ window-rule {
     match app-id="^org.kde.kcalc$"
     match app-id="^org.kde.kcharselect$"
     match app-id="^org.gnome.Characters$"
+    match app-id="^org.kde.elisa$"
     open-floating true
     opacity 1.0
+}
+
+// Elisa (música) recuerda el tamaño con el que la cerraste: se le da uno en
+// proporción a la pantalla, para que quepa igual en 1440p que en 1080p
+window-rule {
+    match app-id="^org.kde.elisa$"
+    default-column-width { proportion 0.45; }
+    default-window-height { proportion 0.65; }
 }
 
 // Ventanas que piden contraseña (administrador y llavero): flotantes y

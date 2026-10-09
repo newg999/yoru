@@ -17,7 +17,7 @@ Isla {
         if (!reproductor)
             return "";
         const artista = reproductor.trackArtist ?? "";
-        const titulo = reproductor.trackTitle ?? "";
+        const titulo = Reproductor.titulo(reproductor);
         return artista && titulo ? `${titulo} · ${artista}` : (titulo || artista);
     }
 
@@ -27,7 +27,7 @@ Isla {
         const r = reproductor;
         if (!r)
             return "";
-        const lineas = [`<b>${Tema.html(r.trackTitle || "Sin título")}</b>`];
+        const lineas = [`<b>${Tema.html(Reproductor.titulo(r) || "Sin título")}</b>`];
         if (r.trackArtist)
             lineas.push(Tema.html(r.trackArtist));
         if (r.trackAlbum)
