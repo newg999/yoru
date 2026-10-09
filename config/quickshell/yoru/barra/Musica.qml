@@ -56,13 +56,14 @@ Isla {
                     height: 3 + 13 * (Cava.niveles[index] ?? 0)
                     radius: 1.5
                     color: isla.reproductor?.isPlaying ? Tema.texto : Tema.tenue
-                    Behavior on height { NumberAnimation { duration: 60 } }
                 }
             }
         }
     }
 
-    // Canción: letra pequeña y, si no cabe, se desplaza sola (como en DMS)
+    // Canción: letra pequeña y, si no cabe, se desplaza una vez al cambiar
+    // de canción y mientras tienes el ratón encima. (Antes se desplazaba sin
+    // parar: la barra se redibujaba a 120 fps y la gráfica no descansaba)
     Item {
         id: titulo
         visible: isla.reproductor !== null && isla.cancion !== ""
@@ -83,10 +84,11 @@ Isla {
 
             // Va y vuelve despacio, con una pausa en cada extremo
             SequentialAnimation on x {
-                running: !titulo.cabe && titulo.visible
-                loops: Animation.Infinite
+                id: desplazar
+                running: false
+                loops: tituloRaton.containsMouse ? Animation.Infinite : 1
                 onRunningChanged: if (!running) texto.x = 5
-                PauseAnimation { duration: 2000 }
+                PauseAnimation { duration: 1500 }
                 NumberAnimation {
                     from: 5; to: isla.maximo - texto.implicitWidth + 5
                     duration: Math.max(1, texto.implicitWidth - isla.maximo) * 25
@@ -99,10 +101,25 @@ Isla {
             }
         }
 
+        // Una pasada al cambiar de canción; con el ratón encima, sin parar
+        Connections {
+            target: isla
+            function onCancionChanged() {
+                if (!titulo.cabe)
+                    desplazar.restart();
+            }
+        }
+
         MouseArea {
             id: tituloRaton
             anchors.fill: parent
             hoverEnabled: true
+            onContainsMouseChanged: {
+                if (containsMouse && !titulo.cabe)
+                    desplazar.restart();
+                else if (!containsMouse)
+                    desplazar.stop();
+            }
             cursorShape: Qt.PointingHandCursor
             acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
             onClicked: e => {

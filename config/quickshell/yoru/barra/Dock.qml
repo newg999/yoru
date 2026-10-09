@@ -29,18 +29,18 @@ PanelWindow {
     readonly property int alto: 44           // alto de la isla
     readonly property int margen: Tema.margenBarra   // hasta el borde, como la barra
 
-    // La ventana es más alta que el dock (para el nombre y el menú que salen
-    // encima), pero solo reserva el alto del dock y solo recibe clics en él
-    anchors { bottom: true; left: true; right: true }
-    implicitHeight: 260
-    exclusiveZone: alto + 2 * margen
+    // La ventana mide justo lo que la isla (centrada abajo). El nombre y el
+    // menú salen en ventanitas aparte que solo existen mientras se ven.
+    // (Antes era una franja transparente de 2560×260 y niri tenía que
+    // mezclarla en cada fotograma: con un vídeo, la gráfica iba al 40 %)
+    anchors.bottom: true
+    margins.bottom: margen
+    implicitWidth: isla.width
+    implicitHeight: alto
+    exclusiveZone: alto + margen
     color: "transparent"
     WlrLayershell.namespace: "yoru-dock"
     WlrLayershell.layer: WlrLayer.Top
-    mask: Region {
-        item: isla
-        Region { item: menu.visible ? menu : null }
-    }
 
     // ------------------------------------------------------------ Datos
     // Una entrada por app: las favoritas primero (en su orden) y luego las
@@ -113,7 +113,6 @@ PanelWindow {
     // ------------------------------------------------------------- Isla
     Rectangle {
         id: isla
-        anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: dock.margen }
         width: fila.implicitWidth + 12
         height: dock.alto
         radius: Tema.radio + 2
@@ -121,7 +120,6 @@ PanelWindow {
         border.width: 1
         border.color: Tema.islaBorde
         visible: dock.apps.length > 0
-        Behavior on width { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
 
         Row {
             id: fila
@@ -216,29 +214,37 @@ PanelWindow {
                         Timer {
                             id: retraso
                             interval: 450
-                            running: raton.containsMouse && !menu.visible
+                            running: raton.containsMouse && !menu.abierto
                         }
-                        Rectangle {
-                            visible: opacity > 0
-                            opacity: raton.containsMouse && !retraso.running && !menu.visible ? 1 : 0
-                            Behavior on opacity { NumberAnimation { duration: Tema.rapida } }
-                            parent: dock.contentItem
-                            x: isla.x + fila.x + hueco.x + elemento.x + (elemento.width - width) / 2
-                            y: isla.y - height - 10
-                            width: etiqueta.implicitWidth + 24
-                            height: etiqueta.implicitHeight + 14
-                            radius: 10
-                            color: Tema.panel
-                            border.width: 1
-                            border.color: Tema.claro(0.25)
-                            Texto {
-                                id: etiqueta
-                                anchors.centerIn: parent
-                                text: dock.nombre(hueco.app)
-                                    + (hueco.app.ventanas.length > 1 ? Tema.suave("  ×" + hueco.app.ventanas.length) : "")
-                                textFormat: Text.StyledText
-                                font.bold: false
-                                font.pixelSize: 12
+                        LazyLoader {
+                            active: raton.containsMouse && !retraso.running && !menu.abierto
+                            PopupWindow {
+                                anchor.item: elemento
+                                anchor.rect.y: -8
+                                anchor.rect.width: elemento.width
+                                anchor.rect.height: 1
+                                anchor.edges: Edges.Top
+                                anchor.gravity: Edges.Top
+                                implicitWidth: etiqueta.implicitWidth + 24
+                                implicitHeight: etiqueta.implicitHeight + 14
+                                color: "transparent"
+                                visible: true
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: 10
+                                    color: Tema.panel
+                                    border.width: 1
+                                    border.color: Tema.claro(0.25)
+                                    Texto {
+                                        id: etiqueta
+                                        anchors.centerIn: parent
+                                        text: dock.nombre(hueco.app)
+                                            + (hueco.app.ventanas.length > 1 ? Tema.suave("  ×" + hueco.app.ventanas.length) : "")
+                                        textFormat: Text.StyledText
+                                        font.bold: false
+                                        font.pixelSize: 12
+                                    }
+                                }
                             }
                         }
                     }
@@ -248,87 +254,96 @@ PanelWindow {
     }
 
     // ------------------------------------------------- Menú (clic derecho)
-    // Se cierra al sacar el ratón de él un momento, al elegir algo o con Esc
-    Rectangle {
+    // Se cierra al sacar el ratón de él un momento o al elegir algo
+    QtObject {
         id: menu
-
         property var app: null
         property Item sobre: null
+        readonly property bool abierto: app !== null
 
         function abrir(a, item) {
-            app = a;
             sobre = item;
-            visible = true;
+            app = a;
         }
         function cerrar() {
-            visible = false;
             app = null;
         }
+    }
 
-        visible: false
-        width: 230
-        height: opciones.implicitHeight + 12
-        x: {
-            if (!sobre)
-                return 0;
-            const centro = sobre.mapToItem(dock.contentItem, sobre.width / 2, 0).x;
-            return Math.max(8, Math.min(dock.width - width - 8, centro - width / 2));
-        }
-        y: isla.y - height - 10
-        radius: 12
-        color: Tema.panel
-        border.width: 1
-        border.color: Tema.claro(0.25)
+    LazyLoader {
+        active: menu.abierto && menu.sobre !== null
 
-        HoverHandler { id: dentro }
-        Timer {
-            interval: 700
-            running: menu.visible && !dentro.hovered
-            onTriggered: menu.cerrar()
-        }
+        PopupWindow {
+            anchor.item: menu.sobre
+            anchor.rect.y: -8
+            anchor.rect.width: menu.sobre?.width ?? 0
+            anchor.rect.height: 1
+            anchor.edges: Edges.Top
+            anchor.gravity: Edges.Top
+            implicitWidth: 230
+            implicitHeight: opciones.implicitHeight + 12
+            color: "transparent"
+            visible: true
 
-        Column {
-            id: opciones
-            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 6 }
-            spacing: 2
+            Rectangle {
+                anchors.fill: parent
+                radius: 12
+                color: Tema.panel
+                border.width: 1
+                border.color: Tema.claro(0.25)
 
-            Texto {
-                width: parent.width
-                leftPadding: 10
-                height: 28
-                text: menu.app ? dock.nombre(menu.app) : ""
-                elide: Text.ElideRight
-                font.pixelSize: 12
-                color: Tema.gris
-            }
-            Fila {
-                width: parent.width
-                visible: menu.app?.entrada !== null && menu.app?.entrada !== undefined
-                icono: menu.app?.fija ? "󰐄" : "󰐃"
-                titulo: menu.app?.fija ? "Quitar del dock" : "Fijar en el dock"
-                onClic: {
-                    Favoritos.alternar(menu.app.clave);
-                    menu.cerrar();
+                HoverHandler { id: dentro }
+                Timer {
+                    // Margen al abrir: el ratón aún está en el icono, no en el menú
+                    interval: 900
+                    running: !dentro.hovered
+                    onTriggered: menu.cerrar()
                 }
-            }
-            Fila {
-                width: parent.width
-                visible: menu.app?.entrada !== null && menu.app?.entrada !== undefined
-                icono: "󰐕"
-                titulo: "Ventana nueva"
-                onClic: {
-                    dock.lanzar(menu.app);
-                    menu.cerrar();
-                }
-            }
-            Fila {
-                width: parent.width
-                visible: (menu.app?.ventanas.length ?? 0) > 0
-                icono: "󰅖"
-                titulo: (menu.app?.ventanas.length ?? 0) > 1 ? "Cerrar las " + menu.app.ventanas.length + " ventanas" : "Cerrar"
-                onClic: {
-                    dock.cerrarTodas(menu.app);
-                    menu.cerrar();
+
+                Column {
+                    id: opciones
+                    anchors { left: parent.left; right: parent.right; top: parent.top; margins: 6 }
+                    spacing: 2
+
+                    Texto {
+                        width: parent.width
+                        leftPadding: 10
+                        height: 28
+                        text: menu.app ? dock.nombre(menu.app) : ""
+                        elide: Text.ElideRight
+                        font.pixelSize: 12
+                        color: Tema.gris
+                    }
+                    Fila {
+                        width: parent.width
+                        visible: !!menu.app?.entrada
+                        icono: menu.app?.fija ? "󰐄" : "󰐃"
+                        titulo: menu.app?.fija ? "Quitar del dock" : "Fijar en el dock"
+                        onClic: {
+                            Favoritos.alternar(menu.app.clave);
+                            menu.cerrar();
+                        }
+                    }
+                    Fila {
+                        width: parent.width
+                        visible: !!menu.app?.entrada
+                        icono: "󰐕"
+                        titulo: "Ventana nueva"
+                        onClic: {
+                            dock.lanzar(menu.app);
+                            menu.cerrar();
+                        }
+                    }
+                    Fila {
+                        width: parent.width
+                        visible: (menu.app?.ventanas.length ?? 0) > 0
+                        icono: "󰅖"
+                        titulo: (menu.app?.ventanas.length ?? 0) > 1 ? "Cerrar las " + menu.app.ventanas.length + " ventanas" : "Cerrar"
+                        onClic: {
+                            dock.cerrarTodas(menu.app);
+                            menu.cerrar();
+                        }
+                    }
                 }
             }
         }
