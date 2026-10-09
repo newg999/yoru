@@ -79,6 +79,8 @@ window-rule {
 // Apps pequeñas (calculadora, mapa de caracteres, Elisa...): flotantes, con su
 // tamaño normal y centradas, en vez de ocupar media pantalla. Se mueven
 // arrastrándolas con Mod pulsado (o por su barra de título, si tienen).
+// Tamaño: Mod + clic derecho y arrastrar (vale aunque la app no tenga marco,
+// como las de KDE: Elisa...), o Mod +/- (ancho) y Mod+Shift +/- (alto).
 // ¿Quieres otra? Mira su app-id con «niri msg windows» y añade un match.
 // Cualquier ventana se puede hacer flotante (o volver a columna) con Mod+V.
 window-rule {
