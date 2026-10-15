@@ -86,6 +86,11 @@ def paleta_fondo(claro=False):
          "--mode", "light" if claro else "dark", "--prefer", "saturation"],
         capture_output=True, text=True, check=True).stdout
     colores = json.loads(salida)["colors"]
+    # Si mientras matugen trabajaba se ha puesto otro fondo (dos cambios
+    # seguidos), este resultado ya no vale: lo escribiría encima del bueno si
+    # terminara el último. La otra llamada, la del fondo nuevo, se encarga.
+    if FONDO_ACTUAL.read_text().strip() != str(fondo):
+        sys.exit(0)
     p = paleta_blanco()
     variante = "light" if claro else "dark"
     for nuestro, suyo in DESDE_MATUGEN.items():
