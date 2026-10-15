@@ -15,6 +15,7 @@
 #    niri.kdl    ← config/niri/config.kdl      (include optional=true)
 #    kitty.conf  ← config/kitty/kitty.conf     (include)
 #    colores.json ← Quickshell (comun/Tema.qml)
+#    fastfetch.zsh ← config/zsh/zshrc (colores del logo de fastfetch)
 #  Fuera del repo a propósito: cambiar de fondo no deja cambios en git.
 #
 #  En modo fondo, rojo y amarillo no cambian: son los avisos y tienen que
@@ -92,6 +93,12 @@ def paleta_fondo(claro=False):
     return p
 
 
+def ansi(color):
+    """#rrggbb → código de color de terminal (38;2;r;g;b), como lo pide fastfetch"""
+    r, g, b = (int(color[i:i + 2], 16) for i in (1, 3, 5))
+    return f"38;2;{r};{g};{b}"
+
+
 def escribir(nombre, texto):
     destino = ESTADO / nombre
     temporal = destino.with_suffix(destino.suffix + ".tmp")
@@ -118,6 +125,15 @@ layout {{
 overview {{
     backdrop-color "{p['velo']}"
 }}
+""")
+
+    escribir("fastfetch.zsh", f"""# Generado por tema/aplicar.py ({modo}). No lo edites: se sobrescribe.
+# Colores del logo de fastfetch (los usa config/zsh/zshrc)
+ff_colores=(
+    --logo-color-1 '{ansi(a)}'
+    --logo-color-2 '{ansi(p['gris'])}'
+    --color-keys '{ansi(a)}'
+)
 """)
 
     escribir("kitty.conf", f"""# Generado por tema/aplicar.py ({modo}). No lo edites: se sobrescribe.

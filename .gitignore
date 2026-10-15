@@ -2,7 +2,7 @@
 config/niri/local.kdl
 # Dónde vives, para el clima (copia lugar.json.example)
 config/quickshell/yoru/lugar.json
-# Tu logo de fastfetch (una imagen tuya: no se sube)
+# Logo de fastfetch en imagen (ya no se usa: el logo es yoru.txt)
 config/fastfetch/logo.*
 
 # Basura habitual

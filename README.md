@@ -20,7 +20,7 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Notificaciones | `quickshell` | `config/quickshell/yoru/comun/Notificaciones.qml` |
 | Terminal | `kitty` | `config/kitty/` |
 | Shell | `zsh` + Oh My Zsh (autosugerencias y resaltado) · `eza`, `bat`, `zoxide` | `config/zsh/zshrc` → `~/.zshrc` |
-| Info al abrir la terminal | `fastfetch` (pon tu logo en `config/fastfetch/logo.webp`) | `config/fastfetch/` |
+| Info al abrir la terminal | `fastfetch` con 夜 (yoru) en grande y una luna, en los colores del tema (`config/fastfetch/yoru.txt`) | `config/fastfetch/` |
 | Bloqueo | `swaylock` + `swayidle` | `config/swaylock/` |
 | Fondo | `swaybg` | `config/niri/scripts/wallpaper.sh` |
 | Apps X11 | `xwayland-satellite` | automático |

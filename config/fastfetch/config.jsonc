@@ -1,12 +1,17 @@
 // fastfetch — info del sistema al abrir la terminal (lo lanza config/zsh/zshrc)
-// El logo es una imagen tuya: ponla en ~/.config/fastfetch/logo.webp
-// (no se sube al repo). Si no está, sale el logo de Fedora.
+// El logo es yoru.txt: 夜 (yoru, «noche») en grande, sacado de Noto Serif CJK
+// con bloques de cuartos de celda, una luna y «よる · yoru». $1 es el kanji,
+// la luna y よる (color de acento) y $2 las estrellas y «yoru» (gris).
+// zshrc le pasa los colores del tema de «yoru tema» (ver tema/aplicar.py);
+// sin tema, salen los de aquí.
 {
     "logo": {
-        "type": "kitty",
-        "source": "~/.config/fastfetch/logo.webp",
-        "width": 30,
-        "height": 15,
+        "type": "file",
+        "source": "~/.config/fastfetch/yoru.txt",
+        "color": {
+            "1": "blue",
+            "2": "bright_black"
+        },
         "padding": {
             "top": 1,
             "left": 2,
@@ -14,7 +19,10 @@
         }
     },
     "display": {
-        "separator": " → "
+        "separator": " → ",
+        "color": {
+            "keys": "blue"
+        }
     },
     "modules": [
         "title",

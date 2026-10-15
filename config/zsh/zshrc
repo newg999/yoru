@@ -28,8 +28,14 @@ command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
 # ~/.local/bin: el comando yoru (y lo que instales con pip --user, etc.)
 export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"
 
-# Info del sistema con el logo al abrir la terminal (config/fastfetch)
-command -v fastfetch >/dev/null && fastfetch
+# Info del sistema con el logo al abrir la terminal (config/fastfetch), en
+# los colores del tema («yoru tema» deja ff_colores en fastfetch.zsh)
+if command -v fastfetch >/dev/null; then
+    ff_colores=()
+    [[ -f ~/.local/state/yoru/tema/fastfetch.zsh ]] && source ~/.local/state/yoru/tema/fastfetch.zsh
+    fastfetch "${ff_colores[@]}"
+    unset ff_colores
+fi
 
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
