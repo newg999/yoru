@@ -25,7 +25,8 @@ PanelWindow {
 
     visible: mostrar
     anchors { top: true; right: true }
-    margins.top: Tema.margenBarra + Tema.altoBarra + 8
+    // Bajo la barra; con la barra a la izquierda, arriba del todo
+    margins.top: Ajustes.vertical ? Tema.margenLados + 6 : Tema.hueco
     margins.right: Tema.margenLados
     implicitWidth: 380
     implicitHeight: Math.max(1, pila.height)

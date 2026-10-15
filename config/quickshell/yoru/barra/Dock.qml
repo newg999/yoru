@@ -10,8 +10,11 @@
 //                     cerrar todas
 //
 //  Los puntitos de debajo son sus ventanas abiertas; el alargado, la app
-//  que tiene el foco. Solo sale con el overview abierto (Mod+Tab), como en
-//  GNOME: no reserva espacio y al elegir una app el overview se cierra.
+//  que tiene el foco. Cuándo sale se elige en Ajustes (Barra y dock):
+//    · con el overview (Mod+Tab), como en GNOME: no reserva espacio y al
+//      elegir una app el overview se cierra (lo normal)
+//    · siempre, pegado abajo y reservando su espacio
+//    · nunca
 //  Las favoritas se guardan en comun/Favoritos.qml.
 // ============================================================================
 import QtQuick
@@ -29,7 +32,9 @@ PanelWindow {
     readonly property int celda: 40          // hueco de cada app
     readonly property int icono: 28
     readonly property int alto: 44           // alto de la isla
-    readonly property int margen: 12         // hasta el borde de abajo
+    readonly property bool siempre: Ajustes.dock === "siempre"
+    readonly property bool mostrado: siempre || (Ajustes.dock === "overview" && Niri.overview)
+    readonly property int margen: siempre ? Tema.margenBarra : 12   // hasta el borde de abajo
 
     // La ventana mide justo lo que la isla (centrada abajo). El nombre y el
     // menú salen en ventanitas aparte que solo existen mientras se ven.
@@ -39,13 +44,15 @@ PanelWindow {
     margins.bottom: margen
     implicitWidth: isla.width
     implicitHeight: alto
-    exclusionMode: ExclusionMode.Ignore
+    visible: Ajustes.dock !== "nunca"
+    exclusionMode: siempre ? ExclusionMode.Normal : ExclusionMode.Ignore
+    exclusiveZone: siempre ? alto + margen : 0
     color: "transparent"
     WlrLayershell.namespace: "yoru-dock"
     WlrLayershell.layer: WlrLayer.Top
 
-    // Fuera del overview: escondido y sin zona de clic (al revés que la barra)
-    mask: Niri.overview ? null : vacia
+    // Escondido: sin zona de clic, para que los clics lleguen a las ventanas
+    mask: mostrado ? null : vacia
     Region { id: vacia }
     Connections {
         target: Niri
@@ -138,9 +145,9 @@ PanelWindow {
         visible: dock.apps.length > 0
 
         // Sube desde abajo al abrir el overview, como la barra baja desde arriba
-        opacity: Niri.overview ? 1 : 0
+        opacity: dock.mostrado ? 1 : 0
         transform: Translate {
-            y: Niri.overview ? 0 : dock.alto + dock.margen
+            y: dock.mostrado ? 0 : dock.alto + dock.margen
             Behavior on y { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
         }
         Behavior on opacity { NumberAnimation { duration: Tema.normal } }

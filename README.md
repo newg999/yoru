@@ -90,7 +90,7 @@ El script **no copia** archivos: crea *enlaces simbólicos*. `~/.config/niri` ap
 | `yoru update` | Baja los cambios del repo, actualiza el sistema y las apps Flatpak y vuelve a pasar el instalador |
 | `yoru reload` | Comprueba la config de Niri y recarga la barra y las notificaciones |
 | `yoru doctor` | Revisa enlaces, programas, servicios, copias y el repo, y dice qué falla y cómo arreglarlo |
-| `yoru tema blanco` / `yoru tema fondo` | Colores monocromos de siempre, o sacados del fondo de pantalla (cambian solos al cambiar de fondo) |
+| `yoru tema <tema>` | Colores: `blanco` (los de siempre), `fondo` / `fondo-claro` (sacados del fondo de pantalla; cambian solos al cambiar de fondo) o una paleta de `tema/paletas/` (`nord`, `catppuccin`, `gruvbox`...). También desde Ajustes (`Mod+Alt+T`) |
 | `yoru copias` | Lista las copias del sistema |
 | `yoru volver <n>` | Deja el sistema como estaba en la copia `n` |
 
@@ -139,6 +139,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | `Mod+Alt+S` | Tienda de apps (buscar, instalar, actualizar) |
 | `Mod+Alt+I` | Test de velocidad de internet (también en el lanzador) |
 | `Mod+Alt+W` | Elegir fondo de pantalla (con miniaturas) |
+| `Mod+Alt+T` | Ajustes: tema, fondo, barra (arriba o a la izquierda), dock y aspecto |
 | `Mod+Alt+Shift+W` | Siguiente fondo de pantalla |
 | `Mod+BackSpace` | Bloquear |
 | `Mod+Shift+BackSpace` | Menú de apagado |
@@ -149,7 +150,8 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 
 | Quiero cambiar… | Archivo |
 |---|---|
-| Colores de todo el escritorio | `tema/blanco.json` y después `yoru tema blanco` |
+| Tema, barra, dock, transparencias, esquinas… | Ajustes (`Mod+Alt+T` o 󰒓 en la barra); se guardan en `~/.local/state/yoru/ajustes.json` |
+| Colores de todo el escritorio | `tema/blanco.json` y después `yoru tema blanco`, o una paleta nueva en `tema/paletas/` |
 | Atajos | `config/niri/binds.kdl` |
 | Separación entre ventanas, anchos | `config/niri/config.kdl` → `layout` |
 | Qué arranca al iniciar | `config/niri/config.kdl` → `spawn-at-startup` |
@@ -163,7 +165,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | Panel central (resumen, multimedia, clima) | `config/quickshell/yoru/paneles/PanelCentral.qml` |
 | Monitor del sistema (clic en CPU/RAM) | `config/quickshell/yoru/paneles/Monitor.qml` y `scripts/monitor.py` |
 | Lanzador de apps (`Mod+Space`, sale por la izquierda) | `config/quickshell/yoru/paneles/Lanzador.qml` |
-| Dock de apps abajo, solo con el overview abierto (Mod+Tab) (clic = ir a su ventana o elegir entre varias, clic derecho = fijar/cerrar) | `config/quickshell/yoru/barra/Dock.qml` (favoritas en `~/.local/state/yoru/favoritos.json`) |
+| Dock de apps abajo, con el overview abierto (Mod+Tab), siempre o nunca, según Ajustes (clic = ir a su ventana o elegir entre varias, clic derecho = fijar/cerrar) | `config/quickshell/yoru/barra/Dock.qml` (favoritas en `~/.local/state/yoru/favoritos.json`) |
 | Dónde vives (para el clima) | `config/quickshell/yoru/lugar.json` (copia `lugar.json.example`; sin él, se adivina por tu IP) |
 | Fondos de pantalla | Echa imágenes en `wallpapers/`, o añade uno de wallhaven.cc a `wallpapers/wallhaven.txt` y ejecuta `wallpapers/descargar.sh` |
 

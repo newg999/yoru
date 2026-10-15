@@ -1,6 +1,7 @@
 // ============================================================================
 //  Ventana activa de esta pantalla: icono de la app (en blanco, ver
 //  comun/Iconos.qml) y título. Sin ventanas, la isla desaparece.
+//  Con la barra a la izquierda, solo el icono (el título, en la ayuda).
 // ============================================================================
 import QtQuick
 import qs.comun
@@ -17,7 +18,7 @@ Isla {
 
     // Ayuda: el título entero (si se ha cortado) y de qué app es
     ayuda: !ventana ? ""
-        : (textoTitulo.truncated ? Tema.html(ventana.title) + "<br>" : "") + Tema.suave(Tema.html(ventana.app_id))
+        : (textoTitulo.truncated || vertical ? Tema.html(ventana.title) + "<br>" : "") + Tema.suave(Tema.html(ventana.app_id))
 
     Texto {
         visible: isla.ventana !== null
@@ -30,7 +31,7 @@ Isla {
     Texto {
         id: textoTitulo
         text: isla.ventana?.title ?? ""
-        visible: text !== ""
+        visible: text !== "" && !isla.vertical
         font.bold: false
         elide: Text.ElideRight
         width: Math.min(implicitWidth, isla.maximo)

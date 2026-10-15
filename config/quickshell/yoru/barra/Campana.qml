@@ -1,8 +1,9 @@
 // ============================================================================
-//  Portapapeles y notificaciones, al final de la barra
+//  Portapapeles, notificaciones y ajustes, al final de la barra
 //    󰅌  = historial del portapapeles (Mod+Alt+V)
 //    󰂚  = panel de notificaciones (Mod+Alt+M), con cuántas hay
 //         clic derecho = no molestar (󰂛) · clic central = borrarlas todas
+//    󰒓  = ajustes: tema, fondo, barra y aspecto (Mod+Alt+T)
 // ============================================================================
 import QtQuick
 import qs.comun
@@ -16,6 +17,7 @@ Isla {
             : `<b>${Notificaciones.cuantas}</b> notificaci${Notificaciones.cuantas === 1 ? "ón" : "ones"}`)
         + (Notificaciones.noMolestar ? "  ·  no molestar" : "")
         + "<br>" + Tema.suave("Campana: clic dcho no molestar · clic central borrar todas")
+        + "<br>" + Tema.suave("󰒓 Ajustes: tema, fondo, barra y aspecto  ·  Mod+Alt+T")
 
     Modulo {
         icono: "󰅌"
@@ -37,5 +39,11 @@ Isla {
             else
                 Paneles.alternar("notificaciones", isla.pantalla, "");
         }
+    }
+
+    Modulo {
+        icono: "󰒓"
+        resaltado: Paneles.esta("ajustes", isla.pantalla)
+        onClic: Paneles.alternar("ajustes", isla.pantalla, "")
     }
 }

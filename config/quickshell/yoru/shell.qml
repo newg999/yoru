@@ -63,6 +63,10 @@ ShellRoot {
     }
     Variants {
         model: Quickshell.screens
+        PanelAjustes {}
+    }
+    Variants {
+        model: Quickshell.screens
         Tienda {}
     }
     Variants {
@@ -89,6 +93,7 @@ ShellRoot {
     //   qs -c yoru ipc call panel alternar lanzador ""        (o medio: en mitad de la pantalla)
     //   qs -c yoru ipc call panel alternar monitor procesos   (o rendimiento)
     //   qs -c yoru ipc call panel alternar apagado ""         (o portapapeles, notificaciones, fondos, tienda, velocidad)
+    //   qs -c yoru ipc call panel alternar ajustes tema       (o fondo, barra, aspecto)
     //   qs -c yoru ipc call panel cerrar
     IpcHandler {
         target: "panel"

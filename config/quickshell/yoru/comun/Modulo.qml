@@ -1,6 +1,7 @@
 // ============================================================================
 //  Modulo — un icono (y opcionalmente un texto) de la barra que se puede pulsar
 //  Al pasar el ratón se ilumina en blanco, como en waybar.
+//  Con la barra a la izquierda, el texto va debajo del icono, más pequeño.
 //
 //    Modulo {
 //        icono: "󰕾"; texto: "40%"
@@ -27,33 +28,44 @@ Item {
     signal clic(int boton)
     signal rueda(int pasos)
 
+    readonly property bool vertical: Ajustes.vertical
+
     readonly property color colorActual: colorAviso.a > 0 ? colorAviso
         : (raton.containsMouse && pulsable) || resaltado ? Tema.blanco
         : apagado ? Tema.tenue : Tema.texto
 
-    implicitWidth: fila.implicitWidth + 2 * relleno
-    implicitHeight: Tema.altoBarra
+    implicitWidth: vertical ? Tema.anchoBarra : fila.implicitWidth + 2 * relleno
+    implicitHeight: !vertical ? Tema.altoBarra
+        : texto === "" ? Tema.altoBarra - 2 : fila.implicitHeight + 12
 
-    Row {
+    // Icono y texto en fila (barra arriba) o uno sobre otro (a la izquierda)
+    Grid {
         id: fila
         anchors.centerIn: parent
-        spacing: modulo.texto !== "" && modulo.icono !== "" ? 10 : 0
+        // Solo cambian las columnas: una (en columna) o de sobra (en fila).
+        // Cambiar filas y columnas a la vez pasa un momento por 1×1 y Qt avisa
+        columns: modulo.vertical ? 1 : 99
+        horizontalItemAlignment: Grid.AlignHCenter
+        verticalItemAlignment: Grid.AlignVCenter
+        spacing: modulo.texto === "" || modulo.icono === "" ? 0 : modulo.vertical ? 1 : 10
 
         Texto {
             text: modulo.icono
             visible: text !== ""
             font.pixelSize: modulo.tamIcono
             color: modulo.colorActual
-            anchors.verticalCenter: parent.verticalCenter
             Behavior on color { ColorAnimation { duration: Tema.rapida } }
         }
         Texto {
             text: modulo.texto
             visible: text !== ""
             color: modulo.colorActual
+            font.pixelSize: modulo.vertical ? Math.min(Tema.letra, 11) : Tema.letra
+            horizontalAlignment: Text.AlignHCenter
+            lineHeight: modulo.vertical ? 0.95 : 1
             elide: Text.ElideRight
-            width: modulo.anchoTexto > 0 ? Math.min(implicitWidth, modulo.anchoTexto) : implicitWidth
-            anchors.verticalCenter: parent.verticalCenter
+            readonly property int maximo: modulo.vertical ? Tema.anchoBarra - 4 : modulo.anchoTexto
+            width: maximo > 0 ? Math.min(implicitWidth, maximo) : implicitWidth
             Behavior on color { ColorAnimation { duration: Tema.rapida } }
         }
     }

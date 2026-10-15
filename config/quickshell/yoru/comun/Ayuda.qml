@@ -1,6 +1,7 @@
 // ============================================================================
 //  Ayuda — recuadro con información al dejar el ratón encima (tooltip)
-//  Sale debajo de «objetivo», centrado. Lo usan las islas de la barra:
+//  Sale debajo de «objetivo», centrado (o a su derecha, con la barra a la
+//  izquierda). Lo usan las islas de la barra:
 //
 //    Isla { ayuda: "CPU 12%<br><font color='gris'>...</font>" }
 //
@@ -20,10 +21,10 @@ LazyLoader {
 
     PopupWindow {
         anchor.item: ayuda.objetivo
-        anchor.rect.width: ayuda.objetivo.width
-        anchor.rect.height: ayuda.objetivo.height + 6
-        anchor.edges: Edges.Bottom
-        anchor.gravity: Edges.Bottom
+        anchor.rect.width: ayuda.objetivo.width + (Ajustes.vertical ? 6 : 0)
+        anchor.rect.height: ayuda.objetivo.height + (Ajustes.vertical ? 0 : 6)
+        anchor.edges: Ajustes.vertical ? Edges.Right : Edges.Bottom
+        anchor.gravity: Ajustes.vertical ? Edges.Right : Edges.Bottom
         implicitWidth: caja.width
         implicitHeight: caja.height
         color: "transparent"

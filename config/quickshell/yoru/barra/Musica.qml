@@ -3,6 +3,7 @@
 //  Visualizador · canción · anterior · play/pausa · siguiente
 //  Sin reproductor (o parado), la isla desaparece.
 //  En la canción: clic = pestaña Multimedia · clic dcho = siguiente · clic central = pausa
+//  Con la barra a la izquierda, solo los botones (la canción, en la ayuda)
 // ============================================================================
 import QtQuick
 import qs.comun
@@ -33,13 +34,13 @@ Isla {
         if (r.trackAlbum)
             lineas.push(Tema.suave(Tema.html(r.trackAlbum)));
         lineas.push(Tema.suave((r.isPlaying ? "󰐊 " : "󰏤 ") + Tema.html(r.identity)
-            + "  ·  clic: multimedia · clic central: pausa"));
+            + (isla.vertical ? "  ·  clic dcho en 󰐊: multimedia" : "  ·  clic: multimedia · clic central: pausa")));
         return lineas.join("<br>");
     }
 
     // Visualizador: barritas que bailan con el audio
     Item {
-        visible: isla.reproductor !== null
+        visible: isla.reproductor !== null && !isla.vertical
         implicitWidth: barras.implicitWidth + 12
         implicitHeight: Tema.altoBarra
 
@@ -66,7 +67,7 @@ Isla {
     // parar: la barra se redibujaba a 120 fps y la gráfica no descansaba)
     Item {
         id: titulo
-        visible: isla.reproductor !== null && isla.cancion !== ""
+        visible: isla.reproductor !== null && isla.cancion !== "" && !isla.vertical
         readonly property bool cabe: texto.implicitWidth <= isla.maximo
         implicitWidth: Math.min(texto.implicitWidth, isla.maximo) + 16
         implicitHeight: Tema.altoBarra
@@ -164,7 +165,14 @@ Isla {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: isla.reproductor.togglePlaying()
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            // Clic derecho = pestaña Multimedia (a la izquierda no hay título donde pulsar)
+            onClicked: e => {
+                if (e.button === Qt.RightButton)
+                    Paneles.alternar("centro", isla.pantalla, "multimedia");
+                else
+                    isla.reproductor.togglePlaying();
+            }
         }
     }
     Modulo {

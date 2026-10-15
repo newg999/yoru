@@ -1,5 +1,7 @@
 // ============================================================================
 //  Panel — recuadro que se despliega bajo la barra (como los de DMS)
+//  Con la barra a la izquierda, sale a su derecha: «izquierda» arriba,
+//  «centro» en medio y «derecha» abajo (donde quedan sus botones).
 //
 //  La ventana ocupa la pantalla entera pero es invisible: así un clic fuera
 //  del recuadro lo cierra.
@@ -27,11 +29,12 @@ PanelWindow {
     default property alias contenido: interior.data
 
     readonly property bool abierto: Paneles.abierto === nombre && Paneles.pantalla === modelData
+    readonly property bool vertical: Ajustes.vertical
 
     // Alto máximo del recuadro en ESTA pantalla (bajo la barra, con margen).
     // Los paneles con listas largas las acortan con esto para caber también
     // en monitores pequeños (1080p, portátiles de 768...)
-    readonly property int altoMax: modelData.height - (Tema.margenBarra + Tema.altoBarra + 8) - 12
+    readonly property int altoMax: modelData.height - (vertical ? 2 * Tema.margenLados + 12 : Tema.hueco) - 12
 
     // 0 = cerrado · 1 = abierto. La ventana sigue visible hasta que termina
     // la animación de cierre.
@@ -67,15 +70,23 @@ PanelWindow {
         height: interior.implicitHeight + 32
         readonly property bool enMedio: ventana.lado === "medio"
 
-        x: ventana.lado === "izquierda" ? Tema.margenLados
-            : ventana.lado === "centro" || enMedio ? (parent.width - width) / 2
+        // Al abrirse se desliza un poco desde la barra
+        readonly property real deslizar: (1 - ventana.progreso) * 14
+
+        x: enMedio ? Math.round((parent.width - width) / 2)
+            : ventana.vertical ? Tema.hueco - deslizar
+            : ventana.lado === "izquierda" ? Tema.margenLados
+            : ventana.lado === "centro" ? (parent.width - width) / 2
             : parent.width - width - Tema.margenLados
         y: enMedio ? Math.round((parent.height - height) / 2)
-            : Tema.margenBarra + Tema.altoBarra + 8 - (1 - ventana.progreso) * 14
+            : !ventana.vertical ? Tema.hueco - deslizar
+            : ventana.lado === "izquierda" ? Tema.margenLados + 6
+            : ventana.lado === "centro" ? Math.round((parent.height - height) / 2)
+            : parent.height - height - Tema.margenLados - 6
 
         opacity: ventana.progreso
         scale: (enMedio ? 0.94 : 0.96) + (enMedio ? 0.06 : 0.04) * ventana.progreso
-        transformOrigin: enMedio ? Item.Center : Item.Top
+        transformOrigin: enMedio ? Item.Center : ventana.vertical ? Item.Left : Item.Top
 
         radius: Tema.radioPanel
         color: Tema.panel

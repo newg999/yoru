@@ -1,4 +1,5 @@
 // Reloj y fecha · Clic = panel central (calendario, clima, música...)
+// Con la barra a la izquierda, las horas sobre los minutos y el día debajo
 import QtQuick
 import Quickshell
 import qs.comun
@@ -32,18 +33,18 @@ Isla {
     }
 
     Modulo {
-        texto: Qt.formatDateTime(reloj.date, "HH:mm")
+        texto: Qt.formatDateTime(reloj.date, isla.vertical ? "HH\nmm" : "HH:mm")
         relleno: 7
         resaltado: Paneles.esta("centro", isla.pantalla, "resumen")
         onClic: Paneles.alternar("centro", isla.pantalla, "resumen")
     }
     Texto {
-        text: "•"
+        text: isla.vertical ? "··" : "•"
         color: Tema.tenue
-        height: Tema.altoBarra
+        height: isla.vertical ? 10 : Tema.altoBarra
     }
     Modulo {
-        texto: isla.diasSemana[reloj.date.getDay()] + " " + reloj.date.getDate()
+        texto: isla.diasSemana[reloj.date.getDay()] + (isla.vertical ? "\n" : " ") + reloj.date.getDate()
         relleno: 7
         resaltado: Paneles.esta("centro", isla.pantalla, "resumen")
         onClic: Paneles.alternar("centro", isla.pantalla, "resumen")

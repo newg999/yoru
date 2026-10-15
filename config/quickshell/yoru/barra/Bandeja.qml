@@ -55,9 +55,11 @@ Isla {
                 menu: elemento.modelData.menu
                 anchor.window: isla.ventana
                 anchor.item: elemento
-                anchor.edges: Edges.Bottom
-                anchor.gravity: Edges.Bottom
-                anchor.margins.top: 6
+                // Debajo del icono (o a su derecha, con la barra a la izquierda)
+                anchor.edges: isla.vertical ? Edges.Right : Edges.Bottom
+                anchor.gravity: isla.vertical ? Edges.Right : Edges.Bottom
+                anchor.margins.top: isla.vertical ? 0 : 6
+                anchor.margins.left: isla.vertical ? 6 : 0
             }
 
             MouseArea {

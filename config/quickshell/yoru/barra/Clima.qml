@@ -15,7 +15,7 @@ Isla {
     Modulo {
         visible: Tiempo.listo
         icono: Tiempo.icono
-        texto: Tiempo.temperatura + "°C"
+        texto: Tiempo.temperatura + (isla.vertical ? "°" : "°C")
         resaltado: Paneles.esta("centro", isla.pantalla, "clima")
         onClic: Paneles.alternar("centro", isla.pantalla, "clima")
     }

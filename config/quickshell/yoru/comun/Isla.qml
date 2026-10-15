@@ -1,7 +1,8 @@
 // ============================================================================
 //  Isla — recuadro translúcido de la barra que agrupa uno o varios módulos
-//  Los módulos se ponen dentro y se colocan en fila.
-//  Si no hay nada visible dentro, la isla se desvanece.
+//  Los módulos se ponen dentro y se colocan en fila (o en columna, con la
+//  barra a la izquierda: Ajustes.vertical).
+//  Si no hay nada visible dentro (u oculta: true), la isla se desvanece.
 //  Con pulsable: true, la isla entera es un solo botón (avisa con clic(boton)
 //  y rueda(pasos)); al pasar el ratón se iluminan sus módulos, como los demás
 //  (resaltado: isla.hover), sin cambiar el fondo.
@@ -15,17 +16,21 @@ Rectangle {
     id: isla
 
     default property alias contenido: fila.data
-    property int relleno: 14            // margen a izquierda y derecha
+    property int relleno: 14            // margen a izquierda y derecha (arriba y abajo en vertical)
     property alias espacio: fila.spacing
-    property bool vacia: fila.implicitWidth <= 0
+    property bool oculta: false         // quitada en Ajustes
+    readonly property bool vertical: Ajustes.vertical
+    property bool vacia: oculta || (vertical ? fila.implicitHeight : fila.implicitWidth) <= 0
+    // En vertical sobra tanto margen: los módulos ya llevan el suyo
+    readonly property int rellenoVertical: Math.min(relleno, 6)
     property bool pulsable: false
     readonly property alias hover: raton.containsMouse
     property string ayuda: ""
     signal clic(int boton)
     signal rueda(int pasos)
 
-    implicitWidth: vacia ? 0 : fila.implicitWidth + 2 * relleno
-    implicitHeight: Tema.altoBarra
+    implicitWidth: vertical ? Tema.anchoBarra : vacia ? 0 : fila.implicitWidth + 2 * relleno
+    implicitHeight: !vertical ? Tema.altoBarra : vacia ? 0 : fila.implicitHeight + 2 * rellenoVertical
     radius: Tema.radio
     color: Tema.isla
     border.width: 1
@@ -36,6 +41,7 @@ Rectangle {
     visible: opacity > 0
     Behavior on opacity { NumberAnimation { duration: Tema.normal } }
     Behavior on implicitWidth { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
+    Behavior on implicitHeight { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
 
     MouseArea {
         id: raton
@@ -80,10 +86,16 @@ Rectangle {
         mostrar: retraso.mostrar && Paneles.abierto === "" && !Niri.overview
     }
 
-    Row {
+    // Una fila (barra arriba) o una columna (barra a la izquierda)
+    Grid {
         id: fila
-        anchors.verticalCenter: parent.verticalCenter
-        x: isla.relleno
+        // Solo cambian las columnas: una (en columna) o de sobra (en fila).
+        // Cambiar filas y columnas a la vez pasa un momento por 1×1 y Qt avisa
+        columns: isla.vertical ? 1 : 99
+        horizontalItemAlignment: Grid.AlignHCenter
+        verticalItemAlignment: Grid.AlignVCenter
+        x: isla.vertical ? Math.round((isla.width - width) / 2) : isla.relleno
+        y: isla.vertical ? isla.rellenoVertical : Math.round((isla.height - height) / 2)
         spacing: 0
     }
 }

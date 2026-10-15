@@ -23,6 +23,7 @@ Singleton {
     property color oscuro: "#1a1b1e"
     property color rojo: "#bf616a"
     property color amarillo: "#ebcb8b"
+    property string modo: "blanco"      // tema elegido con «yoru tema» (ver Ajustes)
 
     // El acento o el fondo con transparencia (0 = invisible, 1 = sólido).
     // Úsalos en vez de Qt.rgba(1, 1, 1, x): así siguen al tema.
@@ -37,12 +38,12 @@ Singleton {
     function suave(t) { return "<font color='" + gris + "'>" + t + "</font>"; }
     function html(t) { return String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
-    // Islas de la barra: 1.0 = sólidas, 0.0 = invisibles
-    readonly property color isla: sombra(0.45)
+    // Islas de la barra: 1.0 = sólidas, 0.0 = invisibles (panel de Ajustes)
+    readonly property color isla: sombra(Ajustes.opacidadIslas)
     readonly property color islaBorde: claro(0.12)
 
     // Paneles
-    readonly property color panel: sombra(0.90)
+    readonly property color panel: sombra(Ajustes.opacidadPaneles)
     readonly property color panelBorde: claro(0.80)    // = anillo de foco de niri
     readonly property color caja: claro(0.06)          // fondos de filas y botones
     readonly property color cajaHover: claro(0.12)
@@ -61,6 +62,7 @@ Singleton {
                 tema.oscuro = c.fondo;
                 tema.rojo = c.rojo;
                 tema.amarillo = c.amarillo;
+                tema.modo = c.modo ?? "blanco";
                 console.info("Tema:", c.modo, "· acento", c.acento);
             } catch (e) {
                 console.warn("colores.json no es válido:", e);
@@ -70,18 +72,24 @@ Singleton {
 
     // --------------------------------------------------------------- Fuente
     readonly property string fuente: "JetBrainsMono Nerd Font"
-    readonly property int letra: 13        // texto normal de la barra
+    readonly property int letra: Ajustes.letra   // texto normal de la barra
     readonly property int icono: 16        // iconos solos (wifi, bluetooth...)
 
     // --------------------------------------------------------------- Medidas
-    readonly property int altoBarra: 30
-    readonly property int margenBarra: 2     // arriba
+    // La barra va arriba o a la izquierda (Ajustes.barra). «grosor» es lo
+    // que ocupa desde su borde: el alto de las islas arriba, su ancho a la
+    // izquierda. «hueco» es donde empiezan los paneles y avisos, al lado.
+    readonly property int altoBarra: 30      // islas de la barra de arriba
+    readonly property int anchoBarra: 40     // islas de la barra de la izquierda
+    readonly property int grosor: Ajustes.vertical ? anchoBarra : altoBarra
+    readonly property int margenBarra: 2     // de la barra a su borde
     readonly property int margenLados: 2
+    readonly property int hueco: margenBarra + grosor + 8
     readonly property int separacion: 6      // entre islas
-    readonly property int radio: 10
-    readonly property int radioPanel: 14
+    readonly property int radio: Ajustes.radio
+    readonly property int radioPanel: Ajustes.radio + 4
 
     // ----------------------------------------------------------- Animaciones
-    readonly property int rapida: 120
-    readonly property int normal: 220
+    readonly property int rapida: Ajustes.animaciones ? 120 : 0
+    readonly property int normal: Ajustes.animaciones ? 220 : 0
 }
