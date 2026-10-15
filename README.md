@@ -28,6 +28,7 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Archivos | `nautilus` | — |
 | Navegador | `brave-browser` | — |
 | Visor de PDF | `okular` | `config/kdeglobals` (sus colores oscuros) |
+| Documentos | PdfCraft, WordCraft, DeckCraft y GridCraft de [ArtCraft](https://github.com/storytold) (con su Launcher, que las actualiza), predeterminadas para PDF, Word, PowerPoint y Excel | `artcraft.txt` · `install.sh` → `apps_predeterminadas` |
 | Tema de las apps | `adw-gtk3-dark` (GTK3) · modo oscuro (GTK4) | `install.sh` → `ajustes_gtk` |
 | Tema de las apps Qt | Breeze Dark (`plasma-integration`) | `config/kdeglobals` · `system/environment.d/yoru.conf` |
 
@@ -159,6 +160,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | Monitores y escala | `config/niri/local.kdl` (copia `local.kdl.example`) |
 | Pantalla de inicio de sesión | `system/greetd/config.toml` (se copia a `/etc`, vuelve a ejecutar `./install.sh`) |
 | Paquetes que se instalan | `packages.txt` |
+| Apps de ArtCraft que se instalan (PdfCraft, WordCraft, DeckCraft, GridCraft…) | `artcraft.txt` |
 | Qué sale en la barra y en qué orden | `config/quickshell/yoru/barra/Barra.qml` |
 | Fuente y medidas de la barra y los paneles | `config/quickshell/yoru/comun/Tema.qml` |
 | Centro de control (wifi, bluetooth, audio, brillo y perfil de energía) | `config/quickshell/yoru/paneles/CentroControl.qml` |

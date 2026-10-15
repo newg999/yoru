@@ -1,0 +1,18 @@
+# ============================================================================
+#  Apps de ArtCraft que instala install.sh (https://github.com/storytold)
+#  Una por línea: el nombre de su repositorio en GitHub. Lo que va detrás de
+#  # se ignora. No están en Fedora ni en Flathub: se baja su .flatpak de la
+#  última versión, se comprueba con su SHA256SUMS.txt y se instala para tu
+#  usuario. Las que ya tienes no se tocan: las actualiza el ArtCraft Launcher.
+#
+#  Hay más: lightcraft, photocraft, filmcraft, effectcraft, designcraft,
+#  vectorcraft, soundcraft, cadcraft...
+#  Las de documentos se ponen como predeterminadas (install.sh →
+#  apps_predeterminadas).
+# ============================================================================
+
+craft-launcher     # ArtCraft Launcher: instala más y avisa de actualizaciones
+pdfcraft           # PDF (como Acrobat)
+wordcraft          # documentos (como Word)
+deckcraft          # presentaciones (como PowerPoint)
+gridcraft          # hojas de cálculo (como Excel)

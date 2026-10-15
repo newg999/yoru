@@ -7,6 +7,7 @@
 #       y, si el disco es btrfs, activa las copias del sistema con cada dnf
 #    2. Actualiza el sistema, añade el repositorio de Brave e instala los
 #       paquetes de packages.txt (y, si hay gráfica NVIDIA, su driver)
+#       y las apps de ArtCraft de artcraft.txt (PDF, Word, PowerPoint, Excel)
 #    3. Descarga la fuente JetBrainsMono Nerd Font (iconos de la barra)
 #    4. Hace copia de seguridad de tus configs actuales
 #    5. Enlaza (symlink) las carpetas de config/ en ~/.config/
@@ -223,6 +224,56 @@ instalar_paquetes() {
         aviso "No se pudieron instalar: ${fallidos[*]}"
         aviso "El resto de la instalación sigue. Revísalos luego a mano."
     fi
+}
+
+# Apps de ArtCraft (artcraft.txt): no están en Fedora ni en Flathub, se
+# publican como .flatpak en GitHub. De cada una se baja la última versión
+# para este equipo, se comprueba con el SHA256SUMS.txt de su versión y se
+# instala para tu usuario (como hace su Launcher). Las que ya tienes no se
+# tocan: las actualiza el ArtCraft Launcher.
+apps_artcraft() {
+    paso "Apps de ArtCraft (artcraft.txt)"
+    if ! command -v flatpak >/dev/null; then
+        aviso "flatpak no está instalado: me lo salto"
+        return 0
+    fi
+    # Sus runtimes (org.freedesktop.Platform) salen de Flathub
+    flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null
+    local arq tmp repo datos paquete sumas nombre id
+    arq="$(uname -m)"
+    tmp="$(mktemp -d)"
+    mapfile -t APPS < <(sed -e 's/#.*//' -e 's/[[:space:]]*$//' "$REPO/artcraft.txt" | grep -v '^[[:space:]]*$' | awk '{print $1}')
+    for repo in "${APPS[@]}"; do
+        # Enlaces del .flatpak de este equipo y de las sumas, de la última versión
+        datos="$(curl -fsSL "https://api.github.com/repos/storytold/$repo/releases/latest" 2>/dev/null \
+            | python3 -c '
+import json, sys
+assets = json.load(sys.stdin).get("assets", [])
+url = lambda f: next((a["browser_download_url"] for a in assets if f(a["name"])), "-")
+print(url(lambda n: n.endswith("-linux-" + sys.argv[1] + ".flatpak")), url(lambda n: n == "SHA256SUMS.txt"))
+' "$arq" 2>/dev/null)"
+        read -r paquete sumas <<< "$datos"
+        if [[ -z "$paquete" || "$paquete" == "-" || "$sumas" == "-" ]]; then
+            aviso "$repo: no encuentro su paquete para $arq (¿sin conexión?)"
+            continue
+        fi
+        nombre="${paquete##*/}"                       # pdfcraft-0.8.0-linux-x86_64.flatpak
+        id="ai.storyteller.${nombre%%-[0-9]*}"         # ai.storyteller.pdfcraft
+        if flatpak info "$id" >/dev/null 2>&1; then
+            ok "$repo ya estaba"
+            continue
+        fi
+        if curl -fsSL -o "$tmp/$nombre" "$paquete" && curl -fsSL -o "$tmp/SHA256SUMS.txt" "$sumas" \
+                && grep -q "  $nombre\$" "$tmp/SHA256SUMS.txt" \
+                && (cd "$tmp" && grep "  $nombre\$" SHA256SUMS.txt | sha256sum -c --status) \
+                && flatpak install --user -y --noninteractive --bundle "$tmp/$nombre" >/dev/null 2>&1; then
+            ok "$repo"
+        else
+            error "$repo: no se pudo bajar, comprobar o instalar"
+        fi
+        rm -f "$tmp/$nombre" "$tmp/SHA256SUMS.txt"
+    done
+    rm -rf "$tmp"
 }
 
 # cliphist (historial del portapapeles) no está en los repositorios de
@@ -484,10 +535,47 @@ configurar_sistema() {
     # Carpetas personales (Descargas, Imágenes...), según el idioma del sistema
     xdg-user-dirs-update 2>/dev/null && ok "Carpetas personales"
 
-    # Los PDF se abren con Okular
-    xdg-mime default org.kde.okular.desktop application/pdf 2>/dev/null && ok "PDF → Okular"
+    apps_predeterminadas
 
     pantalla_login
+}
+
+# Apps para abrir documentos. Si están las de ArtCraft (PdfCraft, WordCraft,
+# DeckCraft, GridCraft; se instalan con su ArtCraft Launcher, no aquí), van
+# ellas; si no, los PDF con Okular y lo demás como esté.
+# A WordCraft no se le dan .txt, .md ni .html aunque los acepte: esos van a
+# un editor de texto o al navegador.
+apps_predeterminadas() {
+    local apps="$HOME/.local/share/flatpak/exports/share/applications"
+    _app() {   # _app <id de flatpak> <nombre> <tipos...>
+        local id="$1" nombre="$2"; shift 2
+        [[ -f "$apps/$id.desktop" ]] || return 1
+        xdg-mime default "$id.desktop" "$@" 2>/dev/null && ok "$nombre"
+    }
+    _app ai.storyteller.pdfcraft "PDF → PdfCraft" application/pdf \
+        || { xdg-mime default org.kde.okular.desktop application/pdf 2>/dev/null && ok "PDF → Okular"; }
+    _app ai.storyteller.wordcraft "Documentos de texto → WordCraft" \
+        application/vnd.openxmlformats-officedocument.wordprocessingml.document \
+        application/vnd.ms-word.document.macroEnabled.12 \
+        application/vnd.openxmlformats-officedocument.wordprocessingml.template \
+        application/vnd.ms-word.template.macroEnabled.12 \
+        application/msword application/msword-template \
+        application/vnd.oasis.opendocument.text application/rtf text/rtf
+    _app ai.storyteller.deckcraft "Presentaciones → DeckCraft" \
+        application/x-deckcraft \
+        application/vnd.openxmlformats-officedocument.presentationml.presentation \
+        application/vnd.openxmlformats-officedocument.presentationml.template \
+        application/vnd.openxmlformats-officedocument.presentationml.slideshow
+    _app ai.storyteller.gridcraft "Hojas de cálculo → GridCraft" \
+        application/vnd.openxmlformats-officedocument.spreadsheetml.sheet \
+        application/vnd.ms-excel.sheet.macroEnabled.12 \
+        application/vnd.ms-excel.sheet.binary.macroEnabled.12 \
+        application/vnd.oasis.opendocument.spreadsheet text/csv text/tab-separated-values
+    # Texto plano: sin esto, .txt y .md acaban en WordCraft (que también los acepta)
+    [[ -f /usr/share/applications/org.gnome.TextEditor.desktop ]] \
+        && xdg-mime default org.gnome.TextEditor.desktop text/plain text/markdown text/x-log 2>/dev/null \
+        && ok "Texto plano → Editor de texto"
+    return 0
 }
 
 # Pantalla de inicio de sesión. Si el sistema ya tiene otra (GDM en una
@@ -782,6 +870,7 @@ case "${1:-}" in
         instalar_paquetes
         cliphist_si_falta
         repo_flathub
+        apps_artcraft
         drivers_nvidia
         instalar_fuente
         instalar_cursor
