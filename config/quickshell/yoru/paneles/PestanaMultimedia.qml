@@ -24,6 +24,19 @@ Item {
     property string menu: ""          // "" · "reproductores" · "salidas" · "volumen"
     onActivaChanged: menu = ""
 
+    // Lo que suena el reproductor en PipeWire (su flujo de salida). Su volumen
+    // es el que se cambia: el de MPRIS no sirve, Brave dice que lo permite
+    // pero ignora los cambios
+    readonly property var flujo: {
+        const nombres = [reproductor?.identity, reproductor?.desktopEntry]
+            .filter(n => n).map(n => n.toLowerCase());
+        if (nombres.length === 0)
+            return null;
+        return Pipewire.nodes.values.find(n => n.type === PwNodeType.AudioOutStream
+            && [n.name, n.properties?.["application.name"]]
+                .some(x => x && nombres.includes(x.toLowerCase()))) ?? null;
+    }
+
     implicitHeight: 420
 
     // Mpris no avisa de la posición: se pregunta cada segundo mientras se ve
@@ -339,38 +352,14 @@ Item {
                     }
                 }
 
-                // Volumen: el del reproductor si lo permite; si no, el general
+                // Volumen: el del reproductor (su flujo); si no se encuentra, el general
                 FilaVolumen {
-                    visible: multimedia.menu === "volumen" && !(multimedia.reproductor?.volumeSupported ?? false)
+                    visible: multimedia.menu === "volumen"
                     width: contenidoMenu.width
-                    nodo: Pipewire.defaultAudioSink
+                    nodo: multimedia.flujo ?? Pipewire.defaultAudioSink
+                    iconoOn: multimedia.flujo ? "󰝚" : "󰕾"
+                    iconoOff: multimedia.flujo ? "󰝛" : "󰖁"
                     onElegir: multimedia.menu = "salidas"
-                }
-                Item {
-                    visible: multimedia.menu === "volumen" && (multimedia.reproductor?.volumeSupported ?? false)
-                    width: contenidoMenu.width
-                    height: 40
-                    Texto {
-                        id: iconoVolumen
-                        anchors { left: parent.left; leftMargin: 8; verticalCenter: parent.verticalCenter }
-                        text: "󰝚"
-                        font.pixelSize: 16
-                    }
-                    Deslizador {
-                        anchors {
-                            left: iconoVolumen.right; leftMargin: 12
-                            right: porcentaje.left; rightMargin: 10
-                            verticalCenter: parent.verticalCenter
-                        }
-                        valor: multimedia.reproductor?.volume ?? 0
-                        onMovido: nuevo => multimedia.reproductor.volume = nuevo
-                    }
-                    Texto {
-                        id: porcentaje
-                        anchors { right: parent.right; rightMargin: 8; verticalCenter: parent.verticalCenter }
-                        text: Math.round((multimedia.reproductor?.volume ?? 0) * 100) + "%"
-                        font.pixelSize: 12
-                    }
                 }
             }
         }
