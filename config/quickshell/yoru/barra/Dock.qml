@@ -3,13 +3,15 @@
 //
 //    [favoritas] │ [abiertas que no están fijadas]
 //
-//    Clic           = ir a su ventana (si tiene varias, cada clic pasa a la
-//                     siguiente) · si no está abierta, la abre
+//    Clic           = ir a su ventana · si tiene varias, una lista para elegir
+//                     a cuál · si no está abierta, la abre
 //    Clic central   = ventana nueva
-//    Clic derecho   = menú: fijar / quitar, ventana nueva, cerrar todas
+//    Clic derecho   = menú: sus ventanas, fijar / quitar, ventana nueva,
+//                     cerrar todas
 //
 //  Los puntitos de debajo son sus ventanas abiertas; el alargado, la app
-//  que tiene el foco. Siempre visible: reserva su espacio abajo.
+//  que tiene el foco. Solo sale con el overview abierto (Mod+Tab), como en
+//  GNOME: no reserva espacio y al elegir una app el overview se cierra.
 //  Las favoritas se guardan en comun/Favoritos.qml.
 // ============================================================================
 import QtQuick
@@ -27,7 +29,7 @@ PanelWindow {
     readonly property int celda: 40          // hueco de cada app
     readonly property int icono: 28
     readonly property int alto: 44           // alto de la isla
-    readonly property int margen: Tema.margenBarra   // hasta el borde, como la barra
+    readonly property int margen: 12         // hasta el borde de abajo
 
     // La ventana mide justo lo que la isla (centrada abajo). El nombre y el
     // menú salen en ventanitas aparte que solo existen mientras se ven.
@@ -37,10 +39,21 @@ PanelWindow {
     margins.bottom: margen
     implicitWidth: isla.width
     implicitHeight: alto
-    exclusiveZone: alto + margen
+    exclusionMode: ExclusionMode.Ignore
     color: "transparent"
     WlrLayershell.namespace: "yoru-dock"
     WlrLayershell.layer: WlrLayer.Top
+
+    // Fuera del overview: escondido y sin zona de clic (al revés que la barra)
+    mask: Niri.overview ? null : vacia
+    Region { id: vacia }
+    Connections {
+        target: Niri
+        function onOverviewChanged() {
+            if (!Niri.overview)
+                menu.cerrar();
+        }
+    }
 
     // ------------------------------------------------------------ Datos
     // Una entrada por app: las favoritas primero (en su orden) y luego las
@@ -65,21 +78,16 @@ PanelWindow {
     }
     readonly property int fijas: apps.filter(a => a.fija).length
 
-    // Última ventana con el foco de cada app: al volver a ella, se va a esa
-    property var ultima: ({})
-    Connections {
-        target: Niri
-        function onEnfocadaChanged() {
-            const v = Niri.enfocada;
-            if (!v)
-                return;
-            const clave = DesktopEntries.heuristicLookup(v.app_id)?.id ?? v.app_id;
-            dock.ultima[clave] = v.id;
-        }
-    }
-
     function nombre(app) {
         return app.entrada?.name ?? app.appId;
+    }
+
+    // Dónde está una ventana: «Escritorio 2» (y la pantalla, si hay varias)
+    function lugar(v) {
+        const e = Niri.escritorios.find(e => e.id === v.workspace_id);
+        if (!e)
+            return "";
+        return "Escritorio " + e.idx + (Quickshell.screens.length > 1 ? " · " + e.output : "");
     }
 
     function lanzar(app) {
@@ -91,18 +99,26 @@ PanelWindow {
         Niri.lanzar(e.workingDirectory
             ? ["sh", "-c", 'cd "$1" && shift && exec "$@"', "_", e.workingDirectory, ...orden]
             : orden);
+        Niri.accion("close-overview");
     }
 
-    function pulsar(app) {
-        if (app.ventanas.length === 0) {
+    // Ir a una ventana. Primero el foco y luego cerrar el overview: así se
+    // acerca a esa ventana
+    function irA(v) {
+        Quickshell.execDetached(["sh", "-c",
+            `niri msg action focus-window --id ${v.id} && niri msg action close-overview`]);
+    }
+
+    // Clic: sin ventanas la abre, con una va a ella y con varias deja elegir
+    function pulsar(app, item) {
+        if (app.ventanas.length === 0)
             lanzar(app);
-            return;
-        }
-        const actual = app.ventanas.findIndex(v => v.id === Niri.enfocada?.id);
-        const destino = actual >= 0
-            ? app.ventanas[(actual + 1) % app.ventanas.length]            // la siguiente
-            : app.ventanas.find(v => v.id === ultima[app.clave]) ?? app.ventanas[0];
-        Niri.accion("focus-window", "--id", String(destino.id));
+        else if (app.ventanas.length === 1)
+            irA(app.ventanas[0]);
+        else if (menu.app?.clave === app.clave && menu.soloVentanas)
+            menu.cerrar();
+        else
+            menu.abrir(app, item, true);
     }
 
     function cerrarTodas(app) {
@@ -120,6 +136,14 @@ PanelWindow {
         border.width: 1
         border.color: Tema.islaBorde
         visible: dock.apps.length > 0
+
+        // Sube desde abajo al abrir el overview, como la barra baja desde arriba
+        opacity: Niri.overview ? 1 : 0
+        transform: Translate {
+            y: Niri.overview ? 0 : dock.alto + dock.margen
+            Behavior on y { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
+        }
+        Behavior on opacity { NumberAnimation { duration: Tema.normal } }
 
         Row {
             id: fila
@@ -199,13 +223,12 @@ PanelWindow {
                             acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                             onClicked: e => {
                                 if (e.button === Qt.RightButton) {
-                                    menu.abrir(hueco.app, elemento);
-                                } else {
+                                    menu.abrir(hueco.app, elemento, false);
+                                } else if (e.button === Qt.MiddleButton) {
                                     menu.cerrar();
-                                    if (e.button === Qt.MiddleButton)
-                                        dock.lanzar(hueco.app);
-                                    else
-                                        dock.pulsar(hueco.app);
+                                    dock.lanzar(hueco.app);
+                                } else {
+                                    dock.pulsar(hueco.app, elemento);
                                 }
                             }
                         }
@@ -253,20 +276,28 @@ PanelWindow {
         }
     }
 
-    // ------------------------------------------------- Menú (clic derecho)
-    // Se cierra al sacar el ratón de él un momento o al elegir algo
+    // ------------------------------------------- Menú (clic y clic derecho)
+    // Con clic (app con varias ventanas) solo la lista de ventanas; con clic
+    // derecho, la lista y las opciones. Se cierra al sacar el ratón de él un
+    // momento o al elegir algo.
     QtObject {
         id: menu
-        property var app: null
+        property string clave: ""
+        property bool soloVentanas: false
         property Item sobre: null
+        // Se busca en «apps» cada vez para que la lista siga al día si se abre
+        // o se cierra una ventana con el menú abierto (y se cierre si la app
+        // desaparece del dock)
+        readonly property var app: clave !== "" ? (dock.apps.find(a => a.clave === clave) ?? null) : null
         readonly property bool abierto: app !== null
 
-        function abrir(a, item) {
+        function abrir(a, item, solo) {
             sobre = item;
-            app = a;
+            soloVentanas = solo;
+            clave = a.clave;
         }
         function cerrar() {
-            app = null;
+            clave = "";
         }
     }
 
@@ -280,7 +311,7 @@ PanelWindow {
             anchor.rect.height: 1
             anchor.edges: Edges.Top
             anchor.gravity: Edges.Top
-            implicitWidth: 230
+            implicitWidth: (menu.app?.ventanas.length ?? 0) > 1 ? 300 : 230
             implicitHeight: opciones.implicitHeight + 12
             color: "transparent"
             visible: true
@@ -314,9 +345,35 @@ PanelWindow {
                         font.pixelSize: 12
                         color: Tema.gris
                     }
+
+                    // Sus ventanas (si tiene más de una): título y escritorio
+                    Repeater {
+                        model: (menu.app?.ventanas.length ?? 0) > 1 ? menu.app.ventanas : []
+                        Fila {
+                            required property var modelData
+                            width: opciones.width
+                            icono: "󰖯"
+                            titulo: modelData.title || dock.nombre(menu.app)
+                            formato: Text.PlainText
+                            detalle: dock.lugar(modelData)
+                            seleccionada: modelData.id === Niri.enfocada?.id
+                            onClic: {
+                                dock.irA(modelData);
+                                menu.cerrar();
+                            }
+                        }
+                    }
+                    Rectangle {
+                        visible: !menu.soloVentanas && (menu.app?.ventanas.length ?? 0) > 1
+                        width: parent.width - 20
+                        x: 10
+                        height: 1
+                        color: Tema.claro(0.12)
+                    }
+
                     Fila {
                         width: parent.width
-                        visible: !!menu.app?.entrada
+                        visible: !menu.soloVentanas && !!menu.app?.entrada
                         icono: menu.app?.fija ? "󰐄" : "󰐃"
                         titulo: menu.app?.fija ? "Quitar del dock" : "Fijar en el dock"
                         onClic: {
@@ -326,7 +383,7 @@ PanelWindow {
                     }
                     Fila {
                         width: parent.width
-                        visible: !!menu.app?.entrada
+                        visible: !menu.soloVentanas && !!menu.app?.entrada
                         icono: "󰐕"
                         titulo: "Ventana nueva"
                         onClic: {
@@ -336,7 +393,7 @@ PanelWindow {
                     }
                     Fila {
                         width: parent.width
-                        visible: (menu.app?.ventanas.length ?? 0) > 0
+                        visible: !menu.soloVentanas && (menu.app?.ventanas.length ?? 0) > 0
                         icono: "󰅖"
                         titulo: (menu.app?.ventanas.length ?? 0) > 1 ? "Cerrar las " + menu.app.ventanas.length + " ventanas" : "Cerrar"
                         onClic: {
