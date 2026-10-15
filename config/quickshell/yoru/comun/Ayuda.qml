@@ -36,7 +36,7 @@ LazyLoader {
             height: etiqueta.implicitHeight + 16
             radius: 10
             color: Tema.panel
-            border.width: 1
+            border.width: Tema.borde(1)
             border.color: Tema.claro(0.25)
 
             opacity: 0

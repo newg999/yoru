@@ -29,6 +29,7 @@ Singleton {
     property alias opacidadPaneles: datos.opacidadPaneles
     property alias letra: datos.letra                 // texto de la barra (px)
     property alias desenfoque: datos.desenfoque       // fondo borroso tras las islas
+    property alias bordes: datos.bordes               // línea alrededor de islas y paneles
     property alias animaciones: datos.animaciones
 
     readonly property bool vertical: barra === "izquierda"
@@ -40,6 +41,7 @@ Singleton {
         datos.opacidadPaneles = 0.90;
         datos.letra = 13;
         datos.desenfoque = true;
+        datos.bordes = true;
         datos.animaciones = true;
     }
 
@@ -71,6 +73,7 @@ Singleton {
             property real opacidadPaneles: 0.90
             property int letra: 13
             property bool desenfoque: true
+            property bool bordes: true
             property bool animaciones: true
         }
     }

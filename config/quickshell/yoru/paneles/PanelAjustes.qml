@@ -455,6 +455,13 @@ Panel {
             }
             Interruptor {
                 width: parent.width
+                titulo: "Bordes"
+                detalle: "Línea alrededor de las islas de la barra, los paneles y el dock"
+                activo: Ajustes.bordes
+                onCambiar: v => Ajustes.bordes = v
+            }
+            Interruptor {
+                width: parent.width
                 titulo: "Animaciones"
                 detalle: "Paneles, islas y botones se mueven con suavidad"
                 activo: Ajustes.animaciones

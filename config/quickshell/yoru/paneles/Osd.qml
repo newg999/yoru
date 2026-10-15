@@ -101,7 +101,7 @@ PanelWindow {
         anchors.fill: parent
         radius: Tema.radioPanel
         color: Tema.panel
-        border.width: 2
+        border.width: Tema.borde(2)
         border.color: Tema.panelBorde
         opacity: osd.progreso
         scale: 0.94 + 0.06 * osd.progreso

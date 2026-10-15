@@ -33,7 +33,7 @@ Rectangle {
     implicitHeight: !vertical ? Tema.altoBarra : vacia ? 0 : fila.implicitHeight + 2 * rellenoVertical
     radius: Tema.radio
     color: Tema.isla
-    border.width: 1
+    border.width: Tema.borde(1)
     border.color: Tema.islaBorde
     clip: true
 

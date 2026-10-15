@@ -140,7 +140,7 @@ PanelWindow {
         height: dock.alto
         radius: Tema.radio + 2
         color: Tema.isla
-        border.width: 1
+        border.width: Tema.borde(1)
         border.color: Tema.islaBorde
         visible: dock.apps.length > 0
 
@@ -263,7 +263,7 @@ PanelWindow {
                                     anchors.fill: parent
                                     radius: 10
                                     color: Tema.panel
-                                    border.width: 1
+                                    border.width: Tema.borde(1)
                                     border.color: Tema.claro(0.25)
                                     Texto {
                                         id: etiqueta
@@ -327,7 +327,7 @@ PanelWindow {
                 anchors.fill: parent
                 radius: 12
                 color: Tema.panel
-                border.width: 1
+                border.width: Tema.borde(1)
                 border.color: Tema.claro(0.25)
 
                 HoverHandler { id: dentro }

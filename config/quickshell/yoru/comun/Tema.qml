@@ -87,6 +87,9 @@ Singleton {
     readonly property int hueco: margenBarra + grosor + 8
     readonly property int separacion: 6      // entre islas
     readonly property int radio: Ajustes.radio
+    // Grosor del borde de islas, paneles y ayudas: 0 si se quitan en Ajustes.
+    // (Los bordes de dentro, que marcan lo elegido, no dependen de esto)
+    function borde(ancho) { return Ajustes.bordes ? ancho : 0; }
     readonly property int radioPanel: Ajustes.radio + 4
 
     // ----------------------------------------------------------- Animaciones

@@ -90,7 +90,7 @@ PanelWindow {
 
         radius: Tema.radioPanel
         color: Tema.panel
-        border.width: 2
+        border.width: Tema.borde(2)
         border.color: Tema.panelBorde
         clip: true
 

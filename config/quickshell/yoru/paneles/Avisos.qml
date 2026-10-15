@@ -60,7 +60,7 @@ PanelWindow {
             lineas: 3
             color: hover ? Tema.sombra(0.95) : Tema.panel
             border.color: urgente ? Tema.rojo : Tema.panelBorde
-            border.width: 2
+            border.width: urgente ? 2 : Tema.borde(2)
             radius: Tema.radioPanel
 
             // Entra desde la derecha (aquí y no en «add» de la lista: si
