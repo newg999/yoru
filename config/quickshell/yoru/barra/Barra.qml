@@ -2,7 +2,7 @@
 //  Barra — una por pantalla. La barra en sí es invisible: solo se ven las islas.
 //
 //  Arriba (lo normal):
-//    [escritorios] [título]    [música] [reloj] [clima]    [bandeja] [recursos] [conexión] [campana]
+//    [escritorios] [título o apps abiertas]    [música] [reloj] [clima]    [bandeja] [recursos] [conexión] [campana]
 //
 //  A la izquierda (Ajustes → Barra y dock), lo mismo en columna:
 //    arriba escritorios y ventana · en medio música, reloj y clima ·
@@ -53,6 +53,7 @@ PanelWindow {
         id: islas
         Region { item: escritorios; radius: Tema.radio }
         Region { item: titulo; radius: Tema.radio }
+        Region { item: ventanas; radius: Tema.radio }
         Region { item: musica; radius: Tema.radio }
         Region { item: reloj; radius: Tema.radio }
         Region { item: clima; radius: Tema.radio }
@@ -182,11 +183,17 @@ PanelWindow {
             y: barra.vertical ? 0 : contenido.centrado(height)
 
             Escritorios { id: escritorios; salida: barra.modelData.name }
+            // La ventana activa o todas las abiertas (Ajustes → Barra y dock)
             Titulo {
                 id: titulo
-                oculta: !Ajustes.islaTitulo
+                oculta: !Ajustes.islaTitulo || Ajustes.ventanas !== "activa"
                 salida: barra.modelData.name
                 maximo: barra.pequena ? 300 : 420
+            }
+            Ventanas {
+                id: ventanas
+                oculta: !Ajustes.islaTitulo || Ajustes.ventanas !== "abiertas"
+                salida: barra.modelData.name
             }
         }
 

@@ -330,10 +330,21 @@ Panel {
             Titular { texto: "Qué se ve en la barra"; width: parent.width }
             Interruptor {
                 width: parent.width
-                titulo: "Ventana activa"
-                detalle: Ajustes.vertical ? "A la izquierda, solo su icono" : "Icono y título"
+                titulo: "Ventanas"
+                detalle: Ajustes.ventanas === "abiertas" ? "Un icono por cada app abierta"
+                    : Ajustes.vertical ? "La activa: a la izquierda, solo su icono" : "La activa: icono y título"
                 activo: Ajustes.islaTitulo
                 onCambiar: v => Ajustes.islaTitulo = v
+            }
+            Opciones {
+                width: parent.width
+                visible: Ajustes.islaTitulo
+                opciones: [
+                    {id: "activa", icono: "󰖯", texto: "Ventana activa"},
+                    {id: "abiertas", icono: "󰕰", texto: "Apps abiertas"}
+                ]
+                valor: Ajustes.ventanas
+                onElegir: id => Ajustes.ventanas = id
             }
             Interruptor {
                 width: parent.width

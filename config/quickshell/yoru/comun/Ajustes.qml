@@ -18,6 +18,7 @@ Singleton {
     property alias barra: datos.barra                 // "arriba" · "izquierda"
     property alias dock: datos.dock                   // "overview" · "siempre" · "nunca"
     property alias islaTitulo: datos.islaTitulo
+    property alias ventanas: datos.ventanas           // "activa" (icono y título) · "abiertas" (todas)
     property alias islaMusica: datos.islaMusica
     property alias islaClima: datos.islaClima
     property alias islaRecursos: datos.islaRecursos
@@ -63,6 +64,7 @@ Singleton {
             property string barra: "arriba"
             property string dock: "overview"
             property bool islaTitulo: true
+            property string ventanas: "activa"
             property bool islaMusica: true
             property bool islaClima: true
             property bool islaRecursos: true
