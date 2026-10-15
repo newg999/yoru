@@ -325,7 +325,9 @@ def trabajar(cmd, hecho, fallo):
 
 def instalar(tipo, ident, remoto, nombre):
     if tipo == "flatpak":
-        cmd = ["flatpak", "install", "-y", "--noninteractive", remoto or "flathub", ident]
+        # --system: Flathub también está para el usuario (lo añade el instalador
+        # para ArtCraft) y, sin decir cuál, flatpak no sigue sin preguntar
+        cmd = ["flatpak", "install", "--system", "-y", "--noninteractive", remoto or "flathub", ident]
     else:
         cmd = ["pkexec", "dnf", "install", "-y", ident]
     return trabajar(cmd, f"{nombre} instalado. Ya está en el lanzador (Mod+Espacio).",
