@@ -9,8 +9,10 @@
 #    yoru reload        comprueba la config de Niri y recarga la barra y las
 #                       notificaciones
 #    yoru doctor        revisa que todo esté en su sitio y dice qué falla
-#    yoru tema [modo]   colores: «blanco» (tema/blanco.json) o «fondo»
-#                       (sacados del fondo de pantalla); sin modo, lo reaplica
+#    yoru tema [modo]   colores: «blanco» (tema/blanco.json), «fondo» o
+#                       «fondo-claro» (sacados del fondo de pantalla) o una
+#                       paleta de tema/paletas/ (nord, catppuccin...); sin
+#                       modo, lo reaplica. También desde Ajustes (Mod+Alt+T)
 #    yoru copias        lista las copias del sistema (se hacen con cada dnf)
 #    yoru volver <n>    deja el sistema como estaba en la copia <n>
 #    yoru ayuda
@@ -166,7 +168,7 @@ cmd_doctor() {
     paso "Tema de colores"
     local modo_tema="$HOME/.local/state/yoru/tema/modo"
     if [[ -f "$modo_tema" ]]; then
-        bien "Tema $(cat "$modo_tema") (cámbialo con: yoru tema blanco|fondo)"
+        bien "Tema $(cat "$modo_tema") (cámbialo en Ajustes, Mod+Alt+T, o con: yoru tema <tema>)"
     else
         mal "Los colores no están generados → yoru tema"
     fi

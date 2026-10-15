@@ -3,9 +3,12 @@
 #  aplicar.py — genera los colores de Yoru y recarga lo que haga falta
 # ----------------------------------------------------------------------------
 #  Normalmente se usa a través de «yoru tema»:
-#    aplicar.py           vuelve a aplicar el modo guardado (blanco si no hay)
-#    aplicar.py blanco    la paleta de tema/blanco.json (monocromo)
-#    aplicar.py fondo     colores sacados del fondo de pantalla (matugen)
+#    aplicar.py              vuelve a aplicar el modo guardado (blanco si no hay)
+#    aplicar.py blanco       la paleta de tema/blanco.json (monocromo)
+#    aplicar.py fondo        colores sacados del fondo de pantalla (matugen)
+#    aplicar.py fondo-claro  lo mismo, en claro
+#    aplicar.py <paleta>     una de tema/paletas/ (nord, catppuccin...)
+#    aplicar.py --lista      los temas que hay, en JSON (para el panel de Ajustes)
 #
 #  Escribe en ~/.local/state/yoru/tema/ un archivo por programa. Las configs
 #  del repo los incluyen y, si no existen, usan sus colores de siempre:
@@ -26,6 +29,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 BLANCO = REPO / "tema" / "blanco.json"
+PALETAS = REPO / "tema" / "paletas"
 ESTADO = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "yoru" / "tema"
 FONDO_ACTUAL = Path.home() / ".cache" / "wallpaper-actual"
 
@@ -51,18 +55,40 @@ def paleta_blanco():
     return {k: v for k, v in p.items() if not k.startswith("_")}
 
 
-def paleta_fondo():
+def leer_paleta(archivo):
+    """Una paleta de tema/paletas/ (sin las claves «_» de nombre y notas)"""
+    p = json.loads(archivo.read_text())
+    return {k: v for k, v in p.items() if not k.startswith("_")}
+
+
+def lista():
+    """Los temas que se pueden elegir, con sus colores (los del fondo no se
+    saben hasta generarlos)"""
+    temas = [
+        {"id": "blanco", "nombre": "Yoru", "claro": False, "colores": paleta_blanco()},
+        {"id": "fondo", "nombre": "Del fondo", "claro": False, "colores": None},
+        {"id": "fondo-claro", "nombre": "Del fondo (claro)", "claro": True, "colores": None},
+    ]
+    for archivo in sorted(PALETAS.glob("*.json")):
+        datos = json.loads(archivo.read_text())
+        temas.append({"id": archivo.stem, "nombre": datos.get("_nombre", archivo.stem),
+                      "claro": datos.get("_claro", False), "colores": leer_paleta(archivo)})
+    print(json.dumps(temas))
+
+
+def paleta_fondo(claro=False):
     fondo = Path(FONDO_ACTUAL.read_text().strip()) if FONDO_ACTUAL.exists() else None
     if not fondo or not fondo.is_file():
         sys.exit("No encuentro el fondo actual (~/.cache/wallpaper-actual). Elige uno con Mod+Alt+W")
     salida = subprocess.run(
         ["matugen", "image", str(fondo), "--dry-run", "--json", "hex", "-q",
-         "--mode", "dark", "--prefer", "saturation"],
+         "--mode", "light" if claro else "dark", "--prefer", "saturation"],
         capture_output=True, text=True, check=True).stdout
     colores = json.loads(salida)["colors"]
     p = paleta_blanco()
+    variante = "light" if claro else "dark"
     for nuestro, suyo in DESDE_MATUGEN.items():
-        p[nuestro] = colores[suyo]["dark"]["color"]
+        p[nuestro] = colores[suyo][variante]["color"]
     return p
 
 
@@ -123,6 +149,9 @@ def recargar(primera_vez):
 
 
 def main():
+    if sys.argv[1:] == ["--lista"]:
+        lista()
+        return
     ESTADO.mkdir(parents=True, exist_ok=True)
     archivo_modo = ESTADO / "modo"
     if len(sys.argv) > 1:
@@ -134,15 +163,18 @@ def main():
 
     if modo == "blanco":
         p = paleta_blanco()
-    elif modo == "fondo":
+    elif modo in ("fondo", "fondo-claro"):
         try:
-            p = paleta_fondo()
+            p = paleta_fondo(claro=modo == "fondo-claro")
         except FileNotFoundError:
             sys.exit("Falta matugen: sudo dnf install matugen  (o ./install.sh)")
         except subprocess.CalledProcessError as e:
             sys.exit(f"matugen falló: {e.stderr.strip()}")
+    elif (PALETAS / f"{modo}.json").is_file():
+        p = leer_paleta(PALETAS / f"{modo}.json")
     else:
-        sys.exit(f"Modo desconocido: {modo}  (usa blanco o fondo)")
+        otras = " · ".join(a.stem for a in sorted(PALETAS.glob("*.json")))
+        sys.exit(f"Tema desconocido: {modo}  (usa blanco, fondo, fondo-claro o {otras})")
 
     primera_vez = not (ESTADO / "colores.json").exists()
     generar(p, modo)
