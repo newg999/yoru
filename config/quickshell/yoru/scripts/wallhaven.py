@@ -5,6 +5,7 @@
 #
 #    wallhaven.py buscar <tema|texto> <página>   → JSON: {"pagina", "ultima", "fondos": [...]}
 #    wallhaven.py bajar <id> <url>               → ruta del fondo bajado
+#    wallhaven.py borrar <ruta>                  → lo manda a la papelera
 #
 #  Los fondos se bajan a ~/.local/share/wallpapers (la carpeta wallpapers/
 #  del repo) como wallhaven-<id>.<ext>, y se apuntan en wallhaven.txt para
@@ -12,6 +13,7 @@
 # ----------------------------------------------------------------------------
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import urllib.parse
@@ -21,6 +23,9 @@ API = "https://wallhaven.cc/api/v1/search"
 CARPETA = os.path.expanduser("~/.local/share/wallpapers")
 LISTA = os.path.join(CARPETA, "wallhaven.txt")
 CABECERA_LISTA = "# Bajados desde el panel de fondos (Descubrir)"
+ACTUAL = os.path.expanduser("~/.cache/wallpaper-actual")
+MINIATURAS = os.path.expanduser("~/.cache/fondos-miniaturas")
+WALLPAPER_SH = os.path.expanduser("~/.config/niri/scripts/wallpaper.sh")
 
 # Temas del panel: qué se le pide a Wallhaven. categories = general/anime/gente
 TEMAS = {
@@ -91,14 +96,54 @@ def apuntar(ident, url):
         f.write(f"{ident} {url}\n")
 
 
+def borrar(ruta):
+    """A la papelera (se puede recuperar), sin su miniatura y fuera de
+    wallhaven.txt para que descargar.sh no lo vuelva a bajar."""
+    ruta = os.path.realpath(ruta)
+    if os.path.dirname(ruta) != os.path.realpath(CARPETA) or not os.path.isfile(ruta):
+        raise ValueError("no es un fondo de la carpeta de fondos")
+    # Si es el que está puesto, antes se pasa al siguiente. Lo lanza niri:
+    # swaybg tiene que seguir vivo aunque se reinicie la shell
+    try:
+        with open(ACTUAL) as f:
+            puesto = os.path.realpath(f.read().strip()) == ruta
+    except FileNotFoundError:
+        puesto = False
+    if puesto:
+        subprocess.run(["niri", "msg", "action", "spawn", "--", WALLPAPER_SH, "next"], check=False)
+
+    if subprocess.run(["gio", "trash", ruta], capture_output=True).returncode != 0:
+        os.remove(ruta)
+    nombre = os.path.splitext(os.path.basename(ruta))[0]
+    try:
+        os.remove(os.path.join(MINIATURAS, nombre + ".jpg"))
+    except FileNotFoundError:
+        pass
+
+    # Fuera de la lista (los de wallhaven se llaman anime-<id> o wallhaven-<id>)
+    ident = nombre.split("-")[-1]
+    try:
+        with open(LISTA) as f:
+            lineas = f.readlines()
+    except FileNotFoundError:
+        lineas = []
+    quedan = [l for l in lineas if l.split(" ")[0] != ident]
+    if len(quedan) != len(lineas):
+        with open(LISTA, "w") as f:
+            f.writelines(quedan)
+    print(ruta)
+
+
 if __name__ == "__main__":
     try:
         if len(sys.argv) == 4 and sys.argv[1] == "buscar":
             buscar(sys.argv[2], int(sys.argv[3]))
         elif len(sys.argv) == 4 and sys.argv[1] == "bajar":
             bajar(sys.argv[2], sys.argv[3])
+        elif len(sys.argv) == 3 and sys.argv[1] == "borrar":
+            borrar(sys.argv[2])
         else:
-            sys.exit(__doc__ or "uso: wallhaven.py buscar <tema|texto> <página> | bajar <id> <url>")
+            sys.exit(__doc__ or "uso: wallhaven.py buscar <tema|texto> <página> | bajar <id> <url> | borrar <ruta>")
     except Exception as e:   # el panel enseña el error tal cual
         print(json.dumps({"error": str(e)}))
         sys.exit(1)

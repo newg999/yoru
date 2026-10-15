@@ -3,6 +3,7 @@
 //  Atajo: Mod+Alt+W   ·   Mod+Alt+Shift+W pasa al siguiente sin panel
 //
 //    ↑ ↓ ← → para moverte · Enter para ponerlo · Esc para cerrar
+//    Supr (o la papelera del fondo) dos veces = mandarlo a la papelera
 //
 //  Los fondos salen de ~/.local/share/wallpapers (scripts/fondos.sh hace
 //  las miniaturas la primera vez) y se ponen con niri/scripts/wallpaper.sh,
@@ -30,6 +31,35 @@ Panel {
     property string actual: ""
     property bool cargando: false
     property string vista: "mios"    // "mios" · "descubrir"
+
+    // Borrar: el primer clic (o Supr) lo marca en rojo; el segundo, a la papelera
+    property string aBorrar: ""
+    function borrar(fondo) {
+        if (!fondo || borrador.running)
+            return;
+        if (aBorrar !== fondo.ruta) {
+            aBorrar = fondo.ruta;
+            olvidarBorrar.restart();
+            return;
+        }
+        aBorrar = "";
+        borrador.command = [Quickshell.shellPath("scripts/wallhaven.py"), "borrar", fondo.ruta];
+        borrador.running = true;
+    }
+    Timer {
+        id: olvidarBorrar
+        interval: 3000
+        onTriggered: panel.aBorrar = ""
+    }
+    Process {
+        id: borrador
+        onExited: {
+            const i = rejilla.currentIndex;
+            leer.running = true;
+            actualFile.reload();
+            rejilla.currentIndex = Math.max(0, Math.min(i, panel.fondos.length - 2));
+        }
+    }
 
     // ------------------------------------------------------ Descubrir
     readonly property var temas: [
@@ -219,6 +249,7 @@ Panel {
             Keys.onReturnPressed: panel.poner(panel.fondos[currentIndex])
             Keys.onEnterPressed: panel.poner(panel.fondos[currentIndex])
             Keys.onEscapePressed: Paneles.cerrar()
+            Keys.onDeletePressed: panel.borrar(panel.fondos[currentIndex])
 
             Texto {
                 visible: panel.fondos.length === 0
@@ -238,7 +269,9 @@ Panel {
                 width: rejilla.cellWidth
                 height: rejilla.cellHeight
 
+                // Encima del MouseArea de la celda, para que la papelera reciba su clic
                 Rectangle {
+                    z: 1
                     anchors { fill: parent; margins: 5 }
                     radius: 12
                     color: Tema.caja
@@ -258,6 +291,44 @@ Panel {
                             asynchronous: true
                             opacity: celda.elegida ? 1 : 0.8
                             Behavior on opacity { NumberAnimation { duration: Tema.rapida } }
+                        }
+                    }
+
+                    // Papelera (con el ratón encima). Primer clic: en rojo; segundo: se borra
+                    Rectangle {
+                        readonly property bool marcado: panel.aBorrar === celda.modelData.ruta
+                        visible: celda.elegida || marcado
+                        anchors { right: parent.right; top: parent.top; margins: 10 }
+                        width: marcado ? confirmar.width + 34 : 26
+                        height: 26
+                        radius: 13
+                        color: marcado ? Tema.rojo : papelera.containsMouse ? Qt.alpha(Tema.rojo, 0.85) : Qt.alpha(Tema.oscuro, 0.75)
+                        Behavior on width { NumberAnimation { duration: Tema.rapida } }
+                        Behavior on color { ColorAnimation { duration: Tema.rapida } }
+
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 6
+                            Texto {
+                                text: "󰩹"
+                                font.pixelSize: 14
+                                color: Tema.blanco
+                            }
+                            Texto {
+                                id: confirmar
+                                visible: parent.parent.marcado
+                                text: "¿Borrar?"
+                                font.pixelSize: 11
+                                color: Tema.blanco
+                            }
+                        }
+
+                        MouseArea {
+                            id: papelera
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: panel.borrar(celda.modelData)
                         }
                     }
 
@@ -291,7 +362,7 @@ Panel {
             leftPadding: 4
             width: parent.width
             elide: Text.ElideRight
-            text: (panel.fondos[rejilla.currentIndex]?.nombre ?? "") + "  <font color='" + Tema.gris + "'>·  Enter lo pone  ·  Esc cierra</font>"
+            text: (panel.fondos[rejilla.currentIndex]?.nombre ?? "") + "  <font color='" + Tema.gris + "'>·  Enter lo pone  ·  Supr lo borra  ·  Esc cierra</font>"
             textFormat: Text.StyledText
             font.pixelSize: 11
         }
