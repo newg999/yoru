@@ -139,7 +139,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | `Mod+Alt+V` | Historial del portapapeles |
 | `Mod+Alt+S` | Tienda de apps (buscar, instalar, actualizar) |
 | `Mod+Alt+I` | Test de velocidad de internet (también en el lanzador) |
-| `Mod+Alt+W` | Elegir fondo de pantalla (con miniaturas) |
+| `Mod+Alt+W` | Elegir fondo de pantalla (con miniaturas) o buscar nuevos en wallhaven.cc (Descubrir) |
 | `Mod+Alt+T` | Ajustes: tema, fondo, barra (arriba o a la izquierda), dock y aspecto |
 | `Mod+Alt+Shift+W` | Siguiente fondo de pantalla |
 | `Mod+BackSpace` | Bloquear |
@@ -169,7 +169,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | Lanzador de apps (`Mod+Space`, sale por la izquierda) | `config/quickshell/yoru/paneles/Lanzador.qml` |
 | Dock de apps abajo, con el overview abierto (Mod+Tab), siempre o nunca, según Ajustes (clic = ir a su ventana o elegir entre varias, clic derecho = fijar/cerrar) | `config/quickshell/yoru/barra/Dock.qml` (favoritas en `~/.local/state/yoru/favoritos.json`) |
 | Dónde vives (para el clima) | `config/quickshell/yoru/lugar.json` (copia `lugar.json.example`; sin él, se adivina por tu IP) |
-| Fondos de pantalla | Echa imágenes en `wallpapers/`, o añade uno de wallhaven.cc a `wallpapers/wallhaven.txt` y ejecuta `wallpapers/descargar.sh` |
+| Fondos de pantalla | Echa imágenes en `wallpapers/`, o busca en `Mod+Alt+W` → Descubrir: se bajan y se apuntan en `wallpapers/wallhaven.txt` (en otro equipo, `wallpapers/descargar.sh` los vuelve a bajar) |
 
 Niri recarga su configuración **al guardar**. Para el resto:
 
