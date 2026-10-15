@@ -635,15 +635,22 @@ pantalla_login() {
     local fondo=""
     [[ -f "$HOME/.cache/wallpaper-actual" ]] && fondo="$(readlink -f "$(cat "$HOME/.cache/wallpaper-actual")" 2>/dev/null || true)"
     if [[ ! -f "$fondo" ]]; then
-        fondo="$(ls "$REPO"/wallpapers/anime-* 2>/dev/null | head -n1 || true)"
+        fondo="$(ls "$REPO"/wallpapers/{anime,wallhaven}-* 2>/dev/null | head -n1 || true)"
     fi
-    [[ -f "$fondo" ]] || fondo="$REPO/wallpapers/nord-aurora.png"
     # Es tuyo (no de root) para que wallpaper.sh lo cambie al elegir fondo.
-    # Desenfocado (wallpaper.sh hace lo mismo al cambiar de fondo)
-    sudo install -D -m 644 -o "$USER" "$fondo" /usr/share/backgrounds/yoru/inicio
-    command -v magick >/dev/null \
-        && magick "$fondo" -resize 1920x1080^ -blur 0x24 -modulate 70,80 "jpg:/usr/share/backgrounds/yoru/inicio" \
-        && echo "$fondo" > "$HOME/.cache/fondo-inicio-origen"
+    # Desenfocado (wallpaper.sh hace lo mismo al cambiar de fondo).
+    # Sin ningún fondo bajado, uno de color liso: al elegir fondo, wallpaper.sh lo cambia
+    if [[ -f "$fondo" ]]; then
+        sudo install -D -m 644 -o "$USER" "$fondo" /usr/share/backgrounds/yoru/inicio
+        command -v magick >/dev/null \
+            && magick "$fondo" -resize 1920x1080^ -blur 0x24 -modulate 70,80 "jpg:/usr/share/backgrounds/yoru/inicio" \
+            && echo "$fondo" > "$HOME/.cache/fondo-inicio-origen"
+    else
+        sudo install -D -m 644 -o "$USER" /dev/null /usr/share/backgrounds/yoru/inicio
+        command -v magick >/dev/null \
+            && magick -size 1920x1080 "xc:#2e3440" "png:/usr/share/backgrounds/yoru/inicio"
+        aviso "Sin fondos bajados: la pantalla de inicio será de color liso hasta que elijas uno"
+    fi
 
     # Lista de sesiones para el desplegable (Niri, y GNOME si lo tienes)
     [[ -x /usr/libexec/gtkgreet-update-environments ]] \

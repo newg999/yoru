@@ -1,24 +1,15 @@
 # Fondos de wallhaven.cc: "id url". Ver https://wallhaven.cc/w/<id>
 
 # Los que se descargan
-jedrqw https://w.wallhaven.cc/full/je/wallhaven-jedrqw.jpg
 
 # Naturaleza (fotos y pinturas, sin personas)
 yqxzqx https://w.wallhaven.cc/full/yq/wallhaven-yqxzqx.jpg
-jexkwm https://w.wallhaven.cc/full/je/wallhaven-jexkwm.jpg
 e89l8k https://w.wallhaven.cc/full/e8/wallhaven-e89l8k.jpg
 213edy https://w.wallhaven.cc/full/21/wallhaven-213edy.png
 6l2rgq https://w.wallhaven.cc/full/6l/wallhaven-6l2rgq.jpg
-5ymyz7 https://w.wallhaven.cc/full/5y/wallhaven-5ymyz7.jpg
-lyz3d2 https://w.wallhaven.cc/full/ly/wallhaven-lyz3d2.png
 8g5p52 https://w.wallhaven.cc/full/8g/wallhaven-8g5p52.jpg
-yqvj5g https://w.wallhaven.cc/full/yq/wallhaven-yqvj5g.jpg
-ml2wj8 https://w.wallhaven.cc/full/ml/wallhaven-ml2wj8.jpg
-ogy6zm https://w.wallhaven.cc/full/og/wallhaven-ogy6zm.jpg
 e82xxr https://w.wallhaven.cc/full/e8/wallhaven-e82xxr.jpg
 vpywv3 https://w.wallhaven.cc/full/vp/wallhaven-vpywv3.jpg
-qrg817 https://w.wallhaven.cc/full/qr/wallhaven-qrg817.jpg
-gwm2z3 https://w.wallhaven.cc/full/gw/wallhaven-gwm2z3.jpg
 8ge2x1 https://w.wallhaven.cc/full/8g/wallhaven-8ge2x1.png
 
 # Paisajes anime sin personajes
@@ -29,11 +20,9 @@ gw1qwq https://w.wallhaven.cc/full/gw/wallhaven-gw1qwq.png
 gp7mq3 https://w.wallhaven.cc/full/gp/wallhaven-gp7mq3.jpg
 3q9qky https://w.wallhaven.cc/full/3q/wallhaven-3q9qky.png
 x621xo https://w.wallhaven.cc/full/x6/wallhaven-x621xo.png
-3qkzqv https://w.wallhaven.cc/full/3q/wallhaven-3qkzqv.jpg
 vg8mo8 https://w.wallhaven.cc/full/vg/wallhaven-vg8mo8.jpg
 yqjdpd https://w.wallhaven.cc/full/yq/wallhaven-yqjdpd.jpg
 2y89my https://w.wallhaven.cc/full/2y/wallhaven-2y89my.jpg
-po99ee https://w.wallhaven.cc/full/po/wallhaven-po99ee.jpg
 
 # Más fondos: quita la # de los que quieras y ejecuta wallpapers/descargar.sh
 # yqe81l https://w.wallhaven.cc/full/yq/wallhaven-yqe81l.png
@@ -63,3 +52,6 @@ po99ee https://w.wallhaven.cc/full/po/wallhaven-po99ee.jpg
 # xe9223 https://w.wallhaven.cc/full/xe/wallhaven-xe9223.jpg
 # mlwq81 https://w.wallhaven.cc/full/ml/wallhaven-mlwq81.png
 # rq6j57 https://w.wallhaven.cc/full/rq/wallhaven-rq6j57.png
+
+# Bajados desde el panel de fondos (Descubrir)
+3q3j6y https://w.wallhaven.cc/full/3q/wallhaven-3q3j6y.jpg
