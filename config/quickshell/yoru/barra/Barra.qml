@@ -1,7 +1,7 @@
 // ============================================================================
 //  Barra — una por pantalla. La barra en sí es invisible: solo se ven las islas.
 //
-//    [apps] [escritorios] [título]    [música] [reloj] [clima]    [bandeja] [recursos] [conexión] [campana]
+//    [escritorios] [título]    [música] [reloj] [clima]    [bandeja] [recursos] [conexión] [campana]
 //
 //  El reloj va siempre en el centro exacto; la música y el clima, a sus lados.
 //  Con el overview abierto (Mod+Tab) la barra sube y desaparece, como en DMS.
@@ -36,7 +36,6 @@ PanelWindow {
     BackgroundEffect.blurRegion: Niri.overview ? null : islas
     Region {
         id: islas
-        Region { item: apps; radius: Tema.radio }
         Region { item: escritorios; radius: Tema.radio }
         Region { item: titulo; radius: Tema.radio }
         Region { item: musica; radius: Tema.radio }
@@ -69,7 +68,6 @@ PanelWindow {
             anchors { left: parent.left; verticalCenter: parent.verticalCenter }
             spacing: Tema.separacion
 
-            BotonApps { id: apps; pantalla: barra.modelData }
             Escritorios { id: escritorios; salida: barra.modelData.name }
             Titulo {
                 id: titulo
