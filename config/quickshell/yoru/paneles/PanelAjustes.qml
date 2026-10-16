@@ -1,5 +1,5 @@
 // ============================================================================
-//  Ajustes — personalizar Yoru sin tocar archivos (Mod+Alt+T o 󰒓 en la barra)
+//  Ajustes — personalizar Yoru sin tocar archivos (Mod+Alt+T o 󰒓 en el Centro de control)
 //
 //  Pestañas: Tema · Fondo · Barra y dock · Aspecto
 //

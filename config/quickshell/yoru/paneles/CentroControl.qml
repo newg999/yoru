@@ -10,7 +10,7 @@
 //    │ ─────────────────────────────── │
 //    │  lista de la sección elegida    │  redes, dispositivos, salidas o micros
 //    │ ─────────────────────────────── │
-//    │ Sesión de don    󰌾 󰤄 󰍃 󰜉 󰐥    │  bloquear, suspender, salir, reiniciar,
+//    │ Sesión de don  󰒓 │ 󰌾 󰤄 󰍃 󰜉 󰐥  │  ajustes · bloquear, suspender, salir, reiniciar,
 //    └──────────────────────────────────┘  apagar (los 3 últimos: dos clics)
 // ============================================================================
 import QtQuick
@@ -210,6 +210,18 @@ Panel {
             width: parent.width
             texto: panel.confirmar !== "" ? panel.confirmar + ": pulsa otra vez"
                 : "Sesión de " + Quickshell.env("USER")
+
+            // Ajustes de Yoru (Mod+Alt+T): tema, fondo, barra y aspecto
+            BotonIcono {
+                icono: "󰒓"
+                onClic: Paneles.alternar("ajustes", panel.modelData, "")
+            }
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 1
+                height: 16
+                color: Tema.claro(0.12)
+            }
 
             Repeater {
                 model: panel.sesion

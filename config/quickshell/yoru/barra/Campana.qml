@@ -1,9 +1,11 @@
 // ============================================================================
-//  Portapapeles, notificaciones y ajustes, al final de la barra
+//  Portapapeles, notificaciones y apagado, al final de la barra
 //    󰅌  = historial del portapapeles (Mod+Alt+V)
-//    󰂚  = panel de notificaciones (Mod+Alt+M), con cuántas hay
+//    󰂚  = panel de notificaciones (Mod+Alt+M), con un punto rojo si hay
 //         clic derecho = no molestar (󰂛) · clic central = borrarlas todas
-//    󰒓  = ajustes: tema, fondo, barra y aspecto (Mod+Alt+T)
+//    󰐥  = bloquear, suspender, cerrar sesión, reiniciar o apagar
+//         (Mod+Shift+BackSpace)
+//  Los ajustes (Mod+Alt+T) están en el Centro de control, junto a la sesión
 // ============================================================================
 import QtQuick
 import qs.comun
@@ -17,7 +19,7 @@ Isla {
             : `<b>${Notificaciones.cuantas}</b> notificaci${Notificaciones.cuantas === 1 ? "ón" : "ones"}`)
         + (Notificaciones.noMolestar ? "  ·  no molestar" : "")
         + "<br>" + Tema.suave("Campana: clic dcho no molestar · clic central borrar todas")
-        + "<br>" + Tema.suave("󰒓 Ajustes: tema, fondo, barra y aspecto  ·  Mod+Alt+T")
+        + "<br>" + Tema.suave("󰐥 Apagar, reiniciar, cerrar sesión…  ·  Mod+Shift+BackSpace")
 
     Modulo {
         icono: "󰅌"
@@ -26,9 +28,8 @@ Isla {
     }
 
     Modulo {
-        icono: Notificaciones.noMolestar ? "󰂛" : Notificaciones.cuantas > 0 ? "󰂞" : "󰂚"
-        texto: Notificaciones.cuantas > 0 ? String(Notificaciones.cuantas) : ""
-        tamIcono: Tema.icono
+        icono: Notificaciones.noMolestar ? "󰂛" : "󰂚"
+        punto: Notificaciones.cuantas > 0 && !Notificaciones.noMolestar
         apagado: Notificaciones.noMolestar
         resaltado: Paneles.esta("notificaciones", isla.pantalla)
         onClic: boton => {
@@ -42,8 +43,8 @@ Isla {
     }
 
     Modulo {
-        icono: "󰒓"
-        resaltado: Paneles.esta("ajustes", isla.pantalla)
-        onClic: Paneles.alternar("ajustes", isla.pantalla, "")
+        icono: "󰐥"
+        resaltado: Paneles.esta("apagado", isla.pantalla)
+        onClic: Paneles.alternar("apagado", isla.pantalla, "")
     }
 }

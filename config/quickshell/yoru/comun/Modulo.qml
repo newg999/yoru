@@ -8,6 +8,7 @@
 //        onClic: boton => ...        // Qt.LeftButton, Qt.RightButton, Qt.MiddleButton
 //        onRueda: pasos => ...       // +1 arriba, -1 abajo
 //    }
+//  Con punto: true, un puntito rojo en la esquina del icono (hay algo nuevo)
 // ============================================================================
 import QtQuick
 
@@ -24,6 +25,7 @@ Item {
     property bool resaltado: false      // iluminado desde fuera (isla pulsable)
     property alias hover: raton.containsMouse
     property int anchoTexto: 0          // > 0 = recorta el texto con "…"
+    property bool punto: false          // puntito rojo sobre el icono
 
     signal clic(int boton)
     signal rueda(int pasos)
@@ -50,6 +52,7 @@ Item {
         spacing: modulo.texto === "" || modulo.icono === "" ? 0 : modulo.vertical ? 1 : 10
 
         Texto {
+            id: textoIcono
             text: modulo.icono
             visible: text !== ""
             font.pixelSize: modulo.tamIcono
@@ -68,6 +71,16 @@ Item {
             width: maximo > 0 ? Math.min(implicitWidth, maximo) : implicitWidth
             Behavior on color { ColorAnimation { duration: Tema.rapida } }
         }
+    }
+
+    Rectangle {
+        visible: modulo.punto
+        width: 7
+        height: 7
+        radius: 3.5
+        color: Tema.rojo
+        x: fila.x + textoIcono.x + textoIcono.width - 5
+        y: fila.y + textoIcono.y + 1
     }
 
     MouseArea {
