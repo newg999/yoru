@@ -172,6 +172,8 @@ debug {
 }
 
 include "rules.kdl"
+// Esquinas de las ventanas elegidas en Ajustes → Aspecto (lo escribe la barra)
+include optional=true "~/.local/state/yoru/niri-ventanas.kdl"
 
 // Ajustes solo de este equipo (monitores, escala...). No existe por defecto.
 // Copia local.kdl.example a local.kdl y edítalo.

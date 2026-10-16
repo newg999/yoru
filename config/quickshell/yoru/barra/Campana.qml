@@ -1,11 +1,11 @@
 // ============================================================================
-//  Portapapeles, notificaciones y apagado, al final de la barra
+//  Ajustes, portapapeles, notificaciones y apagado, al final de la barra
+//    󰒓  = ajustes: tema, fondo, barra y aspecto (Mod+Alt+T)
 //    󰅌  = historial del portapapeles (Mod+Alt+V)
 //    󰂚  = panel de notificaciones (Mod+Alt+M), con un punto rojo si hay
 //         clic derecho = no molestar (󰂛) · clic central = borrarlas todas
 //    󰐥  = bloquear, suspender, cerrar sesión, reiniciar o apagar
 //         (Mod+Shift+BackSpace)
-//  Los ajustes (Mod+Alt+T) están en el Centro de control, junto a la sesión
 // ============================================================================
 import QtQuick
 import qs.comun
@@ -19,7 +19,14 @@ Isla {
             : `<b>${Notificaciones.cuantas}</b> notificaci${Notificaciones.cuantas === 1 ? "ón" : "ones"}`)
         + (Notificaciones.noMolestar ? "  ·  no molestar" : "")
         + "<br>" + Tema.suave("Campana: clic dcho no molestar · clic central borrar todas")
+        + "<br>" + Tema.suave("󰒓 Ajustes: tema, fondo, barra y aspecto  ·  Mod+Alt+T")
         + "<br>" + Tema.suave("󰐥 Apagar, reiniciar, cerrar sesión…  ·  Mod+Shift+BackSpace")
+
+    Modulo {
+        icono: "󰒓"
+        resaltado: Paneles.esta("ajustes", isla.pantalla)
+        onClic: Paneles.alternar("ajustes", isla.pantalla, "")
+    }
 
     Modulo {
         icono: "󰅌"

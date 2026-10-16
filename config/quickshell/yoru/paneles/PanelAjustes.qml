@@ -1,5 +1,5 @@
 // ============================================================================
-//  Ajustes — personalizar Yoru sin tocar archivos (Mod+Alt+T o 󰒓 en el Centro de control)
+//  Ajustes — personalizar Yoru sin tocar archivos (Mod+Alt+T o 󰒓 en la barra)
 //
 //  Pestañas: Tema · Fondo · Barra y dock · Aspecto
 //
@@ -430,10 +430,17 @@ Panel {
 
             // Esquinas: 0-20 px
             Regulador {
-                titulo: "Esquinas"
+                titulo: "Esquinas de la barra"
                 valor: Ajustes.radio / 20
                 mostrado: Ajustes.radio + " px"
                 onMovido: nuevo => Ajustes.radio = Math.round(nuevo * 20)
+            }
+            // Las de niri: 0 (en ángulo recto) a 24 px
+            Regulador {
+                titulo: "Esquinas de las ventanas"
+                valor: Ajustes.radioVentanas / 24
+                mostrado: Ajustes.radioVentanas + " px"
+                onMovido: nuevo => Ajustes.radioVentanas = Math.round(nuevo * 24)
             }
             // Transparencias: de 0 (invisible) a 1 (sólido)
             Regulador {

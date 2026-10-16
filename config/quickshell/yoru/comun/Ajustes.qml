@@ -26,6 +26,7 @@ Singleton {
 
     // ------------------------------------------------------------ Aspecto
     property alias radio: datos.radio                 // esquinas de islas y paneles (px)
+    property alias radioVentanas: datos.radioVentanas // esquinas de las ventanas (px, ver abajo)
     property alias opacidadIslas: datos.opacidadIslas
     property alias opacidadPaneles: datos.opacidadPaneles
     property alias letra: datos.letra                 // texto de la barra (px)
@@ -38,12 +39,48 @@ Singleton {
     // Vuelve a dejar el aspecto (no la barra ni el dock) como al principio
     function restablecerAspecto() {
         datos.radio = 10;
+        datos.radioVentanas = 10;
         datos.opacidadIslas = 0.45;
         datos.opacidadPaneles = 0.90;
         datos.letra = 13;
         datos.desenfoque = true;
         datos.bordes = true;
         datos.animaciones = true;
+    }
+
+    // ------------------------------------------- Esquinas de las ventanas
+    // Las dibuja niri: se le escribe una regla en este archivo, que
+    // config/niri/config.kdl incluye después de rules.kdl (gana la última)
+    readonly property string niriVentanas: `// Generado por la barra (Ajustes → Aspecto). No lo edites: se sobrescribe.
+window-rule {
+    geometry-corner-radius ${datos.radioVentanas}
+    clip-to-geometry true
+}
+`
+    FileView {
+        id: archivoVentanas
+        path: Quickshell.env("HOME") + "/.local/state/yoru/niri-ventanas.kdl"
+        printErrors: false
+        onLoaded: ajustes.escribirVentanas()
+        onLoadFailed: ajustes.escribirVentanas()
+    }
+    property bool _ventanasLeido: false   // hasta leerlo no se sabe si cambia
+    // Al arrancar solo se escribe si cambia; al mover el regulador, siempre
+    // (text() puede devolver aún el contenido anterior)
+    function escribirVentanas(siempre) {
+        _ventanasLeido = true;
+        if (!siempre && archivoVentanas.text() === niriVentanas)
+            return;
+        archivoVentanas.setText(niriVentanas);
+        // niri no vigila el archivo si no existía al cargar su config
+        recargarNiri.restart();
+    }
+    // Un momento después: al avisar del cambio, niriVentanas aún no está al día
+    onRadioVentanasChanged: if (_ventanasLeido) Qt.callLater(escribirVentanas, true)
+    Timer {
+        id: recargarNiri
+        interval: 150
+        onTriggered: Quickshell.execDetached(["niri", "msg", "action", "load-config-file"])
     }
 
     FileView {
@@ -71,6 +108,7 @@ Singleton {
             property bool islaBandeja: true
 
             property int radio: 10
+            property int radioVentanas: 10
             property real opacidadIslas: 0.45
             property real opacidadPaneles: 0.90
             property int letra: 13
