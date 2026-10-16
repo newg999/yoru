@@ -9,6 +9,8 @@
 //    abajo bandeja, recursos, conexión y campana
 //
 //  El reloj va siempre en el centro exacto; la música y el clima, a sus lados.
+//  Si no caben sin chocar con los grupos de los lados (pantallas pequeñas),
+//  se esconden en vez de montarse encima.
 //  Con el overview abierto (Mod+Tab) la barra se aparta y desaparece, como en DMS.
 //  Detrás de cada isla, el fondo se ve desenfocado (como en los paneles).
 //  Qué islas se ven, el desenfoque y la posición se eligen en Ajustes.
@@ -25,8 +27,10 @@ PanelWindow {
     screen: modelData
 
     readonly property bool vertical: Ajustes.vertical
-    // Monitor pequeño (portátil) → títulos más cortos
+    // Monitor pequeño (portátil) → títulos más cortos; muy estrecho
+    // (1366x768 o con escala) → más cortos todavía
     readonly property bool pequena: modelData.width < 1800
+    readonly property bool estrecha: modelData.width < 1500
 
     anchors {
         top: true
@@ -176,9 +180,23 @@ PanelWindow {
         // acababan con alto negativo o encima de otras.
         readonly property int sep: Tema.separacion
         function centrado(alto) { return Math.round((height - alto) / 2); }
+        // «pos» movida lo justo para quedar entre «desde» y «hasta» (con separación)
+        function enHueco(pos, largo, desde, hasta) {
+            return Math.max(desde + sep, Math.min(pos, hasta - largo - sep));
+        }
+
+        // ¿Cabe la música entre el grupo de arriba/izquierda y el reloj? ¿Y
+        // el clima entre el reloj y el grupo de abajo/derecha?
+        readonly property bool cabeMusica: barra.vertical
+            ? grupoInicio.y + grupoInicio.height + sep + musica.largoNatural + sep <= reloj.y
+            : grupoInicio.x + grupoInicio.width + sep + musica.largoNatural + sep <= reloj.x
+        readonly property bool cabeClima: barra.vertical
+            ? reloj.y + reloj.height + sep + clima.largoNatural + sep <= grupoFin.y
+            : reloj.x + reloj.width + sep + clima.largoNatural + sep <= grupoFin.x
 
         // ---------------------------------------------- Izquierda (o arriba)
         Grupo {
+            id: grupoInicio
             x: 0
             y: barra.vertical ? 0 : contenido.centrado(height)
 
@@ -188,7 +206,7 @@ PanelWindow {
                 id: titulo
                 oculta: !Ajustes.islaTitulo || Ajustes.ventanas !== "activa"
                 salida: barra.modelData.name
-                maximo: barra.pequena ? 300 : 420
+                maximo: barra.estrecha ? 180 : barra.pequena ? 300 : 420
             }
             Ventanas {
                 id: ventanas
@@ -201,21 +219,25 @@ PanelWindow {
         // El reloj en el centro exacto; la música antes y el clima después
         Musica {
             id: musica
-            oculta: !Ajustes.islaMusica
+            oculta: !Ajustes.islaMusica || !contenido.cabeMusica
             x: barra.vertical ? 0 : reloj.x - width - contenido.sep
             y: barra.vertical ? reloj.y - height - contenido.sep : contenido.centrado(height)
             pantalla: barra.modelData
-            maximo: barra.pequena ? 140 : 200
+            maximo: barra.estrecha ? 90 : barra.pequena ? 140 : 200
         }
+        // En el centro exacto, salvo que choque con un grupo de los lados
+        // (barra a la izquierda en pantallas bajas): entonces, en el hueco libre
         Reloj {
             id: reloj
-            x: barra.vertical ? 0 : Math.round((contenido.width - width) / 2)
-            y: contenido.centrado(height)
+            x: barra.vertical ? 0 : contenido.enHueco(Math.round((contenido.width - width) / 2), width,
+                                                     grupoInicio.x + grupoInicio.width, grupoFin.x)
+            y: !barra.vertical ? contenido.centrado(height)
+                : contenido.enHueco(contenido.centrado(height), height, grupoInicio.y + grupoInicio.height, grupoFin.y)
             pantalla: barra.modelData
         }
         Clima {
             id: clima
-            oculta: !Ajustes.islaClima
+            oculta: !Ajustes.islaClima || !contenido.cabeClima
             x: barra.vertical ? 0 : reloj.x + reloj.width + contenido.sep
             y: barra.vertical ? reloj.y + reloj.height + contenido.sep : contenido.centrado(height)
             pantalla: barra.modelData
@@ -223,6 +245,7 @@ PanelWindow {
 
         // ------------------------------------------------ Derecha (o abajo)
         Grupo {
+            id: grupoFin
             x: barra.vertical ? 0 : contenido.width - width
             y: barra.vertical ? contenido.height - height : contenido.centrado(height)
 

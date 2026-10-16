@@ -25,6 +25,12 @@ Panel {
     ancho: 1000
 
     readonly property int columnas: 5
+
+    // Filas de miniaturas que caben (máximo 3) dejando «resto» px para
+    // pestañas, buscador y pie
+    function filasQueCaben(alto, resto) {
+        return Math.max(1, Math.min(3, Math.floor((altoMax - 32 - resto) / alto)));
+    }
     readonly property string casa: Quickshell.env("HOME")
 
     property var fondos: []          // [{ruta, miniatura, nombre}]
@@ -236,7 +242,9 @@ Panel {
             id: rejilla
             visible: panel.vista === "mios"
             width: parent.width
-            height: Math.min(Math.ceil(Math.max(panel.fondos.length, 1) / panel.columnas), 3) * cellHeight
+            // Hasta 3 filas; menos si no caben bajo la barra (portátiles de 768)
+            height: Math.min(Math.ceil(Math.max(panel.fondos.length, 1) / panel.columnas),
+                             panel.filasQueCaben(cellHeight, 130)) * cellHeight
             clip: true
             cellWidth: Math.floor(width / panel.columnas)
             cellHeight: cellWidth
@@ -425,7 +433,7 @@ Panel {
             id: descubiertos
             visible: panel.vista === "descubrir"
             width: parent.width
-            height: 3 * cellHeight
+            height: panel.filasQueCaben(cellHeight, 125) * cellHeight
             clip: true
             cellWidth: Math.floor(width / 4)
             cellHeight: Math.round(cellWidth * 10 / 16)

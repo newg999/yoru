@@ -21,6 +21,10 @@ Rectangle {
     property bool oculta: false         // quitada en Ajustes
     readonly property bool vertical: Ajustes.vertical
     property bool vacia: oculta || (vertical ? fila.implicitHeight : fila.implicitWidth) <= 0
+    // Lo que ocuparía a lo largo de la barra aunque esté oculta (la barra lo
+    // usa para ver si cabe sin chocar con las de al lado)
+    readonly property int largoNatural: vertical ? fila.implicitHeight + 2 * rellenoVertical
+                                                 : fila.implicitWidth + 2 * relleno
     // En vertical sobra tanto margen: los módulos ya llevan el suyo
     readonly property int rellenoVertical: Math.min(relleno, 6)
     property bool pulsable: false
