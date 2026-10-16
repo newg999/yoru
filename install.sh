@@ -703,6 +703,9 @@ ajustes_gtk() {
     # El cursor, también en las apps (niri lo pone en config.kdl → cursor)
     gsettings set org.gnome.desktop.interface cursor-theme "$CURSOR_TEMA"
     gsettings set org.gnome.desktop.interface cursor-size 24
+    # Sin botón de minimizar: niri no minimiza y Brave/Chrome (que dibujan sus
+    # botones según esto) se quedaban congelados creyéndose minimizados
+    gsettings set org.gnome.desktop.wm.preferences button-layout 'appmenu:maximize,close'
     # Lo mismo para las apps GTK3 que van por Xwayland (leen este archivo)
     mkdir -p "$HOME/.config/gtk-3.0"
     cat > "$HOME/.config/gtk-3.0/settings.ini" <<INI
@@ -712,6 +715,7 @@ gtk-application-prefer-dark-theme=true
 gtk-icon-theme-name=Papirus-Dark
 gtk-cursor-theme-name=$CURSOR_TEMA
 gtk-cursor-theme-size=24
+gtk-decoration-layout=appmenu:maximize,close
 INI
     # Apps X11 antiguas (Xwayland): leen el cursor «default»
     mkdir -p "$HOME/.icons/default"
