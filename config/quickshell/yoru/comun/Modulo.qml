@@ -44,9 +44,11 @@ Item {
     Grid {
         id: fila
         anchors.centerIn: parent
-        // Solo cambian las columnas: una (en columna) o de sobra (en fila).
-        // Cambiar filas y columnas a la vez pasa un momento por 1×1 y Qt avisa
-        columns: modulo.vertical ? 1 : 99
+        // Solo cambian las columnas: una (en columna) o una por elemento (en
+        // fila). Cambiar filas y columnas a la vez pasa un momento por 1×1 y
+        // Qt avisa. Con columnas de sobra, Grid deja una separación de más al
+        // final y el texto quedaba descentrado (más aire a la derecha)
+        columns: modulo.vertical ? 1 : Math.max(1, (modulo.icono !== "" ? 1 : 0) + (modulo.texto !== "" ? 1 : 0))
         horizontalItemAlignment: Grid.AlignHCenter
         verticalItemAlignment: Grid.AlignVCenter
         spacing: modulo.texto === "" || modulo.icono === "" ? 0 : modulo.vertical ? 1 : 10

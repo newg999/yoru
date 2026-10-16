@@ -20,11 +20,24 @@ Rectangle {
     property alias espacio: fila.spacing
     property bool oculta: false         // quitada en Ajustes
     readonly property bool vertical: Ajustes.vertical
-    property bool vacia: oculta || (vertical ? fila.implicitHeight : fila.implicitWidth) <= 0
+    // Lo que ocupan los módulos visibles. No vale fila.implicitWidth: Grid
+    // cuenta la separación de los ocultos (la batería en un PC, el Repeater...)
+    // y dejaba más margen a un lado de la isla que al otro
+    // Mientras la isla está oculta sus hijos también lo parecen (visible es
+    // heredado) y salía 0: entonces vale la medida aproximada de Grid. (No se
+    // mira isla.visible: depende de esto mismo y sería un bucle)
+    readonly property real ocupado: {
+        let fin = 0;
+        for (const hijo of fila.children)
+            if (hijo.visible)
+                fin = Math.max(fin, vertical ? hijo.y + hijo.height : hijo.x + hijo.width);
+        return fin > 0 ? Math.ceil(fin) : (vertical ? fila.implicitHeight : fila.implicitWidth);
+    }
+    property bool vacia: oculta || ocupado <= 0
     // Lo que ocuparía a lo largo de la barra aunque esté oculta (la barra lo
     // usa para ver si cabe sin chocar con las de al lado)
-    readonly property int largoNatural: vertical ? fila.implicitHeight + 2 * rellenoVertical
-                                                 : fila.implicitWidth + 2 * relleno
+    readonly property int largoNatural: vertical ? ocupado + 2 * rellenoVertical
+                                                 : ocupado + 2 * relleno
     // En vertical sobra tanto margen: los módulos ya llevan el suyo
     readonly property int rellenoVertical: Math.min(relleno, 6)
     property bool pulsable: false
@@ -33,8 +46,8 @@ Rectangle {
     signal clic(int boton)
     signal rueda(int pasos)
 
-    implicitWidth: vertical ? Tema.anchoBarra : vacia ? 0 : fila.implicitWidth + 2 * relleno
-    implicitHeight: !vertical ? Tema.altoBarra : vacia ? 0 : fila.implicitHeight + 2 * rellenoVertical
+    implicitWidth: vertical ? Tema.anchoBarra : vacia ? 0 : ocupado + 2 * relleno
+    implicitHeight: !vertical ? Tema.altoBarra : vacia ? 0 : ocupado + 2 * rellenoVertical
     radius: Tema.radio
     color: Tema.isla
     border.width: Tema.borde(1)

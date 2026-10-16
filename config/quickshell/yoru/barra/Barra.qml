@@ -69,6 +69,15 @@ PanelWindow {
 
     // Un grupo de islas: en fila arriba, en columna a la izquierda
     component Grupo: Grid {
+        // Lo que ocupan las islas visibles (Grid cuenta también la separación
+        // de las ocultas, p. ej. la bandeja vacía, y sobraban 6 px al final)
+        readonly property int largo: {
+            let fin = 0;
+            for (const hijo of children)
+                if (hijo.visible)
+                    fin = Math.max(fin, barra.vertical ? hijo.y + hijo.height : hijo.x + hijo.width);
+            return Math.ceil(fin);
+        }
         // Solo cambian las columnas: una (en columna) o de sobra (en fila).
         // Cambiar filas y columnas a la vez pasa un momento por 1×1 y Qt avisa
         columns: barra.vertical ? 1 : 99
@@ -188,8 +197,8 @@ PanelWindow {
         // ¿Cabe la música entre el grupo de arriba/izquierda y el reloj? ¿Y
         // el clima entre el reloj y el grupo de abajo/derecha?
         readonly property bool cabeMusica: barra.vertical
-            ? grupoInicio.y + grupoInicio.height + sep + musica.largoNatural + sep <= reloj.y
-            : grupoInicio.x + grupoInicio.width + sep + musica.largoNatural + sep <= reloj.x
+            ? grupoInicio.y + grupoInicio.largo + sep + musica.largoNatural + sep <= reloj.y
+            : grupoInicio.x + grupoInicio.largo + sep + musica.largoNatural + sep <= reloj.x
         readonly property bool cabeClima: barra.vertical
             ? reloj.y + reloj.height + sep + clima.largoNatural + sep <= grupoFin.y
             : reloj.x + reloj.width + sep + clima.largoNatural + sep <= grupoFin.x
@@ -230,9 +239,9 @@ PanelWindow {
         Reloj {
             id: reloj
             x: barra.vertical ? 0 : contenido.enHueco(Math.round((contenido.width - width) / 2), width,
-                                                     grupoInicio.x + grupoInicio.width, grupoFin.x)
+                                                     grupoInicio.x + grupoInicio.largo, grupoFin.x)
             y: !barra.vertical ? contenido.centrado(height)
-                : contenido.enHueco(contenido.centrado(height), height, grupoInicio.y + grupoInicio.height, grupoFin.y)
+                : contenido.enHueco(contenido.centrado(height), height, grupoInicio.y + grupoInicio.largo, grupoFin.y)
             pantalla: barra.modelData
         }
         Clima {
@@ -246,8 +255,8 @@ PanelWindow {
         // ------------------------------------------------ Derecha (o abajo)
         Grupo {
             id: grupoFin
-            x: barra.vertical ? 0 : contenido.width - width
-            y: barra.vertical ? contenido.height - height : contenido.centrado(height)
+            x: barra.vertical ? 0 : Math.round(contenido.width - largo)
+            y: barra.vertical ? Math.round(contenido.height - largo) : contenido.centrado(height)
 
             Bandeja { id: bandeja; ventana: barra; oculta: !Ajustes.islaBandeja }
             Recursos { id: recursos; pantalla: barra.modelData; oculta: !Ajustes.islaRecursos }
