@@ -1,5 +1,5 @@
 // ============================================================================
-//  Audio, wifi y bluetooth: un solo botón (como en DMS)
+//  Audio, wifi (y VPN) y bluetooth: un solo botón (como en DMS)
 //    Clic = centro de control · Rueda = volumen
 //    Clic central = silenciar · Clic derecho = mezclador (pavucontrol)
 // ============================================================================
@@ -39,6 +39,8 @@ Isla {
         lineas.push(cable ? "󰈀  Por cable" + Tema.suave("  ·  " + Tema.html(cable.name))
             : redWifi ? `󰖩  ${Tema.html(redWifi.name)}  <b>${Math.round(redWifi.signalStrength * 100)}%</b>`
             : Networking.wifiEnabled ? "󰤮  Sin conexión" : "󰤭  Wi-Fi apagado");
+        if (Vpn.conectadas.length)
+            lineas.push("󰦝  VPN " + Vpn.conectadas.map(v => Tema.html(v.nombre)).join(", "));
         if (adaptador) {
             const bt = Bluetooth.devices.values.filter(d => d.connected);
             lineas.push(!adaptador.enabled ? "󰂲  Bluetooth apagado"
@@ -97,6 +99,15 @@ Isla {
             : !Networking.wifiEnabled ? "󰤭" : "󰤮"
         colorAviso: !isla.cable && !isla.redWifi && Networking.wifiEnabled ? Tema.rojo : "transparent"
         apagado: !isla.cable && !Networking.wifiEnabled
+        relleno: isla.margenIcono
+        pulsable: false
+        resaltado: isla.iluminada
+    }
+
+    // VPN conectada: un escudo junto a la red
+    Modulo {
+        visible: Vpn.conectadas.length > 0
+        icono: "󰦝"
         relleno: isla.margenIcono
         pulsable: false
         resaltado: isla.iluminada

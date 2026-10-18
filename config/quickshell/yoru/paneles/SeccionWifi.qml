@@ -2,6 +2,7 @@
 //  Redes wifi: la conectada primero, luego las guardadas y el resto por señal.
 //    Clic en una red = conectar (si es nueva y tiene candado, pide la contraseña)
 //    En la conectada: 󰖪 desconectar · 󰆴 olvidar
+//  Encima, las VPN (SeccionVpn.qml)
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -49,10 +50,21 @@ Column {
         return ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"][Math.min(4, Math.floor(red.signalStrength * 5))];
     }
 
+    SeccionVpn {
+        width: parent.width
+        activa: seccion.activa
+    }
+
     Titular {
         width: parent.width
         texto: "Redes wifi"
 
+        // Con cable, la baldosa es la del cable: el wifi se enciende aquí
+        BotonIcono {
+            icono: Networking.wifiEnabled ? "󰖩" : "󰖪"
+            colorIcono: Networking.wifiEnabled ? Tema.texto : Tema.gris
+            onClic: Networking.wifiEnabled = !Networking.wifiEnabled
+        }
         BotonIcono {
             icono: "󰑐"
             visible: Networking.wifiEnabled

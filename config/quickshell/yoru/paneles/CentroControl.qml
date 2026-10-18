@@ -3,15 +3,16 @@
 //
 //    ┌──────────────────────────────────┐
 //    │ [󰖩 Wi-Fi     󰅀] [󰂯 Bluetooth 󰅀]│  icono = on/off · resto = su lista
+//    │                                  │  (con cable: 󰈀 Ethernet; el wifi, en su lista)
 //    │ 󰕾 ━━━━━━━━━○──────── 45%  󰅀     │  volumen (󰅀 = elegir salida)
 //    │ 󰍬 ━━━━━○──────────── 60%  󰅀     │  micrófono (󰅀 = elegir micrófono)
 //    │ 󰃠 ━━━━━━━━━━━━○───── 80%        │  brillo (portátil o monitor por DDC)
 //    │ [Ahorro] [Equilibrado] [Rendim.]│  perfil de energía
 //    │ ─────────────────────────────── │
-//    │  lista de la sección elegida    │  redes, dispositivos, salidas o micros
-//    │ ─────────────────────────────── │
-//    │ Sesión de don  󰒓 │ 󰌾 󰤄 󰍃 󰜉 󰐥  │  ajustes · bloquear, suspender, salir, reiniciar,
-//    └──────────────────────────────────┘  apagar (los 3 últimos: dos clics)
+//    │  lista de la sección elegida    │  VPN y redes, dispositivos, salidas o micros
+//    └──────────────────────────────────┘
+//
+//  Bloquear, apagar, etc.: botón 󰐥 de la barra (paneles/Apagado.qml)
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -41,38 +42,6 @@ Panel {
 
     // (El brillo no se relee al abrir: ddcutil congela el ratón con NVIDIA,
     // ver comun/Brillo.qml)
-    onAbiertoChanged: {
-        if (!abierto)
-            confirmar = "";
-    }
-
-    // ------------------------------------------------------------ Sesión
-    // Cerrar sesión, reiniciar y apagar piden un segundo clic (el botón se
-    // pone rojo 3 s): un clic sin querer no te cierra todo
-    readonly property var sesion: [
-        {icono: "󰌾", titulo: "Bloquear", orden: ["sh", "-c", "~/.config/niri/scripts/bloquear.sh"]},
-        {icono: "󰤄", titulo: "Suspender", orden: ["sh", "-c", "~/.config/niri/scripts/bloquear.sh && systemctl suspend"]},
-        {icono: "󰍃", titulo: "Cerrar sesión", seguro: true, orden: ["niri", "msg", "action", "quit", "--skip-confirmation"]},
-        {icono: "󰜉", titulo: "Reiniciar", seguro: true, orden: ["systemctl", "reboot"]},
-        {icono: "󰐥", titulo: "Apagar", seguro: true, orden: ["systemctl", "poweroff"]},
-    ]
-    property string confirmar: ""      // título de la opción esperando el 2.º clic
-
-    function sesionElegir(o) {
-        if (o.seguro && confirmar !== o.titulo) {
-            confirmar = o.titulo;
-            espera.restart();
-            return;
-        }
-        confirmar = "";
-        Paneles.cerrar();
-        Quickshell.execDetached(o.orden);
-    }
-    Timer {
-        id: espera
-        interval: 3000
-        onTriggered: panel.confirmar = ""
-    }
 
     Column {
         width: parent.width
@@ -83,16 +52,23 @@ Panel {
             width: parent.width
             spacing: 10
 
+            // Con cable es la baldosa del cable (el wifi se enciende y apaga
+            // desde su lista); si no, la del wifi
             Baldosa {
                 width: (parent.width - 10) / 2
-                icono: Networking.wifiEnabled ? "󰖩" : "󰖪"
-                titulo: "Wi-Fi"
-                detalle: panel.redWifi ? panel.redWifi.name
-                    : panel.cable ? "Por cable"
+                icono: panel.cable ? "󰈀" : Networking.wifiEnabled ? "󰖩" : "󰖪"
+                titulo: panel.cable ? "Ethernet" : "Wi-Fi"
+                detalle: panel.cable ? (Vpn.conectadas.length ? "VPN " + Vpn.conectadas[0].nombre : "Conectado")
+                    : panel.redWifi ? panel.redWifi.name + (Vpn.conectadas.length ? " · VPN" : "")
                     : Networking.wifiEnabled ? "Sin conectar" : "Apagado"
-                encendida: Networking.wifiEnabled
+                encendida: panel.cable !== null || Networking.wifiEnabled
                 elegida: panel.seccion === "wifi"
-                onAlternar: Networking.wifiEnabled = !Networking.wifiEnabled
+                onAlternar: {
+                    if (panel.cable)
+                        panel.elegir("wifi");
+                    else
+                        Networking.wifiEnabled = !Networking.wifiEnabled;
+                }
                 onElegir: panel.elegir("wifi")
             }
             Baldosa {
@@ -196,41 +172,6 @@ Panel {
                 visible: opacity > 0
                 opacity: panel.seccion === "micro" ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: Tema.normal } }
-            }
-        }
-
-        // ------------------------------------------------------- Sesión
-        Rectangle {
-            width: parent.width
-            height: 1
-            color: Tema.claro(0.08)
-        }
-
-        Titular {
-            width: parent.width
-            texto: panel.confirmar !== "" ? panel.confirmar + ": pulsa otra vez"
-                : "Sesión de " + Quickshell.env("USER")
-
-            // Ajustes de Yoru (Mod+Alt+T): tema, fondo, barra y aspecto
-            BotonIcono {
-                icono: "󰒓"
-                onClic: Paneles.alternar("ajustes", panel.modelData, "")
-            }
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: 1
-                height: 16
-                color: Tema.claro(0.12)
-            }
-
-            Repeater {
-                model: panel.sesion
-                BotonIcono {
-                    required property var modelData
-                    icono: modelData.icono
-                    alerta: panel.confirmar === modelData.titulo
-                    onClic: panel.sesionElegir(modelData)
-                }
             }
         }
     }
