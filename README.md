@@ -140,7 +140,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | `Mod+Alt+S` | Tienda de apps (buscar, instalar, actualizar) |
 | `Mod+Alt+I` | Test de velocidad de internet (también en el lanzador) |
 | `Mod+Alt+W` | Elegir fondo de pantalla (con miniaturas) o buscar nuevos en wallhaven.cc (Descubrir) |
-| `Mod+Alt+T` | Ajustes: tema, fondo, barra (arriba o a la izquierda), dock y aspecto |
+| `Mod+Alt+T` | Ajustes: tema, fondo, barra (arriba o a la izquierda), dock, aspecto y pantallas |
 | `Mod+Alt+Shift+W` | Siguiente fondo de pantalla |
 | `Mod+BackSpace` | Bloquear |
 | `Mod+Shift+BackSpace` | Menú de apagado |
@@ -157,7 +157,9 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | Separación entre ventanas, anchos | `config/niri/config.kdl` → `layout` |
 | Qué arranca al iniciar | `config/niri/config.kdl` → `spawn-at-startup` |
 | Esquinas, ventanas flotantes | `config/niri/rules.kdl` |
-| Monitores y escala | `config/niri/local.kdl` (copia `local.kdl.example`) |
+| VPN (WireGuard u OpenVPN) | Centro de control → baldosa de red (Wi-Fi o Ethernet) 󰅀 → VPN: un interruptor por cada una y 󰐕 para añadir un `.conf` o `.ovpn` (busca en tu carpeta personal o escribes la ruta). Se guardan en NetworkManager; con una conectada sale un escudo en la barra |
+| Ratón, touchpad y cursor | Ajustes › Ratón (`Mod+Alt+T`): velocidad, rueda, aceleración, zurdos, tocar para hacer clic, tamaño del cursor... También va a `config/niri/local.kdl`, en su propio bloque |
+| Monitores y escala | Ajustes › Pantallas (`Mod+Alt+T`): arrástralas para colocarlas, y elige resolución y escala. Se guarda en `config/niri/local.kdl` (no se sube a git); lo que escribas a mano fuera de su bloque se respeta |
 | Pantalla de inicio de sesión | `system/greetd/config.toml` (se copia a `/etc`, vuelve a ejecutar `./install.sh`) |
 | Paquetes que se instalan | `packages.txt` |
 | Apps de ArtCraft que se instalan (PdfCraft, WordCraft, DeckCraft, GridCraft…) | `artcraft.txt` |

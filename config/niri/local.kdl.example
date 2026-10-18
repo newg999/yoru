@@ -1,7 +1,9 @@
 // ============================================================================
 //  local.kdl — Ajustes solo para ESTE equipo (no se sube a git)
 // ----------------------------------------------------------------------------
-//  Copia este archivo:  cp local.kdl.example local.kdl
+//  Lo más fácil: Ajustes › Pantallas (Mod+Alt+T) crea local.kdl y escribe
+//  ahí la colocación de los monitores. Para hacerlo a mano:
+//    cp local.kdl.example local.kdl
 //  Nombres y modos de tus pantallas:  niri msg outputs
 // ============================================================================
 

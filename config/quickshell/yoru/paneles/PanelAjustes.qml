@@ -1,12 +1,16 @@
 // ============================================================================
 //  Ajustes — personalizar Yoru sin tocar archivos (Mod+Alt+T o 󰒓 en la barra)
 //
-//  Pestañas: Tema · Fondo · Barra y dock · Aspecto
+//  Pestañas: Tema · Fondo · Barra y dock · Aspecto · Pantallas · Ratón
 //
 //    Tema:    paletas de colores (las de «yoru tema»: Yoru, del fondo, Nord...)
 //    Fondo:   el fondo actual, elegir otro o pasar al siguiente
 //    Barra:   arriba o a la izquierda, qué islas se ven y cuándo sale el dock
 //    Aspecto: esquinas, transparencias, letra, desenfoque y animaciones
+//    Pantallas: colocar los monitores arrastrándolos, resolución y escala
+//             (PestanaPantallas.qml; se guarda en niri/local.kdl)
+//    Ratón:   velocidad, rueda, touchpad y tamaño del cursor
+//             (PestanaRaton.qml; también en niri/local.kdl)
 //
 //  Lo de Barra y Aspecto se guarda en comun/Ajustes.qml; los colores, con
 //  «yoru tema» (tema/aplicar.py), que es quien los genera para todo.
@@ -25,7 +29,7 @@ Panel {
 
     readonly property string casa: Quickshell.env("HOME")
     readonly property string yoru: casa + "/.local/bin/yoru"
-    readonly property string pestana: ["tema", "fondo", "barra", "aspecto"].includes(Paneles.seccion) ? Paneles.seccion : "tema"
+    readonly property string pestana: ["tema", "fondo", "barra", "aspecto", "pantallas", "raton"].includes(Paneles.seccion) ? Paneles.seccion : "tema"
 
     property var temas: []            // [{id, nombre, claro, colores}] de «yoru tema --lista»
     property string aplicando: ""     // tema que se está generando
@@ -86,21 +90,26 @@ Panel {
 
         // ------------------------------------------------------ Pestañas
         Row {
-            anchors.horizontalCenter: parent.horizontalCenter
+            id: pestanas
+            width: parent.width
             spacing: 6
 
             Repeater {
+                id: listaPestanas
                 model: [
                     {id: "tema", icono: "󰏘", texto: "Tema"},
                     {id: "fondo", icono: "󰸉", texto: "Fondo"},
                     {id: "barra", icono: "󰕮", texto: "Barra y dock"},
-                    {id: "aspecto", icono: "󰙵", texto: "Aspecto"}
+                    {id: "aspecto", icono: "󰙵", texto: "Aspecto"},
+                    {id: "pantallas", icono: "󰍹", texto: "Pantallas"},
+                    {id: "raton", icono: "󰍽", texto: "Ratón"}
                 ]
                 Rectangle {
                     id: pestana
                     required property var modelData
                     readonly property bool elegida: panel.pestana === modelData.id
-                    width: 160; height: 36; radius: 10
+                    width: (pestanas.width - pestanas.spacing * (listaPestanas.count - 1)) / listaPestanas.count
+                    height: 36; radius: 10
                     color: elegida ? Tema.claro(0.90) : pestanaRaton.containsMouse ? Tema.cajaHover : "transparent"
                     Behavior on color { ColorAnimation { duration: Tema.rapida } }
 
@@ -492,6 +501,20 @@ Panel {
                 opciones: [{id: "restablecer", icono: "󰑓", texto: "Restablecer el aspecto"}]
                 onElegir: Ajustes.restablecerAspecto()
             }
+        }
+
+        // ----------------------------------------------------- Pantallas
+        PestanaPantallas {
+            visible: panel.pestana === "pantallas"
+            activa: panel.abierto && visible
+            width: parent.width
+        }
+
+        // --------------------------------------------------------- Ratón
+        PestanaRaton {
+            visible: panel.pestana === "raton"
+            activa: panel.abierto && visible
+            width: parent.width
         }
     }
 }
