@@ -303,6 +303,38 @@ cliphist_si_falta() {
     rm -f "$tmp"
 }
 
+# Yazi (gestor de archivos en la terminal): no está en los repos de Fedora,
+# se baja la versión oficial de GitHub a ~/.local/bin (comprobando su suma).
+# Para actualizarlo: sube YAZI_VERSION y YAZI_SHA256 (sale en la página de
+# la versión) y vuelve a ejecutar el instalador o «yoru update».
+YAZI_VERSION="v26.9.1"
+YAZI_SHA256="a02fe91d3304294048c681f010f1100856872a4e98ecf6927328e888d40a6ad2"
+instalar_yazi() {
+    local actual=""
+    command -v yazi >/dev/null && actual="v$(yazi --version 2>/dev/null | awk '/Version:/ {print $2; exit}')"
+    [[ "$actual" == "$YAZI_VERSION" ]] && return 0
+    if [[ "$(uname -m)" != "x86_64" ]]; then
+        aviso "Yazi no se instala solo en $(uname -m): mira https://yazi-rs.github.io"
+        return 0
+    fi
+    paso "Yazi $YAZI_VERSION (archivos en la terminal) desde GitHub"
+    local tmp
+    tmp="$(mktemp -d)"
+    if curl -fsSL -o "$tmp/yazi.zip" \
+            "https://github.com/sxyazi/yazi/releases/download/$YAZI_VERSION/yazi-x86_64-unknown-linux-gnu.zip" \
+            && echo "$YAZI_SHA256  $tmp/yazi.zip" | sha256sum -c --quiet - \
+            && unzip -q "$tmp/yazi.zip" -d "$tmp"; then
+        local d="$tmp/yazi-x86_64-unknown-linux-gnu"
+        mkdir -p "$HOME/.local/bin" "$HOME/.local/share/zsh/site-functions"
+        install -m 755 "$d/yazi" "$d/ya" "$HOME/.local/bin/"
+        install -m 644 "$d/completions/_yazi" "$d/completions/_ya" "$HOME/.local/share/zsh/site-functions/" 2>/dev/null
+        ok "Yazi $YAZI_VERSION en ~/.local/bin (ábrelo con «y» en la terminal)"
+    else
+        aviso "No se pudo descargar Yazi (o no coincide su suma): me lo salto"
+    fi
+    rm -rf "$tmp"
+}
+
 # -------------------------------------------------------------------- NVIDIA
 # Si hay una gráfica NVIDIA se instala su driver oficial (RPM Fusion).
 # Con Secure Boot activado, el driver hay que firmarlo con una clave propia
@@ -891,6 +923,7 @@ case "${1:-}" in
         repo_quickshell
         instalar_paquetes
         cliphist_si_falta
+        instalar_yazi
         repo_flathub
         apps_artcraft
         drivers_nvidia

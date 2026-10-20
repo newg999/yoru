@@ -76,7 +76,10 @@ Panel {
         {id: "noche", icono: "󰖔", texto: "Noche"}
     ]
     property string consulta: "populares"   // un tema o lo que se haya escrito
-    property var nuevos: []          // [{id, url, miniatura, resolucion, megas, bajado}]
+    // Los resultados: {ident, url, miniatura, resolucion, megas, bajado}.
+    // Un ListModel y no una lista: al añadir una página se añaden filas y la
+    // rejilla se queda donde estabas (con una lista nueva entera, volvía arriba)
+    ListModel { id: nuevos }
     property int pagina: 0
     property int ultima: 1
     property string error: ""
@@ -87,7 +90,7 @@ Panel {
         if (consulta === "")
             return;
         panel.consulta = consulta;
-        nuevos = [];
+        nuevos.clear();
         pagina = 0;
         ultima = 1;
         error = "";
@@ -126,8 +129,13 @@ Panel {
                     return;
                 }
                 // Sin repetidos (las listas de populares se mueven entre páginas)
-                const vistos = new Set(panel.nuevos.map(f => f.id));
-                panel.nuevos = panel.nuevos.concat(r.fondos.filter(f => !vistos.has(f.id)));
+                const vistos = new Set();
+                for (let i = 0; i < nuevos.count; i++)
+                    vistos.add(nuevos.get(i).ident);
+                for (const f of r.fondos)
+                    if (!vistos.has(f.id))
+                        nuevos.append({ident: f.id, url: f.url, miniatura: f.miniatura,
+                                       resolucion: f.resolucion, megas: f.megas, bajado: f.bajado});
                 panel.pagina = r.pagina;
                 panel.ultima = r.ultima;
             }
@@ -145,7 +153,9 @@ Panel {
                     panel.error = "No se pudo bajar el fondo";
                     return;
                 }
-                panel.nuevos = panel.nuevos.map(f => f.id === id ? Object.assign({}, f, {bajado: true}) : f);
+                for (let i = 0; i < nuevos.count; i++)
+                    if (nuevos.get(i).ident === id)
+                        nuevos.setProperty(i, "bajado", true);
                 panel.poner({ruta});
                 leer.running = true;
             }
@@ -158,7 +168,7 @@ Panel {
             // qs -c yoru ipc call panel alternar fondos descubrir
             if (Paneles.seccion === "descubrir") {
                 vista = "descubrir";
-                if (nuevos.length === 0)
+                if (nuevos.count === 0)
                     buscar(consulta);
             }
             cargando = fondos.length === 0;
@@ -216,7 +226,7 @@ Panel {
             onElegir: id => {
                 panel.vista = id;
                 if (id === "descubrir") {
-                    if (panel.nuevos.length === 0)
+                    if (nuevos.count === 0)
                         panel.buscar(panel.consulta);
                     busqueda.forceActiveFocus();
                 } else {
@@ -437,13 +447,13 @@ Panel {
             clip: true
             cellWidth: Math.floor(width / 4)
             cellHeight: Math.round(cellWidth * 10 / 16)
-            model: panel.nuevos
+            model: nuevos
             boundsBehavior: Flickable.StopAtBounds
             // Cerca del final, la página siguiente
             onContentYChanged: if (contentHeight > 0 && contentY + height > contentHeight - cellHeight) panel.mas()
 
             Texto {
-                visible: panel.nuevos.length === 0
+                visible: nuevos.count === 0
                 anchors.centerIn: parent
                 width: parent.width - 40
                 horizontalAlignment: Text.AlignHCenter
@@ -457,8 +467,9 @@ Panel {
 
             delegate: Item {
                 id: nuevo
-                required property var modelData
-                readonly property bool bajandolo: panel.bajando === modelData.id
+                required property var model
+                readonly property var modelData: model
+                readonly property bool bajandolo: panel.bajando === modelData.ident
                 width: descubiertos.cellWidth
                 height: descubiertos.cellHeight
 
@@ -527,7 +538,7 @@ Panel {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: panel.bajar(nuevo.modelData)
+                    onClicked: panel.bajar({id: nuevo.modelData.ident, url: nuevo.modelData.url})
                 }
             }
         }
@@ -537,9 +548,9 @@ Panel {
             leftPadding: 4
             width: parent.width
             elide: Text.ElideRight
-            text: (panel.error !== "" && panel.nuevos.length > 0 ? panel.error + "  ·  " : "")
+            text: (panel.error !== "" && nuevos.count > 0 ? panel.error + "  ·  " : "")
                 + "<font color='" + Tema.gris + "'>De wallhaven.cc · clic lo baja y lo pone (queda en Mis fondos)"
-                + (buscador.running && panel.nuevos.length > 0 ? "  ·  cargando más…" : "") + "</font>"
+                + (buscador.running && nuevos.count > 0 ? "  ·  cargando más…" : "") + "</font>"
             textFormat: Text.StyledText
             font.pixelSize: 11
         }

@@ -98,9 +98,16 @@ zsh                       # la shell de la terminal (config/zsh/zshrc)
 eza                       # ls con iconos y colores (alias ls / ll)
 bat                       # cat con colores (alias cat)
 zoxide                    # z <carpeta>: saltar a carpetas donde ya estuviste
+fd-find                   # buscar archivos por nombre (Yazi: tecla s)
+ripgrep                   # buscar texto dentro de archivos (rg; Yazi: tecla S)
+fzf                       # buscador interactivo (Yazi: tecla z)
+jq                        # vista previa de JSON (Yazi)
+7zip                      # vista previa y extracción de comprimidos (Yazi)
+poppler-utils             # vista previa de PDF (Yazi)
 wget                      # descargar archivos desde la terminal
 fontconfig                # fc-cache
 git
 curl
 tar
 xz
+unzip                     # descomprimir .zip (el instalador lo usa para Yazi)
