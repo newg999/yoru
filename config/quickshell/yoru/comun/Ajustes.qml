@@ -30,6 +30,9 @@ Singleton {
     property alias opacidadIslas: datos.opacidadIslas
     property alias opacidadPaneles: datos.opacidadPaneles
     property alias letra: datos.letra                 // texto de la barra (px)
+    property alias fuente: datos.fuente               // tipo de letra de todo Yoru
+    property alias luzNocturna: datos.luzNocturna     // "apagada" · "auto" · "siempre"
+    property alias calidez: datos.calidez             // K de la luz nocturna
     property alias desenfoque: datos.desenfoque       // fondo borroso tras las islas
     property alias bordes: datos.bordes               // línea alrededor de islas y paneles
     property alias animaciones: datos.animaciones
@@ -43,6 +46,7 @@ Singleton {
         datos.opacidadIslas = 0.45;
         datos.opacidadPaneles = 0.90;
         datos.letra = 13;
+        datos.fuente = "JetBrainsMono Nerd Font";
         datos.desenfoque = true;
         datos.bordes = true;
         datos.animaciones = true;
@@ -112,6 +116,9 @@ window-rule {
             property real opacidadIslas: 0.45
             property real opacidadPaneles: 0.90
             property int letra: 13
+            property string fuente: "JetBrainsMono Nerd Font"
+            property string luzNocturna: "apagada"
+            property int calidez: 4000
             property bool desenfoque: true
             property bool bordes: true
             property bool animaciones: true

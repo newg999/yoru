@@ -1,7 +1,7 @@
 // ============================================================================
 //  Panel central — se abre al pulsar la música, el reloj o el clima
 //
-//  Pestañas: Multimedia · Resumen · Clima
+//  Pestañas: Multimedia · Resumen · Clima · Ajustes
 //
 //    Resumen:  ┌──────┬──────────────┬──────────────┐
 //              │ hora │ clima        │ usuario      │
@@ -12,6 +12,8 @@
 //              └──────┴─────────────────┴───────────┘
 //    Multimedia: lo que suena, en grande (reproductor, salida, volumen)
 //    Clima:      ahora, próximas horas y los 7 días
+//    Ajustes:    tema, fondo, barra, aspecto, pantallas y ratón
+//                (PestanaAjustes.qml, con sus propias pestañas)
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -23,7 +25,9 @@ Panel {
     lado: "centro"
     ancho: 780
 
-    readonly property string pestana: ["multimedia", "clima"].includes(Paneles.seccion) ? Paneles.seccion : "resumen"
+    readonly property string pestana: ["multimedia", "clima"].includes(Paneles.seccion) ? Paneles.seccion
+        : Paneles.seccionesAjustes.includes(Paneles.seccion) ? "ajustes"
+        : "resumen"
     onAbiertoChanged: {
         if (abierto) {
             calendario.volverAHoy();
@@ -49,7 +53,8 @@ Panel {
                 model: [
                     {id: "multimedia", icono: "󰝚", texto: "Multimedia"},
                     {id: "resumen", icono: "󰕮", texto: "Resumen"},
-                    {id: "clima", icono: "󰖐", texto: "Clima"}
+                    {id: "clima", icono: "󰖐", texto: "Clima"},
+                    {id: "ajustes", icono: "󰒓", texto: "Ajustes"}
                 ]
                 Rectangle {
                     id: pestana
@@ -78,7 +83,7 @@ Panel {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: Paneles.seccion = pestana.modelData.id
+                        onClicked: Paneles.seccion = pestana.modelData.id === "ajustes" ? Paneles.ultimoAjuste : pestana.modelData.id
                     }
                 }
             }
@@ -290,6 +295,14 @@ Panel {
         // --------------------------------------------------------- Clima
         PestanaClima {
             visible: panel.pestana === "clima"
+            width: parent.width
+        }
+
+        // ------------------------------------------------------- Ajustes
+        PestanaAjustes {
+            visible: panel.pestana === "ajustes"
+            abierto: panel.abierto && visible
+            pantalla: panel.modelData
             width: parent.width
         }
     }

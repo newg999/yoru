@@ -21,6 +21,7 @@ import Quickshell.Io
 import qs.comun
 import qs.barra
 import qs.paneles
+import qs.bloqueo
 
 ShellRoot {
     // Una barra y un juego de paneles por pantalla
@@ -43,6 +44,22 @@ ShellRoot {
     }
     Variants {
         model: Quickshell.screens
+        PanelBateria {}
+    }
+    Variants {
+        model: Quickshell.screens
+        PanelUso {}
+    }
+    Variants {
+        model: Quickshell.screens
+        PanelDiscos {}
+    }
+    Variants {
+        model: Quickshell.screens
+        PanelActualizaciones {}
+    }
+    Variants {
+        model: Quickshell.screens
         Lanzador {}
     }
     Variants {
@@ -60,10 +77,6 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
         Fondos {}
-    }
-    Variants {
-        model: Quickshell.screens
-        PanelAjustes {}
     }
     Variants {
         model: Quickshell.screens
@@ -92,8 +105,10 @@ ShellRoot {
     //   qs -c yoru ipc call panel alternar centro resumen     (o clima)
     //   qs -c yoru ipc call panel alternar lanzador ""        (o medio: en mitad de la pantalla)
     //   qs -c yoru ipc call panel alternar monitor procesos   (o rendimiento)
-    //   qs -c yoru ipc call panel alternar apagado ""         (o portapapeles, notificaciones, fondos, tienda, velocidad)
-    //   qs -c yoru ipc call panel alternar ajustes tema       (o fondo, barra, aspecto)
+    //   qs -c yoru ipc call panel alternar uso cpu            (o memoria)
+    //   qs -c yoru ipc call panel alternar apagado ""         (o portapapeles, notificaciones, bateria, fondos, tienda, velocidad)
+    //   qs -c yoru ipc call panel alternar ajustes tema       (o fondo, barra, aspecto, pantallas, raton;
+    //                                                          es la pestaña Ajustes del panel central)
     //   qs -c yoru ipc call panel cerrar
     IpcHandler {
         target: "panel"
@@ -108,6 +123,21 @@ ShellRoot {
             Paneles.cerrar();
         }
     }
+
+    // «No suspender»:  qs -c yoru ipc call despierto alternar
+    IpcHandler {
+        target: "despierto"
+
+        function alternar(): void {
+            Despierto.activo = !Despierto.activo;
+        }
+    }
+
+    // Pantalla de bloqueo (en vez de swaylock): bloqueo/Bloqueo.qml
+    Bloqueo {}
+
+    // Avisos de batería baja (20, 10 y 5 %)
+    AvisoBateria {}
 
     // Teclas de brillo (binds.kdl):  qs -c yoru ipc call brillo subir   (o bajar)
     IpcHandler {

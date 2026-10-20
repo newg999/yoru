@@ -1,5 +1,5 @@
 // ============================================================================
-//  Portapapeles — historial de lo copiado (cliphist), en mitad de la pantalla
+//  Portapapeles — historial de lo copiado (cliphist), bajo su botón de la barra
 //  Atajo: Mod+Alt+V
 //
 //    Escribe para buscar · ↑ ↓ para moverte · Enter copia (pega con Ctrl+V)
@@ -13,7 +13,7 @@ import qs.comun
 Panel {
     id: panel
     nombre: "portapapeles"
-    lado: "medio"
+    lado: "derecha"
     ancho: 640
 
     // Cada entrada: {linea: "id\ttexto" tal cual la da cliphist, texto, imagen}

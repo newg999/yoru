@@ -3,6 +3,7 @@
 //
 //    Opciones {
 //        opciones: [{id: "arriba", icono: "󰞕", texto: "Arriba"}, ...]
+//                   (con «fuente», el texto sale en esa letra)
 //        valor: Ajustes.barra
 //        onElegir: id => Ajustes.barra = id
 //    }
@@ -42,6 +43,7 @@ Row {
                 }
                 Texto {
                     text: boton.modelData.texto
+                    font.family: boton.modelData.fuente ?? Tema.fuente
                     font.pixelSize: 12
                     color: boton.elegido ? Tema.oscuro : Tema.texto
                 }

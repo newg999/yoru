@@ -1,5 +1,5 @@
 // ============================================================================
-//  Apagado — menú de sesión en mitad de la pantalla (Mod+Shift+BackSpace)
+//  Apagado — menú de sesión bajo su botón de la barra (Mod+Shift+BackSpace)
 //
 //    ↑ ↓ para moverte · Enter para elegir · Esc para cerrar
 //    o la letra subrayada: B bloquear, S suspender, C cerrar sesión,
@@ -15,7 +15,7 @@ import qs.comun
 Panel {
     id: panel
     nombre: "apagado"
-    lado: "medio"
+    lado: "derecha"
     ancho: 340
 
     readonly property var opciones: [

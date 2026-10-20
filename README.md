@@ -32,7 +32,7 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Tema de las apps | `adw-gtk3-dark` (GTK3) · modo oscuro (GTK4) | `install.sh` → `ajustes_gtk` |
 | Tema de las apps Qt | Breeze Dark (`plasma-integration`) | `config/kdeglobals` · `system/environment.d/yoru.conf` |
 
-Tema: **blanco sobre oscuro translúcido**, con barra en islas, menús que salen bajo la barra (y se cierran con un clic fuera) y fondos de naturaleza y paisajes anime sin personajes. El color se reserva para los avisos. Fuente: **JetBrainsMono Nerd Font**.
+Tema: **blanco sobre oscuro translúcido**, con barra en islas, menús que salen bajo la barra (y se cierran con un clic fuera) y fondos de naturaleza y paisajes anime sin personajes. El color se reserva para los avisos. Fuente: **JetBrainsMono Nerd Font** (se cambia en Ajustes › Aspecto; los iconos salen siempre de ella).
 
 ## Instalación
 
@@ -151,7 +151,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 
 | Quiero cambiar… | Archivo |
 |---|---|
-| Tema, barra, dock, transparencias, esquinas (también las de las ventanas)… | Ajustes (`Mod+Alt+T`, o 󰒓 en la barra, junto al wifi); se guardan en `~/.local/state/yoru/ajustes.json` |
+| Tema, barra, dock, transparencias, esquinas (también las de las ventanas)… | Ajustes (`Mod+Alt+T`, o la pestaña Ajustes del panel central); se guardan en `~/.local/state/yoru/ajustes.json` |
 | Colores de todo el escritorio | `tema/blanco.json` y después `yoru tema blanco`, o una paleta nueva en `tema/paletas/` |
 | Atajos | `config/niri/binds.kdl` |
 | Separación entre ventanas, anchos | `config/niri/config.kdl` → `layout` |

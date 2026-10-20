@@ -1,12 +1,15 @@
 // ============================================================================
-//  Ajustes — personalizar Yoru sin tocar archivos (Mod+Alt+T o 󰒓 en la barra)
+//  Ajustes — personalizar Yoru sin tocar archivos
+//  Es una pestaña del panel central (PanelCentral.qml): se abre con
+//  Mod+Alt+T o desde las pestañas de ese panel
 //
 //  Pestañas: Tema · Fondo · Barra y dock · Aspecto · Pantallas · Ratón
 //
 //    Tema:    paletas de colores (las de «yoru tema»: Yoru, del fondo, Nord...)
 //    Fondo:   el fondo actual, elegir otro o pasar al siguiente
 //    Barra:   arriba o a la izquierda, qué islas se ven y cuándo sale el dock
-//    Aspecto: esquinas, transparencias, letra, desenfoque y animaciones
+//    Aspecto: esquinas, transparencias, letra (tamaño y tipo), desenfoque, animaciones
+//             y luz nocturna
 //    Pantallas: colocar los monitores arrastrándolos, resolución y escala
 //             (PestanaPantallas.qml; se guarda en niri/local.kdl)
 //    Ratón:   velocidad, rueda, touchpad y tamaño del cursor
@@ -21,15 +24,16 @@ import Quickshell.Io
 import Quickshell.Widgets
 import qs.comun
 
-Panel {
+Item {
     id: panel
-    nombre: "ajustes"
-    lado: "medio"
-    ancho: 760
+
+    property bool abierto: false      // a la vista (panel abierto y en esta pestaña)
+    property var pantalla: null       // la del panel central que la contiene
+    implicitHeight: contenido.height
 
     readonly property string casa: Quickshell.env("HOME")
     readonly property string yoru: casa + "/.local/bin/yoru"
-    readonly property string pestana: ["tema", "fondo", "barra", "aspecto", "pantallas", "raton"].includes(Paneles.seccion) ? Paneles.seccion : "tema"
+    readonly property string pestana: Paneles.seccionesAjustes.includes(Paneles.seccion) ? Paneles.seccion : "tema"
 
     property var temas: []            // [{id, nombre, claro, colores}] de «yoru tema --lista»
     property string aplicando: ""     // tema que se está generando
@@ -85,6 +89,7 @@ Panel {
     }
 
     Column {
+        id: contenido
         width: parent.width
         spacing: 16
 
@@ -303,7 +308,7 @@ Panel {
                 ]
                 onElegir: id => {
                     if (id === "elegir")
-                        Paneles.alternar("fondos", panel.modelData, "");
+                        Paneles.alternar("fondos", panel.pantalla, "");
                     else
                         Niri.lanzar([panel.casa + "/.config/niri/scripts/wallpaper.sh", "next"]);
                 }
@@ -472,6 +477,35 @@ Panel {
                 mostrado: Ajustes.letra + " px"
                 onMovido: nuevo => Ajustes.letra = 11 + Math.round(nuevo * 5)
             }
+            // Tipo de letra: cada botón sale escrito en la suya. Solo las
+            // que estén instaladas (en otro equipo puede faltar alguna)
+            Item {
+                width: parent.width
+                height: 40
+                Texto {
+                    id: etiquetaLetra
+                    anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
+                    width: 200
+                    text: "Tipo de letra"
+                    font.pixelSize: 13
+                }
+                Opciones {
+                    anchors {
+                        left: etiquetaLetra.right; leftMargin: 8
+                        right: parent.right; rightMargin: 12
+                        verticalCenter: parent.verticalCenter
+                    }
+                    opciones: [
+                        {id: "JetBrainsMono Nerd Font", texto: "JetBrains"},
+                        {id: "Adwaita Sans", texto: "Adwaita"},
+                        {id: "Noto Sans", texto: "Noto"},
+                        {id: "Cantarell", texto: "Cantarell"},
+                        {id: "Montserrat", texto: "Montserrat"}
+                    ].filter(f => Qt.fontFamilies().includes(f.id)).map(f => Object.assign(f, {fuente: f.id}))
+                    valor: Ajustes.fuente
+                    onElegir: id => Ajustes.fuente = id
+                }
+            }
 
             Interruptor {
                 width: parent.width
@@ -493,6 +527,50 @@ Panel {
                 detalle: "Paneles, islas y botones se mueven con suavidad"
                 activo: Ajustes.animaciones
                 onCambiar: v => Ajustes.animaciones = v
+            }
+
+            // Luz nocturna (comun/LuzNocturna.qml, con wlsunset)
+            Item {
+                width: parent.width
+                height: 40
+                Texto {
+                    id: etiquetaLuz
+                    anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
+                    width: 200
+                    text: "Luz nocturna"
+                    font.pixelSize: 13
+                }
+                Opciones {
+                    anchors {
+                        left: etiquetaLuz.right; leftMargin: 8
+                        right: parent.right; rightMargin: 12
+                        verticalCenter: parent.verticalCenter
+                    }
+                    opciones: [
+                        {id: "apagada", icono: "󰖨", texto: "Apagada"},
+                        {id: "auto", icono: "󰖚", texto: "Al anochecer"},
+                        {id: "siempre", icono: "󰖔", texto: "Siempre"}
+                    ]
+                    valor: Ajustes.luzNocturna
+                    onElegir: id => Ajustes.luzNocturna = id
+                }
+            }
+            // Calidez: de 5500 K (poco) a 2500 K (muy anaranjada)
+            Regulador {
+                visible: Ajustes.luzNocturna !== "apagada"
+                titulo: "Calidez"
+                valor: (5500 - Ajustes.calidez) / 3000
+                mostrado: Ajustes.calidez + " K"
+                onMovido: nuevo => Ajustes.calidez = 5500 - Math.round(nuevo * 30) * 100
+            }
+            Texto {
+                visible: !LuzNocturna.instalada && Ajustes.luzNocturna !== "apagada"
+                width: parent.width
+                leftPadding: 12
+                text: "Falta wlsunset: instálalo con «sudo dnf install wlsunset»"
+                font.pixelSize: 11
+                font.bold: false
+                color: Tema.amarillo
             }
 
             Item { width: 1; height: 6 }

@@ -1,6 +1,6 @@
 // ============================================================================
-//  Ajustes, portapapeles, notificaciones y apagado, al final de la barra
-//    󰒓  = ajustes: tema, fondo, barra, pantallas, ratón... (Mod+Alt+T)
+//  Portapapeles, notificaciones y apagado, cada uno en su isla
+//  (cual: "portapapeles" | "notificaciones" | "apagado")
 //    󰅌  = historial del portapapeles (Mod+Alt+V)
 //    󰂚  = panel de notificaciones (Mod+Alt+M), con un punto rojo si hay
 //         clic derecho = no molestar (󰂛) · clic central = borrarlas todas
@@ -13,28 +13,25 @@ import qs.comun
 Isla {
     id: isla
     required property var pantalla
-    relleno: 5
+    property string cual: "notificaciones"
+    relleno: 3
 
-    ayuda: (Notificaciones.cuantas === 0 ? "Sin notificaciones"
+    ayuda: cual === "portapapeles" ? "Portapapeles  ·  " + Tema.suave("Mod+Alt+V")
+        : cual === "apagado" ? "Apagar, reiniciar, cerrar sesión…  ·  " + Tema.suave("Mod+Shift+BackSpace")
+        : (Notificaciones.cuantas === 0 ? "Sin notificaciones"
             : `<b>${Notificaciones.cuantas}</b> notificaci${Notificaciones.cuantas === 1 ? "ón" : "ones"}`)
-        + (Notificaciones.noMolestar ? "  ·  no molestar" : "")
-        + "<br>" + Tema.suave("Campana: clic dcho no molestar · clic central borrar todas")
-        + "<br>" + Tema.suave("󰒓 Ajustes: tema, fondo, barra, pantallas, ratón...  ·  Mod+Alt+T")
-        + "<br>" + Tema.suave("󰐥 Apagar, reiniciar, cerrar sesión…  ·  Mod+Shift+BackSpace")
+          + (Notificaciones.noMolestar ? "  ·  no molestar" : "")
+          + "<br>" + Tema.suave("Clic dcho: no molestar · clic central: borrarlas todas")
 
     Modulo {
-        icono: "󰒓"
-        resaltado: Paneles.esta("ajustes", isla.pantalla)
-        onClic: Paneles.alternar("ajustes", isla.pantalla, "")
-    }
-
-    Modulo {
+        visible: isla.cual === "portapapeles"
         icono: "󰅌"
         resaltado: Paneles.esta("portapapeles", isla.pantalla)
         onClic: Paneles.alternar("portapapeles", isla.pantalla, "")
     }
 
     Modulo {
+        visible: isla.cual === "notificaciones"
         icono: Notificaciones.noMolestar ? "󰂛" : "󰂚"
         punto: Notificaciones.cuantas > 0 && !Notificaciones.noMolestar
         apagado: Notificaciones.noMolestar
@@ -50,6 +47,7 @@ Isla {
     }
 
     Modulo {
+        visible: isla.cual === "apagado"
         icono: "󰐥"
         resaltado: Paneles.esta("apagado", isla.pantalla)
         onClic: Paneles.alternar("apagado", isla.pantalla, "")

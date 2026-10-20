@@ -14,16 +14,35 @@ Singleton {
     property var pantalla: null      // ShellScreen donde se abrió
     property string seccion: ""      // dentro del panel: "wifi", "bluetooth", "audio"...
 
+    // Ajustes es una pestaña del panel central: «ajustes» abre «centro» en
+    // una de estas secciones (la última que se vio, si no se dice cuál)
+    readonly property var seccionesAjustes: ["tema", "fondo", "barra", "aspecto", "pantallas", "raton"]
+    property string ultimoAjuste: "tema"
+    onSeccionChanged: if (seccionesAjustes.includes(seccion)) ultimoAjuste = seccion
+    function enAjustes() {
+        return abierto === "centro" && seccionesAjustes.includes(seccion);
+    }
+
     // ¿Está abierto este panel en esta pantalla? (y en esta sección, si se da)
     // Lo usa la barra para dejar iluminado el botón que lo abrió: al abrirse,
     // el panel tapa la barra y el ratón deja de estar «encima» del botón.
     function esta(nombre, enPantalla, enSeccion) {
+        if (nombre === "ajustes")
+            return enAjustes() && pantalla === enPantalla && (!enSeccion || seccion === enSeccion);
         return abierto === nombre && pantalla === enPantalla
             && (enSeccion === undefined || seccion === enSeccion);
     }
 
     // Abre el panel (o lo cierra si ya estaba abierto en esa misma sección)
     function alternar(nombre, enPantalla, enSeccion) {
+        if (nombre === "ajustes") {
+            if (!enSeccion && enAjustes() && pantalla === enPantalla) {
+                cerrar();
+                return;
+            }
+            nombre = "centro";
+            enSeccion = enSeccion || ultimoAjuste;
+        }
         if (abierto === nombre && pantalla === enPantalla && seccion === (enSeccion ?? "")) {
             cerrar();
             return;

@@ -71,7 +71,9 @@ Singleton {
     }
 
     // --------------------------------------------------------------- Fuente
-    readonly property string fuente: "JetBrainsMono Nerd Font"
+    // La elegida en Ajustes › Aspecto. Los iconos salen siempre de la Nerd
+    // Font: si la letra no los tiene, Qt los busca en ella.
+    readonly property string fuente: Ajustes.fuente
     readonly property int letra: Ajustes.letra   // texto normal de la barra
     readonly property int icono: 16        // iconos solos (wifi, bluetooth...)
 
@@ -82,9 +84,16 @@ Singleton {
     readonly property int altoBarra: 30      // islas de la barra de arriba
     readonly property int anchoBarra: 40     // islas de la barra de la izquierda
     readonly property int grosor: Ajustes.vertical ? anchoBarra : altoBarra
-    readonly property int margenBarra: 2     // de la barra a su borde
-    readonly property int margenLados: 2
-    readonly property int hueco: margenBarra + grosor + 8
+    // A los lados, la barra deja los «gaps» de niri (layout en config.kdl):
+    // así empieza y acaba donde las ventanas (si cambias uno, cambia el otro).
+    // En alto va más apretada: poco margen al borde y a las ventanas.
+    readonly property int gaps: 12
+    readonly property int margenLados: gaps
+    readonly property int margenBarra: 6     // de la barra a su borde
+    readonly property int aVentanas: 6       // de la barra a las ventanas
+    // niri ya pone «gaps» tras la zona reservada: se reserva eso de menos
+    readonly property int zonaBarra: margenBarra + grosor + aVentanas - gaps
+    readonly property int hueco: margenBarra + grosor + aVentanas
     readonly property int separacion: 6      // entre islas
     readonly property int radio: Ajustes.radio
     // Grosor del borde de islas, paneles y ayudas: 0 si se quitan en Ajustes.

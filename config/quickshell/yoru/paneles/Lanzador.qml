@@ -8,11 +8,15 @@
 //
 //  Las apps que más abres salen primero (se cuentan en usos.json, en
 //  ~/.local/state/quickshell/.../).
+//
+//  Al buscar salen también los ajustes de Yoru («ajustes», «settings»,
+//  «wifi», «pantallas», «letra»...): abren su panel o su pestaña.
 // ============================================================================
 import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
+import Quickshell.Services.UPower
 import qs.comun
 
 Panel {
@@ -35,9 +39,36 @@ Panel {
         }
     }
 
+    // Ajustes de Yoru que se pueden buscar: [glifo, nombre, descripción,
+    // palabras clave, panel, sección]. Solo salen al escribir algo.
+    readonly property var ajustes: [
+        ["󰒓", "Ajustes de Yoru", "Tema, fondo, barra, aspecto, pantallas y ratón", "ajustes settings configuración configuracion preferencias opciones", "ajustes", ""],
+        ["󰏘", "Tema y colores", "Ajustes › Tema", "tema theme colores colors paleta oscuro claro dark light", "ajustes", "tema"],
+        ["󰸉", "Fondo de pantalla", "Ajustes › Fondo", "fondo wallpaper background imagen", "ajustes", "fondo"],
+        ["󰕮", "Barra y dock", "Ajustes › Barra y dock", "barra bar dock panel islas", "ajustes", "barra"],
+        ["󰙵", "Aspecto", "Ajustes › Aspecto: esquinas, transparencias, letra, animaciones", "aspecto appearance letra fuente font tipografía tipografia esquinas transparencia opacidad desenfoque blur bordes animaciones", "ajustes", "aspecto"],
+        ["󰍹", "Pantallas", "Ajustes › Pantallas: colocarlas, resolución y escala", "pantallas pantalla monitores monitor displays display resolución resolucion escala hz frecuencia", "ajustes", "pantallas"],
+        ["󰖔", "Luz nocturna", "Ajustes › Aspecto: pantalla más cálida por la noche", "luz nocturna night light filtro azul blue cálida calida noche", "ajustes", "aspecto"],
+        ["󰍽", "Ratón y touchpad", "Ajustes › Ratón: velocidad, rueda y cursor", "ratón raton mouse touchpad cursor puntero trackpad", "ajustes", "raton"],
+        ["󰖩", "Wi-Fi y red", "Redes, VPN y cable", "wifi wi-fi red network internet ethernet cable vpn wireguard", "conexion", "wifi"],
+        ["󰂯", "Bluetooth", "Conectar auriculares, ratones...", "bluetooth auriculares cascos", "conexion", "bluetooth"],
+        ["󰕾", "Sonido", "Salida de audio y volumen", "sonido audio volumen sound altavoces salida", "conexion", "audio"],
+        ["󰍬", "Micrófono", "Entrada de audio", "micrófono microfono micro mic entrada", "conexion", "micro"],
+        ["󰁹", "Batería y energía", "Salud, consumo y perfil de energía", "batería bateria battery energía energia power perfil ahorro rendimiento", "bateria", ""],
+        ["󰚰", "Actualizaciones", "Actualizar Fedora y las apps", "actualizar actualizaciones updates update upgrade dnf flatpak", "actualizaciones", ""],
+        ["󰕓", "Memorias USB y discos", "Abrir o expulsar los conectados", "usb pendrive memoria disco externo expulsar tarjeta sd", "discos", ""],
+        ["󰨇", "Monitor del sistema", "Procesos, CPU, memoria, red y disco", "monitor procesos tareas task manager administrador cpu memoria ram rendimiento", "monitor", "procesos"],
+        ["󰅶", "No suspender", "Centro de control: que no se bloquee ni se apague la pantalla", "no suspender cafeína cafeina caffeine despierto inhibir pantalla encendida presentación", "conexion", ""],
+        ["󰂚", "Notificaciones", "Historial y no molestar", "notificaciones notifications no molestar", "notificaciones", ""],
+        ["󰅌", "Portapapeles", "Historial de lo copiado", "portapapeles clipboard copiado pegar", "portapapeles", ""],
+        ["󰐥", "Apagar o reiniciar", "Bloquear, suspender, cerrar sesión...", "apagar reiniciar suspender bloquear cerrar sesión sesion power shutdown reboot logout", "apagado", ""]
+    ].filter(a => a[4] !== "bateria" || (UPower.displayDevice?.isLaptopBattery ?? false))
+     .map(a => ({ajuste: true, glifo: a[0], name: a[1], comment: a[2], keywords: a[3].split(" "), panel: a[4], seccion: a[5], id: "yoru:" + a[1]}))
+
     readonly property var resultados: {
         const q = busqueda.text.trim().toLowerCase();
-        const apps = DesktopEntries.applications.values.filter(a => !a.noDisplay);
+        const apps = DesktopEntries.applications.values.filter(a => !a.noDisplay)
+            .concat(q === "" ? [] : panel.ajustes);
         const puntuar = a => {
             if (q === "")
                 return 1;
@@ -51,13 +82,19 @@ Panel {
         return apps
             .map(a => ({app: a, puntos: puntuar(a), usos: panel.usos[a.id] ?? 0}))
             .filter(r => r.puntos > 0)
-            .sort((x, y) => (y.puntos - x.puntos) || (y.usos - x.usos) || x.app.name.localeCompare(y.app.name))
+            .sort((x, y) => (y.puntos - x.puntos) || ((y.app.ajuste ?? false) - (x.app.ajuste ?? false))
+                || (y.usos - x.usos) || x.app.name.localeCompare(y.app.name))
             .map(r => r.app);
     }
 
     function abrir(app) {
         if (!app)
             return;
+        // Un ajuste de Yoru: se abre su panel (en vez del lanzador)
+        if (app.ajuste) {
+            Paneles.alternar(app.panel, panel.modelData, app.seccion);
+            return;
+        }
         const u = Object.assign({}, usos);
         u[app.id] = (u[app.id] ?? 0) + 1;
         usos = u;
@@ -130,7 +167,7 @@ Panel {
                 Texto {
                     visible: busqueda.text === ""
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "Buscar apps…"
+                    text: "Buscar apps y ajustes…"
                     font.bold: false
                     font.pixelSize: 14
                     color: Tema.gris
@@ -140,7 +177,7 @@ Panel {
 
         Texto {
             leftPadding: 4
-            text: "󰀻  Aplicaciones  <font color='" + Tema.gris + "'>" + panel.resultados.length + "</font>"
+            text: "󰀻  " + (busqueda.text.trim() === "" ? "Aplicaciones" : "Apps y ajustes") + "  <font color='" + Tema.gris + "'>" + panel.resultados.length + "</font>"
             textFormat: Text.StyledText
             font.pixelSize: 11
             color: Tema.gris
@@ -166,7 +203,7 @@ Panel {
             Texto {
                 visible: panel.resultados.length === 0
                 anchors.centerIn: parent
-                text: "Ninguna app se llama así"
+                text: "No hay nada que se llame así"
                 font.bold: false
                 color: Tema.gris
             }
@@ -191,11 +228,25 @@ Panel {
 
                 IconImage {
                     id: iconoApp
+                    visible: !fila.modelData.ajuste
                     anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
                     implicitSize: 34
                     // Si la app no trae icono (o no existe en el tema), uno genérico
-                    source: Quickshell.iconPath(fila.modelData.icon, true) || Quickshell.iconPath("application-x-executable")
+                    source: fila.modelData.ajuste ? "" : Quickshell.iconPath(fila.modelData.icon, true) || Quickshell.iconPath("application-x-executable")
                     asynchronous: true
+                }
+                // Los ajustes de Yoru llevan su icono de la barra
+                Rectangle {
+                    visible: fila.modelData.ajuste ?? false
+                    anchors.centerIn: iconoApp
+                    width: 34; height: 34; radius: 10
+                    color: fila.elegida ? Tema.sombra(0.15) : Tema.caja
+                    Texto {
+                        anchors.centerIn: parent
+                        text: fila.modelData.glifo ?? ""
+                        font.pixelSize: 18
+                        color: fila.elegida ? Tema.oscuro : Tema.texto
+                    }
                 }
                 Column {
                     anchors {

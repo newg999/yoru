@@ -2,11 +2,12 @@
 //  Barra — una por pantalla. La barra en sí es invisible: solo se ven las islas.
 //
 //  Arriba (lo normal):
-//    [escritorios] [título o apps abiertas]    [música] [reloj] [clima]    [bandeja] [recursos] [conexión] [campana]
+//    [escritorios] [título o apps abiertas]    [música] [reloj] [clima]
+//        [bandeja] [󰅶 no suspender, si está] [actualizaciones, si hay] [usb, si hay] [portapapeles] [cpu] [memoria] [notificaciones] [batería] [conexión] [apagado]
 //
 //  A la izquierda (Ajustes → Barra y dock), lo mismo en columna:
 //    arriba escritorios y ventana · en medio música, reloj y clima ·
-//    abajo bandeja, recursos, conexión y campana
+//    abajo bandeja, portapapeles, cpu, memoria... hasta el apagado
 //
 //  El reloj va siempre en el centro exacto; la música y el clima, a sus lados.
 //  Si no caben sin chocar con los grupos de los lados (pantallas pequeñas),
@@ -40,7 +41,7 @@ PanelWindow {
     }
     implicitHeight: Tema.margenBarra + Tema.altoBarra
     implicitWidth: Tema.margenBarra + Tema.anchoBarra
-    exclusiveZone: Tema.margenBarra + Tema.grosor
+    exclusiveZone: Tema.zonaBarra
     color: "transparent"
     WlrLayershell.namespace: "yoru-barra"
     WlrLayershell.layer: WlrLayer.Top
@@ -48,6 +49,12 @@ PanelWindow {
     // Escondida: sin zona de clic, para que los clics lleguen al overview
     mask: Niri.overview ? vacia : null
     Region { id: vacia }
+
+    // «No suspender» (Centro de control): swayidle no hace nada mientras
+    IdleInhibitor {
+        window: barra
+        enabled: Despierto.activo
+    }
 
     // Desenfoque detrás de cada isla (la barra en sí es transparente: si se
     // desenfocara entera, se vería una franja borrosa de lado a lado).
@@ -62,9 +69,16 @@ PanelWindow {
         Region { item: reloj; radius: Tema.radio }
         Region { item: clima; radius: Tema.radio }
         Region { item: bandeja; radius: Tema.radio }
-        Region { item: recursos; radius: Tema.radio }
+        Region { item: cafe; radius: Tema.radio }
+        Region { item: novedades; radius: Tema.radio }
+        Region { item: discos; radius: Tema.radio }
+        Region { item: portapapeles; radius: Tema.radio }
+        Region { item: cpu; radius: Tema.radio }
+        Region { item: memoria; radius: Tema.radio }
+        Region { item: notificaciones; radius: Tema.radio }
+        Region { item: bateria; radius: Tema.radio }
         Region { item: conexion; radius: Tema.radio }
-        Region { item: campana; radius: Tema.radio }
+        Region { item: apagado; radius: Tema.radio }
     }
 
     // Un grupo de islas: en fila arriba, en columna a la izquierda
@@ -259,9 +273,16 @@ PanelWindow {
             y: barra.vertical ? Math.round(contenido.height - largo) : contenido.centrado(height)
 
             Bandeja { id: bandeja; ventana: barra; oculta: !Ajustes.islaBandeja }
-            Recursos { id: recursos; pantalla: barra.modelData; oculta: !Ajustes.islaRecursos }
+            Cafe { id: cafe }
+            Novedades { id: novedades; pantalla: barra.modelData }
+            Usb { id: discos; pantalla: barra.modelData }
+            Campana { id: portapapeles; cual: "portapapeles"; pantalla: barra.modelData }
+            Recursos { id: cpu; cual: "cpu"; pantalla: barra.modelData; oculta: !Ajustes.islaRecursos }
+            Recursos { id: memoria; cual: "memoria"; pantalla: barra.modelData; oculta: !Ajustes.islaRecursos }
+            Campana { id: notificaciones; cual: "notificaciones"; pantalla: barra.modelData }
+            Bateria { id: bateria; pantalla: barra.modelData }
             Conexion { id: conexion; pantalla: barra.modelData }
-            Campana { id: campana; pantalla: barra.modelData }
+            Campana { id: apagado; cual: "apagado"; pantalla: barra.modelData }
         }
     }
 }
