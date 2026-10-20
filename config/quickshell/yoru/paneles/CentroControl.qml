@@ -4,6 +4,8 @@
 //    ┌──────────────────────────────────┐
 //    │ [󰖩 Wi-Fi     󰅀] [󰂯 Bluetooth 󰅀]│  icono = on/off · resto = su lista
 //    │                                  │  (con cable: 󰈀 Ethernet; el wifi, en su lista)
+//    │ [󰖔 Luz noct.  ] [󰂚 No molestar ]│  icono = on/off · resto = sus ajustes
+//    │ [󰅶 No suspend.] [󰀝 Modo avión  ]│
 //    │ 󰕾 ━━━━━━━━━○──────── 45%  󰅀     │  volumen (󰅀 = elegir salida)
 //    │ 󰍬 ━━━━━○──────────── 60%  󰅀     │  micrófono (󰅀 = elegir micrófono)
 //    │ 󰃠 ━━━━━━━━━━━━○───── 80%        │  brillo (portátil o monitor por DDC)
@@ -84,6 +86,72 @@ Panel {
                 elegida: panel.seccion === "bluetooth"
                 onAlternar: if (panel.adaptador) panel.adaptador.enabled = !panel.adaptador.enabled
                 onElegir: panel.elegir("bluetooth")
+            }
+        }
+
+        // Luz nocturna y no molestar (clic en el resto: sus ajustes)
+        Row {
+            width: parent.width
+            spacing: 10
+
+            Baldosa {
+                width: (parent.width - 10) / 2
+                icono: "󰖔"
+                titulo: "Luz nocturna"
+                detalle: !LuzNocturna.instalada ? "Falta wlsunset"
+                    : Ajustes.luzNocturna === "auto" ? "Al anochecer"
+                    : Ajustes.luzNocturna === "siempre" ? "Siempre" : "Apagada"
+                encendida: LuzNocturna.encendida
+                property string ultimo: "auto"     // el modo al que vuelve al encenderla
+                onAlternar: {
+                    if (LuzNocturna.encendida) {
+                        ultimo = Ajustes.luzNocturna;
+                        Ajustes.luzNocturna = "apagada";
+                    } else {
+                        Ajustes.luzNocturna = ultimo;
+                    }
+                }
+                onElegir: Paneles.alternar("ajustes", panel.modelData, "aspecto")
+            }
+            Baldosa {
+                width: (parent.width - 10) / 2
+                icono: Notificaciones.noMolestar ? "󰂛" : "󰂚"
+                titulo: "No molestar"
+                detalle: Notificaciones.noMolestar ? "Solo avisos urgentes" : "Apagado"
+                encendida: Notificaciones.noMolestar
+                onAlternar: Notificaciones.noMolestar = !Notificaciones.noMolestar
+                onElegir: Paneles.alternar("notificaciones", panel.modelData, "")
+            }
+        }
+
+        // No suspender y modo avión
+        Row {
+            width: parent.width
+            spacing: 10
+
+            Baldosa {
+                width: (parent.width - 10) / 2
+                icono: "󰅶"
+                titulo: "No suspender"
+                detalle: Despierto.activo ? "Activado" : "Apagado"
+                encendida: Despierto.activo
+                onAlternar: Despierto.activo = !Despierto.activo
+                onElegir: Despierto.activo = !Despierto.activo
+            }
+            // Wifi y bluetooth apagados a la vez (al quitarlo, se encienden los dos)
+            Baldosa {
+                readonly property bool avion: !Networking.wifiEnabled && !(panel.adaptador?.enabled ?? false)
+                width: (parent.width - 10) / 2
+                icono: "󰀝"
+                titulo: "Modo avión"
+                detalle: avion ? "Sin wifi ni bluetooth" : "Apagado"
+                encendida: avion
+                onAlternar: {
+                    Networking.wifiEnabled = avion;
+                    if (panel.adaptador)
+                        panel.adaptador.enabled = avion;
+                }
+                onElegir: alternar()
             }
         }
 

@@ -66,6 +66,7 @@ swappy                    # editor de capturas (flechas, texto, difuminar)
 swaybg                    # fondo de pantalla
 swaylock                  # pantalla de bloqueo
 swayidle                  # bloqueo automático por inactividad
+wlsunset                  # luz nocturna (Ajustes › Aspecto)
 kitty                     # terminal
 
 # --- Aplicaciones ------------------------------------------------------------
