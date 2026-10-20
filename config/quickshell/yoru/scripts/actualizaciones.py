@@ -24,6 +24,13 @@ def ejecutar(*orden):
         return ""
 
 
+def dnf_ocupado():
+    """¿Está dnf en marcha (instalando, actualizando, install.sh...)? Entonces
+    no se mira: dnf check-update se quedaría esperando y además le haría
+    esperar a él («Waiting for a lock on the system repository»)."""
+    return subprocess.run(["pgrep", "-x", "dnf|dnf5"], capture_output=True).returncode == 0
+
+
 def contar():
     # «nombre.arquitectura  versión  repositorio» (sin la sección de obsoletos)
     paquetes = []
@@ -49,4 +56,6 @@ def contar():
 
 
 if __name__ == "__main__":
-    print(json.dumps(contar(), ensure_ascii=False))
+    # Sin salida: la barra se queda con la cuenta de antes y mira otra vez luego
+    if not dnf_ocupado():
+        print(json.dumps(contar(), ensure_ascii=False))

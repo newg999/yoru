@@ -82,6 +82,11 @@ comprobar_sistema() {
         error "y vuelve a ejecutar ./install.sh"
         exit 1
     fi
+
+    # La barra mira de vez en cuando si hay actualizaciones (dnf check-update):
+    # si justo está en ello, dnf queda ocupado y cada paso se queda esperando
+    # («Waiting for a lock...»). Se para: ya volverá a mirar más tarde
+    pkill -u "$USER" -f '^dnf5? (check-update|updateinfo)' 2>/dev/null || true
 }
 
 # ------------------------------------------------------- Copias del sistema
