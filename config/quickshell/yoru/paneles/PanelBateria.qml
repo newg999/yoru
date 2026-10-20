@@ -137,7 +137,7 @@ Panel {
         }
 
         Texto {
-            visible: panel.fisica?.healthSupported && panel.fisica.healthPercentage < 50
+            visible: (panel.fisica?.healthSupported ?? false) && panel.fisica.healthPercentage < 50
             width: parent.width
             leftPadding: 4
             text: "La batería está gastada: aguanta mucho menos que nueva."

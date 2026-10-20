@@ -36,6 +36,9 @@ Item {
     property string pista: "Contraseña"
     property string mensaje: ""
     property bool error: false
+    // En rojo hasta que vuelves a escribir (sin tocar «error», que viene de
+    // fuera: asignarlo aquí rompería el enlace y el siguiente fallo no se vería)
+    readonly property bool enRojo: error && campo.text === ""
     property bool ocupada: false              // comprobando la contraseña
     property alias texto: campo.text
     property alias campo: campo
@@ -161,7 +164,7 @@ Item {
             radius: 24
             color: Qt.rgba(cerradura.colorOscuro.r, cerradura.colorOscuro.g, cerradura.colorOscuro.b, 0.55)
             border.width: campo.activeFocus ? 2 : 1
-            border.color: cerradura.error ? cerradura.colorRojo
+            border.color: cerradura.enRojo ? cerradura.colorRojo
                 : campo.activeFocus ? Qt.rgba(cerradura.colorAcento.r, cerradura.colorAcento.g, cerradura.colorAcento.b, 0.8)
                 : Qt.rgba(cerradura.colorAcento.r, cerradura.colorAcento.g, cerradura.colorAcento.b, 0.2)
 
@@ -196,7 +199,6 @@ Item {
                     visible: campo.text !== "" && campo.cursorVisible
                 }
                 onAccepted: if (text !== "") cerradura.enviar(text)
-                onTextChanged: if (text !== "") cerradura.error = false
 
                 Text {
                     anchors.centerIn: parent
@@ -215,7 +217,7 @@ Item {
             height: 20
             horizontalAlignment: Text.AlignHCenter
             text: cerradura.mensaje
-            color: cerradura.error ? cerradura.colorRojo : cerradura.colorGris
+            color: cerradura.enRojo ? cerradura.colorRojo : cerradura.colorGris
             font.family: cerradura.fuente
             font.pixelSize: 13
             elide: Text.ElideRight
