@@ -159,6 +159,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | Esquinas, ventanas flotantes | `config/niri/rules.kdl` |
 | VPN (WireGuard u OpenVPN) | Centro de control → baldosa de red (Wi-Fi o Ethernet) 󰅀 → VPN: un interruptor por cada una y 󰐕 para añadir un `.conf` o `.ovpn` (busca en tu carpeta personal o escribes la ruta). Se guardan en NetworkManager; con una conectada sale un escudo en la barra |
 | Ratón, touchpad y cursor | Ajustes › Ratón (`Mod+Alt+T`): velocidad, rueda, aceleración, zurdos, tocar para hacer clic, tamaño del cursor... También va a `config/niri/local.kdl`, en su propio bloque |
+| Con qué app se abre cada cosa (navegador, música, vídeo, PDF...) | Ajustes › Apps (`Mod+Alt+T`): eliges la app de cada categoría, o escribes una extensión (`.flac`) para un tipo concreto. Se guarda en `~/.config/mimeapps.list` |
 | Monitores y escala | Ajustes › Pantallas (`Mod+Alt+T`): arrástralas para colocarlas, y elige resolución y escala. Se guarda en `config/niri/local.kdl` (no se sube a git); lo que escribas a mano fuera de su bloque se respeta |
 | Pantalla de inicio de sesión | `system/greetd/config.toml` (se copia a `/etc`, vuelve a ejecutar `./install.sh`) |
 | Paquetes que se instalan | `packages.txt` |

@@ -3,7 +3,7 @@
 //  Es una pestaña del panel central (PanelCentral.qml): se abre con
 //  Mod+Alt+T o desde las pestañas de ese panel
 //
-//  Pestañas: Tema · Fondo · Barra y dock · Aspecto · Pantallas · Ratón
+//  Pestañas: Tema · Fondo · Barra y dock · Aspecto · Pantallas · Ratón · Apps
 //
 //    Tema:    paletas de colores (las de «yoru tema»: Yoru, del fondo, Nord...)
 //    Fondo:   el fondo actual, elegir otro o pasar al siguiente
@@ -14,6 +14,7 @@
 //             (PestanaPantallas.qml; se guarda en niri/local.kdl)
 //    Ratón:   velocidad, rueda, touchpad y tamaño del cursor
 //             (PestanaRaton.qml; también en niri/local.kdl)
+//    Apps:    con qué app se abre cada cosa (PestanaApps.qml)
 //
 //  Lo de Barra y Aspecto se guarda en comun/Ajustes.qml; los colores, con
 //  «yoru tema» (tema/aplicar.py), que es quien los genera para todo.
@@ -107,7 +108,8 @@ Item {
                     {id: "barra", icono: "󰕮", texto: "Barra y dock"},
                     {id: "aspecto", icono: "󰙵", texto: "Aspecto"},
                     {id: "pantallas", icono: "󰍹", texto: "Pantallas"},
-                    {id: "raton", icono: "󰍽", texto: "Ratón"}
+                    {id: "raton", icono: "󰍽", texto: "Ratón"},
+                    {id: "apps", icono: "󰀻", texto: "Apps"}
                 ]
                 Rectangle {
                     id: pestana
@@ -591,6 +593,13 @@ Item {
         // --------------------------------------------------------- Ratón
         PestanaRaton {
             visible: panel.pestana === "raton"
+            activa: panel.abierto && visible
+            width: parent.width
+        }
+
+        // ---------------------------------------------- Apps predeterminadas
+        PestanaApps {
+            visible: panel.pestana === "apps"
             activa: panel.abierto && visible
             width: parent.width
         }

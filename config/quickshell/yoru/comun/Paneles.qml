@@ -16,7 +16,7 @@ Singleton {
 
     // Ajustes es una pestaña del panel central: «ajustes» abre «centro» en
     // una de estas secciones (la última que se vio, si no se dice cuál)
-    readonly property var seccionesAjustes: ["tema", "fondo", "barra", "aspecto", "pantallas", "raton"]
+    readonly property var seccionesAjustes: ["tema", "fondo", "barra", "aspecto", "pantallas", "raton", "apps"]
     property string ultimoAjuste: "tema"
     onSeccionChanged: if (seccionesAjustes.includes(seccion)) ultimoAjuste = seccion
     function enAjustes() {
