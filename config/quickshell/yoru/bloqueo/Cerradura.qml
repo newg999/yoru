@@ -17,7 +17,8 @@
 //  (SVG) y no con la Nerd Font: el usuario de la pantalla de inicio no la ve.
 //
 //  ⏻ abre Suspender / Reiniciar / Apagar (señal «energia»). 󰈈 enseña lo
-//  escrito, 󰌌 cambia la distribución del teclado (señal «cambiarTeclado»).
+//  escrito, 󰌌 cambia la distribución del teclado (señal «cambiarTeclado»;
+//  solo sale si hay más de una).
 // ============================================================================
 import QtQuick
 import QtQuick.Effects
@@ -46,7 +47,7 @@ Item {
     // fuera: asignarlo aquí rompería el enlace y el siguiente fallo no se vería)
     readonly property bool enRojo: error && campo.text === ""
     property bool ocupada: false              // comprobando la contraseña
-    property string teclado: ""               // distribución («es»), en la ayuda de 󰌌
+    property string teclado: ""               // distribución («ES»); vacío = sin botón 󰌌
     property alias texto: campo.text
     property alias campo: campo
     default property alias esquina: esquina.data   // abajo a la derecha
@@ -350,6 +351,8 @@ Item {
                         }
                     }
                     BotonIcono {
+                        // Solo con más de una distribución: con una no hay a qué cambiar
+                        visible: cerradura.teclado !== ""
                         trazo: cerradura.trazos.teclado
                         onPulsado: {
                             cerradura.cambiarTeclado();
