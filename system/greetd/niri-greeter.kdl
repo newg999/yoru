@@ -1,9 +1,9 @@
 // ============================================================================
 //  niri-greeter.kdl — La pantalla de inicio de Yoru
 // ----------------------------------------------------------------------------
-//  greetd arranca un niri mínimo con esta config: tu fondo detrás y gtkgreet
-//  (el recuadro de usuario y contraseña, estilo en gtkgreet.css) delante.
-//  Al entrar, gtkgreet termina y este niri se cierra para dar paso a tu sesión.
+//  greetd arranca un niri mínimo con esta config, que muestra la pantalla de
+//  inicio de Yoru (yoru/shell.qml, en Quickshell). Al entrar, termina y este
+//  niri se cierra para dar paso a tu sesión.
 //  install.sh lo copia a /etc/greetd/ (es del sistema, no de tu usuario).
 // ============================================================================
 
@@ -34,9 +34,11 @@ layout {
 // actualiza al cambiar de fondo)
 spawn-at-startup "swaybg" "-m" "fill" "-i" "/usr/share/backgrounds/yoru/inicio"
 
-// El recuadro de inicio de sesión. GTK_THEME: campos y botones oscuros aunque
-// el usuario de la pantalla de inicio no tenga ajustes propios
-spawn-sh-at-startup "GTK_THEME=Adwaita:dark gtkgreet --layer-shell --style /etc/greetd/gtkgreet.css --command niri-session; niri msg action quit --skip-confirmation"
+// La pantalla de inicio de Yoru (Quickshell, /etc/greetd/yoru/shell.qml): la
+// misma que la de bloqueo. Si no arranca o falla, gtkgreet de reserva
+// (GTK_THEME: campos y botones oscuros aunque el usuario greetd no tenga
+// ajustes propios). Al entrar, este niri se cierra para dar paso a tu sesión.
+spawn-sh-at-startup "qs -p /etc/greetd/yoru || GTK_THEME=Adwaita:dark gtkgreet --layer-shell --style /etc/greetd/gtkgreet.css --command niri-session; niri msg action quit --skip-confirmation"
 
 // Tus ajustes de este equipo (monitores, velocidad del ratón...): install.sh
 // copia aquí tu ~/.config/niri/local.kdl

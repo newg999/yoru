@@ -584,8 +584,8 @@ apps_predeterminadas() {
 MANTENER_LOGIN="$HOME/.local/state/yoru/mantener-login"
 pantalla_login() {
     paso "Pantalla de inicio de sesión"
-    if ! command -v gtkgreet >/dev/null || ! command -v greetd >/dev/null; then
-        aviso "greetd o gtkgreet no están instalados, me lo salto"
+    if ! command -v greetd >/dev/null; then
+        aviso "greetd no está instalado, me lo salto"
         return
     fi
     local actual=""
@@ -624,6 +624,12 @@ pantalla_login() {
     for f in config.toml niri-greeter.kdl gtkgreet.css; do
         sudo install -m 644 "$REPO/system/greetd/$f" "/etc/greetd/$f"
     done
+    # La pantalla de inicio de Yoru (Quickshell): la misma que la de bloqueo
+    sudo install -D -m 644 "$REPO/system/greetd/yoru/shell.qml" /etc/greetd/yoru/shell.qml
+    sudo install -D -m 644 "$REPO/config/quickshell/yoru/bloqueo/Cerradura.qml" /etc/greetd/yoru/Cerradura.qml
+    # Tus colores y tu letra: los escribe tu sesión (bloqueo/Bloqueo.qml), así que es tuyo
+    [[ -f /usr/share/backgrounds/yoru/inicio.json ]] \
+        || sudo install -D -m 644 -o "$USER" /dev/null /usr/share/backgrounds/yoru/inicio.json
 
     # Monitores y ratón como en tu sesión, y tu cursor (tu ~/.local no lo ve)
     [[ -f "$HOME/.config/niri/local.kdl" ]] \

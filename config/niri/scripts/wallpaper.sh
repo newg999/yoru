@@ -10,14 +10,17 @@
 #  Los fondos se buscan en ~/.local/share/wallpapers (el instalador enlaza
 #  ahí la carpeta wallpapers/ del repositorio).
 #
-#  El mismo fondo se usa en la pantalla de bloqueo (swaylock lee el enlace
-#  ~/.cache/fondo-bloqueo) y, desenfocado, en la de inicio de sesión, si
+#  El mismo fondo, desenfocado, se usa en la pantalla de bloqueo
+#  (~/.cache/fondo-bloqueo-borroso.jpg; swaylock usa el enlace sin desenfocar
+#  ~/.cache/fondo-bloqueo) y en la de inicio de sesión, si
 #  install.sh te ha dado permiso sobre /usr/share/backgrounds/yoru/inicio.
 # ----------------------------------------------------------------------------
 
 DIR="$HOME/.local/share/wallpapers"
 STATE="$HOME/.cache/wallpaper-actual"
 BLOQUEO="$HOME/.cache/fondo-bloqueo"
+BORROSO="$HOME/.cache/fondo-bloqueo-borroso.jpg"     # ya desenfocado: carga al instante
+BORROSO_ORIGEN="$HOME/.cache/fondo-bloqueo-origen"
 INICIO="/usr/share/backgrounds/yoru/inicio"
 INICIO_ORIGEN="$HOME/.cache/fondo-inicio-origen"   # de qué fondo salió
 FALLBACK_COLOR="#2e3440"
@@ -53,6 +56,12 @@ if [[ -n "$img" && -f "$img" ]]; then
     echo "$img" > "$STATE"
     setsid -f swaybg -m fill -i "$img" >/dev/null 2>&1
     ln -sfn "$(realpath "$img")" "$BLOQUEO"
+    # Pantalla de bloqueo: el fondo ya desenfocado y pequeño. Desenfocarlo al
+    # bloquear (con la imagen entera) tardaba y se veía aparecer de golpe
+    if [[ "$(cat "$BORROSO_ORIGEN" 2>/dev/null)" != "$img" ]] && command -v magick >/dev/null; then
+        setsid -f sh -c 'magick "$1" -resize 1920x1080^ -blur 0x24 -modulate 70,80 -quality 90 "jpg:$2.tmp" \
+            && mv "$2.tmp" "$2" && echo "$1" > "$3"' _ "$img" "$BORROSO" "$BORROSO_ORIGEN" >/dev/null 2>&1
+    fi
     # Pantalla de inicio: el fondo desenfocado y algo más oscuro. Solo si ha
     # cambiado (desenfocar tarda un poco) y en segundo plano
     if [[ -w "$INICIO" && "$(cat "$INICIO_ORIGEN" 2>/dev/null)" != "$img" ]]; then
