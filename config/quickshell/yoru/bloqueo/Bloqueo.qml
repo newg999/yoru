@@ -17,7 +17,6 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Pam
-import Quickshell.Services.UPower
 import qs.comun
 
 Scope {
@@ -104,6 +103,30 @@ Scope {
         onLoaded: bloqueo.bloquear()
     }
 
+    // Distribución del teclado (niri), para el botón 󰌌 de la contraseña
+    property var teclados: []
+    property int tecladoActual: 0
+    readonly property string teclado: abreviar(teclados[tecladoActual] ?? "")
+    function abreviar(nombre) {
+        const conocidos = {"Spanish": "ES", "English (US)": "US", "English (UK)": "UK", "Portuguese": "PT",
+                           "French": "FR", "German": "DE", "Italian": "IT", "Catalan": "CA"};
+        return conocidos[nombre] ?? nombre.slice(0, 2).toUpperCase();
+    }
+    Process {
+        id: leerTeclado
+        command: ["niri", "msg", "-j", "keyboard-layouts"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse(text);
+                    bloqueo.teclados = d.names;
+                    bloqueo.tecladoActual = d.current_idx;
+                } catch (e) {}
+            }
+        }
+    }
+    onActivoChanged: if (activo) leerTeclado.running = true
+
     WlSessionLock {
         id: cerrojo
         locked: bloqueo.activo
@@ -123,12 +146,21 @@ Scope {
                 colorRojo: Tema.rojo
                 fuente: Tema.fuente
                 nombre: Quickshell.env("USER") ?? ""
+                fotos: ["file://" + Quickshell.env("HOME") + "/.face",
+                        "file:///var/lib/AccountsService/icons/" + Quickshell.env("USER")]
+                teclado: bloqueo.teclados.length > 1 ? bloqueo.teclado : ""
                 mensaje: bloqueo.mensaje
                 error: bloqueo.error
                 ocupada: pam.active
                 texto: bloqueo.escrito
                 onTextoChanged: bloqueo.escrito = texto
                 onEnviar: t => bloqueo.comprobar(t)
+                onEnergia: accion => Quickshell.execDetached(["systemctl", accion])
+                onCambiarTeclado: {
+                    Quickshell.execDetached(["niri", "msg", "action", "switch-layout", "next"]);
+                    if (bloqueo.teclados.length)
+                        bloqueo.tecladoActual = (bloqueo.tecladoActual + 1) % bloqueo.teclados.length;
+                }
                 Component.onCompleted: campo.forceActiveFocus()
 
                 Connections {
@@ -139,15 +171,9 @@ Scope {
                     }
                 }
 
-                // Batería (en portátiles)
-                Text {
-                    readonly property var b: UPower.displayDevice
-                    visible: b?.isLaptopBattery ?? false
-                    text: (UPower.onBattery ? "󰁹 " : "󰂄 ") + Math.round((b?.percentage ?? 0) * 100) + "%"
-                    color: Tema.texto
-                    font.family: Tema.fuente
-                    font.pixelSize: 15
-                }
+                // Arriba a la derecha: lo que suena, el tiempo, la red, el
+                // bluetooth, el volumen y la batería
+                arriba: EstadoBloqueo {}
             }
         }
     }

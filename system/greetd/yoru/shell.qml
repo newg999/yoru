@@ -10,8 +10,9 @@
 //    inicio        tu fondo, ya desenfocado (niri/scripts/wallpaper.sh)
 //    inicio.json   colores y letra (bloqueo/Bloqueo.qml, al cambiarlos)
 //
-//  Si hay varios usuarios, «cambiar de usuario» (encima del nombre) pasa al siguiente.
-//  Abajo a la derecha: la sesión (Niri, Plasma...), suspender, reiniciar y apagar.
+//  Si hay varios usuarios, ‹ › (junto al nombre) pasa al siguiente.
+//  Abajo a la derecha: la sesión (Niri, Plasma...); abajo a la izquierda, ⏻
+//  para suspender, reiniciar y apagar.
 //  Si esto falla, niri-greeter.kdl abre gtkgreet en su lugar.
 // ============================================================================
 import QtQuick
@@ -161,56 +162,69 @@ ShellRoot {
                     }
                 }
 
-                // Cambiar de usuario (solo si hay más de uno)
-                encima: Text {
-                    visible: raiz.usuarios.length > 1
-                    width: 320
-                    horizontalAlignment: Text.AlignHCenter
-                    text: "‹   cambiar de usuario   ›"
-                    color: raiz.estilo.gris
-                    font.family: raiz.estilo.fuente
-                    font.pixelSize: 12
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: raiz.elegido = (raiz.elegido + 1) % raiz.usuarios.length
+                fotos: raiz.usuario.nombre ? ["file:///var/lib/AccountsService/icons/" + raiz.usuario.nombre] : []
+                onEnergia: accion => Quickshell.execDetached(["systemctl", accion])
+                onCambiarTeclado: Quickshell.execDetached(["niri", "msg", "action", "switch-layout", "next"])
+
+                // Quién entra; con varios usuarios, ‹ › pasa al siguiente
+                encima: Row {
+                    spacing: 14
+                    Text {
+                        visible: raiz.usuarios.length > 1
+                        text: "‹"
+                        color: raiz.estilo.gris
+                        font.family: raiz.estilo.fuente
+                        font.pixelSize: 18
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -8
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: raiz.elegido = (raiz.elegido + raiz.usuarios.length - 1) % raiz.usuarios.length
+                        }
+                    }
+                    Text {
+                        text: raiz.usuario.visible
+                        color: raiz.estilo.texto
+                        font.family: raiz.estilo.fuente
+                        font.pixelSize: 16
+                        font.bold: true
+                    }
+                    Text {
+                        visible: raiz.usuarios.length > 1
+                        text: "›"
+                        color: raiz.estilo.gris
+                        font.family: raiz.estilo.fuente
+                        font.pixelSize: 18
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -8
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: raiz.elegido = (raiz.elegido + 1) % raiz.usuarios.length
+                        }
                     }
                 }
 
-                // Sesión (si hay más de una), suspender, reiniciar, apagar
-                Repeater {
-                    model: [
-                        ...(raiz.sesiones.length > 1 ? [{texto: "Sesión: " + raiz.nombreSesion(raiz.sesiones[raiz.sesion]), sesion: true}] : []),
-                        {texto: "Suspender", orden: ["systemctl", "suspend"]},
-                        {texto: "Reiniciar", orden: ["systemctl", "reboot"]},
-                        {texto: "Apagar", orden: ["systemctl", "poweroff"]}
-                    ]
-                    Rectangle {
-                        required property var modelData
-                        width: etiqueta.implicitWidth + 28
-                        height: 36
-                        radius: 18
-                        color: zona.containsMouse ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(1, 1, 1, 0.07)
-                        Text {
-                            id: etiqueta
-                            anchors.centerIn: parent
-                            text: modelData.texto
-                            color: raiz.estilo.texto
-                            font.family: raiz.estilo.fuente
-                            font.pixelSize: 13
-                        }
-                        MouseArea {
-                            id: zona
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (modelData.sesion)
-                                    raiz.sesion = (raiz.sesion + 1) % raiz.sesiones.length;
-                                else
-                                    Quickshell.execDetached(modelData.orden);
-                            }
-                        }
+                // Abajo a la derecha: qué sesión arranca (si hay más de una)
+                Rectangle {
+                    visible: raiz.sesiones.length > 1
+                    width: etiqueta.implicitWidth + 28
+                    height: 36
+                    radius: 18
+                    color: zona.containsMouse ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(1, 1, 1, 0.07)
+                    Text {
+                        id: etiqueta
+                        anchors.centerIn: parent
+                        text: "Sesión: " + raiz.nombreSesion(raiz.sesiones[raiz.sesion])
+                        color: raiz.estilo.texto
+                        font.family: raiz.estilo.fuente
+                        font.pixelSize: 13
+                    }
+                    MouseArea {
+                        id: zona
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: raiz.sesion = (raiz.sesion + 1) % raiz.sesiones.length
                     }
                 }
             }
