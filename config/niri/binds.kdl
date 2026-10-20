@@ -124,7 +124,8 @@ binds {
     Mod+Shift+Equal { set-window-height "+10%"; }
 
     // Flotantes y pestañas
-    Mod+V       { toggle-window-floating; }
+    // Mod+V: flotante con un tamaño manejable y sin taparse con las otras
+    Mod+V       hotkey-overlay-title="Ventana flotante / en columna" { spawn-sh "~/.config/niri/scripts/flotar.sh"; }
     Mod+Shift+V { switch-focus-between-floating-and-tiling; }
     Mod+W       { toggle-column-tabbed-display; }
 

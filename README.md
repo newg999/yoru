@@ -125,7 +125,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | `Mod+Shift+1…9` | Mover la ventana al escritorio N |
 | `Mod+R` | Cambiar ancho (1/3, 1/2, 2/3) |
 | `Mod+F` / `Mod+Shift+F` | Maximizar / pantalla completa |
-| `Mod+V` | Ventana flotante |
+| `Mod+V` | Ventana flotante (o de vuelta a su columna). Flotante: `Mod` + arrastrar la mueve, `Mod` + clic derecho y arrastrar cambia su tamaño |
 | `Mod+W` | Columna en pestañas |
 | `Mod+Alt+O` | Quitar/poner transparencia a la ventana |
 | `Mod+,` / `Mod+.` | Meter la ventana de la derecha en la columna / sacarla |
