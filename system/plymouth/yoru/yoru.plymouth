@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Yoru
+Description=El arranque de Yoru: el 夜 sobre fondo oscuro y tres puntos que laten
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/yoru
+ScriptFile=/usr/share/plymouth/themes/yoru/yoru.script

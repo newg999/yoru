@@ -14,7 +14,8 @@
 #       y pregunta si quieres bajar los fondos de pantalla
 #    6. Activa servicios (bluetooth, energía) y la pantalla de inicio de
 #       sesión (greetd + gtkgreet, con el estilo de Yoru); si ya tienes otra,
-#       como la de GNOME, pregunta si cambiarla
+#       como la de GNOME, pregunta si cambiarla; y el arranque de Yoru:
+#       la pantalla de Plymouth y el tema del menú de GRUB
 #    7. Pone tema oscuro, iconos Papirus y cursor Bibata en las apps GTK
 #    8. Deja zsh como shell, con Oh My Zsh y sus plugins (config/zsh/)
 #    9. Genera los colores del tema (yoru tema) y valida la config de Niri
@@ -572,9 +573,105 @@ configurar_sistema() {
     # Carpetas personales (Descargas, Imágenes...), según el idioma del sistema
     xdg-user-dirs-update 2>/dev/null && ok "Carpetas personales"
 
+    brave_wayland
     apps_predeterminadas
 
     pantalla_login
+    pantalla_arranque
+    menu_grub
+}
+
+# Pantalla de arranque (Plymouth): el 夜 sobre fondo oscuro mientras arranca
+# Linux, en vez de la pantalla gris de una Fedora mínima.
+# Los archivos son de root: se copian. Rehacer el initramfs tarda un rato,
+# así que solo se hace si el tema es nuevo o ha cambiado
+pantalla_arranque() {
+    paso "Pantalla de arranque (Plymouth)"
+    if ! command -v plymouth-set-default-theme >/dev/null || ! rpm -q plymouth-plugin-script >/dev/null 2>&1; then
+        aviso "Falta plymouth o plymouth-plugin-script, me lo salto"
+        return
+    fi
+    local dir=/usr/share/plymouth/themes/yoru cambiado=0 f
+    sudo install -d "$dir"
+    for f in "$REPO"/system/plymouth/yoru/*; do
+        if ! cmp -s "$f" "$dir/$(basename "$f")"; then
+            sudo install -m 644 "$f" "$dir/"
+            cambiado=1
+        fi
+    done
+    if [[ "$(plymouth-set-default-theme)" != yoru ]] || (( cambiado )); then
+        echo "  Rehaciendo el initramfs (tarda un minuto)..."
+        if sudo plymouth-set-default-theme -R yoru >/dev/null 2>&1; then
+            ok "Tema Yoru puesto: se verá al reiniciar"
+        else
+            aviso "No se pudo poner. Prueba: sudo plymouth-set-default-theme -R yoru"
+        fi
+    else
+        ok "Ya estaba puesto"
+    fi
+    # Sin «rhgb quiet» en la línea del kernel no se ve (Fedora ya los pone)
+    if ! grep -qw rhgb /proc/cmdline; then
+        sudo grubby --update-kernel=ALL --args="rhgb quiet" && ok "Añadido rhgb quiet al kernel"
+    fi
+}
+
+# Menú de arranque (GRUB) con el estilo de Yoru. Lo que se cambia de
+# /etc/default/grub se guarda antes en /etc/default/grub.original
+GRUB_TEMA=/boot/grub2/themes/yoru
+menu_grub() {
+    paso "Menú de arranque (GRUB)"
+    if [[ ! -f /etc/default/grub ]] || ! command -v grub2-mkconfig >/dev/null; then
+        aviso "Este equipo no arranca con GRUB, me lo salto"
+        return
+    fi
+    sudo install -d "$GRUB_TEMA"
+    sudo install -m 644 "$REPO"/system/grub/yoru/* "$GRUB_TEMA/"
+
+    # Las fuentes que pide theme.txt, en el formato de GRUB (.pf2)
+    local estilo_tam estilo tam otf
+    for estilo_tam in Regular:16 Regular:18 Bold:18; do
+        estilo="${estilo_tam%:*}" tam="${estilo_tam#*:}"
+        otf="$(ls /usr/share/fonts/jetbrains-mono-fonts/JetBrainsMono-"$estilo".* 2>/dev/null | head -n1 || true)"
+        [[ -f "$GRUB_TEMA/jetbrains-$estilo-$tam.pf2" ]] && continue
+        if [[ -n "$otf" ]] && command -v grub2-mkfont >/dev/null; then
+            sudo grub2-mkfont -s "$tam" -o "$GRUB_TEMA/jetbrains-$estilo-$tam.pf2" "$otf" 2>/dev/null
+        else
+            aviso "Sin grub2-mkfont o sin la fuente JetBrains Mono: GRUB usará su letra"
+            break
+        fi
+    done
+
+    [[ -f /etc/default/grub.original ]] || sudo cp /etc/default/grub /etc/default/grub.original
+    _grub_opcion() {   # _grub_opcion <variable> <valor>: la cambia o la añade
+        if grep -q "^$1=" /etc/default/grub; then
+            sudo sed -i "s|^$1=.*|$1=\"$2\"|" /etc/default/grub
+        else
+            echo "$1=\"$2\"" | sudo tee -a /etc/default/grub >/dev/null
+        fi
+    }
+    _grub_opcion GRUB_TERMINAL_OUTPUT gfxterm   # modo gráfico (Fedora trae «console»)
+    _grub_opcion GRUB_GFXMODE auto              # la resolución de la pantalla
+    _grub_opcion GRUB_THEME "$GRUB_TEMA/theme.txt"
+
+    if sudo grub2-mkconfig -o /boot/grub2/grub.cfg >/dev/null 2>&1; then
+        ok "Tema Yoru puesto: se verá al reiniciar (para quitarlo: sudo cp /etc/default/grub.original /etc/default/grub)"
+    else
+        aviso "grub2-mkconfig ha fallado. Prueba a mano: sudo grub2-mkconfig -o /boot/grub2/grub.cfg"
+    fi
+}
+
+# Brave con sincronización explícita (WaylandLinuxDrmSyncobj): sin ella, con
+# NVIDIA parpadea al hacer scroll. Brave no lee un archivo de opciones, así
+# que se copia su .desktop a ~/.local/share/applications con la opción en
+# cada Exec (manda sobre el del sistema). Se rehace en cada ./install.sh por
+# si Brave cambia el suyo. Mod+B la lleva también (config/niri/binds.kdl)
+brave_wayland() {
+    local origen=/usr/share/applications/brave-browser.desktop
+    local destino="$HOME/.local/share/applications/brave-browser.desktop"
+    [[ -f "$origen" ]] || return 0
+    mkdir -p "$(dirname "$destino")"
+    sed -E 's|^(Exec=[^ ]+)|\1 --enable-features=WaylandLinuxDrmSyncobj|' "$origen" > "$destino"
+    ok "Brave sin parpadeos al hacer scroll (sincronización explícita)"
 }
 
 # Apps para abrir documentos. Si están las de ArtCraft (PdfCraft, WordCraft,

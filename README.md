@@ -25,6 +25,7 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Fondo | `swaybg` | `config/niri/scripts/wallpaper.sh` |
 | Apps X11 | `xwayland-satellite` | automático |
 | Inicio de sesión | `greetd` + `gtkgreet` (dentro de un niri mínimo) | `system/greetd/` |
+| Arranque | `plymouth` (el 夜 con tres puntos que laten) · tema de `grub` a juego | `system/plymouth/` · `system/grub/` · `system/arranque/generar.py` |
 | Archivos | `nautilus` | — |
 | Navegador | `brave-browser` | — |
 | Visor de PDF | `okular` | `config/kdeglobals` (sus colores oscuros) |

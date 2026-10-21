@@ -39,6 +39,10 @@ greetd                    # gestor de inicio de sesión
 gtkgreet                  # pantalla de login gráfica (system/greetd/)
 jetbrains-mono-fonts      # su fuente (la Nerd Font va solo en tu usuario)
 
+# --- Arranque ----------------------------------------------------------------
+plymouth-plugin-script    # la pantalla de arranque de Yoru (system/plymouth/)
+grub2-tools-extra         # grub2-mkfont: la letra del menú de GRUB (system/grub/)
+
 # --- Núcleo de Niri ----------------------------------------------------------
 niri                      # el compositor
 xwayland-satellite        # apps X11 (Steam, Discord...). Niri lo arranca solo

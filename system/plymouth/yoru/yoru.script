@@ -1,0 +1,100 @@
+# ============================================================================
+#  yoru.script — La pantalla de arranque de Yoru (Plymouth)
+# ----------------------------------------------------------------------------
+#  Se ve desde que GRUB arranca Linux hasta la pantalla de inicio de sesión
+#  (y al apagar). El 夜 aparece poco a poco y debajo laten tres puntos.
+#  Las imágenes las hace system/arranque/generar.py.
+#  install.sh lo copia a /usr/share/plymouth/themes/yoru/. Si lo cambias:
+#    sudo cp system/plymouth/yoru/* /usr/share/plymouth/themes/yoru/
+#    sudo plymouth-set-default-theme -R yoru      (rehace el initramfs)
+#  Para probarlo sin reiniciar, desde una consola (Ctrl+Alt+F3, no desde niri):
+#    sudo plymouthd; sudo plymouth --show-splash; sleep 5; sudo plymouth quit
+# ============================================================================
+
+# Fondo: el mismo degradado que GRUB (#1a1b1e arriba, #111214 abajo)
+Window.SetBackgroundTopColor(0.102, 0.106, 0.118);
+Window.SetBackgroundBottomColor(0.067, 0.071, 0.078);
+
+# En pantallas muy grandes (4K), todo al doble
+escala = 1;
+if (Window.GetWidth() > 2600) escala = 2;
+
+fun cargar(archivo) {
+    imagen = Image(archivo);
+    if (escala > 1)
+        imagen = imagen.Scale(imagen.GetWidth() * escala, imagen.GetHeight() * escala);
+    return imagen;
+}
+
+centro_x = Window.GetX() + Window.GetWidth() / 2;
+centro_y = Window.GetY() + Window.GetHeight() / 2;
+
+# --------------------------------------------------------------- El logo
+logo.imagen = cargar("logo.png");
+logo.sprite = Sprite(logo.imagen);
+logo.sprite.SetPosition(centro_x - logo.imagen.GetWidth() / 2,
+                        centro_y - logo.imagen.GetHeight() / 2 - 40 * escala, 1);
+logo.sprite.SetOpacity(0);
+
+# ------------------------------------------------- Los tres puntos que laten
+punto_imagen = cargar("punto.png");
+separacion = 22 * escala;
+puntos_y = centro_y + logo.imagen.GetHeight() / 2 + 10 * escala;
+for (i = 0; i < 3; i++) {
+    puntos[i] = Sprite(punto_imagen);
+    puntos[i].SetPosition(centro_x + (i - 1) * separacion - punto_imagen.GetWidth() / 2, puntos_y, 1);
+    puntos[i].SetOpacity(0);
+}
+
+# Plymouth llama a esto unas 50 veces por segundo
+tiempo = 0;
+fun refresco() {
+    global.tiempo++;
+    # El logo aparece en medio segundo
+    opacidad = global.tiempo / 25;
+    if (opacidad > 1) opacidad = 1;
+    logo.sprite.SetOpacity(opacidad);
+    # Cada punto se enciende un poco después que el anterior, como una ola
+    for (i = 0; i < 3; i++) {
+        brillo = 0.5 + 0.5 * Math.Sin(global.tiempo / 9 - i * 0.9);
+        puntos[i].SetOpacity(opacidad * (0.15 + 0.85 * brillo * brillo));
+    }
+}
+Plymouth.SetRefreshFunction(refresco);
+
+# --------------------------------------------------- Contraseña (si la hay)
+# Solo sale si el disco está cifrado: el mismo recuadro que los campos de Yoru
+caja.imagen = cargar("caja.png");
+
+fun pedir_clave(texto, cuantas) {
+    caja_y = puntos_y + 40 * escala;
+    titulo = Image.Text(texto, 0.898, 0.914, 0.941);
+    ocultas = "";
+    for (i = 0; i < cuantas && i < 24; i++) ocultas += "• ";
+    bolitas = Image.Text(ocultas, 1, 1, 1);
+
+    global.clave.caja = Sprite(caja.imagen);
+    global.clave.caja.SetPosition(centro_x - caja.imagen.GetWidth() / 2, caja_y, 2);
+    global.clave.titulo = Sprite(titulo);
+    global.clave.titulo.SetPosition(centro_x - titulo.GetWidth() / 2,
+                                    caja_y - titulo.GetHeight() - 10 * escala, 2);
+    global.clave.bolitas = Sprite(bolitas);
+    global.clave.bolitas.SetPosition(centro_x - bolitas.GetWidth() / 2,
+                                     caja_y + (caja.imagen.GetHeight() - bolitas.GetHeight()) / 2, 3);
+}
+
+fun sin_clave() {
+    global.clave = NULL;
+}
+
+Plymouth.SetDisplayPasswordFunction(pedir_clave);
+Plymouth.SetDisplayNormalFunction(sin_clave);
+
+# ------------------------------------------- Mensajes (abajo, en gris)
+fun mensaje(texto) {
+    imagen = Image.Text(texto, 0.541, 0.561, 0.596);
+    global.aviso = Sprite(imagen);
+    global.aviso.SetPosition(centro_x - imagen.GetWidth() / 2,
+                             Window.GetY() + Window.GetHeight() - 60 * escala, 2);
+}
+Plymouth.SetMessageFunction(mensaje);
