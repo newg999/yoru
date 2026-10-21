@@ -41,8 +41,9 @@ spawn-at-startup "swaybg" "-m" "fill" "-i" "/usr/share/backgrounds/yoru/inicio"
 spawn-sh-at-startup "qs -p /etc/greetd/yoru || GTK_THEME=Adwaita:dark gtkgreet --layer-shell --style /etc/greetd/gtkgreet.css --command niri-session; niri msg action quit --skip-confirmation"
 
 // Tus ajustes de este equipo (monitores, velocidad del ratón...): install.sh
-// copia aquí tu ~/.config/niri/local.kdl
+// copia aquí tu ~/.config/niri/local.kdl (y raton.kdl, de Ajustes › Ratón)
 include optional=true "local.kdl"
+include optional=true "raton.kdl"
 
 binds {
     // Apagar y reiniciar sin entrar (el botón de encendido también apaga)

@@ -6,7 +6,7 @@
 //              o con un ratón conectado (solo si el equipo tiene touchpad)
 //    Cursor:   tamaño y esconderlo al escribir
 //
-//  Se guarda en niri/local.kdl con scripts/raton.py (un momento después de
+//  Se guarda en niri/raton.kdl con scripts/raton.py (un momento después de
 //  dejar de tocar, para no recargar niri a cada paso del deslizador).
 // ============================================================================
 import QtQuick

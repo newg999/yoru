@@ -1,5 +1,6 @@
 # Ajustes solo de este equipo (monitores, escala...)
 config/niri/local.kdl
+config/niri/raton.kdl
 # Dónde vives, para el clima (copia lugar.json.example)
 config/quickshell/yoru/lugar.json
 # Logo de fastfetch en imagen (ya no se usa: el logo es yoru.txt)

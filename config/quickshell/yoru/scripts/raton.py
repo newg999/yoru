@@ -3,13 +3,17 @@
 #  raton.py — Ratón, touchpad y cursor para Ajustes › Ratón
 #
 #    raton.py leer             JSON con los ajustes (y si hay touchpad)
-#    raton.py guardar '<json>' escribe su bloque en niri/local.kdl
-#    raton.py restablecer      quita el bloque: vuelve lo de config.kdl
+#    raton.py guardar '<json>' escribe niri/raton.kdl
+#    raton.py restablecer      borra raton.kdl: vuelve lo de config.kdl
 #
-#  Como Ajustes › Pantallas (pantallas.py): solo se toca lo que va entre sus
-#  dos marcas, niri lo aplica al guardar y una línea «// datos: {...}» guarda
-#  lo elegido. Los valores de serie son los de config.kdl; en local.kdl solo
-#  van los que cambias.
+#  Va en su propio archivo (raton.kdl, que config.kdl incluye después de
+#  local.kdl) y no dentro de local.kdl: si ahí ya había un «input {...}»
+#  escrito a mano, niri no acepta otro en el mismo archivo («duplicate node
+#  input»). Al ir después, sus secciones mouse y touchpad mandan sobre las
+#  de local.kdl. Niri lo aplica al guardar y una línea «// datos: {...}»
+#  guarda lo elegido.
+#
+#  Antes iba en un bloque de local.kdl: si lo hay, se lee y se quita.
 #
 #  El tamaño del cursor se pone también en GTK (gsettings): si no, las apps
 #  GTK lo dibujarían con el tamaño de antes.
@@ -17,21 +21,23 @@
 
 import json
 import os
+import re
 import subprocess
 import sys
 
 CONFIG = os.path.expanduser("~/.config/niri/config.kdl")
 LOCAL = os.path.expanduser("~/.config/niri/local.kdl")
+RATON = os.path.expanduser("~/.config/niri/raton.kdl")
 
 INICIO = "// >>> Ratón — lo escribe Ajustes › Ratón (Mod+Alt+T)"
 FIN = "// <<< Ratón"
 
 CABECERA = """\
 // ============================================================================
-//  local.kdl — Ajustes solo para ESTE equipo (no se sube a git)
+//  raton.kdl — Ratón, touchpad y cursor de ESTE equipo (no se sube a git)
 // ----------------------------------------------------------------------------
-//  Los bloques marcados los escribe Ajustes (Mod+Alt+T). Lo que pongas fuera
-//  de ellos se respeta.
+//  Lo escribe Ajustes › Ratón (Mod+Alt+T): los cambios a mano se pierden
+//  al guardar desde allí. Borrarlo = volver a lo de config.kdl.
 // ============================================================================
 """
 
@@ -62,15 +68,43 @@ def partes(texto):
     return texto[:i], texto[i:j + len(FIN)], texto[j + len(FIN):]
 
 
-def guardados():
-    _, bloque, _ = partes(leer_local())
-    for linea in (bloque or "").splitlines():
+def leer_raton():
+    try:
+        with open(RATON) as f:
+            return f.read()
+    except FileNotFoundError:
+        return None
+
+
+def datos_de(texto):
+    for linea in (texto or "").splitlines():
         if linea.strip().startswith("// datos: "):
             try:
                 return json.loads(linea.strip()[len("// datos: "):])
             except json.JSONDecodeError:
                 pass
-    return {}
+    return None
+
+
+def a_mano():
+    """Lo del ratón escrito a mano en local.kdl (accel-speed y accel-profile),
+    para que la pestaña lo enseñe la primera vez en vez de los de serie."""
+    texto = leer_local() or ""
+    m = re.search(r"mouse\s*\{([^}]*)\}", texto)
+    if not m:
+        return {}
+    raton = {}
+    v = re.search(r"accel-speed\s+(-?[\d.]+)", m.group(1))
+    if v:
+        raton["velocidad"] = float(v.group(1))
+    p = re.search(r'accel-profile\s+"(\w+)"', m.group(1))
+    if p:
+        raton["perfil"] = p.group(1)
+    return {"raton": raton}
+
+
+def guardados():
+    return datos_de(leer_raton()) or datos_de(partes(leer_local())[1]) or a_mano()
 
 
 def hay_touchpad():
@@ -123,18 +157,39 @@ def bloque(datos):
     return "\n".join(lineas)
 
 
-def escribir(nuevo):
-    viejo = leer_local()
-    with open(LOCAL, "w") as f:
-        f.write(nuevo)
+def validar_o_volver(restaurar):
     r = subprocess.run(["niri", "validate", "-c", CONFIG], capture_output=True, text=True)
     if r.returncode != 0:
-        if viejo is None:
-            os.remove(LOCAL)
-        else:
-            with open(LOCAL, "w") as f:
-                f.write(viejo)
+        restaurar()
         sys.exit("Niri no acepta el cambio:\n" + (r.stderr or r.stdout).strip())
+
+
+def escribir(nuevo):
+    """Escribe raton.kdl (None = borrarlo) y quita el bloque viejo de local.kdl."""
+    viejo, local = leer_raton(), leer_local()
+
+    def restaurar():
+        if viejo is None:
+            if os.path.exists(RATON):
+                os.remove(RATON)
+        else:
+            with open(RATON, "w") as f:
+                f.write(viejo)
+        if local is not None:
+            with open(LOCAL, "w") as f:
+                f.write(local)
+
+    if nuevo is None:
+        if os.path.exists(RATON):
+            os.remove(RATON)
+    else:
+        with open(RATON, "w") as f:
+            f.write(nuevo)
+    antes, bloque, despues = partes(local)
+    if local is not None and bloque is not None:
+        with open(LOCAL, "w") as f:
+            f.write(antes.rstrip("\n") + "\n" + despues.lstrip("\n"))
+    validar_o_volver(restaurar)
 
 
 def cursor_gtk(tamano):
@@ -143,15 +198,12 @@ def cursor_gtk(tamano):
 
 
 def guardar(datos):
-    antes, _, despues = partes(leer_local())
-    escribir(antes.rstrip("\n") + "\n\n" + bloque(datos) + "\n" + despues.lstrip("\n"))
+    escribir(CABECERA + "\n" + bloque(datos) + "\n")
     cursor_gtk(datos["cursor"]["tamano"])
 
 
 def restablecer():
-    antes, viejo, despues = partes(leer_local())
-    if viejo is not None:
-        escribir(antes.rstrip("\n") + "\n" + despues.lstrip("\n"))
+    escribir(None)
     cursor_gtk(DE_SERIE["cursor"]["tamano"])
 
 

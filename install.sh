@@ -671,6 +671,8 @@ pantalla_login() {
     # Monitores y ratón como en tu sesión, y tu cursor (tu ~/.local no lo ve)
     [[ -f "$HOME/.config/niri/local.kdl" ]] \
         && sudo install -m 644 "$HOME/.config/niri/local.kdl" /etc/greetd/local.kdl
+    [[ -f "$HOME/.config/niri/raton.kdl" ]] \
+        && sudo install -m 644 "$HOME/.config/niri/raton.kdl" /etc/greetd/raton.kdl
     [[ -d "$CURSOR_DIR/$CURSOR_TEMA/cursors" && ! -d "/usr/share/icons/$CURSOR_TEMA" ]] \
         && sudo cp -r "$CURSOR_DIR/$CURSOR_TEMA" /usr/share/icons/
 

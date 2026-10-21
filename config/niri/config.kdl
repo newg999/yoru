@@ -181,3 +181,7 @@ include optional=true "~/.local/state/yoru/niri-ventanas.kdl"
 // Ajustes solo de este equipo (monitores, escala...). No existe por defecto.
 // Copia local.kdl.example a local.kdl y edítalo.
 include optional=true "local.kdl"
+
+// Ratón, touchpad y cursor elegidos en Ajustes › Ratón (lo escribe la barra;
+// va después de local.kdl para mandar sobre lo que haya allí a mano)
+include optional=true "raton.kdl"
