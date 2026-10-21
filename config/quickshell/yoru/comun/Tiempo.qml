@@ -6,6 +6,7 @@ pragma Singleton
 //  El lugar se lee de lugar.json (junto a shell.qml; no se sube al repo):
 //      {"nombre": "Madrid", "latitud": 40.4168, "longitud": -3.7038}
 //  Si no existe, se adivina por tu IP (ip-api.com).
+//  Se cambia en la pestaña Clima (buscar() + elegir(), o porIp()).
 //  Se actualiza cada 15 minutos.
 // ============================================================================
 
@@ -19,6 +20,7 @@ Singleton {
     property string lugar: ""
     property real latitud: NaN
     property real longitud: NaN
+    property bool automatico: false // sin lugar.json: el lugar sale de la IP
 
     property bool listo: false
     property int temperatura: 0
@@ -71,6 +73,7 @@ Singleton {
         onLoaded: {
             try {
                 const l = JSON.parse(text());
+                tiempo.automatico = false;
                 tiempo.lugar = l.nombre ?? "";
                 tiempo.latitud = l.latitud;
                 tiempo.longitud = l.longitud;
@@ -80,6 +83,50 @@ Singleton {
             }
         }
         onLoadFailed: tiempo._porIp()
+    }
+
+    // Busca lugares por nombre (geocoding de Open-Meteo):
+    // alLlegar([{nombre, zona, latitud, longitud}])
+    function buscar(texto, alLlegar) {
+        const xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState !== XMLHttpRequest.DONE)
+                return;
+            try {
+                const r = xhr.status === 200 ? JSON.parse(xhr.responseText).results ?? [] : [];
+                alLlegar(r.map(l => ({
+                    nombre: l.name,
+                    zona: [l.admin1, l.country].filter(z => z && z !== l.name).join(", "),
+                    latitud: l.latitude,
+                    longitud: l.longitude
+                })));
+            } catch (e) {
+                alLlegar([]);
+            }
+        };
+        xhr.open("GET", "https://geocoding-api.open-meteo.com/v1/search?count=6&language=es&format=json&name="
+            + encodeURIComponent(texto));
+        xhr.send();
+    }
+
+    // Fija el lugar y lo guarda en lugar.json
+    function elegir(nombre, lat, lon) {
+        lugar = nombre;
+        latitud = lat;
+        longitud = lon;
+        automatico = false;
+        archivoLugar.setText(JSON.stringify({nombre: nombre, latitud: lat, longitud: lon}, null, 4) + "\n");
+        actualizar();
+    }
+
+    // Vuelve a adivinar el lugar por la IP (borra lugar.json)
+    function porIp() {
+        borrarLugar.running = true;
+        _porIp();
+    }
+    Process {
+        id: borrarLugar
+        command: ["rm", "-f", Quickshell.shellPath("lugar.json")]
     }
 
     function _pedir(url, alLlegar) {
@@ -103,6 +150,7 @@ Singleton {
 
     function _porIp() {
         _pedir("http://ip-api.com/json/?fields=city,lat,lon", r => {
+            tiempo.automatico = true;
             tiempo.lugar = r.city;
             tiempo.latitud = r.lat;
             tiempo.longitud = r.lon;
