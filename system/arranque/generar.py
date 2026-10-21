@@ -22,6 +22,8 @@ DIBUJO = REPO / "config/fastfetch/yoru.txt"
 PLYMOUTH = REPO / "system/plymouth/yoru"
 GRUB = REPO / "system/grub/yoru"
 FUENTE = "/usr/share/fonts/jetbrains-mono-fonts/JetBrainsMono-Regular.otf"
+# Los iconos del menú de GRUB salen de la Nerd Font (la instala install.sh)
+NERD = Path.home() / ".local/share/fonts/JetBrainsMonoNerd/JetBrainsMonoNerdFont-Regular.ttf"
 
 # La paleta de tema/blanco.json
 BLANCO = "#ffffff"
@@ -41,7 +43,11 @@ CUARTOS = {
 
 
 def magick(*args, entrada=None):
-    subprocess.run(["magick", *args], input=entrada, check=True)
+    # Sin fechas ni metadatos: si la imagen no cambia, el archivo tampoco
+    # (install.sh compara los de Plymouth para no rehacer el initramfs)
+    *resto, salida = args
+    subprocess.run(["magick", *resto, "-strip", "-define", "png:exclude-chunks=date,time", salida],
+                   input=entrada, check=True)
 
 
 def leer_dibujo():
@@ -108,15 +114,17 @@ def logo(destino, celda, texto=True):
 def caja(destino, prefijo, lado, radio, relleno, borde=None, grosor=0):
     """Un recuadro redondeado partido en 9 trozos, como los pide GRUB
     (prefijo_nw.png, prefijo_n.png... prefijo_c.png): las esquinas se
-    quedan como están y los lados se estiran."""
-    total = lado * 3
+    quedan como están y los lados se estiran. Se dibuja a 4 veces el tamaño
+    y se reduce, para que las esquinas salgan suaves."""
+    total, x4 = lado * 3, 4
     tmp = destino / f"{prefijo}_entero.png"
-    m = grosor / 2
+    m = grosor * x4 / 2
     dibujo = ["-fill", relleno]
-    dibujo += ["-stroke", borde, "-strokewidth", str(grosor)] if borde else ["-stroke", "none"]
-    magick("-size", f"{total}x{total}", "xc:none", *dibujo,
-           "-draw", f"roundrectangle {m},{m} {total - 1 - m},{total - 1 - m} {radio},{radio}",
-           f"png32:{tmp}")
+    dibujo += ["-stroke", borde, "-strokewidth", str(grosor * x4)] if borde else ["-stroke", "none"]
+    fin = total * x4 - 1 - m
+    magick("-size", f"{total * x4}x{total * x4}", "xc:none", *dibujo,
+           "-draw", f"roundrectangle {m},{m} {fin},{fin} {radio * x4},{radio * x4}",
+           "-resize", f"{total}x{total}", f"png32:{tmp}")
     trozos = {"nw": (0, 0), "n": (1, 0), "ne": (2, 0),
               "w": (0, 1), "c": (1, 1), "e": (2, 1),
               "sw": (0, 2), "s": (1, 2), "se": (2, 2)}
@@ -124,6 +132,13 @@ def caja(destino, prefijo, lado, radio, relleno, borde=None, grosor=0):
         magick(tmp, "-crop", f"{lado}x{lado}+{cx * lado}+{cy * lado}", "+repage",
                f"png32:{destino / f'{prefijo}_{nombre}.png'}")
     tmp.unlink()
+
+
+def icono(destino, glifo, lado=32):
+    """Un icono de la Nerd Font, blanco y centrado en un cuadrado"""
+    magick("-background", "none", "-fill", "#e5e9f0", "-font", str(NERD),
+           "-pointsize", str(lado * 0.8), f"label:{glifo}",
+           "-gravity", "center", "-extent", f"{lado}x{lado}", f"png32:{destino}")
 
 
 def main():
@@ -143,12 +158,24 @@ def main():
     # Degradado suave de arriba abajo, igual que el de Plymouth. GRUB lo estira
     # a la pantalla, así que da igual su tamaño
     magick("-size", "64x360", f"gradient:{FONDO}-{VELO}", f"png24:{GRUB / 'fondo.png'}")
-    # El menú: como los paneles (oscuro, borde blanco de 2 px, esquinas de 14)
-    caja(GRUB, "menu", 16, 14, FONDO2, "rgba(255,255,255,0.80)", 2)
-    # La opción elegida: como una fila resaltada de los paneles
-    caja(GRUB, "select", 12, 10, "rgba(255,255,255,0.12)")
-    # La consola de edición (tecla e): el mismo recuadro que el menú
-    caja(GRUB, "terminal_box", 16, 14, FONDO2, "rgba(255,255,255,0.80)", 2)
+    # El menú: como las islas de la barra (oscuro translúcido, borde tenue)
+    caja(GRUB, "menu", 20, 18, "rgba(26,27,30,0.60)", "rgba(255,255,255,0.12)", 1)
+    # La opción elegida: una fila resaltada, como en los paneles. GRUB la
+    # dibuja por FUERA de la fila, tanto como miden las esquinas: si crecen,
+    # hay que subir item_spacing en theme.txt (o tapa la fila de al lado)
+    caja(GRUB, "select", 8, 8, "rgba(255,255,255,0.12)")
+    # La consola (teclas c y e): sin recuadro. GRUB también la saca unos
+    # segundos al arrancar un sistema, y así solo se ve el fondo (el mismo
+    # que el de Plymouth) en vez de un recuadro vacío
+    caja(GRUB, "terminal_box", 16, 14, "none")
+
+    # Iconos de cada entrada: GRUB elige por la «clase» de la entrada
+    # (Fedora pone «kernel» o «fedora»; os-prober, «windows»; la de la BIOS, «efi»)
+    iconos = GRUB / "icons"
+    iconos.mkdir(exist_ok=True)
+    for nombre, glifo in {"fedora": "\uf30a", "kernel": "\uf30a", "windows": "\uf17a",
+                          "gnu-linux": "\uf17c", "efi": "\uf013"}.items():
+        icono(iconos / f"{nombre}.png", glifo)
     print("Imágenes generadas en", PLYMOUTH.relative_to(REPO), "y", GRUB.relative_to(REPO))
 
 

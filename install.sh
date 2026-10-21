@@ -358,6 +358,7 @@ drivers_nvidia() {
     paso "Tarjeta gráfica NVIDIA detectada"
     if rpm -q akmod-nvidia >/dev/null 2>&1; then
         ok "El driver de NVIDIA ya estaba instalado"
+        ajustes_nvidia
         return
     fi
     echo "  Sin su driver oficial, la tarjeta va lenta y sin aceleración."
@@ -426,10 +427,19 @@ drivers_nvidia() {
     sudo akmods --force >/dev/null 2>&1 || true
     ok "Driver de NVIDIA instalado"
 
-    # 4. Ajuste de la documentación de niri: sin él, niri puede acaparar ~1 GB de VRAM
+    ajustes_nvidia
+}
+
+# Lo que necesita niri con el driver de NVIDIA (también si ya estaba instalado)
+ajustes_nvidia() {
+    # Ajuste de la documentación de niri: sin él, niri puede acaparar ~1 GB de VRAM
     sudo install -D -m 644 "$REPO/system/nvidia/50-niri-vram.json" \
         /etc/nvidia/nvidia-application-profiles-rc.d/50-niri-vram.json
     ok "Perfil de NVIDIA para niri (memoria de vídeo)"
+    # El driver de pantalla, antes que la pantalla de inicio (si llega tarde,
+    # el login se queda congelado o en negro)
+    sudo install -D -m 644 "$REPO/system/nvidia/nvidia-drm.conf" /etc/modules-load.d/nvidia-drm.conf
+    ok "Driver de pantalla de NVIDIA al principio del arranque"
 }
 
 # -------------------------------------------------------------------- Fuente
@@ -573,7 +583,7 @@ configurar_sistema() {
     # Carpetas personales (Descargas, Imágenes...), según el idioma del sistema
     xdg-user-dirs-update 2>/dev/null && ok "Carpetas personales"
 
-    brave_wayland
+    brave_nvidia
     apps_predeterminadas
 
     pantalla_login
@@ -625,19 +635,22 @@ menu_grub() {
         return
     fi
     sudo install -d "$GRUB_TEMA"
-    sudo install -m 644 "$REPO"/system/grub/yoru/* "$GRUB_TEMA/"
+    sudo cp -r "$REPO"/system/grub/yoru/. "$GRUB_TEMA/"
 
-    # Las fuentes que pide theme.txt, en el formato de GRUB (.pf2)
-    local estilo_tam estilo tam otf
-    for estilo_tam in Regular:16 Regular:18 Bold:18; do
-        estilo="${estilo_tam%:*}" tam="${estilo_tam#*:}"
-        otf="$(ls /usr/share/fonts/jetbrains-mono-fonts/JetBrainsMono-"$estilo".* 2>/dev/null | head -n1 || true)"
-        [[ -f "$GRUB_TEMA/jetbrains-$estilo-$tam.pf2" ]] && continue
-        if [[ -n "$otf" ]] && command -v grub2-mkfont >/dev/null; then
-            sudo grub2-mkfont -s "$tam" -o "$GRUB_TEMA/jetbrains-$estilo-$tam.pf2" "$otf" 2>/dev/null
+    # Las fuentes que pide theme.txt, en el formato de GRUB (.pf2):
+    # <archivo .pf2>:<tamaño>:<fuente>[:negrita]. Adwaita Sans es una sola
+    # fuente variable: la negrita la hace grub2-mkfont (-b)
+    local adw=/usr/share/fonts/adwaita-sans-fonts/AdwaitaSans-Regular.ttf
+    local jb=/usr/share/fonts/jetbrains-mono-fonts/JetBrainsMono-Regular.otf
+    local fuente pf2 tam ttf negrita
+    sudo rm -f "$GRUB_TEMA"/jetbrains-{Regular-18,Bold-18}.pf2   # las de antes de Adwaita
+    for fuente in "jetbrains-16:16:$jb" "adwaita-16:16:$adw" "adwaita-22:22:$adw" "adwaita-negrita-22:22:$adw:-b"; do
+        IFS=: read -r pf2 tam ttf negrita <<< "$fuente"
+        [[ -f "$GRUB_TEMA/$pf2.pf2" ]] && continue
+        if [[ -f "$ttf" ]] && command -v grub2-mkfont >/dev/null; then
+            sudo grub2-mkfont $negrita -s "$tam" -o "$GRUB_TEMA/$pf2.pf2" "$ttf" 2>/dev/null
         else
-            aviso "Sin grub2-mkfont o sin la fuente JetBrains Mono: GRUB usará su letra"
-            break
+            aviso "Sin grub2-mkfont o sin $(basename "$ttf"): GRUB usará su letra"
         fi
     done
 
@@ -650,8 +663,16 @@ menu_grub() {
         fi
     }
     _grub_opcion GRUB_TERMINAL_OUTPUT gfxterm   # modo gráfico (Fedora trae «console»)
-    _grub_opcion GRUB_GFXMODE auto              # la resolución de la pantalla
+    # La resolución de tu pantalla (la de niri, si está abierto): con «auto»
+    # a secas, la UEFI suele dar 1920x1080 y en pantallas mayores se ve
+    # estirado y borroso. Si la UEFI no la tiene, GRUB pasa a «auto»
+    local resolucion
+    resolucion="$(niri msg outputs 2>/dev/null | grep -m1 'Current mode' | grep -oE '[0-9]+x[0-9]+' || true)"
+    _grub_opcion GRUB_GFXMODE "${resolucion:+$resolucion,}auto"
     _grub_opcion GRUB_THEME "$GRUB_TEMA/theme.txt"
+    # Linux sigue con la pantalla de GRUB hasta que sale Plymouth (sin esto,
+    # unos segundos en negro al elegir)
+    _grub_opcion GRUB_GFXPAYLOAD_LINUX keep
 
     if sudo grub2-mkconfig -o /boot/grub2/grub.cfg >/dev/null 2>&1; then
         ok "Tema Yoru puesto: se verá al reiniciar (para quitarlo: sudo cp /etc/default/grub.original /etc/default/grub)"
@@ -660,18 +681,24 @@ menu_grub() {
     fi
 }
 
-# Brave con sincronización explícita (WaylandLinuxDrmSyncobj): sin ella, con
-# NVIDIA parpadea al hacer scroll. Brave no lee un archivo de opciones, así
-# que se copia su .desktop a ~/.local/share/applications con la opción en
-# cada Exec (manda sobre el del sistema). Se rehace en cada ./install.sh por
-# si Brave cambia el suyo. Mod+B la lleva también (config/niri/binds.kdl)
-brave_wayland() {
+# Brave con NVIDIA: en Wayland parpadea y hace cosas raras al hacer scroll
+# (sobre todo en YouTube), incluso con sincronización explícita. Por XWayland
+# va bien. Brave no lee un archivo de opciones, así que se copia su .desktop
+# a ~/.local/share/applications con la opción en cada Exec (manda sobre el
+# del sistema; Mod+B lo abre con gtk-launch, así que también la lleva). Se
+# rehace en cada ./install.sh por si Brave cambia el suyo. Sin NVIDIA, el de
+# siempre: en Wayland va bien
+brave_nvidia() {
     local origen=/usr/share/applications/brave-browser.desktop
     local destino="$HOME/.local/share/applications/brave-browser.desktop"
     [[ -f "$origen" ]] || return 0
+    if ! tiene_nvidia; then
+        rm -f "$destino"
+        return 0
+    fi
     mkdir -p "$(dirname "$destino")"
-    sed -E 's|^(Exec=[^ ]+)|\1 --enable-features=WaylandLinuxDrmSyncobj|' "$origen" > "$destino"
-    ok "Brave sin parpadeos al hacer scroll (sincronización explícita)"
+    sed -E 's|^(Exec=[^ ]+)|\1 --ozone-platform=x11|' "$origen" > "$destino"
+    ok "Brave por XWayland (con NVIDIA, en Wayland parpadea)"
 }
 
 # Apps para abrir documentos. Si están las de ArtCraft (PdfCraft, WordCraft,

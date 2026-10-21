@@ -1,12 +1,13 @@
 # ============================================================================
 #  theme.txt — El menú de arranque de Yoru (GRUB)
 # ----------------------------------------------------------------------------
-#  El 夜 arriba y un recuadro como los paneles de Yoru: oscuro, borde blanco
-#  de 2 px y esquinas redondeadas. La opción elegida, en blanco y resaltada;
-#  las demás, en gris. Las imágenes las hace system/arranque/generar.py.
+#  El 夜 arriba y el menú en un recuadro como las islas de la barra, con el
+#  icono de cada sistema. La opción elegida, en blanco y resaltada; las
+#  demás, en gris. Letra: Adwaita Sans (la consola, JetBrains Mono).
+#  Las imágenes las hace system/arranque/generar.py.
 #  install.sh lo copia a /boot/grub2/themes/yoru/ junto con las fuentes
 #  (*.pf2, hechas con grub2-mkfont). Si lo cambias:
-#    sudo cp system/grub/yoru/* /boot/grub2/themes/yoru/
+#    sudo cp -r system/grub/yoru/* /boot/grub2/themes/yoru/
 #    sudo grub2-mkconfig -o /boot/grub2/grub.cfg
 # ============================================================================
 
@@ -15,13 +16,15 @@ desktop-image: "fondo.png"
 desktop-image-scale-method: "stretch"
 desktop-color: "#1a1b1e"
 
-# La consola (tecla c) y el editor de una entrada (tecla e)
+# La consola (tecla c) y el editor de una entrada (tecla e). GRUB la saca
+# también al arrancar un sistema, mientras carga, y pinta su fondo de negro:
+# a pantalla completa y sin marco, se ve como un fundido y no como un recuadro
 terminal-font: "JetBrains Mono Regular 16"
 terminal-box: "terminal_box_*.png"
-terminal-left: "10%"
-terminal-top: "10%"
-terminal-width: "80%"
-terminal-height: "80%"
+terminal-left: "0"
+terminal-top: "0"
+terminal-width: "100%"
+terminal-height: "100%"
 terminal-border: "0"
 
 + image {
@@ -31,22 +34,24 @@ terminal-border: "0"
 }
 
 + boot_menu {
-    left = 50%-340
+    left = 50%-410
     top = 40%
-    width = 680
-    height = 270
+    width = 820
+    height = 330
     menu_pixmap_style = "menu_*.png"
-    item_font = "JetBrains Mono Regular 18"
+    item_font = "Adwaita Sans Regular 22"
     item_color = "#8a8f98"
-    selected_item_font = "JetBrains Mono Bold 18"
+    selected_item_font = "Adwaita Sans Bold 22"
     selected_item_color = "#ffffff"
     selected_item_pixmap_style = "select_*.png"
-    item_height = 40
-    item_padding = 14
-    item_spacing = 6
-    icon_width = 0
-    icon_height = 0
-    item_icon_space = 0
+    item_height = 44
+    item_padding = 18
+    # Separación ≥ 2 × las esquinas de select_*.png (8 px): el resaltado
+    # sale por fuera de la fila y, si no, tapa la de al lado
+    item_spacing = 16
+    icon_width = 28
+    icon_height = 28
+    item_icon_space = 18
     scrollbar = false
 }
 
@@ -57,16 +62,16 @@ terminal-border: "0"
     top = 80%
     width = 100%
     align = "center"
-    font = "JetBrains Mono Regular 16"
+    font = "Adwaita Sans Regular 16"
     color = "#8a8f98"
 }
 
 + label {
     text = "↑ ↓  elegir    ·    Intro  arrancar    ·    e  editar    ·    c  consola"
     left = 0
-    top = 86%
+    top = 85%
     width = 100%
     align = "center"
-    font = "JetBrains Mono Regular 16"
+    font = "Adwaita Sans Regular 16"
     color = "#5c616b"
 }
