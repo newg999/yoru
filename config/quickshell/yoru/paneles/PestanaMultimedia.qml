@@ -39,11 +39,14 @@ Item {
 
     implicitHeight: 420
 
-    // Mpris no avisa de la posición: se pregunta cada segundo mientras se ve
+    // Mpris no avisa de la posición: se pregunta cada segundo mientras se ve,
+    // y nada más abrir (si no, el primer segundo enseña la de la última vez
+    // y luego la barra salta de golpe)
     Timer {
         running: multimedia.activa && (multimedia.reproductor?.isPlaying ?? false)
         interval: 1000
         repeat: true
+        triggeredOnStart: true
         onTriggered: multimedia.reproductor.positionChanged()
     }
 
@@ -106,7 +109,7 @@ Item {
             anchors { left: parent.left; right: parent.right; leftMargin: 80; rightMargin: 80; verticalCenter: parent.verticalCenter }
             spacing: 14
 
-            // Carátula redonda; gira despacio mientras suena
+            // Carátula redonda
             ClippingRectangle {
                 id: disco
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -115,10 +118,6 @@ Item {
                 color: Tema.claro(0.08)
                 border.width: 3
                 border.color: Tema.claro(0.6)
-                // Suavizado: sin esto el borde se ve dentado al girar
-                layer.enabled: true
-                layer.smooth: true
-                layer.samples: 8
 
                 Image {
                     id: caratula
@@ -136,12 +135,6 @@ Item {
                     color: Tema.tenue
                 }
 
-                RotationAnimation on rotation {
-                    running: multimedia.activa && (multimedia.reproductor?.isPlaying ?? false)
-                    loops: Animation.Infinite
-                    from: disco.rotation; to: disco.rotation + 360
-                    duration: 24000
-                }
             }
 
             Column {
@@ -181,8 +174,11 @@ Item {
                 spacing: 2
                 visible: (multimedia.reproductor?.length ?? 0) > 0
 
+                // Con ondas mientras suena
                 Deslizador {
                     width: parent.width
+                    conOndas: true
+                    ondas: multimedia.activa && (multimedia.reproductor?.isPlaying ?? false)
                     valor: multimedia.reproductor ? multimedia.reproductor.position / multimedia.reproductor.length : 0
                     onMovido: nuevo => {
                         if (multimedia.reproductor?.canSeek)

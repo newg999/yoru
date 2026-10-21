@@ -14,11 +14,14 @@ Tarjeta {
     readonly property var reproductor: Reproductor.actual
     signal ampliar()     // clic en la carátula = pestaña Multimedia
 
-    // Mpris no avisa de la posición: se pregunta cada segundo mientras se ve
+    // Mpris no avisa de la posición: se pregunta cada segundo mientras se ve,
+    // y nada más abrir (si no, el primer segundo enseña la de la última vez
+    // y luego la barra salta de golpe)
     Timer {
         running: tarjeta.activa && (tarjeta.reproductor?.isPlaying ?? false)
         interval: 1000
         repeat: true
+        triggeredOnStart: true
         onTriggered: tarjeta.reproductor.positionChanged()
     }
 
@@ -116,9 +119,12 @@ Tarjeta {
             spacing: 2
             visible: (tarjeta.reproductor?.length ?? 0) > 0
 
+            // Con ondas mientras suena, como en la pestaña Multimedia
             Deslizador {
                 width: parent.width
                 implicitHeight: 16
+                conOndas: true
+                ondas: tarjeta.activa && (tarjeta.reproductor?.isPlaying ?? false)
                 valor: tarjeta.reproductor ? tarjeta.reproductor.position / tarjeta.reproductor.length : 0
                 onMovido: nuevo => {
                     if (tarjeta.reproductor?.canSeek)
