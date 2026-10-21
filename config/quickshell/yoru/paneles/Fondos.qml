@@ -1,43 +1,57 @@
 // ============================================================================
-//  Fondos — elegir fondo de pantalla con miniaturas, en mitad de la pantalla
-//  Atajo: Mod+Alt+W   ·   Mod+Alt+Shift+W pasa al siguiente sin panel
+//  Fondos — elegir fondo de pantalla, al estilo de Omarchy
+//  Atajo: Mod+Alt+W   ·   Mod+Alt+Shift+W pasa al siguiente sin abrir esto
 //
-//    ↑ ↓ ← → para moverte · Enter para ponerlo · Esc para cerrar
-//    Supr (o la papelera del fondo) dos veces = mandarlo a la papelera
+//  Sin recuadro: sobre el escritorio, con un velo oscuro, una fila de
+//  tarjetas inclinadas (paralelogramos). La elegida, en el centro, grande y
+//  con el borde de Yoru; las demás, más pequeñas y apagadas cuanto más lejos.
+//
+//    ← → (o la rueda, o arrastrando) para moverte · Enter (o clic en la del
+//    centro) para ponerlo · clic en otra la trae al centro · Esc o clic fuera
+//    para cerrar · Supr (o la papelera) dos veces = mandarlo a la papelera
 //
 //  Los fondos salen de ~/.local/share/wallpapers (scripts/fondos.sh hace
 //  las miniaturas la primera vez) y se ponen con niri/scripts/wallpaper.sh,
 //  que también los lleva al bloqueo, al inicio de sesión y a «yoru tema fondo».
-//
-//  Pestaña Descubrir: busca fondos nuevos en wallhaven.cc (populares, por
-//  tema o por palabra) con scripts/wallhaven.py. Clic = vista previa en
-//  grande (← → para pasar, Enter = se baja y se pone, Esc = volver).
+//  Buscar fondos nuevos (wallhaven) está en Ajustes › Fondo (Descubrir.qml).
 // ============================================================================
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 import Quickshell.Widgets
 import qs.comun
 
-Panel {
+PanelWindow {
     id: panel
-    nombre: "fondos"
-    lado: "medio"
-    ancho: 1000
 
-    readonly property int columnas: 5
+    required property ShellScreen modelData
+    readonly property bool abierto: Paneles.abierto === "fondos" && Paneles.pantalla === modelData
 
-    // Filas de miniaturas que caben (máximo 3) dejando «resto» px para
-    // pestañas, buscador y pie
-    function filasQueCaben(alto, resto) {
-        return Math.max(1, Math.min(3, Math.floor((altoMax - 32 - resto) / alto)));
+    // 0 = cerrado · 1 = abierto. La ventana sigue hasta que acaba de irse
+    property real progreso: abierto ? 1 : 0
+    Behavior on progreso {
+        NumberAnimation { duration: Tema.normal * 1.4; easing.type: Easing.OutCubic }
     }
+
+    screen: modelData
+    visible: abierto || progreso > 0
+    color: "transparent"
+    anchors { top: true; bottom: true; left: true; right: true }
+    exclusionMode: ExclusionMode.Ignore
+    WlrLayershell.namespace: "yoru-fondos"
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: abierto ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
     readonly property string casa: Quickshell.env("HOME")
+    // Tamaño de la tarjeta del centro (9:16) y cuánto se inclinan
+    readonly property int altoTarjeta: Math.round(Math.min(640, modelData.height * 0.5))
+    readonly property int anchoTarjeta: Math.round(altoTarjeta * 9 / 16)
+    readonly property real inclinacion: 0.16    // desplazamiento horizontal por px de alto
 
     property var fondos: []          // [{ruta, miniatura, nombre}]
     property string actual: ""
     property bool cargando: false
-    property string vista: "mios"    // "mios" · "descubrir"
 
     // Borrar: el primer clic (o Supr) lo marca en rojo; el segundo, a la papelera
     property string aBorrar: ""
@@ -61,147 +75,19 @@ Panel {
     Process {
         id: borrador
         onExited: {
-            const i = rejilla.currentIndex;
+            const i = carrusel.currentIndex;
             leer.running = true;
             actualFile.reload();
-            rejilla.currentIndex = Math.max(0, Math.min(i, panel.fondos.length - 2));
-        }
-    }
-
-    // ------------------------------------------------------ Descubrir
-    readonly property var temas: [
-        {id: "populares", icono: "󰈸", texto: "Populares"},
-        {id: "naturaleza", icono: "󰔱", texto: "Naturaleza"},
-        {id: "anime", icono: "󰙃", texto: "Anime"},
-        {id: "minimalista", icono: "󰝤", texto: "Minimalista"},
-        {id: "noche", icono: "󰖔", texto: "Noche"}
-    ]
-    property string consulta: "populares"   // un tema o lo que se haya escrito
-    // Los resultados: {ident, url, miniatura, resolucion, megas, bajado}.
-    // Un ListModel y no una lista: al añadir una página se añaden filas y la
-    // rejilla se queda donde estabas (con una lista nueva entera, volvía arriba)
-    ListModel { id: nuevos }
-    property int pagina: 0
-    property int ultima: 1
-    property string error: ""
-    property string bajando: ""      // id del que se está bajando
-
-    function buscar(consulta) {
-        consulta = consulta.trim();
-        if (consulta === "")
-            return;
-        panel.consulta = consulta;
-        nuevos.clear();
-        previa = -1;
-        pagina = 0;
-        ultima = 1;
-        error = "";
-        mas();
-    }
-
-    // Siguiente página de resultados (al llegar al final de la rejilla)
-    function mas() {
-        if (buscador.running || pagina >= ultima)
-            return;
-        buscador.command = [Quickshell.shellPath("scripts/wallhaven.py"), "buscar", consulta, String(pagina + 1)];
-        buscador.running = true;
-    }
-
-    // Vista previa de Descubrir: índice en «nuevos» (-1 = cerrada)
-    property int previa: -1
-    property int marcaPrevia: 0      // sube al bajar uno, para que la previa lo vea
-    function verPrevia(i) {
-        if (i < 0 || i >= nuevos.count)
-            return;
-        previa = i;
-        descubiertos.positionViewAtIndex(i, GridView.Contain);
-        // Cerca del final, la página siguiente (como al bajar con la rueda)
-        if (i >= nuevos.count - 4)
-            mas();
-    }
-    function usarPrevia() {
-        if (previa < 0 || bajador.running)
-            return;
-        const f = nuevos.get(previa);
-        bajar({id: f.ident, url: f.url});
-    }
-
-    function bajar(fondo) {
-        if (!fondo || bajador.running)
-            return;
-        bajando = fondo.id;
-        bajador.command = [Quickshell.shellPath("scripts/wallhaven.py"), "bajar", fondo.id, fondo.url];
-        bajador.running = true;
-    }
-
-    Process {
-        id: buscador
-        stdout: StdioCollector {
-            onStreamFinished: {
-                let r;
-                try {
-                    r = JSON.parse(text);
-                } catch (e) {
-                    panel.error = "Wallhaven no responde";
-                    return;
-                }
-                if (r.error) {
-                    panel.error = r.error;
-                    return;
-                }
-                // Sin repetidos (las listas de populares se mueven entre páginas)
-                const vistos = new Set();
-                for (let i = 0; i < nuevos.count; i++)
-                    vistos.add(nuevos.get(i).ident);
-                for (const f of r.fondos)
-                    if (!vistos.has(f.id))
-                        nuevos.append({ident: f.id, url: f.url, miniatura: f.miniatura,
-                                       resolucion: f.resolucion, megas: f.megas, bajado: f.bajado});
-                panel.pagina = r.pagina;
-                panel.ultima = r.ultima;
-            }
-        }
-    }
-
-    Process {
-        id: bajador
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const ruta = text.trim();
-                const id = panel.bajando;
-                panel.bajando = "";
-                if (!ruta.startsWith("/")) {
-                    panel.error = "No se pudo bajar el fondo";
-                    return;
-                }
-                for (let i = 0; i < nuevos.count; i++)
-                    if (nuevos.get(i).ident === id)
-                        nuevos.setProperty(i, "bajado", true);
-                panel.marcaPrevia++;
-                panel.poner({ruta});
-                leer.running = true;
-            }
+            carrusel.currentIndex = Math.max(0, Math.min(i, panel.fondos.length - 2));
         }
     }
 
     onAbiertoChanged: {
-        if (!abierto)
-            previa = -1;
         if (abierto) {
-            // Se puede abrir directamente en Descubrir:
-            // qs -c yoru ipc call panel alternar fondos descubrir
-            if (Paneles.seccion === "descubrir") {
-                vista = "descubrir";
-                if (nuevos.count === 0)
-                    buscar(consulta);
-            }
             cargando = fondos.length === 0;
             leer.running = true;
             actualFile.reload();
-            if (vista === "mios")
-                rejilla.forceActiveFocus();
-            else
-                busqueda.forceActiveFocus();
+            carrusel.forceActiveFocus();
         }
     }
 
@@ -230,499 +116,290 @@ Panel {
                 });
                 panel.cargando = false;
                 const i = panel.fondos.findIndex(f => f.ruta === panel.actual);
-                rejilla.currentIndex = Math.max(i, 0);
-                rejilla.positionViewAtIndex(rejilla.currentIndex, GridView.Contain);
+                carrusel.positionViewAtIndex(Math.max(i, 0), PathView.Center);
+                carrusel.currentIndex = Math.max(i, 0);
             }
         }
     }
 
-    Column {
-        width: parent.width
-        spacing: 12
-
-        Opciones {
-            width: parent.width
-            opciones: [
-                {id: "mios", icono: "󰸉", texto: "Mis fondos"},
-                {id: "descubrir", icono: "󰍉", texto: "Descubrir"}
-            ]
-            valor: panel.vista
-            onElegir: id => {
-                panel.vista = id;
-                if (id === "descubrir") {
-                    if (nuevos.count === 0)
-                        panel.buscar(panel.consulta);
-                    busqueda.forceActiveFocus();
-                } else {
-                    rejilla.forceActiveFocus();
-                }
-            }
+    // ------------------------------------------------------------- Velo
+    // Oscurece el escritorio; un clic en él cierra
+    Rectangle {
+        anchors.fill: parent
+        color: Qt.rgba(0, 0, 0, 0.55 * panel.progreso)
+        MouseArea {
+            anchors.fill: parent
+            onClicked: Paneles.cerrar()
         }
+    }
 
-        Titular {
-            visible: panel.vista === "mios"
+    Item {
+        anchors.fill: parent
+        opacity: panel.progreso
+        // Al abrirse, sube un poco desde abajo
+        transform: Translate { y: (1 - panel.progreso) * 30 }
+
+        // ---------------------------------------------------- Carrusel
+        PathView {
+            id: carrusel
+            anchors.centerIn: parent
+            anchors.verticalCenterOffset: -30
             width: parent.width
-            texto: "Fondos · " + panel.fondos.length
-
-            BotonIcono {
-                icono: "󰒝"
-                ayuda: "Uno al azar"
-                visible: panel.fondos.length > 1
-                onClic: panel.poner(panel.fondos[Math.floor(Math.random() * panel.fondos.length)])
-            }
-        }
-
-        GridView {
-            id: rejilla
-            visible: panel.vista === "mios"
-            width: parent.width
-            // Hasta 3 filas; menos si no caben bajo la barra (portátiles de 768)
-            height: Math.min(Math.ceil(Math.max(panel.fondos.length, 1) / panel.columnas),
-                             panel.filasQueCaben(cellHeight, 130)) * cellHeight
-            clip: true
-            cellWidth: Math.floor(width / panel.columnas)
-            cellHeight: cellWidth
+            height: panel.altoTarjeta + 40
             model: panel.fondos
-            boundsBehavior: Flickable.StopAtBounds
-            highlightMoveDuration: 0
-            keyNavigationWraps: true
+            // Las que se ven a la vez (impar: una en el centro)
+            pathItemCount: Math.min(7, panel.fondos.length % 2 === 0 ? panel.fondos.length - 1 : panel.fondos.length)
+            cacheItemCount: 4
+            preferredHighlightBegin: 0.5
+            preferredHighlightEnd: 0.5
+            highlightRangeMode: PathView.StrictlyEnforceRange
+            snapMode: PathView.SnapToItem
+            highlightMoveDuration: Ajustes.animaciones ? 320 : 0
             focus: true
 
+            Keys.onLeftPressed: decrementCurrentIndex()
+            Keys.onRightPressed: incrementCurrentIndex()
             Keys.onReturnPressed: panel.poner(panel.fondos[currentIndex])
             Keys.onEnterPressed: panel.poner(panel.fondos[currentIndex])
             Keys.onEscapePressed: Paneles.cerrar()
             Keys.onDeletePressed: panel.borrar(panel.fondos[currentIndex])
 
+            // La rueda pasa de una en una (sin esto, un giro salta varias)
+            WheelHandler {
+                acceptedDevices: PointerDevice.Mouse
+                onWheel: e => {
+                    if (e.angleDelta.y < 0 || e.angleDelta.x < 0)
+                        carrusel.incrementCurrentIndex();
+                    else
+                        carrusel.decrementCurrentIndex();
+                }
+            }
+
+            // Recto de lado a lado; en el centro, tamaño y luz completos
+            path: Path {
+                startX: 0
+                startY: carrusel.height / 2
+                PathAttribute { name: "escala"; value: 0.55 }
+                PathAttribute { name: "luz"; value: 0.3 }
+                PathAttribute { name: "capa"; value: 0 }
+                PathLine { x: carrusel.width / 2; y: carrusel.height / 2 }
+                PathAttribute { name: "escala"; value: 1 }
+                PathAttribute { name: "luz"; value: 1 }
+                PathAttribute { name: "capa"; value: 10 }
+                PathLine { x: carrusel.width; y: carrusel.height / 2 }
+                PathAttribute { name: "escala"; value: 0.55 }
+                PathAttribute { name: "luz"; value: 0.3 }
+                PathAttribute { name: "capa"; value: 0 }
+            }
+
             Texto {
                 visible: panel.fondos.length === 0
                 anchors.centerIn: parent
                 text: panel.cargando ? "Preparando miniaturas…"
-                    : "No hay fondos: echa imágenes en wallpapers/ o ejecuta wallpapers/descargar.sh"
+                    : "No hay fondos: busca alguno en Ajustes › Fondo, o echa imágenes en wallpapers/"
                 font.bold: false
-                color: Tema.gris
+                color: Tema.texto
             }
 
             delegate: Item {
-                id: celda
+                id: tarjeta
                 required property var modelData
                 required property int index
-                readonly property bool elegida: GridView.isCurrentItem
+                readonly property bool elegida: PathView.isCurrentItem
                 readonly property bool puesto: modelData.ruta === panel.actual
-                width: rejilla.cellWidth
-                height: rejilla.cellHeight
+                readonly property real escala: PathView.escala ?? 0.55
+                readonly property real luz: PathView.luz ?? 0.3
+                // Lo que se va a la derecha el borde de arriba (y a la izquierda el de abajo)
+                readonly property real sesgo: panel.inclinacion * height / 2
+                width: panel.anchoTarjeta
+                height: panel.altoTarjeta
+                scale: escala
+                z: PathView.capa ?? 0
 
-                // Encima del MouseArea de la celda, para que la papelera reciba su clic
-                Rectangle {
-                    z: 1
-                    anchors { fill: parent; margins: 5 }
-                    radius: 12
-                    color: Tema.caja
-                    border.width: celda.elegida ? 3 : celda.puesto ? 1 : 0
-                    border.color: celda.elegida ? Tema.blanco : Tema.claro(0.5)
+                // La forma: un paralelogramo (la tarjeta, inclinada)
+                Item {
+                    id: forma
+                    anchors.fill: parent
+                    transform: Matrix4x4 {
+                        matrix: Qt.matrix4x4(1, -panel.inclinacion, 0, tarjeta.sesgo,
+                                             0, 1, 0, 0,
+                                             0, 0, 1, 0,
+                                             0, 0, 0, 1)
+                    }
+
+                    // Sombra
+                    Rectangle {
+                        anchors { fill: parent; topMargin: 14; bottomMargin: -18; leftMargin: -6; rightMargin: -6 }
+                        radius: 16
+                        color: Qt.rgba(0, 0, 0, 0.4 * tarjeta.luz)
+                    }
 
                     ClippingRectangle {
-                        anchors { fill: parent; margins: celda.elegida ? 5 : 3 }
-                        radius: 9
-                        color: "transparent"
+                        anchors.fill: parent
+                        radius: 12
+                        color: Tema.caja
 
+                        // La foto, enderezada (inclinada al revés) y algo más
+                        // ancha, para que llene las esquinas sin deformarse
                         Image {
-                            anchors.fill: parent
-                            source: "file://" + celda.modelData.miniatura
-                            sourceSize: Qt.size(256, 256)
+                            x: -tarjeta.sesgo
+                            width: parent.width + 2 * tarjeta.sesgo
+                            height: parent.height
+                            source: "file://" + tarjeta.modelData.miniatura
+                            sourceSize: Qt.size(360, 640)
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
-                            opacity: celda.elegida ? 1 : 0.8
-                            Behavior on opacity { NumberAnimation { duration: Tema.rapida } }
+                            opacity: tarjeta.luz
+                            transform: Matrix4x4 {
+                                matrix: Qt.matrix4x4(1, panel.inclinacion, 0, -tarjeta.sesgo,
+                                                     0, 1, 0, 0,
+                                                     0, 0, 1, 0,
+                                                     0, 0, 0, 1)
+                            }
                         }
                     }
 
-                    // Papelera (con el ratón encima). Primer clic: en rojo; segundo: se borra
+                    // Borde de la elegida (como el anillo de foco de niri)
                     Rectangle {
-                        readonly property bool marcado: panel.aBorrar === celda.modelData.ruta
-                        visible: celda.elegida || marcado
-                        anchors { right: parent.right; top: parent.top; margins: 10 }
-                        width: marcado ? confirmar.width + 34 : 26
-                        height: 26
-                        radius: 13
-                        color: marcado ? Tema.rojo : papelera.containsMouse ? Qt.alpha(Tema.rojo, 0.85) : Qt.alpha(Tema.oscuro, 0.75)
-                        Behavior on width { NumberAnimation { duration: Tema.rapida } }
-                        Behavior on color { ColorAnimation { duration: Tema.rapida } }
-
-                        Row {
-                            anchors.centerIn: parent
-                            spacing: 6
-                            Texto {
-                                text: "󰩹"
-                                font.pixelSize: 14
-                                color: Tema.blanco
-                            }
-                            Texto {
-                                id: confirmar
-                                visible: parent.parent.marcado
-                                text: "¿Borrar?"
-                                font.pixelSize: 11
-                                color: Tema.blanco
-                            }
-                        }
-
-                        MouseArea {
-                            id: papelera
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: panel.borrar(celda.modelData)
-                        }
-                    }
-
-                    // El que está puesto ahora
-                    Rectangle {
-                        visible: celda.puesto
-                        anchors { right: parent.right; bottom: parent.bottom; margins: 10 }
-                        width: 24; height: 24; radius: 12
-                        color: Tema.blanco
-                        Texto {
-                            anchors.centerIn: parent
-                            text: "󰄬"
-                            font.pixelSize: 14
-                            color: Tema.oscuro
-                        }
+                        anchors.fill: parent
+                        radius: 12
+                        color: "transparent"
+                        border.width: 3
+                        border.color: Tema.blanco
+                        opacity: tarjeta.elegida ? 1 : 0
+                        Behavior on opacity { NumberAnimation { duration: Tema.rapida } }
                     }
                 }
 
                 MouseArea {
                     anchors.fill: parent
-                    hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onEntered: rejilla.currentIndex = celda.index
-                    onClicked: panel.poner(celda.modelData)
-                }
-            }
-        }
-
-        Texto {
-            visible: panel.vista === "mios"
-            leftPadding: 4
-            width: parent.width
-            elide: Text.ElideRight
-            text: (panel.fondos[rejilla.currentIndex]?.nombre ?? "") + "  <font color='" + Tema.gris + "'>·  Enter lo pone  ·  Supr lo borra  ·  Esc cierra</font>"
-            textFormat: Text.StyledText
-            font.pixelSize: 11
-        }
-
-        // --------------------------------------------------------- Descubrir
-        Row {
-            visible: panel.vista === "descubrir"
-            width: parent.width
-            spacing: 8
-
-            Rectangle {
-                width: 260
-                height: 36
-                radius: 10
-                color: Tema.caja
-                border.width: 1
-                border.color: busqueda.activeFocus ? Tema.claro(0.5) : Tema.claro(0.1)
-
-                Texto {
-                    id: lupa
-                    anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
-                    text: "󰍉"
-                    font.pixelSize: 15
-                    color: Tema.gris
-                }
-                TextInput {
-                    id: busqueda
-                    anchors { left: lupa.right; leftMargin: 10; right: parent.right; rightMargin: 12; verticalCenter: parent.verticalCenter }
-                    color: Tema.texto
-                    selectionColor: Tema.claro(0.3)
-                    font.family: Tema.fuente
-                    font.pixelSize: 13
-                    clip: true
-                    onAccepted: panel.buscar(text)
-                    Keys.onEscapePressed: Paneles.cerrar()
-
-                    Texto {
-                        visible: busqueda.text === ""
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "Buscar en inglés…"
-                        font.bold: false
-                        font.pixelSize: 12
-                        color: Tema.gris
+                    onClicked: {
+                        if (tarjeta.elegida)
+                            panel.poner(tarjeta.modelData);
+                        else
+                            carrusel.currentIndex = tarjeta.index;
                     }
                 }
-            }
 
-            Opciones {
-                width: parent.width - 260 - parent.spacing
-                opciones: panel.temas
-                valor: panel.consulta
-                onElegir: id => {
-                    busqueda.text = "";
-                    panel.buscar(id);
-                }
-            }
-        }
+                // Papelera (solo en la del centro), sobre la esquina de arriba,
+                // que con la inclinación queda más a la derecha.
+                // Primer clic: en rojo; segundo: se borra
+                Rectangle {
+                    readonly property bool marcado: panel.aBorrar === tarjeta.modelData.ruta
+                    visible: tarjeta.elegida || marcado
+                    anchors { right: parent.right; top: parent.top; topMargin: 14; rightMargin: 14 - tarjeta.sesgo * 0.8 }
+                    width: marcado ? confirmar.width + 34 : 30
+                    height: 30
+                    radius: 15
+                    color: marcado ? Tema.rojo : papelera.containsMouse ? Qt.alpha(Tema.rojo, 0.85) : Qt.alpha(Tema.oscuro, 0.75)
+                    Behavior on width { NumberAnimation { duration: Tema.rapida } }
+                    Behavior on color { ColorAnimation { duration: Tema.rapida } }
 
-        Item {
-            visible: panel.vista === "descubrir"
-            width: parent.width
-            height: descubiertos.height
-
-            GridView {
-                id: descubiertos
-                width: parent.width
-                height: panel.filasQueCaben(cellHeight, 125) * cellHeight
-                clip: true
-                cellWidth: Math.floor(width / 4)
-                cellHeight: Math.round(cellWidth * 10 / 16)
-                model: nuevos
-                boundsBehavior: Flickable.StopAtBounds
-                // Cerca del final, la página siguiente
-                onContentYChanged: if (contentHeight > 0 && contentY + height > contentHeight - cellHeight) panel.mas()
-
-                Texto {
-                    visible: nuevos.count === 0
-                    anchors.centerIn: parent
-                    width: parent.width - 40
-                    horizontalAlignment: Text.AlignHCenter
-                    wrapMode: Text.Wrap
-                    text: panel.error !== "" ? "No se pudo buscar: " + panel.error
-                        : buscador.running ? "Buscando en Wallhaven…"
-                        : "Nada por aquí: prueba con otra palabra"
-                    font.bold: false
-                    color: Tema.gris
-                }
-
-                delegate: Item {
-                    id: nuevo
-                    required property var model
-                    required property int index
-                    readonly property var modelData: model
-                    readonly property bool bajandolo: panel.bajando === modelData.ident
-                    width: descubiertos.cellWidth
-                    height: descubiertos.cellHeight
-
-                    Rectangle {
-                        anchors { fill: parent; margins: 5 }
-                        radius: 12
-                        color: Tema.caja
-                        border.width: sobre.containsMouse ? 3 : 0
-                        border.color: Tema.blanco
-
-                        ClippingRectangle {
-                            anchors { fill: parent; margins: sobre.containsMouse ? 5 : 3 }
-                            radius: 9
-                            color: "transparent"
-
-                            Image {
-                                anchors.fill: parent
-                                source: nuevo.modelData.miniatura
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                                opacity: nuevo.bajandolo ? 0.4 : sobre.containsMouse ? 1 : 0.85
-                                Behavior on opacity { NumberAnimation { duration: Tema.rapida } }
-                            }
-                        }
-
-                        // Resolución y peso, al pasar el ratón
-                        Rectangle {
-                            visible: sobre.containsMouse && !nuevo.bajandolo
-                            anchors { left: parent.left; bottom: parent.bottom; margins: 10 }
-                            width: info.width + 12
-                            height: 20
-                            radius: 6
-                            color: Qt.alpha(Tema.oscuro, 0.75)
-                            Texto {
-                                id: info
-                                anchors.centerIn: parent
-                                text: nuevo.modelData.resolucion + " · " + nuevo.modelData.megas + " MB"
-                                font.pixelSize: 10
-                                font.bold: false
-                            }
-                        }
-
-                        // Ya lo tienes · o bajándose
-                        Rectangle {
-                            visible: nuevo.modelData.bajado || nuevo.bajandolo
-                            anchors { right: parent.right; bottom: parent.bottom; margins: 10 }
-                            width: 24; height: 24; radius: 12
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 6
+                        Texto {
+                            text: "󰩹"
+                            font.pixelSize: 14
                             color: Tema.blanco
-                            Texto {
-                                anchors.centerIn: parent
-                                text: nuevo.bajandolo ? "󰇚" : "󰄬"
-                                font.pixelSize: 14
-                                color: Tema.oscuro
-                                SequentialAnimation on opacity {
-                                    running: nuevo.bajandolo
-                                    loops: Animation.Infinite
-                                    NumberAnimation { to: 0.3; duration: 400 }
-                                    NumberAnimation { to: 1; duration: 400 }
-                                }
-                            }
+                        }
+                        Texto {
+                            id: confirmar
+                            visible: parent.parent.marcado
+                            text: "¿Borrar?"
+                            font.pixelSize: 11
+                            color: Tema.blanco
                         }
                     }
 
                     MouseArea {
-                        id: sobre
+                        id: papelera
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: panel.verPrevia(nuevo.index)
-                    }
-                }
-            }
-
-            // ------------------------------------------- Vista previa
-            // Clic en una miniatura: el fondo en grande (primero la miniatura,
-            // luego el de verdad en cuanto llega). ← → pasan al anterior y al
-            // siguiente, Enter lo baja y lo pone, Esc vuelve a la rejilla
-            Rectangle {
-                id: vistaPrevia
-                anchors.fill: parent
-                visible: panel.previa >= 0
-                radius: 12
-                color: Tema.sombra(0.97)
-                focus: visible
-                onVisibleChanged: if (visible) forceActiveFocus(); else busqueda.forceActiveFocus()
-
-                readonly property var fondo: panel.previa >= 0 && panel.previa < nuevos.count ? nuevos.get(panel.previa) : null
-                // nuevos.get() no avisa de cambios: se vuelve a mirar al bajarlo
-                readonly property bool bajado: panel.marcaPrevia >= 0 && (fondo?.bajado ?? false)
-                readonly property bool bajandolo: fondo !== null && panel.bajando === fondo.ident
-
-                Keys.onEscapePressed: panel.previa = -1
-                Keys.onLeftPressed: panel.verPrevia(panel.previa - 1)
-                Keys.onRightPressed: panel.verPrevia(panel.previa + 1)
-                Keys.onReturnPressed: panel.usarPrevia()
-                Keys.onEnterPressed: panel.usarPrevia()
-
-                // Que los clics no lleguen a la rejilla de debajo
-                MouseArea { anchors.fill: parent }
-
-                ClippingRectangle {
-                    id: marco
-                    anchors { fill: parent; margins: 10; bottomMargin: 56 }
-                    radius: 10
-                    color: Tema.caja
-
-                    Image {
-                        anchors.fill: parent
-                        source: vistaPrevia.fondo?.miniatura ?? ""
-                        fillMode: Image.PreserveAspectFit
-                        visible: grande.status !== Image.Ready
-                    }
-                    Image {
-                        id: grande
-                        anchors.fill: parent
-                        source: vistaPrevia.fondo?.url ?? ""
-                        fillMode: Image.PreserveAspectFit
-                        asynchronous: true
-                        sourceSize: Qt.size(width * 1.5, height * 1.5)
-                        opacity: status === Image.Ready ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: Tema.rapida } }
-                    }
-                    Rectangle {
-                        visible: grande.status === Image.Loading
-                        anchors { right: parent.right; top: parent.top; margins: 10 }
-                        width: cargaTexto.width + 16
-                        height: 24
-                        radius: 8
-                        color: Tema.sombra(0.75)
-                        Texto {
-                            id: cargaTexto
-                            anchors.centerIn: parent
-                            text: "Cargando " + Math.round(grande.progress * 100) + "%"
-                            font.pixelSize: 11
-                            font.bold: false
-                        }
+                        onClicked: panel.borrar(tarjeta.modelData)
                     }
                 }
 
-                // Pie: info · anterior / siguiente · cerrar · usar
-                Item {
-                    anchors { left: parent.left; right: parent.right; bottom: parent.bottom; margins: 10 }
-                    height: 38
-
+                // El que está puesto ahora, en la esquina de abajo
+                Rectangle {
+                    visible: tarjeta.puesto
+                    anchors { right: parent.right; bottom: parent.bottom; bottomMargin: 14; rightMargin: 14 + tarjeta.sesgo * 0.8 }
+                    width: 30; height: 30; radius: 15
+                    color: Tema.blanco
                     Texto {
-                        anchors { left: parent.left; leftMargin: 4; verticalCenter: parent.verticalCenter }
-                        text: !vistaPrevia.fondo ? ""
-                            : vistaPrevia.fondo.resolucion + "  ·  " + String(vistaPrevia.fondo.megas).replace(".", ",") + " MB"
-                              + "  <font color='" + Tema.gris + "'>·  " + (panel.previa + 1) + " de " + nuevos.count + "</font>"
-                        textFormat: Text.StyledText
-                        font.pixelSize: 12
-                    }
-
-                    Row {
-                        anchors { right: parent.right; verticalCenter: parent.verticalCenter }
-                        spacing: 6
-
-                        BotonIcono {
-                            icono: "󰅁"
-                            ayuda: "Anterior (←)"
-                            visible: panel.previa > 0
-                            onClic: panel.verPrevia(panel.previa - 1)
-                        }
-                        BotonIcono {
-                            icono: "󰅂"
-                            ayuda: "Siguiente (→)"
-                            visible: panel.previa < nuevos.count - 1
-                            onClic: panel.verPrevia(panel.previa + 1)
-                        }
-                        Rectangle {
-                            width: textoCerrar.width + 28
-                            height: 34
-                            radius: 10
-                            color: zonaCerrar.containsMouse ? Tema.cajaHover : Tema.caja
-                            Texto {
-                                id: textoCerrar
-                                anchors.centerIn: parent
-                                text: "Volver"
-                                font.pixelSize: 13
-                            }
-                            MouseArea {
-                                id: zonaCerrar
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: panel.previa = -1
-                            }
-                        }
-                        Rectangle {
-                            width: textoUsar.width + 28
-                            height: 34
-                            radius: 10
-                            color: zonaUsar.containsMouse ? Tema.blanco : Tema.claro(0.9)
-                            opacity: vistaPrevia.bajandolo ? 0.6 : 1
-                            Texto {
-                                id: textoUsar
-                                anchors.centerIn: parent
-                                text: vistaPrevia.bajandolo ? "󰇚  Bajando…" : vistaPrevia.bajado ? "󰸉  Ponerlo" : "󰸉  Bajarlo y ponerlo"
-                                font.pixelSize: 13
-                                color: Tema.oscuro
-                            }
-                            MouseArea {
-                                id: zonaUsar
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: panel.usarPrevia()
-                            }
-                        }
+                        anchors.centerIn: parent
+                        text: "󰄬"
+                        font.pixelSize: 15
+                        color: Tema.oscuro
                     }
                 }
             }
         }
 
-        Texto {
-            visible: panel.vista === "descubrir"
-            leftPadding: 4
-            width: parent.width
-            elide: Text.ElideRight
-            text: (panel.error !== "" && nuevos.count > 0 ? panel.error + "  ·  " : "")
-                + "<font color='" + Tema.gris + "'>De wallhaven.cc · clic: verlo en grande · Enter lo baja y lo pone (queda en Mis fondos)"
-                + (buscador.running && nuevos.count > 0 ? "  ·  cargando más…" : "") + "</font>"
-            textFormat: Text.StyledText
-            font.pixelSize: 11
+        // ------------------------------------- Nombre y lo que se puede hacer
+        Column {
+            visible: panel.fondos.length > 0
+            anchors { top: carrusel.bottom; topMargin: 18; horizontalCenter: parent.horizontalCenter }
+            spacing: 10
+
+            Texto {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: (panel.fondos[carrusel.currentIndex]?.nombre ?? "")
+                    + (panel.fondos[carrusel.currentIndex]?.ruta === panel.actual ? "  ·  puesto ahora" : "")
+                font.pixelSize: 15
+                color: Tema.blanco
+            }
+            Texto {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: `${carrusel.currentIndex + 1} de ${panel.fondos.length}  ·  ← → elegir  ·  Enter lo pone  ·  Supr lo borra  ·  Esc cierra`
+                font.pixelSize: 12
+                font.bold: false
+                color: Tema.texto
+            }
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 8
+
+                Repeater {
+                    model: [
+                        {id: "azar", icono: "󰒝", texto: "Uno al azar"},
+                        {id: "descubrir", icono: "󰍉", texto: "Buscar más fondos"}
+                    ]
+                    Rectangle {
+                        id: boton
+                        required property var modelData
+                        width: filaBoton.width + 28
+                        height: 34
+                        radius: 17
+                        color: botonRaton.containsMouse ? Tema.claro(0.22) : Tema.claro(0.10)
+                        border.width: 1
+                        border.color: Tema.claro(0.15)
+                        Behavior on color { ColorAnimation { duration: Tema.rapida } }
+
+                        Row {
+                            id: filaBoton
+                            anchors.centerIn: parent
+                            spacing: 8
+                            Texto { text: boton.modelData.icono; font.pixelSize: 14 }
+                            Texto { text: boton.modelData.texto; font.pixelSize: 12 }
+                        }
+                        MouseArea {
+                            id: botonRaton
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (boton.modelData.id === "azar")
+                                    panel.poner(panel.fondos[Math.floor(Math.random() * panel.fondos.length)]);
+                                else
+                                    Paneles.alternar("ajustes", panel.modelData, "fondo");
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

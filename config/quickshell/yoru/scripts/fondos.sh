@@ -3,12 +3,13 @@
 #  fondos.sh — Lista de fondos para el panel Fondos (paneles/Fondos.qml)
 #
 #  Escribe una línea por fondo: «ruta<TAB>miniatura». Antes crea las
-#  miniaturas que falten (cuadradas, recortadas por el centro, en paralelo).
-#  Se guardan en ~/.cache/fondos-miniaturas y solo se hacen las nuevas.
+#  miniaturas que falten (verticales, 9:16, para las tarjetas del carrusel;
+#  recortadas por el centro, en paralelo). Se guardan en
+#  ~/.cache/fondos-tarjetas y solo se hacen las nuevas.
 # ----------------------------------------------------------------------------
 
 DIR="$HOME/.local/share/wallpapers"
-CACHE="$HOME/.cache/fondos-miniaturas"
+CACHE="$HOME/.cache/fondos-tarjetas"
 mkdir -p "$CACHE"
 
 mapfile -t FONDOS < <(find -L "$DIR" -maxdepth 1 -type f \
@@ -20,7 +21,7 @@ for f in "${FONDOS[@]}"; do
 done
 if [[ ${#faltan[@]} -gt 0 ]] && command -v magick >/dev/null; then
     printf '%s\0' "${faltan[@]}" | xargs -0 -P "$(nproc)" -I{} sh -c \
-        'magick "$1[0]" -thumbnail 256x256^ -gravity center -extent 256x256 -quality 85 "$2/$(basename "${1%.*}").jpg"' _ {} "$CACHE"
+        'magick "$1[0]" -thumbnail 360x640^ -gravity center -extent 360x640 -quality 85 "$2/$(basename "${1%.*}").jpg"' _ {} "$CACHE"
 fi
 
 for f in "${FONDOS[@]}"; do

@@ -7,7 +7,8 @@
 //             Energía · Fecha y hora · Apps · Acerca de
 //
 //    Tema:    paletas de colores (las de «yoru tema»: Yoru, del fondo, Nord...)
-//    Fondo:   el fondo actual, elegir otro o pasar al siguiente
+//    Fondo:   el fondo actual, elegir otro o pasar al siguiente, y Descubrir
+//             fondos nuevos en wallhaven.cc (Descubrir.qml)
 //    Barra:   arriba o a la izquierda, qué islas se ven y cuándo sale el dock
 //    Aspecto: esquinas, transparencias, letra (tamaño y tipo), desenfoque, animaciones
 //             y luz nocturna
@@ -276,6 +277,13 @@ Item {
                 detalle: "El tema sigue los colores de cada fondo que pongas"
                 activo: Tema.modo === "fondo" || Tema.modo === "fondo-claro"
                 onCambiar: v => panel.ponerTema(v ? "fondo" : "blanco")
+            }
+
+            Item { width: 1; height: 10 }
+            Titular { texto: "Descubrir fondos nuevos"; width: parent.width }
+            Descubrir {
+                width: parent.width
+                activa: panel.abierto && panel.pestana === "fondo"
             }
         }
 

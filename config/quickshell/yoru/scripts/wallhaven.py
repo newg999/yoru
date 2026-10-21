@@ -24,7 +24,9 @@ CARPETA = os.path.expanduser("~/.local/share/wallpapers")
 LISTA = os.path.join(CARPETA, "wallhaven.txt")
 CABECERA_LISTA = "# Bajados desde el panel de fondos (Descubrir)"
 ACTUAL = os.path.expanduser("~/.cache/wallpaper-actual")
-MINIATURAS = os.path.expanduser("~/.cache/fondos-miniaturas")
+# Las miniaturas de Mis fondos (scripts/fondos.sh); la segunda, de antes del carrusel
+MINIATURAS = [os.path.expanduser("~/.cache/fondos-tarjetas"),
+              os.path.expanduser("~/.cache/fondos-miniaturas")]
 WALLPAPER_SH = os.path.expanduser("~/.config/niri/scripts/wallpaper.sh")
 
 # Temas del panel: qué se le pide a Wallhaven. categories = general/anime/gente
@@ -115,10 +117,11 @@ def borrar(ruta):
     if subprocess.run(["gio", "trash", ruta], capture_output=True).returncode != 0:
         os.remove(ruta)
     nombre = os.path.splitext(os.path.basename(ruta))[0]
-    try:
-        os.remove(os.path.join(MINIATURAS, nombre + ".jpg"))
-    except FileNotFoundError:
-        pass
+    for carpeta in MINIATURAS:
+        try:
+            os.remove(os.path.join(carpeta, nombre + ".jpg"))
+        except FileNotFoundError:
+            pass
 
     # Fuera de la lista (los de wallhaven se llaman anime-<id> o wallhaven-<id>)
     ident = nombre.split("-")[-1]
