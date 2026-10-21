@@ -578,8 +578,8 @@ configurar_sistema() {
 }
 
 # Apps para abrir documentos. Si están las de ArtCraft (PdfCraft, WordCraft,
-# DeckCraft, GridCraft; se instalan con su ArtCraft Launcher, no aquí), van
-# ellas; si no, los PDF con Okular y lo demás como esté.
+# DeckCraft, GridCraft; las instala apps_artcraft), van ellas; si no, los
+# PDF con Okular y lo demás como esté.
 # A WordCraft no se le dan .txt, .md ni .html aunque los acepte: esos van a
 # un editor de texto o al navegador.
 apps_predeterminadas() {
