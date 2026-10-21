@@ -33,9 +33,15 @@ Singleton {
         return ventanas[activo.active_window_id] ?? null;
     }
 
+    // focus-monitor lleva el ratón al centro de esa pantalla: solo se usa si
+    // el escritorio está en otra (si no, cada clic movería el ratón)
     function irA(escritorio) {
-        Quickshell.execDetached(["sh", "-c",
-            `niri msg action focus-monitor '${escritorio.output}' && niri msg action focus-workspace ${escritorio.idx}`]);
+        const actual = escritorios.find(e => e.is_focused)?.output;
+        if (escritorio.output === actual)
+            accion("focus-workspace", String(escritorio.idx));
+        else
+            Quickshell.execDetached(["sh", "-c",
+                `niri msg action focus-monitor '${escritorio.output}' && niri msg action focus-workspace ${escritorio.idx}`]);
     }
 
     function accion(...args) {
