@@ -31,10 +31,9 @@ window-rule {
     opacity 0.92
 }
 
-// Navegador, terminal y VirtualBox (el administrador y las máquinas): se
-// abren a todo el ancho (el resto, a la mitad). Mod+R los va estrechando
+// Navegador y VirtualBox (el administrador y las máquinas): se abren a todo
+// el ancho (el resto, también la terminal, a la mitad). Mod+R los va estrechando
 window-rule {
-    match app-id="^kitty$"
     match app-id=r#"(?i)(firefox|brave|chrom)"#
     match app-id="^VirtualBox (Manager|Machine)$"
     default-column-width { proportion 1.0; }
