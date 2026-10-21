@@ -3,7 +3,8 @@
 //  Es el contenido de la ventana de Ajustes (VentanaAjustes.qml): ella pone
 //  la barra lateral con las secciones y aquí se ve la elegida (pestana)
 //
-//  Secciones: Tema · Fondo · Barra y dock · Aspecto · Pantallas · Ratón · Apps
+//  Secciones: Tema · Fondo · Aspecto · Barra y dock · Pantallas · Ratón ·
+//             Energía · Fecha y hora · Apps · Acerca de
 //
 //    Tema:    paletas de colores (las de «yoru tema»: Yoru, del fondo, Nord...)
 //    Fondo:   el fondo actual, elegir otro o pasar al siguiente
@@ -15,6 +16,10 @@
 //    Ratón:   velocidad, rueda, touchpad y tamaño del cursor
 //             (PestanaRaton.qml; también en niri/local.kdl)
 //    Apps:    con qué app se abre cada cosa (PestanaApps.qml)
+//    Energía: perfil, cuándo bloquear, apagar la pantalla y suspender (PestanaEnergia.qml)
+//    Fecha y hora: zona horaria, hora automática y el reloj de la barra (PestanaFecha.qml)
+//    Acerca de: el equipo y la versión de Yoru, buscar novedades y actualizar
+//             (PestanaAcerca.qml)
 //
 //  Lo de Barra y Aspecto se guarda en comun/Ajustes.qml; los colores, con
 //  «yoru tema» (tema/aplicar.py), que es quien los genera para todo.
@@ -549,6 +554,26 @@ Item {
         // ---------------------------------------------- Apps predeterminadas
         PestanaApps {
             visible: panel.pestana === "apps"
+            activa: panel.abierto && visible
+            width: parent.width
+        }
+
+        // ------------------------------------------------------- Energía
+        PestanaEnergia {
+            visible: panel.pestana === "energia"
+            width: parent.width
+        }
+
+        // -------------------------------------------------- Fecha y hora
+        PestanaFecha {
+            visible: panel.pestana === "fecha"
+            activa: panel.abierto && visible
+            width: parent.width
+        }
+
+        // ------------------------------------------------------ Acerca de
+        PestanaAcerca {
+            visible: panel.pestana === "acerca"
             activa: panel.abierto && visible
             width: parent.width
         }

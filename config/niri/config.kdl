@@ -108,11 +108,10 @@ include optional=true "~/.local/state/yoru/tema/niri.kdl"
 spawn-sh-at-startup "~/.config/niri/scripts/wallpaper.sh"
 spawn-sh-at-startup "~/.config/niri/scripts/polkit.sh"
 
-// Bloqueo automático: a los 5 min bloquea, a los 10 apaga la pantalla, a
-// los 15 suspende si va con batería (enchufado no: scripts/suspender.sh),
-// y bloquea siempre antes de suspender (y con «loginctl lock-session»).
-// Un vídeo a pantalla completa (o una app que lo pida) lo detiene todo.
-spawn-at-startup "swayidle" "-w" "timeout" "300" "~/.config/niri/scripts/bloquear.sh" "timeout" "600" "niri msg action power-off-monitors" "resume" "niri msg action power-on-monitors" "timeout" "900" "~/.config/niri/scripts/suspender.sh" "before-sleep" "~/.config/niri/scripts/bloquear.sh" "lock" "~/.config/niri/scripts/bloquear.sh"
+// Bloqueo automático, apagar la pantalla y suspender cuando no tocas nada:
+// con los tiempos de Ajustes › Energía (scripts/inactividad.sh; por defecto
+// 5, 10 y 15 min, y suspender solo con batería)
+spawn-sh-at-startup "~/.config/niri/scripts/inactividad.sh"
 
 // Historial del portapapeles (requiere cliphist; si no está, no pasa nada)
 spawn-sh-at-startup "command -v cliphist && wl-paste --watch cliphist store"

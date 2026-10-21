@@ -1,7 +1,7 @@
 pragma Singleton
 
 // ============================================================================
-//  Ajustes — lo que se cambia desde el panel de Ajustes (Mod+Alt+T)
+//  Ajustes — lo que se cambia desde la app de Ajustes (Mod+Alt+T)
 //  Se guardan en ~/.local/state/yoru/ajustes.json: fuera del repo, como los
 //  favoritos del dock. Si lo editas a mano, se aplica al guardar.
 //  Lo que falte en el archivo se queda con el valor de aquí.
@@ -37,6 +37,16 @@ Singleton {
     property alias bordes: datos.bordes               // línea alrededor de islas y paneles
     property alias animaciones: datos.animaciones
 
+    // ------------------------------------------------- Energía (0 = nunca)
+    property alias bloquearMin: datos.bloquearMin       // bloquear la pantalla
+    property alias pantallaMin: datos.pantallaMin       // apagar la pantalla
+    property alias suspenderMin: datos.suspenderMin
+    property alias suspenderEnchufado: datos.suspenderEnchufado  // si no, solo con batería
+
+    // ------------------------------------------------------ Fecha y hora
+    property alias reloj24: datos.reloj24               // 14:30 · 2:30 p. m.
+    property alias relojSegundos: datos.relojSegundos   // segundos en el reloj de la barra
+
     readonly property bool vertical: barra === "izquierda"
 
     // Vuelve a dejar el aspecto (no la barra ni el dock) como al principio
@@ -50,6 +60,19 @@ Singleton {
         datos.desenfoque = true;
         datos.bordes = true;
         datos.animaciones = true;
+    }
+
+    // Cambia un tiempo de Energía y, un momento después (ya guardado en el
+    // archivo), vuelve a lanzar swayidle con los tiempos nuevos
+    function ponerEnergia(clave, valor) {
+        datos[clave] = valor;
+        relanzarInactividad.restart();
+    }
+    Timer {
+        id: relanzarInactividad
+        interval: 600
+        onTriggered: Quickshell.execDetached(["niri", "msg", "action", "spawn-sh", "--",
+            "~/.config/niri/scripts/inactividad.sh"])
     }
 
     // ------------------------------------------- Esquinas de las ventanas
@@ -122,6 +145,13 @@ window-rule {
             property bool desenfoque: true
             property bool bordes: true
             property bool animaciones: true
+
+            property int bloquearMin: 5
+            property int pantallaMin: 10
+            property int suspenderMin: 15
+            property bool suspenderEnchufado: false
+            property bool reloj24: true
+            property bool relojSegundos: false
         }
     }
 }

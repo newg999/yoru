@@ -11,8 +11,13 @@ Isla {
 
     SystemClock {
         id: reloj
-        precision: SystemClock.Minutes
+        precision: Ajustes.relojSegundos ? SystemClock.Seconds : SystemClock.Minutes
     }
+
+    // Ajustes › Fecha y hora: 24 o 12 horas y con o sin segundos (en
+    // vertical, sin segundos: no caben)
+    readonly property string formato: isla.vertical ? (Ajustes.reloj24 ? "HH\nmm" : "h\nmm")
+        : (Ajustes.reloj24 ? "HH:mm" : "h:mm") + (Ajustes.relojSegundos ? ":ss" : "") + (Ajustes.reloj24 ? "" : " AP")
 
     readonly property var diasSemana: ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"]
     readonly property var diasLargos: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"]
@@ -33,7 +38,7 @@ Isla {
     }
 
     Modulo {
-        texto: Qt.formatDateTime(reloj.date, isla.vertical ? "HH\nmm" : "HH:mm")
+        texto: Qt.formatDateTime(reloj.date, isla.formato)
         relleno: 7
         resaltado: Paneles.esta("centro", isla.pantalla, "resumen")
         onClic: Paneles.alternar("centro", isla.pantalla, "resumen")

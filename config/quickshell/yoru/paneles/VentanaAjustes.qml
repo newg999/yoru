@@ -29,15 +29,26 @@ Scope {
             // Cerrada desde niri (Mod+Q, el botón de cerrar...): se olvida
             onVisibleChanged: if (!visible) Paneles.ajustesAbiertos = false
 
-            readonly property var secciones: [
-                {id: "tema", icono: "󰏘", texto: "Tema", detalle: "Colores de todo el escritorio"},
-                {id: "fondo", icono: "󰸉", texto: "Fondo", detalle: "El fondo de pantalla"},
-                {id: "barra", icono: "󰕮", texto: "Barra y dock", detalle: "Dónde va la barra, qué se ve en ella y el dock"},
-                {id: "aspecto", icono: "󰙵", texto: "Aspecto", detalle: "Esquinas, transparencias, letra, animaciones y luz nocturna"},
-                {id: "pantallas", icono: "󰍹", texto: "Pantallas", detalle: "Colocar los monitores, resolución y escala"},
-                {id: "raton", icono: "󰍽", texto: "Ratón", detalle: "Velocidad, rueda, touchpad y cursor"},
-                {id: "apps", icono: "󰀻", texto: "Apps", detalle: "Con qué app se abre cada cosa"}
+            // La barra lateral, por grupos (como en GNOME o KDE)
+            readonly property var grupos: [
+                {titulo: "Personalización", secciones: [
+                    {id: "tema", icono: "󰏘", texto: "Tema", detalle: "Colores de todo el escritorio"},
+                    {id: "fondo", icono: "󰸉", texto: "Fondo", detalle: "El fondo de pantalla"},
+                    {id: "aspecto", icono: "󰙵", texto: "Aspecto", detalle: "Esquinas, transparencias, letra, animaciones y luz nocturna"},
+                    {id: "barra", icono: "󰕮", texto: "Barra y dock", detalle: "Dónde va la barra, qué se ve en ella y el dock"}
+                ]},
+                {titulo: "Dispositivos", secciones: [
+                    {id: "pantallas", icono: "󰍹", texto: "Pantallas", detalle: "Colocar los monitores, resolución y escala"},
+                    {id: "raton", icono: "󰍽", texto: "Ratón", detalle: "Velocidad, rueda, touchpad y cursor"}
+                ]},
+                {titulo: "Sistema", secciones: [
+                    {id: "energia", icono: "󰂄", texto: "Energía", detalle: "Perfil de energía, bloqueo, pantalla y suspensión"},
+                    {id: "fecha", icono: "󰥔", texto: "Fecha y hora", detalle: "Zona horaria, hora automática y el reloj de la barra"},
+                    {id: "apps", icono: "󰀻", texto: "Apps", detalle: "Con qué app se abre cada cosa"},
+                    {id: "acerca", icono: "󰋼", texto: "Acerca de", detalle: "Tu equipo y la versión de Yoru"}
+                ]}
             ]
+            readonly property var secciones: [].concat(...grupos.map(g => g.secciones))
             readonly property var actual: secciones.find(s => s.id === Paneles.seccionAjustes) ?? secciones[0]
 
             // Las secciones leen sus datos al pasar «abierto» a true: si ya
@@ -84,40 +95,62 @@ Scope {
                     }
 
                     Repeater {
-                        model: ventana.secciones
+                        model: ventana.grupos
 
-                        Rectangle {
-                            id: fila
+                        Column {
+                            id: grupo
                             required property var modelData
-                            readonly property bool elegida: Paneles.seccionAjustes === modelData.id
+                            required property int index
                             width: parent.width
-                            height: 42
-                            radius: 10
-                            color: elegida ? Tema.claro(0.90) : filaRaton.containsMouse ? Tema.cajaHover : "transparent"
-                            Behavior on color { ColorAnimation { duration: Tema.rapida } }
+                            spacing: 2
+                            topPadding: index > 0 ? 14 : 0
 
-                            Row {
-                                anchors { left: parent.left; leftMargin: 14; verticalCenter: parent.verticalCenter }
-                                spacing: 14
-                                Texto {
-                                    width: 20
-                                    horizontalAlignment: Text.AlignHCenter
-                                    text: fila.modelData.icono
-                                    font.pixelSize: 17
-                                    color: fila.elegida ? Tema.oscuro : Tema.texto
-                                }
-                                Texto {
-                                    text: fila.modelData.texto
-                                    font.pixelSize: 14
-                                    color: fila.elegida ? Tema.oscuro : Tema.texto
-                                }
+                            Texto {
+                                leftPadding: 14
+                                bottomPadding: 4
+                                text: grupo.modelData.titulo.toUpperCase()
+                                font.pixelSize: 10
+                                font.letterSpacing: 1
+                                color: Tema.gris
                             }
-                            MouseArea {
-                                id: filaRaton
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: Paneles.seccionAjustes = fila.modelData.id
+
+                            Repeater {
+                                model: grupo.modelData.secciones
+
+                                Rectangle {
+                                    id: fila
+                                    required property var modelData
+                                    readonly property bool elegida: Paneles.seccionAjustes === modelData.id
+                                    width: parent.width
+                                    height: 38
+                                    radius: 10
+                                    color: elegida ? Tema.claro(0.90) : filaRaton.containsMouse ? Tema.cajaHover : "transparent"
+                                    Behavior on color { ColorAnimation { duration: Tema.rapida } }
+
+                                    Row {
+                                        anchors { left: parent.left; leftMargin: 14; verticalCenter: parent.verticalCenter }
+                                        spacing: 14
+                                        Texto {
+                                            width: 20
+                                            horizontalAlignment: Text.AlignHCenter
+                                            text: fila.modelData.icono
+                                            font.pixelSize: 17
+                                            color: fila.elegida ? Tema.oscuro : Tema.texto
+                                        }
+                                        Texto {
+                                            text: fila.modelData.texto
+                                            font.pixelSize: 14
+                                            color: fila.elegida ? Tema.oscuro : Tema.texto
+                                        }
+                                    }
+                                    MouseArea {
+                                        id: filaRaton
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: Paneles.seccionAjustes = fila.modelData.id
+                                    }
+                                }
                             }
                         }
                     }

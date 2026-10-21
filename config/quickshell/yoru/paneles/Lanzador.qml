@@ -42,7 +42,7 @@ Panel {
     // Ajustes de Yoru que se pueden buscar: [glifo, nombre, descripción,
     // palabras clave, panel, sección]. Solo salen al escribir algo.
     readonly property var ajustes: [
-        ["󰒓", "Ajustes de Yoru", "Tema, fondo, barra, aspecto, pantallas y ratón", "ajustes settings configuración configuracion preferencias opciones", "ajustes", ""],
+        ["󰒓", "Ajustes de Yoru", "Tema, fondo, barra, pantallas, energía, fecha y hora...", "ajustes settings configuración configuracion preferencias opciones", "ajustes", ""],
         ["󰏘", "Tema y colores", "Ajustes › Tema", "tema theme colores colors paleta oscuro claro dark light", "ajustes", "tema"],
         ["󰸉", "Fondo de pantalla", "Ajustes › Fondo", "fondo wallpaper background imagen", "ajustes", "fondo"],
         ["󰕮", "Barra y dock", "Ajustes › Barra y dock", "barra bar dock panel islas", "ajustes", "barra"],
@@ -50,6 +50,9 @@ Panel {
         ["󰍹", "Pantallas", "Ajustes › Pantallas: colocarlas, resolución y escala", "pantallas pantalla monitores monitor displays display resolución resolucion escala hz frecuencia", "ajustes", "pantallas"],
         ["󰖔", "Luz nocturna", "Ajustes › Aspecto: pantalla más cálida por la noche", "luz nocturna night light filtro azul blue cálida calida noche", "ajustes", "aspecto"],
         ["󰍽", "Ratón y touchpad", "Ajustes › Ratón: velocidad, rueda y cursor", "ratón raton mouse touchpad cursor puntero trackpad", "ajustes", "raton"],
+        ["󰂄", "Energía y bloqueo", "Ajustes › Energía: bloquear, apagar la pantalla y suspender", "energía energia bloqueo bloquear suspender suspensión suspension apagar pantalla inactividad power perfil ahorro rendimiento", "ajustes", "energia"],
+        ["󰥔", "Fecha y hora", "Ajustes › Fecha y hora: zona horaria y reloj", "fecha hora zona horaria timezone reloj clock 24 12 segundos ntp", "ajustes", "fecha"],
+        ["󰋼", "Acerca de", "Ajustes › Acerca de: tu equipo y la versión de Yoru", "acerca about sistema versión version equipo hardware actualizar update yoru", "ajustes", "acerca"],
         ["󰖩", "Wi-Fi y red", "Redes, VPN y cable", "wifi wi-fi red network internet ethernet cable vpn wireguard", "conexion", "wifi"],
         ["󰂯", "Bluetooth", "Conectar auriculares, ratones...", "bluetooth auriculares cascos", "conexion", "bluetooth"],
         ["󰕾", "Sonido", "Salida de audio y volumen", "sonido audio volumen sound altavoces salida", "conexion", "audio"],

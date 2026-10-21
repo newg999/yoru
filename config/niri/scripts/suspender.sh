@@ -2,11 +2,14 @@
 # ----------------------------------------------------------------------------
 #  suspender.sh — Suspende el equipo, pero solo si va con batería
 #
-#  Lo llama swayidle tras 15 min sin tocar nada (config.kdl). Enchufado no
+#  Lo llama swayidle tras un rato sin tocar nada (inactividad.sh). Enchufado no
 #  hace nada: así un PC o un portátil en la mesa no se duermen solos, pero
 #  uno que te dejas abierto con batería no la gasta entera.
 #  Al suspender, swayidle bloquea antes (before-sleep).
+#  Con --siempre (Ajustes › Energía › «También enchufado») suspende siempre.
 # ----------------------------------------------------------------------------
+
+[[ ${1:-} == --siempre ]] && exec systemctl suspend
 
 hay_bateria=false
 for fuente in /sys/class/power_supply/*; do
