@@ -1,9 +1,9 @@
 // ============================================================================
 //  Ajustes — personalizar Yoru sin tocar archivos
-//  Es una pestaña del panel central (PanelCentral.qml): se abre con
-//  Mod+Alt+T o desde las pestañas de ese panel
+//  Es el contenido de la ventana de Ajustes (VentanaAjustes.qml): ella pone
+//  la barra lateral con las secciones y aquí se ve la elegida (pestana)
 //
-//  Pestañas: Tema · Fondo · Barra y dock · Aspecto · Pantallas · Ratón · Apps
+//  Secciones: Tema · Fondo · Barra y dock · Aspecto · Pantallas · Ratón · Apps
 //
 //    Tema:    paletas de colores (las de «yoru tema»: Yoru, del fondo, Nord...)
 //    Fondo:   el fondo actual, elegir otro o pasar al siguiente
@@ -28,13 +28,13 @@ import qs.comun
 Item {
     id: panel
 
-    property bool abierto: false      // a la vista (panel abierto y en esta pestaña)
-    property var pantalla: null       // la del panel central que la contiene
+    property bool abierto: false      // a la vista (la ventana de Ajustes abierta)
+    property var pantalla: null       // donde abrir el selector de fondos
+    property string pestana: "tema"   // la sección que se ve (una de Paneles.seccionesAjustes)
     implicitHeight: contenido.height
 
     readonly property string casa: Quickshell.env("HOME")
     readonly property string yoru: casa + "/.local/bin/yoru"
-    readonly property string pestana: Paneles.seccionesAjustes.includes(Paneles.seccion) ? Paneles.seccion : "tema"
 
     property var temas: []            // [{id, nombre, claro, colores}] de «yoru tema --lista»
     property string aplicando: ""     // tema que se está generando
@@ -93,57 +93,6 @@ Item {
         id: contenido
         width: parent.width
         spacing: 16
-
-        // ------------------------------------------------------ Pestañas
-        Row {
-            id: pestanas
-            width: parent.width
-            spacing: 6
-
-            Repeater {
-                id: listaPestanas
-                model: [
-                    {id: "tema", icono: "󰏘", texto: "Tema"},
-                    {id: "fondo", icono: "󰸉", texto: "Fondo"},
-                    {id: "barra", icono: "󰕮", texto: "Barra y dock"},
-                    {id: "aspecto", icono: "󰙵", texto: "Aspecto"},
-                    {id: "pantallas", icono: "󰍹", texto: "Pantallas"},
-                    {id: "raton", icono: "󰍽", texto: "Ratón"},
-                    {id: "apps", icono: "󰀻", texto: "Apps"}
-                ]
-                Rectangle {
-                    id: pestana
-                    required property var modelData
-                    readonly property bool elegida: panel.pestana === modelData.id
-                    width: (pestanas.width - pestanas.spacing * (listaPestanas.count - 1)) / listaPestanas.count
-                    height: 36; radius: 10
-                    color: elegida ? Tema.claro(0.90) : pestanaRaton.containsMouse ? Tema.cajaHover : "transparent"
-                    Behavior on color { ColorAnimation { duration: Tema.rapida } }
-
-                    Row {
-                        anchors.centerIn: parent
-                        spacing: 8
-                        Texto {
-                            text: pestana.modelData.icono
-                            font.pixelSize: 16
-                            color: pestana.elegida ? Tema.oscuro : Tema.texto
-                        }
-                        Texto {
-                            text: pestana.modelData.texto
-                            font.pixelSize: 13
-                            color: pestana.elegida ? Tema.oscuro : Tema.texto
-                        }
-                    }
-                    MouseArea {
-                        id: pestanaRaton
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: Paneles.seccion = pestana.modelData.id
-                    }
-                }
-            }
-        }
 
         // ---------------------------------------------------------- Tema
         Column {

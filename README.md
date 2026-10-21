@@ -152,7 +152,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 
 | Quiero cambiar… | Archivo |
 |---|---|
-| Tema, barra, dock, transparencias, esquinas (también las de las ventanas)… | Ajustes (`Mod+Alt+T`, o la pestaña Ajustes del panel central); se guardan en `~/.local/state/yoru/ajustes.json` |
+| Tema, barra, dock, transparencias, esquinas (también las de las ventanas)… | la app de Ajustes (`Mod+Alt+T`, o el botón Ajustes del panel central); se guardan en `~/.local/state/yoru/ajustes.json` |
 | Colores de todo el escritorio | `tema/blanco.json` y después `yoru tema blanco`, o una paleta nueva en `tema/paletas/` |
 | Atajos | `config/niri/binds.kdl` |
 | Separación entre ventanas, anchos | `config/niri/config.kdl` → `layout` |

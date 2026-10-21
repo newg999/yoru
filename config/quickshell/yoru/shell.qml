@@ -42,6 +42,8 @@ ShellRoot {
         model: Quickshell.screens
         PanelCentral {}
     }
+    // Ajustes: una ventana aparte, una sola (no una por pantalla)
+    VentanaAjustes {}
     Variants {
         model: Quickshell.screens
         PanelBateria {}
@@ -107,8 +109,8 @@ ShellRoot {
     //   qs -c yoru ipc call panel alternar monitor procesos   (o rendimiento)
     //   qs -c yoru ipc call panel alternar uso cpu            (o memoria)
     //   qs -c yoru ipc call panel alternar apagado ""         (o portapapeles, notificaciones, bateria, fondos, tienda, velocidad)
-    //   qs -c yoru ipc call panel alternar ajustes tema       (o fondo, barra, aspecto, pantallas, raton;
-    //                                                          es la pestaña Ajustes del panel central)
+    //   qs -c yoru ipc call panel alternar ajustes tema       (o fondo, barra, aspecto, pantallas, raton, apps;
+    //                                                          abre la ventana de Ajustes en esa sección)
     //   qs -c yoru ipc call panel cerrar
     IpcHandler {
         target: "panel"

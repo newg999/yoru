@@ -14,21 +14,19 @@ Singleton {
     property var pantalla: null      // ShellScreen donde se abrió
     property string seccion: ""      // dentro del panel: "wifi", "bluetooth", "audio"...
 
-    // Ajustes es una pestaña del panel central: «ajustes» abre «centro» en
-    // una de estas secciones (la última que se vio, si no se dice cuál)
+    // Ajustes es una ventana aparte (paneles/VentanaAjustes.qml), con una
+    // sección elegida en su barra lateral. «ajustes» la abre en una de estas
+    // secciones (la última que se vio, si no se dice cuál)
     readonly property var seccionesAjustes: ["tema", "fondo", "barra", "aspecto", "pantallas", "raton", "apps"]
-    property string ultimoAjuste: "tema"
-    onSeccionChanged: if (seccionesAjustes.includes(seccion)) ultimoAjuste = seccion
-    function enAjustes() {
-        return abierto === "centro" && seccionesAjustes.includes(seccion);
-    }
+    property bool ajustesAbiertos: false
+    property string seccionAjustes: "tema"
 
     // ¿Está abierto este panel en esta pantalla? (y en esta sección, si se da)
     // Lo usa la barra para dejar iluminado el botón que lo abrió: al abrirse,
     // el panel tapa la barra y el ratón deja de estar «encima» del botón.
     function esta(nombre, enPantalla, enSeccion) {
         if (nombre === "ajustes")
-            return enAjustes() && pantalla === enPantalla && (!enSeccion || seccion === enSeccion);
+            return ajustesAbiertos && (!enSeccion || seccionAjustes === enSeccion);
         return abierto === nombre && pantalla === enPantalla
             && (enSeccion === undefined || seccion === enSeccion);
     }
@@ -36,12 +34,8 @@ Singleton {
     // Abre el panel (o lo cierra si ya estaba abierto en esa misma sección)
     function alternar(nombre, enPantalla, enSeccion) {
         if (nombre === "ajustes") {
-            if (!enSeccion && enAjustes() && pantalla === enPantalla) {
-                cerrar();
-                return;
-            }
-            nombre = "centro";
-            enSeccion = enSeccion || ultimoAjuste;
+            alternarAjustes(enSeccion);
+            return;
         }
         if (abierto === nombre && pantalla === enPantalla && seccion === (enSeccion ?? "")) {
             cerrar();
@@ -54,6 +48,25 @@ Singleton {
 
     function cerrar() {
         abierto = "";
+    }
+
+    // La ventana de Ajustes. Si ya la tienes delante (con el foco) en esa
+    // sección, o sin decir sección como con Mod+Alt+T, se cierra; si no, se
+    // abre en esa sección o, si estaba detrás de otras ventanas, se trae
+    readonly property string tituloAjustes: "Ajustes de Yoru"
+    function alternarAjustes(enSeccion) {
+        const ventana = Object.values(Niri.ventanas).find(v => v.title === tituloAjustes);
+        const delante = ajustesAbiertos && Niri.enfocada?.title === tituloAjustes;
+        if (delante && (!enSeccion || enSeccion === seccionAjustes)) {
+            ajustesAbiertos = false;
+            return;
+        }
+        if (enSeccion && seccionesAjustes.includes(enSeccion))
+            seccionAjustes = enSeccion;
+        cerrar();
+        if (ajustesAbiertos && ventana)
+            Niri.accion("focus-window", "--id", String(ventana.id));
+        ajustesAbiertos = true;
     }
 
     // Al abrir el overview (Mod+Tab) se cierra cualquier panel

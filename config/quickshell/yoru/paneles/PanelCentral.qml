@@ -12,8 +12,8 @@
 //              └──────┴─────────────────┴───────────┘
 //    Multimedia: lo que suena, en grande (reproductor, salida, volumen)
 //    Clima:      ahora, próximas horas y los 7 días
-//    Ajustes:    tema, fondo, barra, aspecto, pantallas y ratón
-//                (PestanaAjustes.qml, con sus propias pestañas)
+//    Ajustes:    no es una pestaña: abre la ventana de Ajustes
+//                (VentanaAjustes.qml) y cierra el panel
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -25,9 +25,7 @@ Panel {
     lado: "centro"
     ancho: 780
 
-    readonly property string pestana: ["multimedia", "clima"].includes(Paneles.seccion) ? Paneles.seccion
-        : Paneles.seccionesAjustes.includes(Paneles.seccion) ? "ajustes"
-        : "resumen"
+    readonly property string pestana: ["multimedia", "clima"].includes(Paneles.seccion) ? Paneles.seccion : "resumen"
     onAbiertoChanged: {
         if (abierto) {
             calendario.volverAHoy();
@@ -83,7 +81,12 @@ Panel {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: Paneles.seccion = pestana.modelData.id === "ajustes" ? Paneles.ultimoAjuste : pestana.modelData.id
+                        onClicked: {
+                            if (pestana.modelData.id === "ajustes")
+                                Paneles.alternar("ajustes", panel.modelData, "");
+                            else
+                                Paneles.seccion = pestana.modelData.id;
+                        }
                     }
                 }
             }
@@ -295,14 +298,6 @@ Panel {
         // --------------------------------------------------------- Clima
         PestanaClima {
             visible: panel.pestana === "clima"
-            width: parent.width
-        }
-
-        // ------------------------------------------------------- Ajustes
-        PestanaAjustes {
-            visible: panel.pestana === "ajustes"
-            abierto: panel.abierto && visible
-            pantalla: panel.modelData
             width: parent.width
         }
     }

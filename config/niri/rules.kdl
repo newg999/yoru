@@ -50,9 +50,10 @@ window-rule {
     opacity 1.0
 }
 
-// Terminal: transparente y con el fondo desenfocado
+// Terminal y Ajustes de Yoru: transparentes y con el fondo desenfocado
 window-rule {
     match app-id="^kitty$"
+    match title="^Ajustes de Yoru$"
     background-effect {
         blur true
     }
