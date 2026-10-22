@@ -41,7 +41,8 @@ Scope {
                     {id: "pantallas", icono: "󰍹", texto: "Pantallas", detalle: "Colocar los monitores, resolución y escala"},
                     {id: "raton", icono: "󰍽", texto: "Ratón", detalle: "Velocidad, rueda, touchpad y cursor"},
                     {id: "sonido", icono: "󰕾", texto: "Sonido", detalle: "Altavoces, auriculares, micrófono y el volumen de cada app"},
-                    {id: "teclado", icono: "󰌌", texto: "Teclado", detalle: "Distribución, repetición de teclas y Bloq Mayús"}
+                    {id: "teclado", icono: "󰌌", texto: "Teclado", detalle: "Distribución, repetición de teclas y Bloq Mayús"},
+                    {id: "atajos", icono: "󰘳", texto: "Atajos", detalle: "Todos los atajos de teclado de Yoru"}
                 ]},
                 {titulo: "Sistema", secciones: [
                     {id: "notificaciones", icono: "󰂚", texto: "Notificaciones", detalle: "No molestar, cuánto duran los avisos y qué apps pueden avisar"},

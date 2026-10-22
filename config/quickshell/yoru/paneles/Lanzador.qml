@@ -52,6 +52,7 @@ Panel {
         ["󰍽", "Ratón y touchpad", "Ajustes › Ratón: velocidad, rueda y cursor", "ratón raton mouse touchpad cursor puntero trackpad", "ajustes", "raton"],
         ["󰕾", "Ajustes de sonido", "Ajustes › Sonido: salida, micrófono y volumen de cada app", "sonido audio volumen altavoces auriculares micrófono microfono mic salida entrada apps", "ajustes", "sonido"],
         ["󰌌", "Teclado", "Ajustes › Teclado: distribución, repetición y Bloq Mayús", "teclado keyboard distribución distribucion idioma layout inglés ingles repetición repeticion mayúsculas mayusculas bloq num", "ajustes", "teclado"],
+        ["󰘳", "Atajos de teclado", "Ajustes › Atajos: todos, con buscador", "atajos shortcuts teclas combinaciones keybinds binds chuleta", "ajustes", "atajos"],
         ["󰂚", "Ajustes de notificaciones", "Ajustes › Notificaciones: no molestar, avisos y apps", "notificaciones notifications avisos no molestar silenciar sonido dnd", "ajustes", "notificaciones"],
         ["󰂄", "Energía y bloqueo", "Ajustes › Energía: bloquear, apagar la pantalla y suspender", "energía energia bloqueo bloquear suspender suspensión suspension apagar pantalla inactividad power perfil ahorro rendimiento", "ajustes", "energia"],
         ["󰥔", "Fecha y hora", "Ajustes › Fecha y hora: zona horaria y reloj", "fecha hora zona horaria timezone reloj clock 24 12 segundos ntp", "ajustes", "fecha"],

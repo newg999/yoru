@@ -17,7 +17,7 @@ Singleton {
     // Ajustes es una ventana aparte (paneles/VentanaAjustes.qml), con una
     // sección elegida en su barra lateral. «ajustes» la abre en una de estas
     // secciones (la última que se vio, si no se dice cuál)
-    readonly property var seccionesAjustes: ["tema", "fondo", "aspecto", "barra", "pantallas", "sonido", "raton", "teclado",
+    readonly property var seccionesAjustes: ["tema", "fondo", "aspecto", "barra", "pantallas", "sonido", "raton", "teclado", "atajos",
         "notificaciones", "energia", "fecha", "apps", "acerca"]
     property bool ajustesAbiertos: false
     property string seccionAjustes: "tema"

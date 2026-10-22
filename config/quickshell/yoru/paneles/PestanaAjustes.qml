@@ -4,8 +4,8 @@
 //  la barra lateral con las secciones y aquí se ve la elegida (pestana)
 //
 //  Secciones: Tema · Fondo · Aspecto · Barra y dock · Pantallas · Sonido ·
-//             Ratón · Teclado · Notificaciones · Energía · Fecha y hora ·
-//             Apps · Acerca de
+//             Ratón · Teclado · Atajos · Notificaciones · Energía ·
+//             Fecha y hora · Apps · Acerca de
 //
 //    Tema:    paletas de colores (las de «yoru tema»: Yoru, del fondo, Nord...)
 //    Fondo:   el fondo actual, elegir otro o pasar al siguiente, y Descubrir
@@ -20,6 +20,7 @@
 //             (PestanaRaton.qml; en niri/raton.kdl)
 //    Teclado: distribuciones, repetición, Bloq Mayús y Bloq Num
 //             (PestanaTeclado.qml; también en niri/raton.kdl)
+//    Atajos:  todos los de niri/binds.kdl, con buscador (PestanaAtajos.qml)
 //    Notificaciones: no molestar, duración, posición, sonido y apps
 //             silenciadas (PestanaNotificaciones.qml)
 //    Apps:    con qué app se abre cada cosa (PestanaApps.qml)
@@ -582,6 +583,13 @@ Item {
         // ---------------------------------------------- Apps predeterminadas
         PestanaApps {
             visible: panel.pestana === "apps"
+            activa: panel.abierto && visible
+            width: parent.width
+        }
+
+        // -------------------------------------------------------- Atajos
+        PestanaAtajos {
+            visible: panel.pestana === "atajos"
             activa: panel.abierto && visible
             width: parent.width
         }
