@@ -2,12 +2,13 @@
 //  Fondos — elegir fondo de pantalla, al estilo de Omarchy
 //  Atajo: Mod+Alt+W   ·   Mod+Alt+Shift+W pasa al siguiente sin abrir esto
 //
-//  Sin recuadro: sobre el escritorio, con un velo oscuro, una fila de
-//  tarjetas inclinadas (paralelogramos). La elegida, en el centro, grande y
-//  con el borde de Yoru; las demás, más pequeñas y apagadas cuanto más lejos.
+//  Sin recuadro: sobre el escritorio, con un velo oscuro, una fila de cuatro
+//  tarjetas inclinadas (paralelogramos), casi pegadas. La elegida es la
+//  primera, con el borde de Yoru; a su derecha, las que vienen. Las que
+//  pasan a la izquierda se desvanecen.
 //
-//    ← → (o la rueda, o arrastrando) para moverte · Enter (o clic en la del
-//    centro) para ponerlo · clic en otra la trae al centro · Esc o clic fuera
+//    ← → (o la rueda, o arrastrando) para moverte · Enter (o clic en la
+//    elegida) para ponerlo · clic en otra la elige · Esc o clic fuera
 //    para cerrar · Supr (o la papelera) dos veces = mandarlo a la papelera
 //
 //  Los fondos salen de ~/.local/share/wallpapers (scripts/fondos.sh hace
@@ -44,9 +45,14 @@ PanelWindow {
     WlrLayershell.keyboardFocus: abierto ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     readonly property string casa: Quickshell.env("HOME")
-    // Tamaño de la tarjeta del centro (9:16) y cuánto se inclinan
-    readonly property int altoTarjeta: Math.round(Math.min(640, modelData.height * 0.5))
-    readonly property int anchoTarjeta: Math.round(altoTarjeta * 9 / 16)
+    // Cuatro tarjetas (9:16) casi pegadas, del ancho que quepa (hasta el 60 %
+    // de la pantalla y el 38 % de su alto), y cuánto se inclinan
+    readonly property int visibles: 4
+    readonly property int separacion: 14
+    readonly property int anchoTarjeta: Math.round(Math.min((modelData.width * 0.6 - (visibles - 1) * separacion) / visibles,
+                                                            modelData.height * 0.38 * 9 / 16))
+    readonly property int hueco: anchoTarjeta + separacion   // de una tarjeta a la siguiente
+    readonly property int altoTarjeta: Math.round(anchoTarjeta * 16 / 9)
     readonly property real inclinacion: 0.16    // desplazamiento horizontal por px de alto
 
     property var fondos: []          // [{ruta, miniatura, nombre}]
@@ -116,7 +122,7 @@ PanelWindow {
                 });
                 panel.cargando = false;
                 const i = panel.fondos.findIndex(f => f.ruta === panel.actual);
-                carrusel.positionViewAtIndex(Math.max(i, 0), PathView.Center);
+                carrusel.positionViewAtIndex(Math.max(i, 0), PathView.Beginning);
                 carrusel.currentIndex = Math.max(i, 0);
             }
         }
@@ -140,22 +146,46 @@ PanelWindow {
         transform: Translate { y: (1 - panel.progreso) * 30 }
 
         // ---------------------------------------------------- Carrusel
+        // Como en Omarchy: la elegida es la primera (a la izquierda) y a su
+        // derecha vienen las siguientes. Es una rueda: tras la última, la
+        // primera otra vez. El camino es recto, con un puesto invisible a cada
+        // lado de las cuatro: por el de la izquierda se va la que pasa
+        // (desvaneciéndose) y por el de la derecha entra la nueva.
+        //   [ sale ] [ elegida ] [ 2 ] [ 3 ] [ 4 ] [ entra ]
         PathView {
             id: carrusel
+            readonly property int puestos: panel.visibles + 2
             anchors.centerIn: parent
             anchors.verticalCenterOffset: -30
-            width: parent.width
+            width: panel.visibles * panel.anchoTarjeta + (panel.visibles - 1) * panel.separacion
             height: panel.altoTarjeta + 40
             model: panel.fondos
-            // Las que se ven a la vez (impar: una en el centro)
-            pathItemCount: Math.min(7, panel.fondos.length % 2 === 0 ? panel.fondos.length - 1 : panel.fondos.length)
-            cacheItemCount: 4
-            preferredHighlightBegin: 0.5
-            preferredHighlightEnd: 0.5
+            pathItemCount: puestos
+            // La elegida, en el segundo puesto (el primero es el de salida)
+            preferredHighlightBegin: 1 / puestos
+            preferredHighlightEnd: 1 / puestos
             highlightRangeMode: PathView.StrictlyEnforceRange
             snapMode: PathView.SnapToItem
-            highlightMoveDuration: Ajustes.animaciones ? 320 : 0
+            highlightMoveDuration: Ajustes.animaciones ? 300 : 0
+            // Las que van a entrar, ya hechas: crearlas a mitad de la
+            // animación daba tirones
+            cacheItemCount: 6
             focus: true
+
+            // Un puesto cada «hueco» px; la presencia (opacidad) sube y baja en los extremos
+            path: Path {
+                startX: panel.anchoTarjeta / 2 - panel.hueco
+                startY: carrusel.height / 2
+                PathAttribute { name: "presencia"; value: 0 }
+                PathLine { relativeX: panel.hueco; relativeY: 0 }
+                PathAttribute { name: "presencia"; value: 1 }
+                PathLine { relativeX: (panel.visibles - 1) * panel.hueco; relativeY: 0 }
+                PathAttribute { name: "presencia"; value: 1 }
+                PathLine { relativeX: panel.hueco; relativeY: 0 }
+                PathAttribute { name: "presencia"; value: 0 }
+                PathLine { relativeX: panel.hueco; relativeY: 0 }
+                PathAttribute { name: "presencia"; value: 0 }
+            }
 
             Keys.onLeftPressed: decrementCurrentIndex()
             Keys.onRightPressed: incrementCurrentIndex()
@@ -175,23 +205,6 @@ PanelWindow {
                 }
             }
 
-            // Recto de lado a lado; en el centro, tamaño y luz completos
-            path: Path {
-                startX: 0
-                startY: carrusel.height / 2
-                PathAttribute { name: "escala"; value: 0.55 }
-                PathAttribute { name: "luz"; value: 0.3 }
-                PathAttribute { name: "capa"; value: 0 }
-                PathLine { x: carrusel.width / 2; y: carrusel.height / 2 }
-                PathAttribute { name: "escala"; value: 1 }
-                PathAttribute { name: "luz"; value: 1 }
-                PathAttribute { name: "capa"; value: 10 }
-                PathLine { x: carrusel.width; y: carrusel.height / 2 }
-                PathAttribute { name: "escala"; value: 0.55 }
-                PathAttribute { name: "luz"; value: 0.3 }
-                PathAttribute { name: "capa"; value: 0 }
-            }
-
             Texto {
                 visible: panel.fondos.length === 0
                 anchors.centerIn: parent
@@ -207,16 +220,23 @@ PanelWindow {
                 required property int index
                 readonly property bool elegida: PathView.isCurrentItem
                 readonly property bool puesto: modelData.ruta === panel.actual
-                readonly property real escala: PathView.escala ?? 0.55
-                readonly property real luz: PathView.luz ?? 0.3
+                readonly property bool enFila: opacity > 0.5
+                readonly property real luz: elegida ? 1 : 0.7
                 // Lo que se va a la derecha el borde de arriba (y a la izquierda el de abajo)
                 readonly property real sesgo: panel.inclinacion * height / 2
                 width: panel.anchoTarjeta
                 height: panel.altoTarjeta
-                scale: escala
-                z: PathView.capa ?? 0
+                // Las que se van a la izquierda (o aún no han llegado) no se ven
+                opacity: PathView.presencia ?? 0
 
-                // La forma: un paralelogramo (la tarjeta, inclinada)
+                // La forma: un paralelogramo (la tarjeta, inclinada).
+                // La tarjeta se dibuja RECTA en una capa con 2 px de margen
+                // transparente, y lo que se inclina es la capa entera:
+                //  · al inclinarla, el filtrado de la textura (layer.smooth)
+                //    alisa los bordes; inclinando la tarjeta tal cual, Qt la
+                //    dibuja sin suavizado y salen en dientes de sierra
+                //  · la capa se dibuja una vez: al moverse el carrusel solo se
+                //    desplaza una imagen ya hecha (fluido a 240 Hz)
                 Item {
                     id: forma
                     anchors.fill: parent
@@ -227,53 +247,62 @@ PanelWindow {
                                              0, 0, 0, 1)
                     }
 
-                    // Sombra
-                    Rectangle {
-                        anchors { fill: parent; topMargin: 14; bottomMargin: -18; leftMargin: -6; rightMargin: -6 }
-                        radius: 16
-                        color: Qt.rgba(0, 0, 0, 0.4 * tarjeta.luz)
-                    }
+                    Item {
+                        anchors { fill: parent; margins: -2 }
+                        layer.enabled: true
+                        layer.smooth: true
 
-                    ClippingRectangle {
-                        anchors.fill: parent
-                        radius: 12
-                        color: Tema.caja
+                        ClippingRectangle {
+                            anchors { fill: parent; margins: 2 }
+                            radius: 12
+                            color: Tema.caja
 
-                        // La foto, enderezada (inclinada al revés) y algo más
-                        // ancha, para que llene las esquinas sin deformarse
-                        Image {
-                            x: -tarjeta.sesgo
-                            width: parent.width + 2 * tarjeta.sesgo
-                            height: parent.height
-                            source: "file://" + tarjeta.modelData.miniatura
-                            sourceSize: Qt.size(360, 640)
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            opacity: tarjeta.luz
-                            transform: Matrix4x4 {
-                                matrix: Qt.matrix4x4(1, panel.inclinacion, 0, -tarjeta.sesgo,
-                                                     0, 1, 0, 0,
-                                                     0, 0, 1, 0,
-                                                     0, 0, 0, 1)
+                            // La foto, enderezada (inclinada al revés) y algo más
+                            // ancha, para que llene las esquinas sin deformarse
+                            Image {
+                                x: -tarjeta.sesgo
+                                width: parent.width + 2 * tarjeta.sesgo
+                                height: parent.height
+                                source: "file://" + tarjeta.modelData.miniatura
+                                sourceSize: Qt.size(360, 640)
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                smooth: true
+                                transform: Matrix4x4 {
+                                    matrix: Qt.matrix4x4(1, panel.inclinacion, 0, -tarjeta.sesgo,
+                                                         0, 1, 0, 0,
+                                                         0, 0, 1, 0,
+                                                         0, 0, 0, 1)
+                                }
                             }
                         }
-                    }
 
-                    // Borde de la elegida (como el anillo de foco de niri)
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: 12
-                        color: "transparent"
-                        border.width: 3
-                        border.color: Tema.blanco
-                        opacity: tarjeta.elegida ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: Tema.rapida } }
+                        // Las que no son la elegida, algo apagadas: con una capa
+                        // oscura encima, no transparentes (si no, se mezclan con
+                        // lo que hay detrás)
+                        Rectangle {
+                            anchors { fill: parent; margins: 2 }
+                            visible: !tarjeta.elegida
+                            radius: 12
+                            color: Qt.rgba(0, 0, 0, 1 - tarjeta.luz)
+                        }
+
+                        // Borde de la elegida (como el anillo de foco de niri)
+                        Rectangle {
+                            anchors { fill: parent; margins: 2 }
+                            visible: tarjeta.elegida
+                            radius: 12
+                            color: "transparent"
+                            border.width: 3
+                            border.color: Tema.blanco
+                        }
                     }
                 }
 
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
+                    enabled: tarjeta.enFila
                     onClicked: {
                         if (tarjeta.elegida)
                             panel.poner(tarjeta.modelData);
