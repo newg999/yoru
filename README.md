@@ -140,7 +140,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | `Mod+Alt+S` | Tienda de apps (buscar, instalar, actualizar) |
 | `Mod+Alt+I` | Test de velocidad de internet (también en el lanzador) |
 | `Mod+Alt+W` | Elegir fondo de pantalla (con miniaturas) o buscar nuevos en wallhaven.cc (Descubrir) |
-| `Mod+Alt+T` | Ajustes: tema, fondo, barra (arriba o a la izquierda), dock, aspecto y pantallas |
+| `Mod+Alt+T` | Ajustes: tema, fondo, aspecto, barra, pantallas, sonido, ratón, teclado, atajos, notificaciones, energía, fecha y hora... (con buscador) |
 | `Mod+Alt+Shift+W` | Siguiente fondo de pantalla |
 | `Mod+BackSpace` | Bloquear |
 | `Mod+Shift+BackSpace` | Menú de apagado |
@@ -160,6 +160,9 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | VPN (WireGuard u OpenVPN) | Centro de control → baldosa de red (Wi-Fi o Ethernet) 󰅀 → VPN: un interruptor por cada una y 󰐕 para añadir un `.conf` o `.ovpn` (busca en tu carpeta personal o escribes la ruta). Se guardan en NetworkManager; con una conectada sale un escudo en la barra |
 | Ratón, touchpad y cursor | Ajustes › Ratón (`Mod+Alt+T`): velocidad, rueda, aceleración, zurdos, tocar para hacer clic, tamaño del cursor... Se guarda en `config/niri/raton.kdl` (no se sube a git), que manda sobre lo que pongas a mano en `local.kdl` |
 | Distribución de teclado, repetición, Bloq Mayús | Ajustes › Teclado (`Mod+Alt+T`): añade otras distribuciones (y cambia con Alt+Mayús), cuánto espera y lo rápido que repite una tecla, Bloq Mayús como Escape o Ctrl... Se guarda en el mismo `config/niri/raton.kdl`, que el instalador copia también a la pantalla de inicio de sesión |
+| Sonido | Ajustes › Sonido: salida y micrófono (con su volumen y el nivel del micro) y el volumen de cada app que suena |
+| Notificaciones | Ajustes › Notificaciones: no molestar, cuánto duran los avisos, dónde salen, sonido al llegar y silenciar apps (sus avisos siguen en el panel de la campana) |
+| Ver los atajos | Ajustes › Atajos: todos los de `config/niri/binds.kdl`, con buscador. Para cambiarlos, edita ese archivo (el botón de la sección lo abre) |
 | Con qué app se abre cada cosa (navegador, música, vídeo, PDF...) | Ajustes › Apps (`Mod+Alt+T`): eliges la app de cada categoría, o escribes una extensión (`.flac`) para un tipo concreto. Se guarda en `~/.config/mimeapps.list` |
 | Monitores y escala | Ajustes › Pantallas (`Mod+Alt+T`): arrástralas para colocarlas, y elige resolución y escala. Se guarda en `config/niri/local.kdl` (no se sube a git); lo que escribas a mano fuera de su bloque se respeta |
 | Pantalla de inicio de sesión | `system/greetd/config.toml` (se copia a `/etc`, vuelve a ejecutar `./install.sh`) |

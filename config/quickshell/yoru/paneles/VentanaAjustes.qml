@@ -8,9 +8,14 @@
 //  Solo existe mientras está abierta (Paneles.ajustesAbiertos).
 //  Su fondo translúcido se desenfoca por una regla de niri (rules.kdl, por
 //  su título: Paneles.tituloAjustes)
+//  Arriba de la barra lateral va quién eres (la foto de ~/.face, si la hay)
+//  y un buscador: filtra las secciones por su nombre, lo que tienen dentro
+//  (claves) y su descripción; Enter abre la primera.
 // ============================================================================
 import QtQuick
 import Quickshell
+import Quickshell.Io
+import Quickshell.Widgets
 import qs.comun
 
 Scope {
@@ -39,8 +44,8 @@ Scope {
                 ]},
                 {titulo: "Dispositivos", secciones: [
                     {id: "pantallas", icono: "󰍹", texto: "Pantallas", detalle: "Colocar los monitores, resolución y escala"},
-                    {id: "raton", icono: "󰍽", texto: "Ratón", detalle: "Velocidad, rueda, touchpad y cursor"},
                     {id: "sonido", icono: "󰕾", texto: "Sonido", detalle: "Altavoces, auriculares, micrófono y el volumen de cada app"},
+                    {id: "raton", icono: "󰍽", texto: "Ratón", detalle: "Velocidad, rueda, touchpad y cursor"},
                     {id: "teclado", icono: "󰌌", texto: "Teclado", detalle: "Distribución, repetición de teclas y Bloq Mayús"},
                     {id: "atajos", icono: "󰘳", texto: "Atajos", detalle: "Todos los atajos de teclado de Yoru"}
                 ]},
@@ -53,6 +58,38 @@ Scope {
                 ]}
             ]
             readonly property var secciones: [].concat(...grupos.map(g => g.secciones))
+
+            // Lo que se busca más allá del nombre y la descripción
+            readonly property var claves: ({
+                tema: "colores paleta oscuro claro nord catppuccin",
+                fondo: "wallpaper imagen descubrir wallhaven",
+                aspecto: "transparencia opacidad letra fuente desenfoque blur luz nocturna animaciones bordes",
+                barra: "dock islas reloj bandeja",
+                pantallas: "monitor resolución resolucion hz escala",
+                sonido: "audio volumen altavoces auriculares micrófono microfono",
+                raton: "touchpad cursor puntero zurdo",
+                teclado: "idioma layout inglés ingles repetición repeticion mayúsculas",
+                atajos: "teclas shortcuts combinaciones",
+                notificaciones: "avisos no molestar silenciar",
+                energia: "bloqueo suspender batería bateria inactividad",
+                fecha: "hora zona horaria reloj ntp",
+                apps: "predeterminadas navegador abrir con",
+                acerca: "sistema versión version actualizar equipo"
+            })
+            function casa(s, q) {
+                const sinTildes = t => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                return sinTildes(`${s.texto} ${s.detalle} ${claves[s.id] ?? ""}`).includes(sinTildes(q));
+            }
+            readonly property string buscado: buscador.text.trim()
+            readonly property var halladas: buscado === "" ? secciones : secciones.filter(s => casa(s, buscado))
+            readonly property string usuario: Quickshell.env("USER") ?? ""
+            // ~/.face, solo si existe (si no, Image se queja en el registro)
+            property bool hayFoto: false
+            Process {
+                running: true
+                command: ["test", "-f", Quickshell.env("HOME") + "/.face"]
+                onExited: codigo => ventana.hayFoto = codigo === 0
+            }
             readonly property var actual: secciones.find(s => s.id === Paneles.seccionAjustes) ?? secciones[0]
 
             // Las secciones leen sus datos al pasar «abierto» a true: si ya
@@ -78,24 +115,106 @@ Scope {
                     color: Tema.claro(0.08)
                 }
 
+                // Con la ventana baja, la lista se desplaza
+                Flickable {
+                    anchors { fill: parent; margins: 14; topMargin: 22; rightMargin: 15 }
+                    contentHeight: listaLateral.height
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+
                 Column {
-                    anchors { fill: parent; margins: 14; topMargin: 22 }
+                    id: listaLateral
+                    width: parent.width
                     spacing: 4
 
+                    // Quién eres: foto (o la inicial) y nombre
                     Row {
-                        leftPadding: 10
-                        bottomPadding: 18
+                        leftPadding: 6
+                        bottomPadding: 16
                         spacing: 12
-                        Texto {
-                            text: "󰒓"
-                            font.pixelSize: 22
-                            color: Tema.blanco
+
+                        ClippingRectangle {
+                            width: 44
+                            height: 44
+                            radius: 22
+                            color: Tema.claro(0.10)
+                            border.width: 1
+                            border.color: Tema.claro(0.15)
+                            Texto {
+                                anchors.centerIn: parent
+                                visible: foto.status !== Image.Ready
+                                text: ventana.usuario.charAt(0).toUpperCase()
+                                font.pixelSize: 19
+                                color: Tema.blanco
+                            }
+                            Image {
+                                id: foto
+                                anchors.fill: parent
+                                source: ventana.hayFoto ? "file://" + Quickshell.env("HOME") + "/.face" : ""
+                                sourceSize: Qt.size(88, 88)
+                                fillMode: Image.PreserveAspectCrop
+                            }
                         }
-                        Texto {
-                            text: "Ajustes"
-                            font.pixelSize: 20
-                            color: Tema.blanco
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 1
+                            Texto {
+                                text: ventana.usuario
+                                font.pixelSize: 15
+                                color: Tema.blanco
+                            }
+                            Texto {
+                                text: "Ajustes de Yoru"
+                                font.pixelSize: 11
+                                font.bold: false
+                                color: Tema.gris
+                            }
                         }
+                    }
+
+                    // Buscador de secciones
+                    Rectangle {
+                        width: parent.width
+                        height: 36
+                        radius: 10
+                        color: Tema.caja
+                        border.width: 1
+                        border.color: buscador.activeFocus ? Tema.claro(0.5) : Tema.claro(0.08)
+
+                        Texto {
+                            id: lupa
+                            anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
+                            text: "󰍉"
+                            font.pixelSize: 14
+                            color: Tema.gris
+                        }
+                        TextInput {
+                            id: buscador
+                            anchors { left: lupa.right; leftMargin: 8; right: parent.right; rightMargin: 12; verticalCenter: parent.verticalCenter }
+                            color: Tema.texto
+                            selectionColor: Tema.claro(0.3)
+                            font.family: Tema.fuente
+                            font.pixelSize: 13
+                            clip: true
+                            Texto {
+                                visible: buscador.text === ""
+                                text: "Buscar ajuste"
+                                font.pixelSize: 13
+                                font.bold: false
+                                color: Tema.tenue
+                            }
+                            Keys.onReturnPressed: if (ventana.halladas.length > 0)
+                                Paneles.seccionAjustes = ventana.halladas[0].id
+                        }
+                    }
+                    Item { width: 1; height: 10 }
+                    Texto {
+                        visible: ventana.halladas.length === 0
+                        leftPadding: 14
+                        text: "Nada con «" + ventana.buscado + "»"
+                        font.pixelSize: 12
+                        font.bold: false
+                        color: Tema.gris
                     }
 
                     Repeater {
@@ -105,6 +224,8 @@ Scope {
                             id: grupo
                             required property var modelData
                             required property int index
+                            readonly property var visibles: modelData.secciones.filter(s => ventana.halladas.some(h => h.id === s.id))
+                            visible: visibles.length > 0
                             width: parent.width
                             spacing: 2
                             topPadding: index > 0 ? 14 : 0
@@ -119,7 +240,7 @@ Scope {
                             }
 
                             Repeater {
-                                model: grupo.modelData.secciones
+                                model: grupo.visibles
 
                                 Rectangle {
                                     id: fila
@@ -158,6 +279,7 @@ Scope {
                             }
                         }
                     }
+                }
                 }
             }
 
