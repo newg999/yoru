@@ -11,18 +11,24 @@
 #    3. Descarga la fuente JetBrainsMono Nerd Font (iconos de la barra)
 #    4. Hace copia de seguridad de tus configs actuales
 #    5. Enlaza (symlink) las carpetas de config/ en ~/.config/
-#       y pregunta si quieres bajar los fondos de pantalla
+#       y baja unos fondos de pantalla (6) para empezar
 #    6. Activa servicios (bluetooth, energía) y la pantalla de inicio de
 #       sesión (greetd + gtkgreet, con el estilo de Yoru); si ya tienes otra,
-#       como la de GNOME, pregunta si cambiarla; y el arranque de Yoru:
+#       como la de GNOME, la deja (YORU_LOGIN=yoru para cambiarla); y el arranque de Yoru:
 #       la pantalla de Plymouth y el tema del menú de GRUB
 #    7. Pone tema oscuro, iconos Papirus y cursor Bibata en las apps GTK
 #    8. Deja zsh como shell, con Oh My Zsh y sus plugins (config/zsh/)
 #    9. Genera los colores del tema (yoru tema) y valida la config de Niri
 #
 #  Funciona tanto en una Fedora MÍNIMA (sin escritorio) como en una con
-#  GNOME. Si ya tienes GNOME, eliges si quedarte con su pantalla de inicio
-#  (GDM) o usar la de Yoru; GNOME sigue disponible en ambos casos.
+#  GNOME. Si ya tienes GNOME, se queda su pantalla de inicio (GDM); con
+#  YORU_LOGIN=yoru ./install.sh se usa la de Yoru. GNOME sigue en ambos casos.
+#
+#  No pregunta nada: solo pide la contraseña (y, con NVIDIA y Secure Boot,
+#  inventar una de un solo uso para su driver). Variables para cambiar lo
+#  que hace por defecto:
+#    YORU_LOGIN=yoru   la pantalla de inicio de Yoru aunque haya otra
+#    YORU_NVIDIA=no    no instalar el driver de NVIDIA
 #
 #  Como usa enlaces simbólicos, cualquier cambio que hagas en ~/.config/niri
 #  se está haciendo en realidad dentro de este repositorio → git lo ve.
@@ -361,18 +367,14 @@ drivers_nvidia() {
         ajustes_nvidia
         return
     fi
-    echo "  Sin su driver oficial, la tarjeta va lenta y sin aceleración."
-    echo "  Se instala desde RPM Fusion (el repositorio de Fedora para software no libre)."
-    if [[ ! -t 0 ]]; then
-        aviso "Sin terminal para preguntar: me lo salto. Vuelve a ejecutar ./install.sh para instalarlo."
+    # Sin preguntar: sin su driver oficial va lenta y sin aceleración.
+    # Para no instalarlo: YORU_NVIDIA=no ./install.sh
+    if [[ "${YORU_NVIDIA:-}" == no ]]; then
+        aviso "No se instala (YORU_NVIDIA=no): la gráfica irá con el driver libre (nouveau), más lento."
         return
     fi
-    local respuesta
-    read -rp "  ¿Instalar el driver de NVIDIA? [S/n] " respuesta
-    if [[ "${respuesta,,}" == n* ]]; then
-        aviso "No se instala. La gráfica NVIDIA funcionará con el driver libre (nouveau), más lento."
-        return
-    fi
+    echo "  Su driver oficial se instala desde RPM Fusion (el repositorio de Fedora"
+    echo "  para software no libre)."
 
     # 1. RPM Fusion (libre y no libre)
     if ! rpm -q rpmfusion-nonfree-release >/dev/null 2>&1; then
@@ -542,29 +544,19 @@ enlazar_todo() {
 # wallhaven.cc. Son bastantes MB, así que se pregunta antes.
 bajar_fondos() {
     paso "Fondos de pantalla"
-    local total faltan
-    total=$(grep -cv '^[[:space:]]*\(#\|$\)' "$REPO/wallpapers/wallhaven.txt" || true)
-    faltan=0
-    while read -r id url; do
-        [[ -z "$id" || "$id" == \#* ]] && continue
-        [[ -f "$REPO/wallpapers/anime-$id.${url##*.}" ]] || faltan=$((faltan + 1))
-    done < "$REPO/wallpapers/wallhaven.txt"
-
-    if [[ $faltan -eq 0 ]]; then
-        ok "Ya están los $total"
+    # Sin preguntar: unos pocos de la lista (wallpapers/wallhaven.txt), para
+    # empezar. Más, en Ajustes › Fondo › Descubrir o con wallpapers/descargar.sh
+    local quiero=6 hay
+    hay=$(find "$REPO/wallpapers" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' \
+        -o -iname '*.png' -o -iname '*.webp' \) | wc -l)
+    if (( hay >= quiero )); then
+        ok "Ya hay $hay"
         return
     fi
-    if [[ ! -t 0 ]]; then
-        aviso "Sin terminal para preguntar: no se bajan. Hazlo luego con wallpapers/descargar.sh"
-        return
-    fi
-    local respuesta
-    read -rp "  ¿Descargar $faltan fondos de pantalla? [s/N] " respuesta
-    if [[ "${respuesta,,}" == s* ]]; then
-        "$REPO/wallpapers/descargar.sh" && ok "Fondos descargados" \
-            || aviso "No se pudieron bajar algunos (¿sin internet?). Reintenta con wallpapers/descargar.sh"
+    if "$REPO/wallpapers/descargar.sh" "$quiero" >/dev/null; then
+        ok "Fondos descargados (más en Ajustes › Fondo › Descubrir)"
     else
-        aviso "Saltado. Puedes bajarlos cuando quieras con wallpapers/descargar.sh"
+        aviso "No se pudieron bajar algunos (¿sin internet?). Reintenta con wallpapers/descargar.sh"
     fi
 }
 
@@ -740,9 +732,8 @@ apps_predeterminadas() {
 }
 
 # Pantalla de inicio de sesión. Si el sistema ya tiene otra (GDM en una
-# Fedora con GNOME), se pregunta si cambiarla; si dices que no, se recuerda
-# y no se vuelve a preguntar (borra el archivo de MANTENER_LOGIN para que sí)
-MANTENER_LOGIN="$HOME/.local/state/yoru/mantener-login"
+# Fedora con GNOME), se queda esa, sin preguntar; para cambiarla por la de
+# Yoru: YORU_LOGIN=yoru ./install.sh (GNOME sigue en su desplegable)
 pantalla_login() {
     paso "Pantalla de inicio de sesión"
     if ! command -v greetd >/dev/null; then
@@ -753,27 +744,12 @@ pantalla_login() {
     [[ -e /etc/systemd/system/display-manager.service ]] \
         && actual="$(basename "$(readlink -f /etc/systemd/system/display-manager.service)" .service)"
     if [[ -n "$actual" && "$actual" != "greetd" ]]; then
-        if [[ -f "$MANTENER_LOGIN" ]]; then
-            ok "Sigues con la tuya ($actual), como elegiste"
-            return
-        fi
-        if [[ ! -t 0 ]]; then
-            ok "Ya tienes una ($actual). Sin terminal para preguntar: no la cambio"
-            return
-        fi
-        echo "  Ya tienes una pantalla de inicio: $actual."
-        echo "  La de Yoru lleva tu fondo y el estilo de los menús; desde ella podrás"
-        echo "  seguir entrando en GNOME. Para volver a $actual más adelante:"
-        echo "    sudo systemctl disable greetd && sudo systemctl enable $actual"
-        local respuesta
-        read -rp "  ¿Cambiarla por la de Yoru? [s/N] " respuesta
-        if [[ "${respuesta,,}" != s* ]]; then
-            mkdir -p "$(dirname "$MANTENER_LOGIN")"
-            echo "$actual" > "$MANTENER_LOGIN"
-            ok "Sigues con $actual (no te lo vuelvo a preguntar; borra $MANTENER_LOGIN para que sí)"
+        if [[ "${YORU_LOGIN:-}" != yoru ]]; then
+            ok "Sigues con la tuya ($actual). Para la de Yoru: YORU_LOGIN=yoru ./install.sh"
             return
         fi
         sudo systemctl disable "$actual" >/dev/null 2>&1
+        ok "Cambiada $actual por la de Yoru. Para volver: sudo systemctl disable greetd && sudo systemctl enable $actual"
     fi
 
     # Todo esto es de root (lo usa el usuario "greetd", no tú): se copia.

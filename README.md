@@ -58,10 +58,9 @@ Al volver verás la pantalla de inicio de Yoru (tu fondo, el reloj y un recuadro
 
 ### B · Sobre una Fedora con GNOME
 
-Los mismos comandos. El instalador verá que ya tienes la pantalla de inicio de GNOME (GDM) y te preguntará si cambiarla por la de Yoru:
+Los mismos comandos. El instalador no pregunta nada (solo tu contraseña): verá que ya tienes la pantalla de inicio de GNOME (GDM) y la dejará. Cierra la sesión, pulsa el engranaje ⚙ (abajo a la derecha), elige **Niri** y entra.
 
-- **Sí**: reinicia (`sudo reboot`) y entrarás por la de Yoru. GNOME sigue en su desplegable de sesiones.
-- **No** (lo que pasa si solo pulsas Intro): cierra la sesión, pulsa el engranaje ⚙ (abajo a la derecha), elige **Niri** y entra. No te lo volverá a preguntar; si cambias de idea, borra `~/.local/state/yoru/mantener-login` y vuelve a ejecutar `./install.sh`.
+Si prefieres la pantalla de inicio de Yoru (GNOME sigue en su desplegable de sesiones): `YORU_LOGIN=yoru ./install.sh` y reinicia.
 
 **GNOME no se desinstala** en ningún caso. Para volver a su pantalla de inicio: `sudo systemctl disable greetd && sudo systemctl enable gdm`.
 
@@ -73,7 +72,7 @@ Los mismos comandos. El instalador verá que ya tienes la pantalla de inicio de 
 
 ### Si tienes una gráfica NVIDIA
 
-El instalador la detecta solo y te ofrece su driver oficial (desde RPM Fusion). Si tu equipo tiene **Secure Boot** activado, te pedirá inventar una **contraseña de un solo uso** (mejor solo números: en ese momento el teclado es inglés). Al reiniciar saldrá una **pantalla azul** (MOK Manager):
+El instalador la detecta e instala solo su driver oficial (desde RPM Fusion; para no instalarlo: `YORU_NVIDIA=no ./install.sh`). Si tu equipo tiene **Secure Boot** activado, te pedirá inventar una **contraseña de un solo uso** (mejor solo números: en ese momento el teclado es inglés). Al reiniciar saldrá una **pantalla azul** (MOK Manager):
 
 1. Pulsa una tecla antes de 10 segundos.
 2. **Enroll MOK** → **Continue** → **Yes**.
@@ -173,7 +172,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | Lanzador de apps (`Mod+Space`, sale por la izquierda) | `config/quickshell/yoru/paneles/Lanzador.qml` |
 | Dock de apps abajo, con el overview abierto (Mod+Tab), siempre o nunca, según Ajustes (clic = ir a su ventana o elegir entre varias, clic derecho = fijar/cerrar) | `config/quickshell/yoru/barra/Dock.qml` (favoritas en `~/.local/state/yoru/favoritos.json`) |
 | Dónde vives (para el clima) | `config/quickshell/yoru/lugar.json` (copia `lugar.json.example`; sin él, se adivina por tu IP) |
-| Fondos de pantalla | Echa imágenes en `wallpapers/`, o busca en `Mod+Alt+W` → Descubrir: se bajan y se apuntan en `wallpapers/wallhaven.txt` (en otro equipo, `wallpapers/descargar.sh` los vuelve a bajar) |
+| Fondos de pantalla | El instalador baja 6 para empezar. Echa imágenes en `wallpapers/`, o busca en Ajustes › Fondo › Descubrir: se bajan y se apuntan en `wallpapers/wallhaven.txt` (en otro equipo, `wallpapers/descargar.sh` los vuelve a bajar todos) |
 
 Niri recarga su configuración **al guardar**. Para el resto:
 

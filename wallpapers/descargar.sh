@@ -6,15 +6,24 @@
 #  guardan en git: este script las descarga en esta misma carpeta.
 #  Las que ya estén bajadas se saltan.
 #
-#  Para añadir uno: búscalo en el panel de fondos (Mod+Alt+W → Descubrir), que
+#    descargar.sh       baja todas las de la lista
+#    descargar.sh 6     solo hasta que haya 6 fondos en la carpeta (lo usa
+#                       install.sh, para no bajar decenas sin preguntar)
+#
+#  Para añadir uno: búscalo en Ajustes › Fondo › Descubrir, que
 #  lo baja y lo apunta aquí solo. A mano: copia su id y la URL de la imagen
 #  ("https://w.wallhaven.cc/full/...") y añade una línea "id url" a la lista.
 # ----------------------------------------------------------------------------
 
 cd "$(dirname "$(realpath "$0")")" || exit 1
 
+maximo="${1:-0}"   # 0 = sin límite
+cuantos() { compgen -G "*.@(jpg|jpeg|png|webp)" 2>/dev/null | wc -l; }
+shopt -s extglob nocaseglob
+
 while read -r id url; do
     [[ -z "$id" || "$id" == \#* ]] && continue
+    (( maximo > 0 && $(cuantos) >= maximo )) && break
     # Los antiguos se llaman anime-<id>; los nuevos, wallhaven-<id>
     compgen -G "*-$id.*" >/dev/null && continue
     destino="wallhaven-$id.${url##*.}"
