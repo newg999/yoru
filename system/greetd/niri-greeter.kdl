@@ -38,7 +38,9 @@ spawn-at-startup "swaybg" "-m" "fill" "-i" "/usr/share/backgrounds/yoru/inicio"
 // misma que la de bloqueo. Si no arranca o falla, gtkgreet de reserva
 // (GTK_THEME: campos y botones oscuros aunque el usuario greetd no tenga
 // ajustes propios). Al entrar, este niri se cierra para dar paso a tu sesión.
-spawn-sh-at-startup "qs -p /etc/greetd/yoru || GTK_THEME=Adwaita:dark gtkgreet --layer-shell --style /etc/greetd/gtkgreet.css --command niri-session; niri msg action quit --skip-confirmation"
+// QSG_RENDER_LOOP=threaded: al ritmo de la pantalla (si no, a veces a ~60 fps;
+// ver system/systemd/yoru-shell.service)
+spawn-sh-at-startup "QSG_RENDER_LOOP=threaded qs -p /etc/greetd/yoru || GTK_THEME=Adwaita:dark gtkgreet --layer-shell --style /etc/greetd/gtkgreet.css --command niri-session; niri msg action quit --skip-confirmation"
 
 // Tus ajustes de este equipo (monitores, velocidad del ratón...): install.sh
 // copia aquí tu ~/.config/niri/local.kdl (y raton.kdl, de Ajustes › Ratón)

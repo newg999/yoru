@@ -16,6 +16,11 @@ Requisite=graphical-session.target
 # El mismo cursor que niri (si no, Qt pone el suyo en la barra y el bloqueo)
 Environment=XCURSOR_THEME=Bibata-Modern-Ice
 Environment=XCURSOR_SIZE=24
+# Dibujar en su propio hilo, al ritmo de la pantalla. Qt elige a veces el
+# modo «basic» (con NVIDIA, por ejemplo), que no se sincroniza con ella y se
+# queda en ~60 fps: en un monitor de 240 Hz, todas las animaciones a 60.
+# Se ve con el contador de fotogramas (Mod+Alt+F).
+Environment=QSG_RENDER_LOOP=threaded
 ExecStart=/usr/bin/qs -c yoru
 Restart=on-failure
 RestartSec=1

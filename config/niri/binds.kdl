@@ -32,6 +32,7 @@ binds {
     Mod+Alt+I           hotkey-overlay-title="Test de velocidad" { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "velocidad" ""; }
     Mod+Alt+W           hotkey-overlay-title="Elegir fondo"    { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "fondos" ""; }
     Mod+Alt+T           hotkey-overlay-title="Ajustes (tema, barra, pantallas, ratón...)" { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "ajustes" ""; }
+    Mod+Alt+F           hotkey-overlay-title="Contador de fotogramas (ver si algo va a tirones)" { spawn "qs" "-c" "yoru" "ipc" "call" "fotogramas" "alternar"; }
     Mod+Alt+Shift+W     hotkey-overlay-title="Fondo siguiente" { spawn-sh "~/.config/niri/scripts/wallpaper.sh next"; }
 
     // --------------------------------------------------------------- Sesión

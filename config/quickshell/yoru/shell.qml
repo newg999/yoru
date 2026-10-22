@@ -24,6 +24,8 @@ import qs.paneles
 import qs.bloqueo
 
 ShellRoot {
+    id: raiz
+
     // Una barra y un juego de paneles por pantalla
     Variants {
         model: Quickshell.screens
@@ -123,6 +125,21 @@ ShellRoot {
         }
         function cerrar(): void {
             Paneles.cerrar();
+        }
+    }
+
+    // Contador de fotogramas (paneles/Fotogramas.qml), para ver si algo va a
+    // tirones:  qs -c yoru ipc call fotogramas alternar   (Mod+Alt+F)
+    property bool fotogramas: false
+    Variants {
+        model: Quickshell.screens
+        Fotogramas { activo: raiz.fotogramas }
+    }
+    IpcHandler {
+        target: "fotogramas"
+
+        function alternar(): void {
+            raiz.fotogramas = !raiz.fotogramas;
         }
     }
 
