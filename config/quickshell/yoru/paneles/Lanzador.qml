@@ -50,6 +50,7 @@ Panel {
         ["󰍹", "Pantallas", "Ajustes › Pantallas: colocarlas, resolución y escala", "pantallas pantalla monitores monitor displays display resolución resolucion escala hz frecuencia", "ajustes", "pantallas"],
         ["󰖔", "Luz nocturna", "Ajustes › Aspecto: pantalla más cálida por la noche", "luz nocturna night light filtro azul blue cálida calida noche", "ajustes", "aspecto"],
         ["󰍽", "Ratón y touchpad", "Ajustes › Ratón: velocidad, rueda y cursor", "ratón raton mouse touchpad cursor puntero trackpad", "ajustes", "raton"],
+        ["󰌌", "Teclado", "Ajustes › Teclado: distribución, repetición y Bloq Mayús", "teclado keyboard distribución distribucion idioma layout inglés ingles repetición repeticion mayúsculas mayusculas bloq num", "ajustes", "teclado"],
         ["󰂄", "Energía y bloqueo", "Ajustes › Energía: bloquear, apagar la pantalla y suspender", "energía energia bloqueo bloquear suspender suspensión suspension apagar pantalla inactividad power perfil ahorro rendimiento", "ajustes", "energia"],
         ["󰥔", "Fecha y hora", "Ajustes › Fecha y hora: zona horaria y reloj", "fecha hora zona horaria timezone reloj clock 24 12 segundos ntp", "ajustes", "fecha"],
         ["󰋼", "Acerca de", "Ajustes › Acerca de: tu equipo y la versión de Yoru", "acerca about sistema versión version equipo hardware actualizar update yoru", "ajustes", "acerca"],

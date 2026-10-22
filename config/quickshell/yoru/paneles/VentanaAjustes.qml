@@ -39,7 +39,8 @@ Scope {
                 ]},
                 {titulo: "Dispositivos", secciones: [
                     {id: "pantallas", icono: "󰍹", texto: "Pantallas", detalle: "Colocar los monitores, resolución y escala"},
-                    {id: "raton", icono: "󰍽", texto: "Ratón", detalle: "Velocidad, rueda, touchpad y cursor"}
+                    {id: "raton", icono: "󰍽", texto: "Ratón", detalle: "Velocidad, rueda, touchpad y cursor"},
+                    {id: "teclado", icono: "󰌌", texto: "Teclado", detalle: "Distribución, repetición de teclas y Bloq Mayús"}
                 ]},
                 {titulo: "Sistema", secciones: [
                     {id: "energia", icono: "󰂄", texto: "Energía", detalle: "Perfil de energía, bloqueo, pantalla y suspensión"},

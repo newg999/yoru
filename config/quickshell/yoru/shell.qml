@@ -111,7 +111,7 @@ ShellRoot {
     //   qs -c yoru ipc call panel alternar monitor procesos   (o rendimiento)
     //   qs -c yoru ipc call panel alternar uso cpu            (o memoria)
     //   qs -c yoru ipc call panel alternar apagado ""         (o portapapeles, notificaciones, bateria, fondos, tienda, velocidad)
-    //   qs -c yoru ipc call panel alternar ajustes tema       (o fondo, barra, aspecto, pantallas, raton, apps;
+    //   qs -c yoru ipc call panel alternar ajustes tema       (o fondo, barra, aspecto, pantallas, raton, teclado, apps;
     //                                                          abre la ventana de Ajustes en esa sección)
     //   qs -c yoru ipc call panel cerrar
     IpcHandler {
