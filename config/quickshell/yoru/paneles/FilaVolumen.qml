@@ -10,6 +10,7 @@ Item {
     property string iconoOn: "󰕾"
     property string iconoOff: "󰖁"
     property bool elegida: false
+    property bool conElegir: true       // sin la flecha (en Ajustes › Sonido)
     signal elegir()
 
     PwObjectTracker { objects: [fila.nodo] }
@@ -51,11 +52,12 @@ Item {
         text: Math.round(fila.volumen * 100) + "%"
         font.pixelSize: 12
         color: fila.mudo ? Tema.tenue : Tema.texto
-        anchors { right: elegirBoton.left; rightMargin: 4; verticalCenter: parent.verticalCenter }
+        anchors { right: elegirBoton.visible ? elegirBoton.left : parent.right; rightMargin: 4; verticalCenter: parent.verticalCenter }
     }
 
     BotonIcono {
         id: elegirBoton
+        visible: fila.conElegir
         anchors { right: parent.right; verticalCenter: parent.verticalCenter }
         icono: "󰅀"
         rotation: fila.elegida ? 180 : 0

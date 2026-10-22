@@ -7,6 +7,9 @@
 //    emergentes   las que se ven ahora arriba a la derecha (Avisos.qml)
 //    noMolestar   sin avisos emergentes (salvo las urgentes); se guardan igual
 //
+//  De Ajustes › Notificaciones: las apps silenciadas no salen como aviso ni
+//  suenan (sí quedan en el panel), y el sonido al llegar.
+//
 //  Cada entrada lleva la notificación (n) y la hora a la que llegó (hora).
 //  Probar:  notify-send "Hola" "Funciona"
 // ============================================================================
@@ -53,8 +56,17 @@ Singleton {
             raiz.lista = [e].concat(raiz.lista.filter(x => x !== e));
             n.closed.connect(() => raiz.quitar(n));
 
-            if (!raiz.noMolestar || n.urgency === NotificationUrgency.Critical)
+            const app = raiz.app(n);
+            if (app !== "" && !Ajustes.appsAvisos.includes(app))
+                Ajustes.appsAvisos = Ajustes.appsAvisos.concat([app]).sort((a, b) => a.localeCompare(b));
+            if (Ajustes.silenciadas.includes(app))
+                return;
+
+            const urgente = n.urgency === NotificationUrgency.Critical;
+            if (!raiz.noMolestar || urgente)
                 raiz.emergentes = [e].concat(raiz.emergentes.filter(x => x !== e));
+            if (Ajustes.avisosSonido && (!raiz.noMolestar || urgente))
+                raiz.sonar();
         }
     }
 
@@ -65,6 +77,15 @@ Singleton {
             n.closed.connect(() => raiz.quitar(n));
             return {n: n, hora: new Date()};
         });
+    }
+
+    // El nombre de la app que la manda (para silenciarla)
+    function app(n) {
+        return (n.appName || n.desktopEntry || "").trim();
+    }
+
+    function sonar() {
+        Quickshell.execDetached(["pw-play", "/usr/share/sounds/freedesktop/stereo/message.oga"]);
     }
 
     // La app la cerró, o la cerramos nosotros

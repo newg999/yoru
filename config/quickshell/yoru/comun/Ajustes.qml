@@ -47,6 +47,13 @@ Singleton {
     property alias reloj24: datos.reloj24               // 14:30 · 2:30 p. m.
     property alias relojSegundos: datos.relojSegundos   // segundos en el reloj de la barra
 
+    // ----------------------------------------------------- Notificaciones
+    property alias avisosSegundos: datos.avisosSegundos // lo que dura un aviso en pantalla
+    property alias avisosLado: datos.avisosLado         // "derecha" · "centro"
+    property alias avisosSonido: datos.avisosSonido     // un «tin» al llegar
+    property alias appsAvisos: datos.appsAvisos         // las apps que han avisado alguna vez
+    property alias silenciadas: datos.silenciadas       // esas, sin aviso ni sonido (sí en el panel)
+
     readonly property bool vertical: barra === "izquierda"
 
     // Vuelve a dejar el aspecto (no la barra ni el dock) como al principio
@@ -152,6 +159,12 @@ window-rule {
             property bool suspenderEnchufado: false
             property bool reloj24: true
             property bool relojSegundos: false
+
+            property int avisosSegundos: 5
+            property string avisosLado: "derecha"
+            property bool avisosSonido: false
+            property var appsAvisos: []
+            property var silenciadas: []
         }
     }
 }

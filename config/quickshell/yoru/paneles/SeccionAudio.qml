@@ -2,6 +2,8 @@
 //  Salidas de audio (altavoces, auriculares, HDMI, bluetooth...) o, con
 //  entrada: true, micrófonos.
 //  Clic = usar ese dispositivo. El que está en uso va en blanco.
+//  Con volumen: true, debajo del título va el volumen del que está en uso
+//  (Ajustes › Sonido).
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -13,6 +15,7 @@ Column {
     spacing: 4
 
     property bool entrada: false     // false = salidas · true = micrófonos
+    property bool volumen: false
 
     readonly property var nodos: Pipewire.nodes.values.filter(n => n.audio && !n.isStream)
     readonly property var salidas: nodos.filter(n => n.isSink)
@@ -43,6 +46,15 @@ Column {
                 Niri.lanzar(["pavucontrol", "-t", seccion.entrada ? "4" : "3"]);
             }
         }
+    }
+
+    FilaVolumen {
+        visible: seccion.volumen
+        width: seccion.width
+        conElegir: false
+        nodo: seccion.entrada ? Pipewire.defaultAudioSource : Pipewire.defaultAudioSink
+        iconoOn: seccion.entrada ? "󰍬" : "󰕾"
+        iconoOff: seccion.entrada ? "󰍭" : "󰖁"
     }
 
     Repeater {

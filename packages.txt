@@ -96,6 +96,7 @@ brightnessctl             # brillo de la pantalla del portátil
 ddcutil                   # brillo de monitores externos (DDC/CI)
 playerctl                 # teclas multimedia
 libnotify                 # notify-send
+sound-theme-freedesktop   # el sonido de los avisos (Ajustes › Notificaciones)
 htop                      # monitor del sistema (clic en la CPU de la barra)
 btop                      # monitor del sistema más completo y bonito
 fastfetch                 # info del sistema con el logo (el clásico de las capturas)

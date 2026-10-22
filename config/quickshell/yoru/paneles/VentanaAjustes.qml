@@ -40,9 +40,11 @@ Scope {
                 {titulo: "Dispositivos", secciones: [
                     {id: "pantallas", icono: "󰍹", texto: "Pantallas", detalle: "Colocar los monitores, resolución y escala"},
                     {id: "raton", icono: "󰍽", texto: "Ratón", detalle: "Velocidad, rueda, touchpad y cursor"},
+                    {id: "sonido", icono: "󰕾", texto: "Sonido", detalle: "Altavoces, auriculares, micrófono y el volumen de cada app"},
                     {id: "teclado", icono: "󰌌", texto: "Teclado", detalle: "Distribución, repetición de teclas y Bloq Mayús"}
                 ]},
                 {titulo: "Sistema", secciones: [
+                    {id: "notificaciones", icono: "󰂚", texto: "Notificaciones", detalle: "No molestar, cuánto duran los avisos y qué apps pueden avisar"},
                     {id: "energia", icono: "󰂄", texto: "Energía", detalle: "Perfil de energía, bloqueo, pantalla y suspensión"},
                     {id: "fecha", icono: "󰥔", texto: "Fecha y hora", detalle: "Zona horaria, hora automática y el reloj de la barra"},
                     {id: "apps", icono: "󰀻", texto: "Apps", detalle: "Con qué app se abre cada cosa"},

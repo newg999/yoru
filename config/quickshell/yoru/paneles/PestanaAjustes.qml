@@ -3,8 +3,9 @@
 //  Es el contenido de la ventana de Ajustes (VentanaAjustes.qml): ella pone
 //  la barra lateral con las secciones y aquí se ve la elegida (pestana)
 //
-//  Secciones: Tema · Fondo · Aspecto · Barra y dock · Pantallas · Ratón ·
-//             Teclado · Energía · Fecha y hora · Apps · Acerca de
+//  Secciones: Tema · Fondo · Aspecto · Barra y dock · Pantallas · Sonido ·
+//             Ratón · Teclado · Notificaciones · Energía · Fecha y hora ·
+//             Apps · Acerca de
 //
 //    Tema:    paletas de colores (las de «yoru tema»: Yoru, del fondo, Nord...)
 //    Fondo:   el fondo actual, elegir otro o pasar al siguiente, y Descubrir
@@ -14,10 +15,13 @@
 //             y luz nocturna
 //    Pantallas: colocar los monitores arrastrándolos, resolución y escala
 //             (PestanaPantallas.qml; se guarda en niri/local.kdl)
+//    Sonido:  salida, micrófono y volumen de cada app (PestanaSonido.qml)
 //    Ratón:   velocidad, rueda, touchpad y tamaño del cursor
 //             (PestanaRaton.qml; en niri/raton.kdl)
 //    Teclado: distribuciones, repetición, Bloq Mayús y Bloq Num
 //             (PestanaTeclado.qml; también en niri/raton.kdl)
+//    Notificaciones: no molestar, duración, posición, sonido y apps
+//             silenciadas (PestanaNotificaciones.qml)
 //    Apps:    con qué app se abre cada cosa (PestanaApps.qml)
 //    Energía: perfil, cuándo bloquear, apagar la pantalla y suspender (PestanaEnergia.qml)
 //    Fecha y hora: zona horaria, hora automática y el reloj de la barra (PestanaFecha.qml)
@@ -554,6 +558,13 @@ Item {
             width: parent.width
         }
 
+        // -------------------------------------------------------- Sonido
+        PestanaSonido {
+            visible: panel.pestana === "sonido"
+            activa: panel.abierto && visible
+            width: parent.width
+        }
+
         // --------------------------------------------------------- Ratón
         PestanaRaton {
             visible: panel.pestana === "raton"
@@ -572,6 +583,12 @@ Item {
         PestanaApps {
             visible: panel.pestana === "apps"
             activa: panel.abierto && visible
+            width: parent.width
+        }
+
+        // ------------------------------------------------ Notificaciones
+        PestanaNotificaciones {
+            visible: panel.pestana === "notificaciones"
             width: parent.width
         }
 

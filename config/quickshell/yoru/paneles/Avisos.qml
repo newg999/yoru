@@ -1,6 +1,7 @@
 // ============================================================================
 //  Avisos — las notificaciones que acaban de llegar, arriba a la derecha,
-//  bajo la barra. Se van solas a los 5 s (las urgentes se quedan hasta que
+//  bajo la barra (o en el centro, según Ajustes › Notificaciones). Se van
+//  solas a los 5 s (o lo elegido allí; las urgentes se quedan hasta que
 //  las cierras); con el ratón encima no se van. Aunque se vayan, siguen en
 //  el panel de notificaciones (la campana de la barra).
 //
@@ -24,7 +25,7 @@ PanelWindow {
         && Notificaciones.emergentes.length > 0
 
     visible: mostrar
-    anchors { top: true; right: true }
+    anchors { top: true; right: Ajustes.avisosLado !== "centro" }
     // Bajo la barra; con la barra a la izquierda, arriba del todo
     margins.top: Ajustes.vertical ? Tema.margenLados + 6 : Tema.hueco
     margins.right: Tema.margenLados
@@ -72,10 +73,10 @@ PanelWindow {
                 NumberAnimation { target: aviso; property: "opacity"; from: 0; to: 1; duration: Tema.normal }
             }
 
-            // Tiempo: el que pida la app, o 5 s; las urgentes, sin límite
+            // Tiempo: el que pida la app, o el de Ajustes; las urgentes, sin límite
             // (Quickshell da expireTimeout en segundos)
             readonly property int duracion: aviso.n?.expireTimeout > 0 ? aviso.n.expireTimeout * 1000
-                : aviso.urgente ? 0 : 5000
+                : aviso.urgente ? 0 : Ajustes.avisosSegundos * 1000
             Timer {
                 interval: aviso.duracion
                 running: aviso.duracion > 0 && !aviso.hover && ventana.mostrar
