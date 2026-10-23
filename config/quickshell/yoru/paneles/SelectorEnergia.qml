@@ -27,7 +27,7 @@ Row {
             readonly property bool elegido: PowerProfiles.profile === modelData.perfil
             width: (selector.width - selector.spacing * (selector.perfiles.length - 1)) / selector.perfiles.length
             height: 36
-            radius: 10
+            radius: Tema.esquina(10)
             color: elegido ? Tema.claro(0.90) : raton.containsMouse ? Tema.cajaHover : Tema.caja
             Behavior on color { ColorAnimation { duration: Tema.rapida } }
 

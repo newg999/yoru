@@ -91,15 +91,19 @@ Singleton {
             "~/.config/niri/scripts/inactividad.sh"])
     }
 
-    // ------------------------------------------- Esquinas de las ventanas
-    // Las dibuja niri: se le escribe una regla en este archivo, que
-    // config/niri/config.kdl incluye después de rules.kdl (gana la última)
-    readonly property string niriVentanas: `// Generado por la barra (Ajustes → Aspecto). No lo edites: se sobrescribe.
+    // ------------------------------- Esquinas y huecos de las ventanas
+    // Los dibuja niri: se le escribe este archivo, que config/niri/config.kdl
+    // incluye después de rules.kdl (gana lo último). Con la barra
+    // minimalista, sin huecos entre ventanas ni con los bordes: todo recto
+    readonly property string niriVentanas: `// Generado por la barra (Ajustes → Aspecto y Barra). No lo edites: se sobrescribe.
 window-rule {
     geometry-corner-radius ${datos.radioVentanas}
     clip-to-geometry true
 }
-`
+` + (datos.barra === "minimalista" ? `layout {
+    gaps 0
+}
+` : "")
     FileView {
         id: archivoVentanas
         path: Quickshell.env("HOME") + "/.local/state/yoru/niri-ventanas.kdl"
@@ -120,6 +124,7 @@ window-rule {
     }
     // Un momento después: al avisar del cambio, niriVentanas aún no está al día
     onRadioVentanasChanged: if (_ventanasLeido) Qt.callLater(escribirVentanas, true)
+    onBarraChanged: if (_ventanasLeido) Qt.callLater(escribirVentanas, true)
     Timer {
         id: recargarNiri
         interval: 150

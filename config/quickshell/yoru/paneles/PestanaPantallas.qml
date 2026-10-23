@@ -205,7 +205,7 @@ Column {
         id: lienzo
         width: parent.width
         height: 210
-        radius: 12
+        radius: Tema.esquina(12)
         color: Tema.caja
         border.width: 1
         border.color: Tema.claro(0.05)
@@ -236,7 +236,7 @@ Column {
             y: lienzo.fantasma ? Math.round(vista.oy + lienzo.fantasma.y * vista.k) : 0
             width: lienzo.fantasma ? Math.round(lienzo.fantasma.w * vista.k) : 0
             height: lienzo.fantasma ? Math.round(lienzo.fantasma.h * vista.k) : 0
-            radius: 8
+            radius: Tema.esquina(8)
             color: "transparent"
             border.width: 2
             border.color: Tema.claro(0.35)
@@ -258,7 +258,7 @@ Column {
                 z: raton.pressed ? 2 : 1
                 width: Math.round(t.w * vista.k)
                 height: Math.round(t.h * vista.k)
-                radius: 8
+                radius: Tema.esquina(8)
                 color: elegida ? Tema.claro(0.16) : raton.containsMouse ? Tema.claro(0.12) : Tema.claro(0.08)
                 border.width: elegida ? 2 : 1
                 border.color: elegida ? Tema.blanco : Tema.claro(0.25)

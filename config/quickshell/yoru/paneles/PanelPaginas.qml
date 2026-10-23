@@ -3,7 +3,7 @@
 //  de lo pulsado, con las páginas de la píldora (Paginas.qml). Cada botón
 //  abre lo suyo (Paneles.abrirPagina):
 //
-//    conexión (islas) o 󰍜        centro de control (a la derecha)
+//    la conexión                 centro de control (a la derecha)
 //    la hora                     calendario
 //    la canción                  multimedia
 //    el tiempo                   clima

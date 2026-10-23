@@ -138,7 +138,7 @@ Panel {
         Rectangle {
             width: parent.width
             height: 46
-            radius: 12
+            radius: Tema.esquina(12)
             color: Tema.caja
             border.width: 1
             border.color: busqueda.activeFocus ? Tema.claro(0.5) : Tema.claro(0.1)
@@ -228,7 +228,7 @@ Panel {
                 readonly property bool elegida: GridView.isCurrentItem
                 width: lista.cellWidth - (panel.columnas > 1 ? 4 : 0)
                 height: 56
-                radius: 10
+                radius: Tema.esquina(10)
                 color: elegida ? Tema.claro(0.90) : "transparent"
 
                 MouseArea {
@@ -252,7 +252,7 @@ Panel {
                 Rectangle {
                     visible: fila.modelData.ajuste ?? false
                     anchors.centerIn: iconoApp
-                    width: 34; height: 34; radius: 10
+                    width: 34; height: 34; radius: Tema.esquina(10)
                     color: fila.elegida ? Tema.sombra(0.15) : Tema.caja
                     Texto {
                         anchors.centerIn: parent

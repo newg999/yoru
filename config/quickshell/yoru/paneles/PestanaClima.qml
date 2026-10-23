@@ -68,7 +68,7 @@ Column {
             Rectangle {
                 width: parent.width
                 height: 42
-                radius: 10
+                radius: Tema.esquina(10)
                 color: Tema.claro(0.04)
                 border.width: 1
                 border.color: campo.activeFocus ? Tema.claro(0.5) : Tema.claro(0.1)
@@ -167,7 +167,7 @@ Column {
 
         width: buscador.width
         height: 36
-        radius: 8
+        radius: Tema.esquina(8)
         color: filaRaton.containsMouse || resaltada ? Tema.cajaHover : "transparent"
         Behavior on color { ColorAnimation { duration: Tema.rapida } }
 
@@ -253,7 +253,7 @@ Column {
                 Rectangle {
                     width: lugarFila.implicitWidth + 20
                     height: 26
-                    radius: 8
+                    radius: Tema.esquina(8)
                     color: lugarRaton.containsMouse || clima.buscando ? Tema.cajaHover : Tema.claro(0.06)
                     Behavior on color { ColorAnimation { duration: Tema.rapida } }
                     Row {

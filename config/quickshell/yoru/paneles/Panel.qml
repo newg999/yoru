@@ -59,81 +59,115 @@ PanelWindow {
     // tienen): el de niri no se puede desvanecer, y al ponerse al final de
     // la animación el panel cambiaba de golpe de tono (parecía un parpadeo).
 
-    // Clic fuera = cerrar
+    // Clic fuera = cerrar. Menos en la franja de la barra: ahí los clics
+    // pasan a la barra, así que pulsar otro botón con un panel abierto lo
+    // abre a la primera (antes el primer clic solo cerraba este)
+    mask: Region {
+        item: entera
+        Region { item: franjaBarra; intersection: Intersection.Subtract }
+    }
+    Item { id: entera; anchors.fill: parent }
+    Item {
+        id: franjaBarra
+        width: ventana.vertical ? Tema.margenBarra + Tema.anchoBarra : parent.width
+        height: ventana.vertical ? parent.height
+            : Ajustes.minimalista ? Tema.altoBarra + 2 : Tema.margenBarra + Tema.altoBarra
+    }
     MouseArea {
         anchors.fill: parent
         onClicked: Paneles.cerrar()
     }
 
-    Rectangle {
-        id: caja
+    // Con la minimalista, el panel baja desde la barra como una persiana: se
+    // recorta justo por debajo de ella para no pintarse encima mientras baja
+    Item {
+        id: recorte
+        anchors.fill: parent
+        anchors.topMargin: Ajustes.minimalista ? Tema.altoBarra + 2 : 0
+        clip: Ajustes.minimalista
 
-        width: ventana.ancho
-        height: interior.implicitHeight + 32
-        readonly property bool enMedio: ventana.lado === "medio"
-        // Con la barra minimalista, pegado a ella: sin hueco, esquinas de
-        // arriba rectas, su mismo fondo y un borde fino
-        readonly property bool pegado: Ajustes.minimalista && !enMedio
-        // Con la barra en píldora, todo sale centrado bajo ella (con la
-        // minimalista, cada uno bajo su botón, como con las islas)
-        readonly property string sitio: Ajustes.pildora && !enMedio ? "centro" : ventana.lado
-
-        // Al abrirse se desliza un poco desde la barra
-        readonly property real deslizar: (1 - ventana.progreso) * 14
-
-        x: enMedio ? Math.round((parent.width - width) / 2)
-            : ventana.vertical ? Tema.hueco - deslizar
-            : sitio === "izquierda" ? Tema.margenLados
-            : sitio === "centro" ? (parent.width - width) / 2
-            : parent.width - width - Tema.margenLados
-        y: enMedio ? Math.round((parent.height - height) / 2)
-            : pegado ? Tema.altoBarra + 2
-            : !ventana.vertical ? Tema.hueco - deslizar
-            : sitio === "izquierda" ? Tema.margenLados + 6
-            : sitio === "centro" ? Math.round((parent.height - height) / 2)
-            : parent.height - height - Tema.margenLados - 6
-
-        opacity: ventana.progreso
-        // Pegado a la barra no encoge (se despegaría de ella): solo aparece
-        scale: pegado ? 1 : (enMedio ? 0.94 : 0.96) + (enMedio ? 0.06 : 0.04) * ventana.progreso
-        transformOrigin: enMedio ? Item.Center : ventana.vertical ? Item.Left : Item.Top
-
-        radius: Tema.radioPanel
-        topLeftRadius: pegado ? 0 : radius
-        topRightRadius: pegado ? 0 : radius
-        color: Tema.panel
-        border.width: pegado ? Tema.borde(1) : Tema.borde(2)
-        border.color: pegado ? Tema.claro(0.08) : Tema.panelBorde
-        clip: true
-
-        // Pegado: sin borde arriba (se funde con la barra)
         Rectangle {
-            visible: caja.pegado && caja.border.width > 0
-            x: caja.border.width
-            width: parent.width - 2 * caja.border.width
-            height: caja.border.width
-            color: caja.color
-            z: 1
-        }
+            id: caja
 
-        Behavior on height { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
+            width: ventana.ancho
+            height: interior.implicitHeight + 32
+            readonly property bool enMedio: ventana.lado === "medio"
+            // Con la barra minimalista, pegado a ella: sin hueco, esquinas
+            // rectas, su mismo fondo y un borde fino
+            readonly property bool pegado: Ajustes.minimalista && !enMedio
+            // Con la barra en píldora, todo sale centrado bajo ella (con la
+            // minimalista, cada uno bajo su botón, como con las islas)
+            readonly property string sitio: Ajustes.pildora && !enMedio ? "centro" : ventana.lado
 
-        // Los clics dentro del recuadro no lo cierran
-        MouseArea {
-            anchors.fill: parent
-        }
+            // Al abrirse se desliza un poco desde la barra
+            readonly property real deslizar: (1 - ventana.progreso) * 14
 
-        FocusScope {
-            id: foco
-            anchors.fill: parent
-            focus: true
-            Keys.onEscapePressed: Paneles.cerrar()
+            x: enMedio ? Math.round((parent.width - width) / 2)
+                : ventana.vertical ? Tema.hueco - deslizar
+                // Pegado al borde de la pantalla, su borde de ese lado queda
+                // fuera (si no, se veía una línea fina contra el borde)
+                : sitio === "izquierda" ? (pegado ? -border.width : Tema.margenLados)
+                : sitio === "centro" ? (parent.width - width) / 2
+                : parent.width - width - (pegado ? -border.width : Tema.margenLados)
+            // (en el recorte, que con la minimalista empieza bajo la barra)
+            y: enMedio ? Math.round((ventana.height - height) / 2) - recorte.y
+                : pegado ? -(1 - ventana.progreso) * height
+                : !ventana.vertical ? Tema.hueco - deslizar
+                : sitio === "izquierda" ? Tema.margenLados + 6
+                : sitio === "centro" ? Math.round((parent.height - height) / 2)
+                : parent.height - height - Tema.margenLados - 6
 
-            Item {
-                id: interior
-                x: 16; y: 16
-                width: parent.width - 32
-                implicitHeight: childrenRect.height
+            // Pegado a la barra baja como una persiana (ver «recorte»), sin
+            // fundido ni encoger (se despegaría de ella)
+            opacity: pegado ? 1 : ventana.progreso
+            scale: pegado ? 1 : (enMedio ? 0.94 : 0.96) + (enMedio ? 0.06 : 0.04) * ventana.progreso
+            transformOrigin: enMedio ? Item.Center : ventana.vertical ? Item.Left : Item.Top
+
+            radius: Tema.radioPanel
+            // Pegado a la barra minimalista: todo recto, como ella
+            topLeftRadius: pegado ? 0 : radius
+            topRightRadius: pegado ? 0 : radius
+            bottomLeftRadius: pegado ? 0 : radius
+            bottomRightRadius: pegado ? 0 : radius
+            color: Tema.panel
+            border.width: pegado ? Tema.borde(1) : Tema.borde(2)
+            border.color: pegado ? Tema.claro(0.08) : Tema.panelBorde
+            clip: true
+
+            // Pegado: sin borde arriba (se funde con la barra)
+            Rectangle {
+                visible: caja.pegado && caja.border.width > 0
+                x: caja.border.width
+                width: parent.width - 2 * caja.border.width
+                height: caja.border.width
+                color: caja.color
+                z: 1
+            }
+
+            // Solo con el panel ya abierto (al cambiar de sección o página): al
+            // abrirse toma su tamaño directamente, sin arrastrar el de la última vez
+            Behavior on height {
+                enabled: ventana.abierto && ventana.progreso === 1
+                NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic }
+            }
+
+            // Los clics dentro del recuadro no lo cierran
+            MouseArea {
+                anchors.fill: parent
+            }
+
+            FocusScope {
+                id: foco
+                anchors.fill: parent
+                focus: true
+                Keys.onEscapePressed: Paneles.cerrar()
+
+                Item {
+                    id: interior
+                    x: 16; y: 16
+                    width: parent.width - 32
+                    implicitHeight: childrenRect.height
+                }
             }
         }
     }

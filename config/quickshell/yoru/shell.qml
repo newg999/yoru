@@ -130,7 +130,7 @@ ShellRoot {
             const salida = Niri.escritorios.find(e => e.is_focused)?.output;
             const pantalla = Quickshell.screens.find(s => s.name === salida) ?? Quickshell.screens[0];
             // Las páginas: el control y sus listas a la derecha (bajo la
-            // conexión o el 󰍜), el resto en el centro
+            // conexión), el resto en el centro
             if (nombre === "pildora")
                 Paneles.abrirPagina(pantalla, seccion,
                     ["control", "wifi", "bluetooth", "audio", "micro", ""].includes(seccion) ? "derecha" : "centro");

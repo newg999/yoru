@@ -164,7 +164,7 @@ Item {
         signal enviar()
         width: parent.width
         height: 42
-        radius: 10
+        radius: Tema.esquina(10)
         color: Tema.caja
         border.width: 1
         border.color: texto.activeFocus ? Tema.claro(0.5) : Tema.claro(0.1)
@@ -218,7 +218,7 @@ Item {
                     required property int index
                     width: parent.width
                     height: 40
-                    radius: 10
+                    radius: Tema.esquina(10)
                     color: capaRaton.containsMouse ? Tema.cajaHover : "transparent"
 
                     HoverHandler { id: capaRaton }
@@ -280,7 +280,7 @@ Item {
                     required property int index
                     width: parent.width
                     height: 38
-                    radius: 10
+                    radius: Tema.esquina(10)
                     color: resultadoRaton.containsMouse || index === 0 ? Tema.cajaHover : "transparent"
                     Texto {
                         anchors { left: parent.left; leftMargin: 14; right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter }

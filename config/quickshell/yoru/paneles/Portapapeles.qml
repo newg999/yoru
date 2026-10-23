@@ -72,7 +72,7 @@ Panel {
         Rectangle {
             width: parent.width
             height: 46
-            radius: 12
+            radius: Tema.esquina(12)
             color: Tema.caja
             border.width: 1
             border.color: busqueda.activeFocus ? Tema.claro(0.5) : Tema.claro(0.1)

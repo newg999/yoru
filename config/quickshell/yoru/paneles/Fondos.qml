@@ -254,7 +254,7 @@ PanelWindow {
 
                         ClippingRectangle {
                             anchors { fill: parent; margins: 2 }
-                            radius: 12
+                            radius: Tema.esquina(12)
                             color: Tema.caja
 
                             // La foto, enderezada (inclinada al revés) y algo más
@@ -283,7 +283,7 @@ PanelWindow {
                         Rectangle {
                             anchors { fill: parent; margins: 2 }
                             visible: !tarjeta.elegida
-                            radius: 12
+                            radius: Tema.esquina(12)
                             color: Qt.rgba(0, 0, 0, 1 - tarjeta.luz)
                         }
 
@@ -291,7 +291,7 @@ PanelWindow {
                         Rectangle {
                             anchors { fill: parent; margins: 2 }
                             visible: tarjeta.elegida
-                            radius: 12
+                            radius: Tema.esquina(12)
                             color: "transparent"
                             border.width: 3
                             border.color: Tema.blanco

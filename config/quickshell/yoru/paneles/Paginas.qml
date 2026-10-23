@@ -46,71 +46,71 @@ Item {
         width: parent.width
         pantalla: raiz.pantalla
         activa: raiz.abierta && raiz.pagina === "control"
-        visible: opacity > 0
-        opacity: raiz.pagina === "control" ? 1 : 0
-        // Entra con fundido; al irse, desaparece al momento (si no, se veían
-        // las dos páginas a la vez un instante)
-        Behavior on opacity { enabled: raiz.pagina === "control"; NumberAnimation { duration: Tema.normal } }
+        // Solo la elegida: la que se va se oculta al momento (con un fundido
+        // se veía un instante encima de la nueva); la que llega, con fundido
+        visible: raiz.pagina === "control"
+        opacity: visible ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Tema.normal } }
     }
     PaginaCalendario {
         id: calendario
         width: parent.width
         activa: raiz.abierta && raiz.pagina === "calendario"
-        visible: opacity > 0
-        opacity: raiz.pagina === "calendario" ? 1 : 0
-        // Entra con fundido; al irse, desaparece al momento (si no, se veían
-        // las dos páginas a la vez un instante)
-        Behavior on opacity { enabled: raiz.pagina === "calendario"; NumberAnimation { duration: Tema.normal } }
+        // Solo la elegida: la que se va se oculta al momento (con un fundido
+        // se veía un instante encima de la nueva); la que llega, con fundido
+        visible: raiz.pagina === "calendario"
+        opacity: visible ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Tema.normal } }
     }
     // Las mismas pestañas del panel central
     PestanaMultimedia {
         id: multimedia
         width: parent.width
         activa: raiz.abierta && raiz.pagina === "multimedia"
-        visible: opacity > 0
-        opacity: raiz.pagina === "multimedia" ? 1 : 0
-        // Entra con fundido; al irse, desaparece al momento (si no, se veían
-        // las dos páginas a la vez un instante)
-        Behavior on opacity { enabled: raiz.pagina === "multimedia"; NumberAnimation { duration: Tema.normal } }
+        // Solo la elegida: la que se va se oculta al momento (con un fundido
+        // se veía un instante encima de la nueva); la que llega, con fundido
+        visible: raiz.pagina === "multimedia"
+        opacity: visible ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Tema.normal } }
     }
     PestanaClima {
         id: clima
         width: parent.width
-        visible: opacity > 0
-        opacity: raiz.pagina === "clima" ? 1 : 0
-        // Entra con fundido; al irse, desaparece al momento (si no, se veían
-        // las dos páginas a la vez un instante)
-        Behavior on opacity { enabled: raiz.pagina === "clima"; NumberAnimation { duration: Tema.normal } }
+        // Solo la elegida: la que se va se oculta al momento (con un fundido
+        // se veía un instante encima de la nueva); la que llega, con fundido
+        visible: raiz.pagina === "clima"
+        opacity: visible ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Tema.normal } }
     }
     PaginaSistema {
         id: sistema
         width: parent.width
         pantalla: raiz.pantalla
         activa: raiz.abierta && raiz.pagina === "sistema"
-        visible: opacity > 0
-        opacity: raiz.pagina === "sistema" ? 1 : 0
-        // Entra con fundido; al irse, desaparece al momento (si no, se veían
-        // las dos páginas a la vez un instante)
-        Behavior on opacity { enabled: raiz.pagina === "sistema"; NumberAnimation { duration: Tema.normal } }
+        // Solo la elegida: la que se va se oculta al momento (con un fundido
+        // se veía un instante encima de la nueva); la que llega, con fundido
+        visible: raiz.pagina === "sistema"
+        opacity: visible ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Tema.normal } }
     }
     PaginaTemas {
         id: temas
         width: parent.width
         activa: raiz.abierta && raiz.pagina === "temas"
-        visible: opacity > 0
-        opacity: raiz.pagina === "temas" ? 1 : 0
-        // Entra con fundido; al irse, desaparece al momento (si no, se veían
-        // las dos páginas a la vez un instante)
-        Behavior on opacity { enabled: raiz.pagina === "temas"; NumberAnimation { duration: Tema.normal } }
+        // Solo la elegida: la que se va se oculta al momento (con un fundido
+        // se veía un instante encima de la nueva); la que llega, con fundido
+        visible: raiz.pagina === "temas"
+        opacity: visible ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Tema.normal } }
     }
     PaginaFondos {
         id: fondos
         width: parent.width
         activa: raiz.abierta && raiz.pagina === "fondos"
-        visible: opacity > 0
-        opacity: raiz.pagina === "fondos" ? 1 : 0
-        // Entra con fundido; al irse, desaparece al momento (si no, se veían
-        // las dos páginas a la vez un instante)
-        Behavior on opacity { enabled: raiz.pagina === "fondos"; NumberAnimation { duration: Tema.normal } }
+        // Solo la elegida: la que se va se oculta al momento (con un fundido
+        // se veía un instante encima de la nueva); la que llega, con fundido
+        visible: raiz.pagina === "fondos"
+        opacity: visible ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Tema.normal } }
     }
 }

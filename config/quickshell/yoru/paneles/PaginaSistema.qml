@@ -32,7 +32,7 @@ Column {
                 required property var modelData
                 width: (pagina.width - 16) / 3
                 height: 62
-                radius: 12
+                radius: Tema.esquina(12)
                 color: medidorRaton.containsMouse ? Tema.cajaHover : Tema.caja
                 Behavior on color { ColorAnimation { duration: Tema.rapida } }
 
@@ -76,7 +76,7 @@ Column {
     Rectangle {
         width: parent.width
         height: 54
-        radius: 12
+        radius: Tema.esquina(12)
         color: climaRaton.containsMouse ? Tema.cajaHover : Tema.caja
         Behavior on color { ColorAnimation { duration: Tema.rapida } }
 
@@ -140,7 +140,7 @@ Column {
         signal clic()
         width: (pagina.width - 8) / 2
         height: 40
-        radius: 12
+        radius: Tema.esquina(12)
         color: filaRaton.containsMouse ? Tema.cajaHover : Tema.caja
         Behavior on color { ColorAnimation { duration: Tema.rapida } }
         Row {

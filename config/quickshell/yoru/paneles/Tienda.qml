@@ -250,7 +250,7 @@ Panel {
 
         implicitWidth: texto === "" ? 30 : interior.implicitWidth + 24
         implicitHeight: 30
-        radius: 8
+        radius: Tema.esquina(8)
         color: peligro ? Tema.conAlfa(Tema.rojo, raton.containsMouse ? 0.35 : 0.2)
             : fuerte ? (raton.containsMouse ? Tema.blanco : Tema.claro(0.85))
             : raton.containsMouse ? Tema.cajaHover : Tema.caja
@@ -306,7 +306,7 @@ Panel {
                         readonly property bool elegida: panel.vista === modelData.id
                         width: contenido.implicitWidth + 28
                         height: 34
-                        radius: 10
+                        radius: Tema.esquina(10)
                         color: elegida ? Tema.claro(0.90) : pestanaRaton.containsMouse ? Tema.cajaHover : "transparent"
 
                         Row {
@@ -354,7 +354,7 @@ Panel {
         Rectangle {
             width: parent.width
             height: 46
-            radius: 12
+            radius: Tema.esquina(12)
             color: Tema.caja
             border.width: 1
             border.color: campo.activeFocus ? Tema.claro(0.5) : Tema.claro(0.1)
@@ -529,7 +529,7 @@ Panel {
 
                 Rectangle {
                     anchors { fill: parent; margins: 4 }
-                    radius: 12
+                    radius: Tema.esquina(12)
                     color: baldosa.elegida ? Tema.cajaHover : Tema.caja
                     border.width: baldosa.elegida ? 1 : 0
                     border.color: Tema.claro(0.25)
@@ -642,7 +642,7 @@ Panel {
                 readonly property bool confirmando: panel.confirmar === panel.clave(modelData)
                 width: lista_.width
                 height: 60
-                radius: 10
+                radius: Tema.esquina(10)
                 color: elegida ? Tema.cajaHover : "transparent"
                 border.width: elegida ? 1 : 0
                 border.color: Tema.claro(0.25)

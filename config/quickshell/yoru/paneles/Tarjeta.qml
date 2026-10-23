@@ -3,7 +3,7 @@ import QtQuick
 import qs.comun
 
 Rectangle {
-    radius: 12
+    radius: Tema.esquina(12)
     color: Tema.caja
     border.width: 1
     border.color: Tema.claro(0.05)

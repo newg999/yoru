@@ -49,7 +49,7 @@ Column {
     Rectangle {
         width: parent.width
         height: 42
-        radius: 10
+        radius: Tema.esquina(10)
         color: Tema.caja
         border.width: 1
         border.color: busqueda.activeFocus ? Tema.claro(0.5) : Tema.claro(0.1)
@@ -107,7 +107,7 @@ Column {
                     required property var modelData
                     width: grupo.width
                     height: 38
-                    radius: 10
+                    radius: Tema.esquina(10)
                     color: filaRaton.hovered ? Tema.cajaHover : "transparent"
 
                     HoverHandler { id: filaRaton }
@@ -153,7 +153,7 @@ Column {
                                         anchors.verticalCenter: parent.verticalCenter
                                         width: Math.max(24, nombre.implicitWidth + 14)
                                         height: 24
-                                        radius: 6
+                                        radius: Tema.esquina(6)
                                         color: Tema.caja
                                         border.width: 1
                                         border.color: Tema.claro(0.12)

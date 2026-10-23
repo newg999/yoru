@@ -30,7 +30,7 @@ Rectangle {
     readonly property string foto: Notificaciones.imagen(n)
 
     implicitHeight: Math.max(columna.implicitHeight, 44) + 24
-    radius: 12
+    radius: Tema.esquina(12)
     color: encima.hovered ? Tema.cajaHover : Tema.caja
     border.width: 1
     border.color: urgente ? Tema.rojo : Tema.claro(0.08)
@@ -53,7 +53,7 @@ Rectangle {
 
         ClippingRectangle {
             anchors.fill: parent
-            radius: 10
+            radius: Tema.esquina(10)
             color: "transparent"
             visible: tarjeta.foto !== "" && imagen.status !== Image.Error
 
@@ -69,7 +69,7 @@ Rectangle {
         }
         Rectangle {
             anchors.fill: parent
-            radius: 10
+            radius: Tema.esquina(10)
             color: Tema.caja
             visible: tarjeta.foto === "" || imagen.status === Image.Error
 
@@ -164,7 +164,7 @@ Rectangle {
                         required property var modelData
                         width: Math.min(etiqueta.implicitWidth + 24, columna.width)
                         height: 28
-                        radius: 8
+                        radius: Tema.esquina(8)
                         color: sobre.containsMouse ? Tema.claro(0.9) : Tema.claro(0.1)
                         Behavior on color { ColorAnimation { duration: Tema.rapida } }
 

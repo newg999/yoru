@@ -100,6 +100,10 @@ Singleton {
     // (Los bordes de dentro, que marcan lo elegido, no dependen de esto)
     function borde(ancho) { return Ajustes.bordes ? ancho : 0; }
     readonly property int radioPanel: Ajustes.radio + 4
+    // Esquinas de tarjetas, botones y cajas de los paneles: con la barra
+    // minimalista, rectas, como ella (los círculos y las píldoras no: no
+    // son esquinas). Uso:  radius: Tema.esquina(12)
+    function esquina(n) { return Ajustes.minimalista ? 0 : n; }
 
     // ----------------------------------------------------------- Animaciones
     readonly property int rapida: Ajustes.animaciones ? 120 : 0

@@ -285,7 +285,7 @@ Panel {
                 visible: panel.fase === "error"
                 width: parent.width
                 height: aviso.implicitHeight + 20
-                radius: 10
+                radius: Tema.esquina(10)
                 color: Tema.conAlfa(Tema.rojo, 0.15)
                 border.width: 1
                 border.color: Tema.conAlfa(Tema.rojo, 0.4)

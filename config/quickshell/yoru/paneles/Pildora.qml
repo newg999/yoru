@@ -328,11 +328,12 @@ PanelWindow {
                     Cafe { color: "transparent"; border.width: 0 }
                     Novedades { pantalla: ventana.modelData; color: "transparent"; border.width: 0 }
                     Usb { pantalla: ventana.modelData; color: "transparent"; border.width: 0 }
-                    // Solo si hay notificaciones (con el punto si alguna es nueva)
+                    // Solo si hay notificaciones sin leer (al abrir el panel se va) o con
+                // «No molestar» puesto (la campana tachada, para no olvidarlo)
                     Campana {
                         cual: "notificaciones"
                         pantalla: ventana.modelData
-                        oculta: Notificaciones.cuantas === 0
+                        oculta: !Notificaciones.hayNuevas && !Notificaciones.noMolestar
                         color: "transparent"
                         border.width: 0
                     }

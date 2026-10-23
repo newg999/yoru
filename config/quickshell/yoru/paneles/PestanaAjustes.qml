@@ -130,7 +130,7 @@ Item {
                         readonly property var c: modelData.colores
                         width: (rejilla.width - 2 * rejilla.spacing) / 3
                         height: 72
-                        radius: 12
+                        radius: Tema.esquina(12)
                         color: tarjetaRaton.containsMouse ? Tema.cajaHover : Tema.caja
                         border.width: elegido ? 2 : 1
                         border.color: elegido ? Tema.blanco : Tema.claro(0.10)
@@ -237,7 +237,7 @@ Item {
             ClippingRectangle {
                 width: parent.width
                 height: Math.round(width * 9 / 16 * 0.62)
-                radius: 12
+                radius: Tema.esquina(12)
                 color: Tema.caja
 
                 Image {

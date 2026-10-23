@@ -19,11 +19,10 @@ Singleton {
     property string origen: "centro"
 
     // Abre una página del panel «pildora» (paneles/Paginas.qml: control,
-    // calendario, multimedia, clima...) bajo el botón pulsado. Si ya está
-    // abierta en esa página, se cierra
+    // calendario, multimedia, clima...) bajo el botón pulsado, aunque ya
+    // estuviera abierto con otra (se mueve). Si ya está en esa página, se cierra
     function abrirPagina(enPantalla, pagina, lado) {
-        if (abierto !== "pildora" || pantalla !== enPantalla)
-            origen = lado ?? "centro";
+        origen = lado ?? "centro";
         alternar("pildora", enPantalla, pagina);
     }
 

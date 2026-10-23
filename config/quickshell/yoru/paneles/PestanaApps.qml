@@ -120,7 +120,7 @@ Item {
                 readonly property var app: modelData.apps.find(a => a.id === modelData.actual) ?? null
                 width: izquierda.width
                 height: 38
-                radius: 10
+                radius: Tema.esquina(10)
                 color: esta ? Tema.activo : zonaFila.containsMouse ? Tema.cajaHover : "transparent"
                 Behavior on color { ColorAnimation { duration: Tema.rapida } }
 
@@ -168,7 +168,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 38
-            radius: 10
+            radius: Tema.esquina(10)
             color: pestana.elegida === "tipo" ? Tema.activo : Tema.caja
             border.width: 1
             border.color: entrada.activeFocus ? Tema.claro(0.5) : Tema.claro(0.1)
@@ -239,7 +239,7 @@ Item {
                 readonly property bool puesta: modelData.id === pestana.actual.actual
                 width: derecha.width
                 height: 44
-                radius: 10
+                radius: Tema.esquina(10)
                 color: puesta ? Tema.activo : zonaOpcion.containsMouse ? Tema.cajaHover : "transparent"
                 Behavior on color { ColorAnimation { duration: Tema.rapida } }
 

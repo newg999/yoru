@@ -13,7 +13,7 @@ Rectangle {
 
     implicitWidth: 30
     implicitHeight: 30
-    radius: 8
+    radius: Tema.esquina(8)
     color: alerta ? Qt.alpha(Tema.rojo, 0.2) : raton.containsMouse ? Tema.cajaHover : "transparent"
     Behavior on color { ColorAnimation { duration: Tema.rapida } }
 

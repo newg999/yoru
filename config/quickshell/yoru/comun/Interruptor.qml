@@ -16,7 +16,7 @@ Rectangle {
     signal cambiar(bool valor)
 
     implicitHeight: detalle !== "" ? 48 : 40
-    radius: 10
+    radius: Tema.esquina(10)
     color: raton.containsMouse ? Tema.cajaHover : "transparent"
     Behavior on color { ColorAnimation { duration: Tema.rapida } }
 

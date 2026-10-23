@@ -52,7 +52,7 @@ Column {
     Rectangle {
         width: parent.width
         height: 290
-        radius: 12
+        radius: Tema.esquina(12)
         color: Tema.caja
 
         Calendario {

@@ -59,7 +59,7 @@ Item {
     ClippingRectangle {
         id: fondo
         anchors.fill: parent
-        radius: 12
+        radius: Tema.esquina(12)
         color: Tema.caja
 
         // Carátula desenfocada y oscurecida detrás de todo
@@ -304,7 +304,7 @@ Item {
             anchors { right: parent.right; rightMargin: 66; verticalCenter: parent.verticalCenter }
             width: 300
             height: contenidoMenu.implicitHeight + 16
-            radius: 12
+            radius: Tema.esquina(12)
             color: Tema.panel
             border.width: 1
             border.color: Tema.claro(0.25)

@@ -34,7 +34,7 @@ LazyLoader {
             id: caja
             width: etiqueta.implicitWidth + 24
             height: etiqueta.implicitHeight + 16
-            radius: 10
+            radius: Tema.esquina(10)
             color: Tema.panel
             border.width: Tema.borde(1)
             border.color: Tema.claro(0.25)

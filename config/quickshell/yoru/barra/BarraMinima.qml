@@ -2,13 +2,13 @@
 //  Barra minimalista — una franja fina de lado a lado (Ajustes › Barra y
 //  dock › Minimalista). Lo mismo que la píldora, sin transformarse:
 //
-//    ━ • •  Ventana     ( ♪ Canción ⏮⏯⏭ )  14:02  󰖐 16°     󰘚 4% 󰍛 21% 󰔏 50°  󰅌 󰓓 󰂚  󰍜
+//    ━ • •  Ventana     ( ♪ Canción ⏮⏯⏭ )  14:02  󰖐 16°     󰘚 4% 󰍛 21% 󰔏 50°  󰅌 󰓓 󰂚  󰕾 󰖩 󰂯
 //
 //  Clic en un punto = ese escritorio · en la canción = Multimedia (⏮⏯⏭ =
 //  cambiar o pausar sin abrir nada) · 󰅌 = lo copiado · en la
 //  hora = calendario · en el tiempo = clima · en la CPU o la RAM = monitor ·
-//  󰍜 = el centro de control (los huecos libres no abren nada)
-//  Se abre debajo de lo pulsado: la hora y la canción en el centro; 󰍜 y los
+//  audio/red/bluetooth = el centro de control (un hueco libre cierra lo abierto)
+//  Se abre debajo de lo pulsado: la hora y la canción en el centro; la conexión y los
 //  avisos, a la derecha (paneles/PanelPaginas.qml, con las páginas de la píldora).
 // ============================================================================
 import QtQuick
@@ -32,8 +32,9 @@ PanelWindow {
     visible: Ajustes.minimalista
     anchors { top: true; left: true; right: true }
     implicitHeight: alto
-    // niri pone sus «gaps» tras la zona reservada: así quedan 6 px hasta las ventanas
-    exclusiveZone: alto + Tema.aVentanas - Tema.gaps
+    // Con la minimalista, niri no deja huecos (Ajustes.niriVentanas): las
+    // ventanas empiezan justo debajo
+    exclusiveZone: alto
     color: "transparent"
     WlrLayershell.namespace: "yoru-barra"
     WlrLayershell.layer: WlrLayer.Top
@@ -68,12 +69,12 @@ PanelWindow {
             Behavior on y { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
         }
 
-        // Una línea fina abajo
-        Rectangle {
-            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-            height: Tema.borde(1)
-            color: Tema.claro(0.08)
+        // Clic en un hueco libre: cierra el panel que haya abierto (no abre nada)
+        MouseArea {
+            anchors.fill: parent
+            onClicked: Paneles.cerrar()
         }
+
 
         // ------------------------------------------------- Izquierda
         Row {
@@ -310,21 +311,24 @@ PanelWindow {
             Cafe { color: "transparent"; border.width: 0 }
             Novedades { pantalla: barra.modelData; color: "transparent"; border.width: 0 }
             Usb { pantalla: barra.modelData; color: "transparent"; border.width: 0 }
-            // Solo si hay notificaciones (con el punto si alguna es nueva)
+            // Solo si hay notificaciones sin leer (al abrir el panel se va) o con
+            // «No molestar» puesto (la campana tachada, para no olvidarlo)
             Campana {
                 cual: "notificaciones"
                 pantalla: barra.modelData
-                oculta: Notificaciones.cuantas === 0
+                oculta: !Notificaciones.hayNuevas && !Notificaciones.noMolestar
                 color: "transparent"
                 border.width: 0
             }
             Bateria { pantalla: barra.modelData; color: "transparent"; border.width: 0 }
 
-            // El centro de control
-            Modulo {
-                icono: "󰍜"
-                resaltado: barra.abierta
-                onClic: barra.abrir("control", "derecha")
+            // Audio, red y Bluetooth (solo lo activo): clic = el centro de
+            // control, rueda = volumen
+            Conexion {
+                pantalla: barra.modelData
+                soloActivo: true
+                color: "transparent"
+                border.width: 0
             }
         }
     }

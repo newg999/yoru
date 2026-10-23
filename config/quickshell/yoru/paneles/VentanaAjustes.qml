@@ -176,7 +176,7 @@ Scope {
                     Rectangle {
                         width: parent.width
                         height: 36
-                        radius: 10
+                        radius: Tema.esquina(10)
                         color: Tema.caja
                         border.width: 1
                         border.color: buscador.activeFocus ? Tema.claro(0.5) : Tema.claro(0.08)
@@ -248,7 +248,7 @@ Scope {
                                     readonly property bool elegida: Paneles.seccionAjustes === modelData.id
                                     width: parent.width
                                     height: 38
-                                    radius: 10
+                                    radius: Tema.esquina(10)
                                     color: elegida ? Tema.claro(0.90) : filaRaton.containsMouse ? Tema.cajaHover : "transparent"
                                     Behavior on color { ColorAnimation { duration: Tema.rapida } }
 

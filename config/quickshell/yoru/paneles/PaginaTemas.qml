@@ -110,7 +110,7 @@ Column {
             readonly property var c: modelData.colores
             width: lista.width
             height: 34
-            radius: 8
+            radius: Tema.esquina(8)
             color: puesto ? Tema.activo : filaRaton.containsMouse ? Tema.cajaHover : "transparent"
             Behavior on color { ColorAnimation { duration: Tema.rapida } }
 

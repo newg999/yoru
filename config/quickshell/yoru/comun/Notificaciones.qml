@@ -4,8 +4,9 @@
 //  molestar».
 //
 //    lista        todas las que siguen abiertas, la más nueva primero
-//    sinLeer      las que han llegado desde la última vez que se abrió el
-//                 panel de notificaciones (el punto rojo de la campana)
+//    sinLeer      las que han llegado desde la última vez que se vieron (panel
+//                 de notificaciones o centro de control): la campana de la
+//                 barra y su punto rojo solo salen si hay alguna
 //    emergentes   las que se ven ahora arriba a la derecha (Avisos.qml)
 //    noMolestar   sin avisos emergentes (salvo las urgentes); se guardan igual
 //
@@ -32,13 +33,17 @@ Singleton {
     property int sinLeer: 0
     readonly property bool hayNuevas: sinLeer > 0 && cuantas > 0
 
-    // Abrir el panel = verlas todas
+    // Abrir el panel de notificaciones o el centro de control (que también
+    // las enseña) = verlas todas
+    function vistas() {
+        if (Paneles.abierto === "notificaciones"
+            || (Paneles.abierto === "pildora" && ["control", "", "wifi", "bluetooth", "audio", "micro"].includes(Paneles.seccion)))
+            sinLeer = 0;
+    }
     Connections {
         target: Paneles
-        function onAbiertoChanged() {
-            if (Paneles.abierto === "notificaciones")
-                raiz.sinLeer = 0;
-        }
+        function onAbiertoChanged() { raiz.vistas(); }
+        function onSeccionChanged() { raiz.vistas(); }
     }
     onCuantasChanged: if (cuantas === 0) sinLeer = 0
 
@@ -75,10 +80,10 @@ Singleton {
                 Ajustes.appsAvisos = Ajustes.appsAvisos.concat([app]).sort((a, b) => a.localeCompare(b));
             if (Ajustes.silenciadas.includes(app))
                 return;
-            // Una nueva enciende el punto, salvo si el panel ya está abierto
-            // (las de apps silenciadas no llegan aquí: no lo encienden)
-            if (Paneles.abierto !== "notificaciones")
-                raiz.sinLeer++;
+            // Una nueva cuenta como sin leer, salvo si ya se están viendo
+            // (las de apps silenciadas no llegan aquí: no cuentan)
+            raiz.sinLeer++;
+            raiz.vistas();
 
             const urgente = n.urgency === NotificationUrgency.Critical;
             if (!raiz.noMolestar || urgente)

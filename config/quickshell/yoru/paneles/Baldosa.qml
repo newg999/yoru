@@ -20,7 +20,7 @@ Rectangle {
     signal elegir()                      // abrir su lista
 
     implicitHeight: 60
-    radius: 12
+    radius: Tema.esquina(12)
     color: raton.containsMouse ? Tema.cajaHover : Tema.caja
     border.width: 1
     border.color: elegida ? Tema.claro(0.55) : Tema.claro(0.06)

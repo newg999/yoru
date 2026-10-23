@@ -193,7 +193,7 @@ Column {
                 required property var modelData
                 width: (pagina.width - 2 * 6) / 3
                 height: 54
-                radius: 12
+                radius: Tema.esquina(12)
                 color: accesoRaton.containsMouse ? Tema.cajaHover : Tema.caja
                 Behavior on color { ColorAnimation { duration: Tema.rapida } }
                 Column {
@@ -228,7 +228,7 @@ Column {
     Rectangle {
         width: parent.width
         height: avisos.implicitHeight + 16
-        radius: 12
+        radius: Tema.esquina(12)
         color: Tema.caja
 
         Column {
@@ -279,7 +279,7 @@ Column {
                     required property var modelData
                     width: avisos.width
                     height: 44
-                    radius: 8
+                    radius: Tema.esquina(8)
                     color: avisoRaton.containsMouse ? Tema.cajaHover : "transparent"
 
                     Rectangle {

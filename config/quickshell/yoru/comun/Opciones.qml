@@ -28,7 +28,7 @@ Row {
             readonly property bool elegido: selector.valor === modelData.id
             width: (selector.width - selector.spacing * (selector.opciones.length - 1)) / selector.opciones.length
             height: 36
-            radius: 10
+            radius: Tema.esquina(10)
             color: elegido ? Tema.claro(0.90) : raton.containsMouse ? Tema.cajaHover : Tema.caja
             Behavior on color { ColorAnimation { duration: Tema.rapida } }
 

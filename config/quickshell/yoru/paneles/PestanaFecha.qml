@@ -96,7 +96,7 @@ Column {
     Rectangle {
         width: parent.width
         height: 96
-        radius: 12
+        radius: Tema.esquina(12)
         color: Tema.caja
 
         Column {
@@ -146,7 +146,7 @@ Column {
     Rectangle {
         width: parent.width
         height: 42
-        radius: 10
+        radius: Tema.esquina(10)
         color: Tema.caja
         border.width: 1
         border.color: busqueda.activeFocus ? Tema.claro(0.5) : Tema.claro(0.1)
@@ -194,7 +194,7 @@ Column {
                 required property int index
                 width: parent.width
                 height: 38
-                radius: 10
+                radius: Tema.esquina(10)
                 color: zonaRaton.containsMouse || index === 0 ? Tema.cajaHover : "transparent"
 
                 Texto {

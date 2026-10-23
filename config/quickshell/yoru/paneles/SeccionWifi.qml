@@ -162,7 +162,7 @@ Column {
                 visible: elemento.escribiendo
                 width: parent.width
                 height: 40
-                radius: 10
+                radius: Tema.esquina(10)
                 color: Tema.caja
                 border.width: 1
                 border.color: clave.activeFocus ? Tema.claro(0.5) : Tema.claro(0.1)

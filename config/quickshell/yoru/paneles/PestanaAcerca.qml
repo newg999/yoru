@@ -49,7 +49,7 @@ Column {
     Rectangle {
         width: parent.width
         height: 120
-        radius: 12
+        radius: Tema.esquina(12)
         color: Tema.caja
 
         Row {
@@ -107,7 +107,7 @@ Column {
             required property var modelData
             width: seccion.width
             height: 40
-            radius: 10
+            radius: Tema.esquina(10)
             color: "transparent"
 
             Row {
@@ -143,7 +143,7 @@ Column {
     Rectangle {
         width: parent.width
         height: 64
-        radius: 12
+        radius: Tema.esquina(12)
         color: Tema.caja
         visible: seccion.datos?.yoru != null
 

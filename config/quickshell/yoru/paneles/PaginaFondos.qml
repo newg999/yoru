@@ -71,7 +71,7 @@ Item {
 
             Rectangle {
                 anchors { fill: parent; margins: 4 }
-                radius: 10
+                radius: Tema.esquina(10)
                 color: Tema.claro(0.06)
                 clip: true
                 scale: tarjetaRaton.containsMouse ? 1.04 : 1

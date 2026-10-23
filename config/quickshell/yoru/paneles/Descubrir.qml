@@ -146,7 +146,7 @@ Column {
         Rectangle {
             width: 260
             height: 36
-            radius: 10
+            radius: Tema.esquina(10)
             color: Tema.caja
             border.width: 1
             border.color: busqueda.activeFocus ? Tema.claro(0.5) : Tema.claro(0.1)
@@ -230,14 +230,14 @@ Column {
 
                 Rectangle {
                     anchors { fill: parent; margins: 5 }
-                    radius: 12
+                    radius: Tema.esquina(12)
                     color: Tema.caja
                     border.width: sobre.containsMouse ? 3 : 0
                     border.color: Tema.blanco
 
                     ClippingRectangle {
                         anchors { fill: parent; margins: sobre.containsMouse ? 5 : 3 }
-                        radius: 9
+                        radius: Tema.esquina(9)
                         color: "transparent"
 
                         Image {
@@ -256,7 +256,7 @@ Column {
                         anchors { left: parent.left; bottom: parent.bottom; margins: 10 }
                         width: info.width + 12
                         height: 20
-                        radius: 6
+                        radius: Tema.esquina(6)
                         color: Qt.alpha(Tema.oscuro, 0.75)
                         Texto {
                             id: info
@@ -306,7 +306,7 @@ Column {
             id: vistaPrevia
             anchors.fill: parent
             visible: descubrir.previa >= 0
-            radius: 12
+            radius: Tema.esquina(12)
             color: Tema.sombra(0.97)
             focus: visible
             onVisibleChanged: if (visible) forceActiveFocus(); else busqueda.forceActiveFocus()
@@ -328,7 +328,7 @@ Column {
             ClippingRectangle {
                 id: marco
                 anchors { fill: parent; margins: 10; bottomMargin: 56 }
-                radius: 10
+                radius: Tema.esquina(10)
                 color: Tema.caja
 
                 Image {
@@ -352,7 +352,7 @@ Column {
                     anchors { right: parent.right; top: parent.top; margins: 10 }
                     width: cargaTexto.width + 16
                     height: 24
-                    radius: 8
+                    radius: Tema.esquina(8)
                     color: Tema.sombra(0.75)
                     Texto {
                         id: cargaTexto
@@ -397,7 +397,7 @@ Column {
                     Rectangle {
                         width: textoCerrar.width + 28
                         height: 34
-                        radius: 10
+                        radius: Tema.esquina(10)
                         color: zonaCerrar.containsMouse ? Tema.cajaHover : Tema.caja
                         Texto {
                             id: textoCerrar
@@ -416,7 +416,7 @@ Column {
                     Rectangle {
                         width: textoUsar.width + 28
                         height: 34
-                        radius: 10
+                        radius: Tema.esquina(10)
                         color: zonaUsar.containsMouse ? Tema.blanco : Tema.claro(0.9)
                         opacity: vistaPrevia.bajandolo ? 0.6 : 1
                         Texto {

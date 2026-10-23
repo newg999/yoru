@@ -157,7 +157,7 @@ Panel {
                         id: pestana
                         required property var modelData
                         readonly property bool elegida: panel.pestana === modelData.id
-                        width: 150; height: 36; radius: 10
+                        width: 150; height: 36; radius: Tema.esquina(10)
                         color: elegida ? Tema.claro(0.90) : pestanaRaton.containsMouse ? Tema.cajaHover : "transparent"
                         Behavior on color { ColorAnimation { duration: Tema.rapida } }
                         Row {
@@ -231,7 +231,7 @@ Panel {
                 Rectangle {
                     width: parent.width - agruparBoton.width - 8
                     height: 40
-                    radius: 10
+                    radius: Tema.esquina(10)
                     color: Tema.caja
                     border.width: 1
                     border.color: busqueda.activeFocus ? Tema.claro(0.5) : Tema.claro(0.1)
@@ -268,7 +268,7 @@ Panel {
                     id: agruparBoton
                     width: agruparFila.implicitWidth + 24
                     height: 40
-                    radius: 10
+                    radius: Tema.esquina(10)
                     color: panel.agrupar ? Tema.claro(0.90) : agruparRaton.containsMouse ? Tema.cajaHover : Tema.caja
                     Row {
                         id: agruparFila
@@ -346,7 +346,7 @@ Panel {
                     readonly property bool desplegada: panel.desplegado === p.clave
                     width: lista.width
                     height: desplegada ? 44 + detalles.implicitHeight + 10 : 44
-                    radius: 10
+                    radius: Tema.esquina(10)
                     color: desplegada ? Tema.cajaHover : filaRaton.containsMouse ? Tema.caja : "transparent"
                     clip: true
 
@@ -457,7 +457,7 @@ Panel {
                                 Rectangle {
                                     id: boton
                                     required property var modelData
-                                    width: botonTexto.implicitWidth + 24; height: 30; radius: 8
+                                    width: botonTexto.implicitWidth + 24; height: 30; radius: Tema.esquina(8)
                                     color: botonRaton.containsMouse
                                         ? (modelData[0] ? Tema.rojo : Tema.blanco)
                                         : Tema.claro(0.08)
