@@ -419,16 +419,39 @@ Scope {
 
     // ================= MUZIK (once Spotify) =================
     readonly property var player: {
-        const ps = Mpris.players.values;
-        let any = null;
+        // Yoru: primero el que está sonando (un vídeo en el navegador, otro
+        // reproductor...), luego Spotify, luego cualquiera con canción.
+        // playerctld es solo un espejo de los demás: fuera
+        const ps = Mpris.players.values.filter(p => (p.dbusName || "").indexOf("playerctld") < 0);
+        let sonando = null, spotify = null, any = null;
         for (let i = 0; i < ps.length; i++) {
             const id = ((ps[i].identity || "") + " " + (ps[i].dbusName || "")).toLowerCase();
-            if (id.indexOf("spotify") >= 0) return ps[i];
-            if (!any && ps[i].trackTitle) any = ps[i];
+            if (!sonando && ps[i].isPlaying && root.tituloDe(ps[i])) sonando = ps[i];
+            if (!spotify && id.indexOf("spotify") >= 0) spotify = ps[i];
+            if (!any && root.tituloDe(ps[i])) any = ps[i];
         }
-        return any;
+        // en pausa se queda el último que sonó (no salta a otro parado)
+        const ultimo = ps.indexOf(root.ultimoSonando) >= 0 && root.tituloDe(root.ultimoSonando) ? root.ultimoSonando : null;
+        return sonando || ultimo || spotify || any;
     }
-    readonly property bool hasMusic: root.player !== null && (root.player.trackTitle || "") !== ""
+    property var ultimoSonando: null
+    Connections {
+        target: root.player
+        ignoreUnknownSignals: true
+        function onIsPlayingChanged() { if (root.player.isPlaying) root.ultimoSonando = root.player; }
+    }
+    // Yoru: el título, o si no lo dice (Elisa con una canción abierta desde
+    // el explorador), el nombre del archivo sin la extensión
+    function tituloDe(p) {
+        if (!p) return "";
+        if (p.trackTitle) return p.trackTitle;
+        const u = String((p.metadata || {})["xesam:url"] || "");
+        if (!u) return "";
+        let n = u.substring(u.lastIndexOf("/") + 1);
+        try { n = decodeURIComponent(n); } catch (e) {}
+        return n.replace(/\.[^.]+$/, "");
+    }
+    readonly property bool hasMusic: root.tituloDe(root.player) !== ""
     // Sarki gecerken Spotify bilgileri bir anligina bosaltiyor: ekranda gosterilenler son dolu degerde
     // kalir, muzik "bitti" sayilmasi icin de 2 sn bos kalmasi gerekir (yoksa plak ve panel kapanip aciliyordu)
     property bool musicOn: false
@@ -440,19 +463,47 @@ Scope {
     property string dispArt: ""
     function syncTrack() {
         if (!root.player) return;
-        const t = root.player.trackTitle || "", a = root.player.trackArtist || "", u = root.player.trackArtUrl || "";
-        if (t !== "" && t !== root.dispTitle) { root.dispTitle = t; root.dispArtist = a; }
+        const t = root.tituloDe(root.player), a = root.player.trackArtist || "", u = root.player.trackArtUrl || "";
+        const nueva = t !== "" && t !== root.dispTitle;
+        if (nueva) { root.dispTitle = t; root.dispArtist = a; }
         else if (t !== "" && a !== "") root.dispArtist = a;
         if (u !== "") root.dispArt = u;
+        // Yoru: sin carátula (Elisa no la pasa): se saca de la del archivo,
+        // y mientras, nada (no la de la canción anterior)
+        else if (nueva) {
+            root.dispArt = "";
+            caratulaProc.url = String((root.player.metadata || {})["xesam:url"] || "");
+            if (caratulaProc.url.startsWith("file://")) caratulaProc.running = true;
+        }
+    }
+    Process {
+        id: caratulaProc
+        property string url: ""
+        // la ruta de un flatpak (/run/flatpak/doc/…) fuera es /run/user/<uid>/doc/…
+        command: ["sh", "-c", 'f=$(python3 -c "import sys,urllib.parse;print(urllib.parse.unquote(sys.argv[1][7:]))" "$1"); ' +
+            'case "$f" in /run/flatpak/doc/*) f="$XDG_RUNTIME_DIR/doc/${f#/run/flatpak/doc/}";; esac; ' +
+            'c="$HOME/.cache/quickshell/caratulas"; mkdir -p "$c"; o="$c/$(printf %s "$f" | md5sum | cut -c1-16).jpg"; ' +
+            '[ -s "$o" ] || ffmpeg -v quiet -y -i "$f" -an -frames:v 1 -vf "scale=300:300:force_original_aspect_ratio=increase" "$o" </dev/null; ' +
+            '[ -s "$o" ] && echo "$o" || find "$(dirname "$f")" -maxdepth 1 -type f -iregex ".*/\\(cover\\|folder\\|front\\|album\\)\\.\\(jpe?g\\|png\\)" | head -n1', "sh", url]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const o = this.text.trim();
+                if (o !== "" && root.player && !(root.player.trackArtUrl || "")) root.dispArt = "file://" + o;
+            }
+        }
     }
     Connections {
         target: root.player
         ignoreUnknownSignals: true
         function onTrackTitleChanged() { root.syncTrack(); }
+        function onMetadataChanged() { root.syncTrack(); }
         function onTrackArtistChanged() { root.syncTrack(); }
         function onTrackArtUrlChanged() { root.syncTrack(); }
     }
-    onPlayerChanged: root.syncTrack()
+    onPlayerChanged: {
+        root.syncTrack();
+        if (root.player && root.player.isPlaying) root.ultimoSonando = root.player;
+    }
     readonly property bool playing: root.player !== null && root.player.isPlaying
     readonly property string trackTitle: root.dispTitle
     readonly property string trackArt: root.dispArt
@@ -615,7 +666,8 @@ Scope {
             "[ \"$(cat \"$c/.thv\" 2>/dev/null)\" = 2 ] || { rm -rf \"$c/thumbs\" \"$c/thumbs-hq\"; mkdir -p \"$c\"; echo 2 > \"$c/.thv\"; }; " +
             "mkdir -p \"$c/thumbs\"; rm -f \"$c/.thq\"; find \"$c\" -maxdepth 1 -name .thlock -mmin +10 -exec rmdir {} \\; 2>/dev/null; " +
             "if [ -s \"$HOME/.cache/wallpaper-actual\" ]; then printf 'CUR|%s\\n' \"$(cat \"$HOME/.cache/wallpaper-actual\")\"; fi; " +
-            "find \"$1\" -maxdepth 1 -type f \\( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \\) | sort | while read -r img; do " +
+            // Yoru: -H, que la carpeta de fondos es un enlace al repo
+            "find -H \"$1\" -maxdepth 1 -type f \\( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \\) | sort | while read -r img; do " +
             "f=$(basename \"$img\"); t=\"$c/thumbs/$f.jpg\"; t2=\"$c/thumbs-hq/$f.jpg\"; mkdir -p \"$c/thumbs-hq\"; " +
             "ok() { [ -f \"$1\" ] && [ \"$1\" -nt \"$img\" ] && [ \"$(stat -c%s \"$1\" 2>/dev/null || echo 0)\" -gt 2048 ]; }; " +
             "th=\"$img\"; ok \"$t\" && th=\"$t\"; " +
@@ -3361,7 +3413,8 @@ Scope {
                         color: "#2a2a2a"
                     }
                     // Win11 gibi: uygulamalar ile sistem simgeleri arasinda siyah bosluk (sadece yatay)
-                    Item { visible: root.horiz; width: root.horiz ? 60 : 0; height: 1 }
+                    // Yoru: sin el hueco, solo un respiro junto a la raya
+                    Item { visible: root.horiz; width: root.horiz ? 6 : 0; height: 1 }
 
 
                     // ses + bildirim + ag: birbirine yakin, tek grup
@@ -3378,8 +3431,8 @@ Scope {
                         Item {
                             id: music
                             transform: Translate { x: root.horiz ? 2 : 0; y: root.horiz ? 3 : 0 }
-                            // yatayda plak yok (medya: ses simgesine cift tik)
-                            visible: root.musicOn && !root.horiz
+                            // Yoru: el disco también en horizontal (el original no lo ponía)
+                            visible: root.musicOn
                             width: root.horiz ? (visible ? 14 + 50 + 14 : 0) : root.cell
                             height: root.horiz ? root.cell + 8 : (visible ? 16 + 50 + 16 : 0)
                             HoverHandler { id: musicHH }

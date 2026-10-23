@@ -831,6 +831,15 @@ apps_predeterminadas() {
         && xdg-mime default yoru-videos.desktop video/mp4 video/x-matroska video/webm video/quicktime \
             video/x-msvideo video/mpeg video/ogg video/x-flv video/3gpp video/mp2t 2>/dev/null \
         && ok "Vídeos → mpv"
+    # Música → Elisa (de Flathub: así no trae medio KDE al sistema; coge los
+    # colores de Yoru por config/kdeglobals). Ve la carpeta de música del NAS
+    [[ -f "$apps/org.kde.elisa.desktop" ]] \
+        || flatpak install --user -y --noninteractive flathub org.kde.elisa >/dev/null 2>&1
+    [[ -d /mnt/synology/Musica ]] \
+        && flatpak override --user --filesystem=/mnt/synology/Musica:ro org.kde.elisa 2>/dev/null
+    _app org.kde.elisa "Música → Elisa" audio/mpeg audio/flac audio/x-flac audio/ogg \
+        audio/x-vorbis+ogg audio/opus audio/x-opus+ogg audio/mp4 audio/x-m4a audio/aac \
+        audio/wav audio/x-wav audio/x-aiff audio/x-ape audio/x-wavpack audio/x-mpegurl
     # Texto plano: sin esto, .txt y .md acaban en WordCraft (que también los acepta)
     [[ -f /usr/share/applications/org.gnome.TextEditor.desktop ]] \
         && xdg-mime default org.gnome.TextEditor.desktop text/plain text/markdown text/x-log 2>/dev/null \
