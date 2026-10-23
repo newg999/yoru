@@ -13,6 +13,9 @@ import qs.comun
 Isla {
     id: isla
     required property var pantalla
+    // Solo lo que está activo (la barra minimalista): sin el Bluetooth
+    // apagado ni el Wi-Fi apagado (el audio se ve siempre: es el volumen)
+    property bool soloActivo: false
     relleno: 5
     pulsable: true
     // Iluminada también con su panel abierto (ver Paneles.esta)
@@ -97,6 +100,7 @@ Isla {
         icono: isla.cable ? "󰈀"
             : isla.redWifi ? senales[Math.min(3, Math.floor(isla.redWifi.signalStrength * 4))]
             : !Networking.wifiEnabled ? "󰤭" : "󰤮"
+        visible: !isla.soloActivo || isla.cable !== null || Networking.wifiEnabled
         colorAviso: !isla.cable && !isla.redWifi && Networking.wifiEnabled ? Tema.rojo : "transparent"
         apagado: !isla.cable && !Networking.wifiEnabled
         relleno: isla.margenIcono
@@ -118,7 +122,7 @@ Isla {
     readonly property int conectados: Bluetooth.devices.values.filter(d => d.connected).length
 
     Modulo {
-        visible: isla.adaptador !== null
+        visible: isla.adaptador !== null && (!isla.soloActivo || isla.adaptador.enabled)
         icono: !isla.adaptador?.enabled ? "󰂲" : isla.conectados > 0 ? "󰂱" : "󰂯"
         texto: isla.conectados > 0 ? String(isla.conectados) : ""
         tamIcono: Tema.icono

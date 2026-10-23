@@ -3,11 +3,11 @@
 //
 //  Arriba (lo normal):
 //    [escritorios] [título o apps abiertas]    [música] [reloj] [clima]
-//        [bandeja] [󰅶 no suspender, si está] [actualizaciones, si hay] [usb, si hay] [portapapeles] [cpu] [memoria] [notificaciones] [batería] [conexión] [apagado]
+//        [cpu] [memoria] [temperatura] [portapapeles] [bandeja] [avisos, si los hay] [notificaciones, si hay] [batería] [conexión]
 //
 //  A la izquierda (Ajustes → Barra y dock), lo mismo en columna:
 //    arriba escritorios y ventana · en medio música, reloj y clima ·
-//    abajo bandeja, portapapeles, cpu, memoria... hasta el apagado
+//    abajo cpu, memoria, portapapeles, bandeja... hasta la conexión
 //
 //  El reloj va siempre en el centro exacto; la música y el clima, a sus lados.
 //  Si no caben sin chocar con los grupos de los lados (pantallas pequeñas),
@@ -83,7 +83,7 @@ PanelWindow {
         Region { item: notificaciones; radius: Tema.radio }
         Region { item: bateria; radius: Tema.radio }
         Region { item: conexion; radius: Tema.radio }
-        Region { item: apagado; radius: Tema.radio }
+        Region { item: temperatura; radius: Tema.radio }
     }
 
     // Un grupo de islas: en fila arriba, en columna a la izquierda
@@ -277,19 +277,23 @@ PanelWindow {
             x: barra.vertical ? 0 : Math.round(contenido.width - largo)
             y: barra.vertical ? Math.round(contenido.height - largo) : contenido.centrado(height)
 
-            Grabando { id: grabando }
+            // El mismo orden que la minimalista: uso, portapapeles, bandeja,
+            // avisos (solo cuando pasan), notificaciones (solo si hay sin leer),
+            // batería y la conexión, que abre el centro de control. (Apagar:
+            // en el centro de control o Mod+Shift+BackSpace)
+            Recursos { id: cpu; cual: "cpu"; pantalla: barra.modelData; oculta: !Ajustes.islaRecursos }
+            Recursos { id: memoria; cual: "memoria"; pantalla: barra.modelData; oculta: !Ajustes.islaRecursos }
+            Recursos { id: temperatura; cual: "temperatura"; pantalla: barra.modelData; oculta: !Ajustes.islaRecursos || Sistema.temperatura <= 0 }
+            Campana { id: portapapeles; cual: "portapapeles"; pantalla: barra.modelData }
             Bandeja { id: bandeja; ventana: barra; oculta: !Ajustes.islaBandeja }
+            Grabando { id: grabando }
             Jugando { id: jugando }
             Cafe { id: cafe }
             Novedades { id: novedades; pantalla: barra.modelData }
             Usb { id: discos; pantalla: barra.modelData }
-            Campana { id: portapapeles; cual: "portapapeles"; pantalla: barra.modelData }
-            Recursos { id: cpu; cual: "cpu"; pantalla: barra.modelData; oculta: !Ajustes.islaRecursos }
-            Recursos { id: memoria; cual: "memoria"; pantalla: barra.modelData; oculta: !Ajustes.islaRecursos }
-            Campana { id: notificaciones; cual: "notificaciones"; pantalla: barra.modelData }
+            Campana { id: notificaciones; cual: "notificaciones"; pantalla: barra.modelData; oculta: !Notificaciones.hayNuevas && !Notificaciones.noMolestar }
             Bateria { id: bateria; pantalla: barra.modelData }
-            Conexion { id: conexion; pantalla: barra.modelData }
-            Campana { id: apagado; cual: "apagado"; pantalla: barra.modelData }
+            Conexion { id: conexion; pantalla: barra.modelData; soloActivo: true }
         }
     }
 }
