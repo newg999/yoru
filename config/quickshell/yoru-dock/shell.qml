@@ -1479,12 +1479,30 @@ Scope {
     // yatayda iki sutunlu genis panel
     // Yoru: sin batería (un PC de sobremesa) el panel es solo «Energía»: el
     // perfil, el modo gráfico y lo que más consume, en una columna
+    // Yoru: «No suspender» (cafeína), el mismo que el de Yoru
+    // (comun/Despierto.qml): $XDG_RUNTIME_DIR/yoru-despierto, «1» o «0».
+    // Lo aplica el IdleInhibitor de la ventana del dock
+    property bool cafe: false
+    FileView {
+        id: cafeArchivo
+        path: Quickshell.env("XDG_RUNTIME_DIR") + "/yoru-despierto"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: root.cafe = text().trim() === "1"
+    }
+    function toggleCafe() {
+        root.cafe = !root.cafe;
+        cafeArchivo.setText(root.cafe ? "1" : "0");
+    }
     readonly property bool sinBat: root.batPct < 0
     readonly property bool batHoriz: root.horiz && !root.sinBat
     readonly property int batSube: root.sinBat ? 204 : 0
-    readonly property int batSubeGraf: root.sinBat ? 260 : 0   // y sin modo gráfico (solo en portátiles)
+    // en vertical, el modo gráfico (solo portátiles) y debajo «No suspender»
+    readonly property int batCafeY: 346 - root.batSube + (root.sinBat ? 0 : 56)
+    readonly property int batAppsY: root.batCafeY + 56
     readonly property int batW: root.batHoriz ? 680 : 340
-    readonly property int batH: root.batHoriz ? 318 : 560 - root.batSubeGraf
+    readonly property int batH: root.batHoriz ? 318 : root.batAppsY + 158
     readonly property int batCol: Math.floor((root.batW - 48) / 2)
     readonly property int batRx: 16 + root.batCol + 16
     function openBat() {
@@ -1995,6 +2013,8 @@ Scope {
 
         PanelWindow {
             id: win
+            // Yoru: «No suspender» (con el estilo Dock no hay barra de Yoru que lo haga)
+            IdleInhibitor { window: win; enabled: root.cafe }
             required property var modelData
             screen: modelData
             anchors { left: true; top: true; bottom: true }
@@ -3780,6 +3800,16 @@ Scope {
                             }
                             // tik: dock batarya paneline donusur
                             onLeftClicked: root.openBat()
+                        }
+                        // Yoru: «No suspender» activo: una taza para no olvidarlo (clic: apagar)
+                        DockBtn {
+                            visible: root.cafe
+                            w: win
+                            height: 46
+                            width: root.horiz ? 48 : root.cell
+                            tip: "No suspender · clic para apagar"
+                            CGlyph { anchors.centerIn: parent; text: root.g(0xF0176); size: 18; color: root.accent }
+                            onLeftClicked: root.toggleCafe()
                         }
                         // Yoru: sin batería, un botón de energía con el perfil puesto
                         // (hoja = ahorro, velocímetro = equilibrado, rayo = rendimiento)
@@ -6559,11 +6589,58 @@ Scope {
                             }
                         }
 
+                        // Yoru: «No suspender» (cafeína): ni bloqueo, ni pantalla apagada,
+                        // ni suspensión por inactividad
+                        Rectangle {
+                            x: root.batHoriz ? root.batRx : 16; y: root.batHoriz ? 144 : root.batCafeY
+                            width: root.batHoriz ? root.batCol : root.batW - 32; height: 44; radius: 14
+                            color: cafeMa.containsMouse ? "#161616" : "#101010"
+                            border.width: 1; border.color: root.cafe ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.5) : "#1e1e1e"
+                            opacity: 1 - batUi.rise
+                            transform: Translate { y: batUi.rise * 35 }
+                            Row {
+                                x: 12; anchors.verticalCenter: parent.verticalCenter; spacing: 10
+                                Rectangle {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 26; height: 26; radius: 8
+                                    color: root.cafe ? root.accent : "#1c1c1c"
+                                    CGlyph { anchors.centerIn: parent; text: root.g(0xF0176); size: 14; color: root.cafe ? root.cuerpo : "#9a9a9a" }
+                                }
+                                Column {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    NText { text: "No suspender"; font.pixelSize: 12; color: "#cfcfcf" }
+                                    NText { text: root.cafe ? "No se bloquea ni se apaga la pantalla" : "Apagado"; font.pixelSize: 10; color: "#7a7a7a" }
+                                }
+                            }
+                            // interruptor
+                            Rectangle {
+                                anchors.right: parent.right; anchors.rightMargin: 12
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 38; height: 22; radius: 11
+                                color: root.cafe ? root.accent : "#2a2a2a"
+                                Behavior on color { ColorAnimation { duration: 160 } }
+                                Rectangle {
+                                    width: 16; height: 16; radius: 8
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    x: root.cafe ? parent.width - width - 3 : 3
+                                    color: root.cafe ? root.cuerpo : "#bdbdbd"
+                                    Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                                }
+                            }
+                            MouseArea {
+                                id: cafeMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.toggleCafe()
+                            }
+                        }
+
                         // ---- en cok tuketen ----
                         Rectangle {
                             id: batApps
-                            x: root.batHoriz ? root.batRx : 16; y: root.batHoriz ? 144 : 402 - root.batSubeGraf
-                            width: root.batHoriz ? root.batCol : root.batW - 32; height: root.batHoriz ? 158 : 140; radius: 16
+                            x: root.batHoriz ? root.batRx : 16; y: root.batHoriz ? 200 : root.batAppsY
+                            width: root.batHoriz ? root.batCol : root.batW - 32; height: root.batHoriz ? 102 : 140; radius: 16
                             color: "#101010"
                             border.width: 1; border.color: "#1e1e1e"
                             opacity: 1 - batUi.rise
