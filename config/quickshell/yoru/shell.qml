@@ -44,7 +44,11 @@ ShellRoot {
     // O el estilo Dock: un Quickshell aparte (config/quickshell/yoru-dock, un
     // port de LeyzS QsDock) que se arranca y se para con el estilo. Al
     // pararlo, se quita el espacio que reservaba en niri
+    // (solo con ajustes.json ya leído: antes, el estilo aún es el de serie y
+    // se cerraba el dock en cada recarga)
     function estiloDock() {
+        if (!Ajustes.leido)
+            return;
         if (Ajustes.estiloDock)
             Quickshell.execDetached(["qs", "-c", "yoru-dock", "-n", "-d"]);
         else
@@ -54,6 +58,9 @@ ShellRoot {
     Connections {
         target: Ajustes
         function onEstiloDockChanged() {
+            raiz.estiloDock();
+        }
+        function onLeidoChanged() {
             raiz.estiloDock();
         }
     }

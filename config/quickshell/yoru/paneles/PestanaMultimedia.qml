@@ -66,7 +66,7 @@ Item {
         Image {
             id: fondoImagen
             anchors.fill: parent
-            source: multimedia.reproductor?.trackArtUrl ?? ""
+            source: Reproductor.caratula(multimedia.reproductor)
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             sourceSize: Qt.size(256, 256)
@@ -122,7 +122,7 @@ Item {
                 Image {
                     id: caratula
                     anchors.fill: parent
-                    source: multimedia.reproductor?.trackArtUrl ?? ""
+                    source: Reproductor.caratula(multimedia.reproductor)
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     sourceSize: Qt.size(340, 340)

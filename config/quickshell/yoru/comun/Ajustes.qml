@@ -164,17 +164,22 @@ window-rule {
         onTriggered: Quickshell.execDetached(["niri", "msg", "action", "load-config-file"])
     }
 
+    // Ya se ha leído ajustes.json: hasta entonces, todo vale lo de serie (la
+    // barra «arriba»...). Lo que actúa fuera (arrancar el dock) espera a esto
+    property bool leido: false
     FileView {
         path: Quickshell.env("HOME") + "/.local/state/yoru/ajustes.json"
         watchChanges: true
         atomicWrites: true
         onFileChanged: reload()
+        onLoaded: ajustes.leido = true
         // Cualquier cambio desde el panel se guarda al momento
         onAdapterUpdated: writeAdapter()
         // Primera vez: se crea con los valores de aquí
         onLoadFailed: error => {
             if (error === FileViewError.FileNotFound)
                 writeAdapter();
+            ajustes.leido = true;
         }
 
         JsonAdapter {

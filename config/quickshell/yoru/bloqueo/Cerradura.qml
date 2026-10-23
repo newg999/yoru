@@ -1,15 +1,19 @@
 // ============================================================================
 //  Cerradura — lo que se ve al bloquear la pantalla y al iniciar sesión
 //
-//                                         (arriba: música, clima, red... )
-//
-//                              22:59
-//                    Jueves, 7 de mayo de 2026
-//
-//              (D)  [ 󰌾  ••••••          󰈈  󰌌  ↵ ]
-//                      Contraseña incorrecta
+//                                              (arriba: red, volumen... )
+//    18
+//    55                                          (D)
+//    Viernes, 23 de octubre · 󰖐 14°              don
+//                                         [ 󰌾 ••••••  󰈈 󰌌 ↵ ]
+//    (abajo: la música)                    Contraseña incorrecta
 //
 //   ⏻                                                  (esquina)
+//
+//  La hora, enorme, a la izquierda; quién entra y la contraseña, a la
+//  derecha. La caja de la contraseña aparece al tocar una tecla o mover el
+//  ratón, y se vuelve a esconder si pasa un rato sin escribir nada
+//  (esconderContrasena: false la deja siempre a la vista).
 //
 //  Solo usa QtQuick: no depende del resto de Yoru, para que la pantalla de
 //  inicio (system/greetd/yoru/, que corre como otro usuario) use este mismo
@@ -53,6 +57,25 @@ Item {
     default property alias esquina: esquina.data   // abajo a la derecha
     property alias encima: encima.data             // encima de la contraseña (p. ej. elegir usuario)
     property alias arriba: arriba.data             // arriba a la derecha (estado del equipo)
+    property alias abajo: abajo.data               // bajo la fecha (la música)
+    property string detalle: ""                    // junto a la fecha (el tiempo)
+    property bool esconderContrasena: true
+
+    // ¿Se ve la caja de la contraseña? Al escribir, al mover el ratón, al
+    // fallar...; y se esconde tras un rato sin nada escrito
+    property bool despierta: !esconderContrasena
+    function despertar() {
+        despierta = true;
+        dormir.restart();
+    }
+    Timer {
+        id: dormir
+        interval: 15000
+        onTriggered: if (cerradura.esconderContrasena && campo.text === "" && !cerradura.ocupada && !menu.visible)
+            cerradura.despierta = false
+    }
+    onErrorChanged: if (error) despertar()
+    onMensajeChanged: if (mensaje !== "") despertar()
 
     signal enviar(string contrasena)
     signal energia(string accion)             // "suspend" · "reboot" · "poweroff"
@@ -144,20 +167,35 @@ Item {
         saturation: -0.1
         autoPaddingEnabled: false
     }
-    // Bastante oscuro: el fondo apenas se intuye y el texto se lee siempre
+    // Un velo oscuro, más fuerte a la izquierda: la hora se lee siempre
     Rectangle {
         anchors.fill: parent
-        color: cerradura.conAlfa(cerradura.colorOscuro, 0.55)
+        color: cerradura.conAlfa(cerradura.colorOscuro, 0.35)
+    }
+    Rectangle {
+        anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+        width: parent.width * 0.65
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0; color: cerradura.conAlfa(cerradura.colorOscuro, 0.55) }
+            GradientStop { position: 1; color: cerradura.conAlfa(cerradura.colorOscuro, 0) }
+        }
     }
 
-    // Un clic en cualquier sitio vuelve a la contraseña (y cierra el menú)
+    // Un clic en cualquier sitio vuelve a la contraseña (y cierra el menú);
+    // mover el ratón la enseña
     MouseArea {
         anchors.fill: parent
+        hoverEnabled: true
+        onPositionChanged: cerradura.despertar()
         onClicked: {
             menu.visible = false;
+            cerradura.despertar();
             campo.forceActiveFocus();
         }
     }
+
+    readonly property int margen: Math.round(width * 0.07)
 
     // ------------------------------------------------------------ Reloj
     property date ahora: new Date()
@@ -171,39 +209,143 @@ Item {
 
     Column {
         id: reloj
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: centro.top
-        anchors.bottomMargin: 22
-        spacing: 2
+        x: cerradura.margen
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -Math.round(parent.height * 0.06)
+        spacing: 0
+
+        // Entra deslizándose desde la izquierda al bloquear
+        opacity: 0
+        transform: Translate { id: entrada; x: -40 }
+        Component.onCompleted: llegada.start()
+        ParallelAnimation {
+            id: llegada
+            NumberAnimation { target: reloj; property: "opacity"; to: 1; duration: 600; easing.type: Easing.OutCubic }
+            NumberAnimation { target: entrada; property: "x"; to: 0; duration: 700; easing.type: Easing.OutCubic }
+        }
+
+        readonly property int tam: Math.round(Math.min(cerradura.height * 0.25, cerradura.width * 0.16))
 
         Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: Qt.formatTime(cerradura.ahora, "HH:mm")
-            color: cerradura.colorAcento
+            text: Qt.formatTime(cerradura.ahora, "HH")
+            color: cerradura.colorTexto
             font.family: cerradura.fuente
-            font.pixelSize: Math.round(Math.min(112, cerradura.height / 8))
-            font.weight: Font.Medium
+            font.pixelSize: reloj.tam
+            font.weight: Font.Bold
             font.features: { "tnum": 1 }
+            // Pegadas: sin el aire de encima y debajo de las cifras
+            height: Math.round(reloj.tam * 0.8)
+            verticalAlignment: Text.AlignVCenter
         }
         Text {
-            anchors.horizontalCenter: parent.horizontalCenter
+            text: Qt.formatTime(cerradura.ahora, "mm")
+            color: cerradura.colorAcento
+            font.family: cerradura.fuente
+            font.pixelSize: reloj.tam
+            font.weight: Font.Bold
+            font.features: { "tnum": 1 }
+            // Pegadas: sin el aire de encima y debajo de las cifras
+            height: Math.round(reloj.tam * 0.8)
+            verticalAlignment: Text.AlignVCenter
+        }
+        Item { width: 1; height: Math.round(reloj.tam * 0.08) }
+        Text {
+            x: Math.round(reloj.tam * 0.05)
             text: {
-                const t = Qt.locale("es_ES").toString(cerradura.ahora, "dddd, d 'de' MMMM 'de' yyyy");
-                return t.charAt(0).toUpperCase() + t.slice(1);
+                const t = Qt.locale("es_ES").toString(cerradura.ahora, "dddd, d 'de' MMMM");
+                return t.charAt(0).toUpperCase() + t.slice(1) + (cerradura.detalle ? "  ·  " + cerradura.detalle : "");
             }
             color: cerradura.colorTexto
             font.family: cerradura.fuente
-            font.pixelSize: 18
+            font.pixelSize: Math.round(Math.max(18, cerradura.height * 0.022))
         }
     }
 
-    // ------------------------------------------------- Foto y contraseña
+    // Bajo la fecha: la música
+    Item {
+        id: abajo
+        x: cerradura.margen + Math.round(reloj.tam * 0.05)
+        anchors.top: reloj.bottom
+        anchors.topMargin: Math.round(cerradura.height * 0.045)
+        width: childrenRect.width
+        height: childrenRect.height
+        opacity: reloj.opacity
+    }
+
+    // ------------------------------------------ Quién entra y contraseña
     Column {
         id: centro
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: Math.round(parent.height * 0.5 - fila.height / 2)
-        spacing: 10
+        anchors.right: parent.right
+        anchors.rightMargin: cerradura.margen
+        anchors.verticalCenter: reloj.verticalCenter
+        width: caja.width
+        spacing: 14
+        opacity: reloj.opacity
 
+        // Foto (~/.face o la de AccountsService) o la inicial en un círculo
+        Item {
+            id: avatar
+            width: 104
+            height: 104
+            anchors.horizontalCenter: parent.horizontalCenter
+            property int cual: 0
+            readonly property bool conFoto: foto.status === Image.Ready
+
+            Rectangle {
+                anchors.fill: parent
+                radius: width / 2
+                visible: !avatar.conFoto
+                color: cerradura.conAlfa(cerradura.colorAcento, 0.12)
+                border.width: 2
+                border.color: cerradura.conAlfa(cerradura.colorAcento, 0.35)
+                Text {
+                    anchors.centerIn: parent
+                    text: cerradura.nombre.charAt(0).toUpperCase()
+                    color: cerradura.colorAcento
+                    font.family: cerradura.fuente
+                    font.pixelSize: 44
+                    font.bold: true
+                }
+            }
+            Image {
+                id: foto
+                anchors.fill: parent
+                visible: false
+                source: cerradura.fotos[avatar.cual] ?? ""
+                sourceSize: Qt.size(208, 208)
+                fillMode: Image.PreserveAspectCrop
+                // Si no existe, la siguiente de la lista
+                onStatusChanged: if (status === Image.Error && avatar.cual < cerradura.fotos.length - 1)
+                    avatar.cual++
+            }
+            Rectangle {
+                id: mascara
+                anchors.fill: parent
+                radius: width / 2
+                visible: false
+                layer.enabled: true
+            }
+            MultiEffect {
+                anchors.fill: parent
+                visible: avatar.conFoto
+                source: foto
+                maskEnabled: true
+                maskSource: mascara
+                maskThresholdMin: 0.5
+                maskSpreadAtMin: 1.0
+            }
+        }
+
+        // El nombre (o lo que ponga la pantalla de inicio: elegir usuario)
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: encima.children.length === 0
+            text: cerradura.nombre
+            color: cerradura.colorTexto
+            font.family: cerradura.fuente
+            font.pixelSize: 20
+            font.bold: true
+        }
         Item {
             id: encima
             anchors.horizontalCenter: parent.horizontalCenter
@@ -212,68 +354,26 @@ Item {
             visible: children.length > 0
         }
 
-        Row {
-            id: fila
-            anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 14
+        Item { width: 1; height: 4 }
 
-            // Foto (~/.face o la de AccountsService) o la inicial en un círculo
-            Item {
-                id: avatar
-                width: 52
-                height: 52
-                anchors.verticalCenter: parent.verticalCenter
-                property int cual: 0
-                readonly property bool conFoto: foto.status === Image.Ready
+        // La caja, o mientras duerme, una pista de que basta con escribir
+        Item {
+            width: caja.width
+            height: caja.height
 
-                Rectangle {
-                    anchors.fill: parent
-                    radius: width / 2
-                    visible: !avatar.conFoto
-                    color: cerradura.conAlfa(cerradura.colorAcento, 0.12)
-                    border.width: 1
-                    border.color: cerradura.conAlfa(cerradura.colorAcento, 0.35)
-                    Text {
-                        anchors.centerIn: parent
-                        text: cerradura.nombre.charAt(0).toUpperCase()
-                        color: cerradura.colorAcento
-                        font.family: cerradura.fuente
-                        font.pixelSize: 22
-                        font.bold: true
-                    }
-                }
-                Image {
-                    id: foto
-                    anchors.fill: parent
-                    visible: false
-                    source: cerradura.fotos[avatar.cual] ?? ""
-                    sourceSize: Qt.size(104, 104)
-                    fillMode: Image.PreserveAspectCrop
-                    // Si no existe, la siguiente de la lista
-                    onStatusChanged: if (status === Image.Error && avatar.cual < cerradura.fotos.length - 1)
-                        avatar.cual++
-                }
-                Rectangle {
-                    id: mascara
-                    anchors.fill: parent
-                    radius: width / 2
-                    visible: false
-                    layer.enabled: true
-                }
-                MultiEffect {
-                    anchors.fill: parent
-                    visible: avatar.conFoto
-                    source: foto
-                    maskEnabled: true
-                    maskSource: mascara
-                    maskThresholdMin: 0.5
-                    maskSpreadAtMin: 1.0
-                }
+            Text {
+                anchors.centerIn: parent
+                opacity: cerradura.despierta ? 0 : 1
+                Behavior on opacity { NumberAnimation { duration: 250 } }
+                text: "Escribe para desbloquear"
+                color: cerradura.colorGris
+                font.family: cerradura.fuente
+                font.pixelSize: 14
             }
 
             Rectangle {
                 id: caja
-                width: 300
+                width: 340
                 height: 52
                 radius: 12
                 color: cerradura.conAlfa(cerradura.colorOscuro, 0.6)
@@ -282,6 +382,11 @@ Item {
                     : campo.activeFocus ? cerradura.conAlfa(cerradura.colorAcento, 0.85)
                     : cerradura.conAlfa(cerradura.colorAcento, 0.2)
                 Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                opacity: cerradura.despierta ? 1 : 0
+                scale: cerradura.despierta ? 1 : 0.94
+                Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutBack } }
 
                 transform: Translate { id: desplazamiento }
                 SequentialAnimation {
@@ -323,6 +428,9 @@ Item {
                         color: cerradura.colorAcento
                         visible: campo.cursorVisible
                     }
+                    // Cualquier tecla la enseña (también las que no escriben)
+                    Keys.onPressed: cerradura.despertar()
+                    onTextChanged: cerradura.despertar()
                     onAccepted: if (text !== "") cerradura.enviar(text)
                     // Esc: cierra el menú de apagar, o borra lo escrito
                     Keys.onEscapePressed: menu.visible ? menu.visible = false : campo.clear()
@@ -379,8 +487,6 @@ Item {
         }
 
         Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.horizontalCenterOffset: (avatar.width + fila.spacing) / 2   // bajo la contraseña
             width: caja.width
             height: 18
             horizontalAlignment: Text.AlignHCenter

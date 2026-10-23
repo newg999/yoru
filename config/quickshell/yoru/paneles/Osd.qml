@@ -1,6 +1,7 @@
 // ============================================================================
-//  OSD — aviso abajo en el centro al cambiar el volumen, el micrófono o el
-//  brillo (teclas, rueda sobre la barra, otra app...). Se va solo.
+//  OSD — aviso abajo en el centro (arriba con el estilo Dock) al cambiar el
+//  volumen, el micrófono o el brillo (teclas, rueda sobre la barra, otra
+//  app...). Se va solo.
 //
 //    ┌──────────────────────────────┐
 //    │ 󰕾  ━━━━━━━━━━━○──────  45%  │
@@ -79,8 +80,12 @@ PanelWindow {
     Behavior on progreso { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
 
     visible: progreso > 0
-    anchors.bottom: true
+    // Con el estilo Dock, arriba: abajo está el dock y su panel de sonido
+    // (sin barra, arriba no hay nada)
+    anchors.bottom: !Ajustes.estiloDock
+    anchors.top: Ajustes.estiloDock
     margins.bottom: 60
+    margins.top: 40
     implicitWidth: 320
     implicitHeight: 56
     color: "transparent"
@@ -105,7 +110,7 @@ PanelWindow {
         border.color: Tema.panelBorde
         opacity: osd.progreso
         scale: 0.94 + 0.06 * osd.progreso
-        transform: Translate { y: (1 - osd.progreso) * 12 }
+        transform: Translate { y: (1 - osd.progreso) * (Ajustes.estiloDock ? -12 : 12) }
 
         Texto {
             id: icono

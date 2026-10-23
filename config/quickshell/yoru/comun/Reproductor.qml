@@ -7,6 +7,7 @@ pragma Singleton
 // ============================================================================
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Mpris
 
 Singleton {
@@ -23,6 +24,46 @@ Singleton {
         return todos.find(p => p.isPlaying)
             ?? todos.find(p => p.playbackState === MprisPlaybackState.Paused)
             ?? null;
+    }
+
+    // Carátula. Si el reproductor no la manda (Elisa), se saca la que lleva
+    // dentro el archivo, o un cover.jpg / folder.jpg de su carpeta; en la
+    // misma caché que el dock (~/.cache/quickshell/caratulas)
+    function caratula(p) {
+        if (!p)
+            return "";
+        if (p.trackArtUrl)
+            return p.trackArtUrl;
+        return p === actual && extraida.de === archivoActual ? extraida.ruta : "";
+    }
+    readonly property string archivoActual: actual && !actual.trackArtUrl
+        ? String((actual.metadata ?? {})["xesam:url"] ?? "") : ""
+    onArchivoActualChanged: if (archivoActual.startsWith("file://")) {
+        extraer.running = false;
+        extraer.url = archivoActual;
+        extraer.running = true;
+    }
+    QtObject {
+        id: extraida
+        property string de: ""
+        property string ruta: ""
+    }
+    Process {
+        id: extraer
+        property string url: ""
+        // La ruta de un flatpak (/run/flatpak/doc/…) fuera es /run/user/<uid>/doc/…
+        command: ["sh", "-c", 'f=$(python3 -c "import sys,urllib.parse;print(urllib.parse.unquote(sys.argv[1][7:]))" "$1"); ' +
+            'case "$f" in /run/flatpak/doc/*) f="$XDG_RUNTIME_DIR/doc/${f#/run/flatpak/doc/}";; esac; ' +
+            'c="$HOME/.cache/quickshell/caratulas"; mkdir -p "$c"; o="$c/$(printf %s "$f" | md5sum | cut -c1-16).jpg"; ' +
+            '[ -s "$o" ] || ffmpeg -v quiet -y -i "$f" -an -frames:v 1 -vf "scale=300:300:force_original_aspect_ratio=increase" "$o" </dev/null; ' +
+            '[ -s "$o" ] && echo "$o" || find "$(dirname "$f")" -maxdepth 1 -type f -iregex ".*/\\(cover\\|folder\\|front\\|album\\)\\.\\(jpe?g\\|png\\)" | head -n1', "sh", url]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const o = text.trim();
+                extraida.de = extraer.url;
+                extraida.ruta = o ? "file://" + o : "";
+            }
+        }
     }
 
     function nombre(p) {

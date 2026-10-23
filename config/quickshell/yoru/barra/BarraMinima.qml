@@ -219,7 +219,7 @@ PanelWindow {
                     Image {
                         id: caratula
                         anchors.fill: parent
-                        source: Reproductor.actual?.trackArtUrl ?? ""
+                        source: Reproductor.caratula(Reproductor.actual)
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         sourceSize: Qt.size(48, 48)

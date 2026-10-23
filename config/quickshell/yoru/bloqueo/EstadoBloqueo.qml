@@ -1,10 +1,10 @@
 // ============================================================================
 //  EstadoBloqueo — arriba a la derecha de la pantalla de bloqueo
 //
-//    󰎈 Canción • Artista  󰒮 󰏤 󰒭  │  󰖐 11°  │  󰤨 󰂯 󰕾  │  󰁹 80%
+//    󰤨 󰂯 󰕾  │  󰁹 80%
 //
-//  Lo que suena (con anterior / pausa / siguiente), el tiempo, la red, el
-//  bluetooth, el volumen y la batería (si la hay). Lo que no hay, no sale.
+//  La red, el bluetooth, el volumen y la batería (si la hay). Lo que no
+//  hay, no sale. (La música y el tiempo van junto a la hora: Bloqueo.qml)
 // ============================================================================
 import QtQuick
 import Quickshell.Services.Pipewire
@@ -46,55 +46,6 @@ Row {
             onClicked: boton.pulsado()
         }
     }
-
-    // ------------------------------------------------------------ Música
-    readonly property var reproductor: Reproductor.actual
-    readonly property string cancion: {
-        const r = reproductor;
-        if (!r)
-            return "";
-        const titulo = Reproductor.titulo(r);
-        return r.trackArtist && titulo ? `${titulo} • ${r.trackArtist}` : (titulo || r.trackArtist || "");
-    }
-
-    Row {
-        visible: estado.cancion !== ""
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: 10
-
-        Etiqueta {
-            text: "󰎈"
-            color: Tema.gris
-        }
-        Etiqueta {
-            text: estado.cancion
-            width: Math.min(implicitWidth, 360)
-            elide: Text.ElideRight
-        }
-        Boton {
-            visible: estado.reproductor?.canGoPrevious ?? false
-            text: "󰒮"
-            onPulsado: estado.reproductor.previous()
-        }
-        Boton {
-            text: estado.reproductor?.isPlaying ? "󰏤" : "󰐊"
-            color: Tema.blanco
-            onPulsado: estado.reproductor.togglePlaying()
-        }
-        Boton {
-            visible: estado.reproductor?.canGoNext ?? false
-            text: "󰒭"
-            onPulsado: estado.reproductor.next()
-        }
-    }
-    Separador { visible: estado.cancion !== "" }
-
-    // ------------------------------------------------------------ Tiempo
-    Etiqueta {
-        visible: Tiempo.listo
-        text: Tiempo.icono + "  " + Tiempo.temperatura + "°"
-    }
-    Separador { visible: Tiempo.listo }
 
     // ------------------------------------------- Red, bluetooth y volumen
     readonly property var dispositivos: Networking.devices.values

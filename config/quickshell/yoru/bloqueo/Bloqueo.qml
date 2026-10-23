@@ -171,8 +171,10 @@ Scope {
                     }
                 }
 
-                // Arriba a la derecha: lo que suena, el tiempo, la red, el
-                // bluetooth, el volumen y la batería
+                // Junto a la fecha, el tiempo; debajo, lo que suena; arriba a
+                // la derecha, la red, el bluetooth, el volumen y la batería
+                detalle: Tiempo.listo ? Tiempo.icono + " " + Tiempo.temperatura + "°" : ""
+                abajo: MusicaBloqueo {}
                 arriba: EstadoBloqueo {}
             }
         }
