@@ -15,6 +15,21 @@ Isla {
     required property var ventana     // la barra, para colocar los menús
     relleno: 5
 
+    // Clic: su ventana al frente si ya la tiene; si no, se abre la app por
+    // su lanzador (Steam y otras con AppIndicator no responden a
+    // «activate»: solo enseñan su menú); si no hay lanzador, «activate»
+    function abrir(item) {
+        const entrada = DesktopEntries.heuristicLookup(item.id);
+        const ids = [item.id, entrada?.id ?? ""].map(x => x.toLowerCase()).filter(x => x !== "");
+        const ventana = Object.values(Niri.ventanas).find(v => ids.includes((v.app_id ?? "").toLowerCase()));
+        if (ventana)
+            Niri.accion("focus-window", "--id", String(ventana.id));
+        else if (entrada)
+            Niri.lanzar(entrada.command);
+        else
+            item.activate();
+    }
+
     Repeater {
         model: SystemTray.items
 
@@ -76,7 +91,7 @@ Isla {
                     } else if (e.button === Qt.MiddleButton) {
                         item.secondaryActivate();
                     } else {
-                        item.activate();
+                        isla.abrir(item);
                     }
                 }
                 onWheel: e => elemento.modelData.scroll(e.angleDelta.y / 120, false)
