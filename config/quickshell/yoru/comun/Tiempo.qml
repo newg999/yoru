@@ -32,7 +32,9 @@ Singleton {
     property string amanecer: ""    // "07:52"
     property string atardecer: ""
     property var horas: []          // próximas 12 h: [{hora, temp, codigo, dia}]
-    property var dias: []           // 7 días: [{fecha, max, min, codigo, lluvia}]
+    property var cadaTres: []       // próximas 24 h, a las 00, 03, 06...: igual que horas
+    property var dias: []           // 7 días: [{fecha, max, min, codigo, lluvia,
+                                    //           viento, humedad, sensacion}]
 
     readonly property string icono: iconoDe(codigo, deDia)
     readonly property string descripcion: descripcionDe(codigo)
@@ -166,7 +168,8 @@ Singleton {
             + `?latitude=${latitud}&longitude=${longitud}&timezone=auto&forecast_days=7`
             + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,is_day"
             + "&hourly=temperature_2m,weather_code,is_day"
-            + "&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max";
+            + "&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max"
+            + ",wind_speed_10m_max,relative_humidity_2m_mean,apparent_temperature_max";
         _pedir(url, r => {
             const a = r.current;
             temperatura = Math.round(a.temperature_2m);
@@ -181,22 +184,30 @@ Singleton {
             // Próximas 12 horas desde la hora actual
             const ahora = a.time.slice(0, 13);
             const desde = Math.max(0, r.hourly.time.findIndex(t => t.slice(0, 13) === ahora));
-            const hs = [];
+            const hora = i => ({
+                hora: r.hourly.time[i].slice(11, 16),
+                temp: Math.round(r.hourly.temperature_2m[i]),
+                codigo: r.hourly.weather_code[i],
+                dia: r.hourly.is_day[i] === 1
+            });
+            const hs = [], tres = [];
             for (let i = desde; i < Math.min(desde + 12, r.hourly.time.length); i++)
-                hs.push({
-                    hora: r.hourly.time[i].slice(11, 16),
-                    temp: Math.round(r.hourly.temperature_2m[i]),
-                    codigo: r.hourly.weather_code[i],
-                    dia: r.hourly.is_day[i] === 1
-                });
+                hs.push(hora(i));
+            for (let i = desde + 1; i <= Math.min(desde + 24, r.hourly.time.length - 1); i++)
+                if (parseInt(r.hourly.time[i].slice(11, 13)) % 3 === 0)
+                    tres.push(hora(i));
             horas = hs;
+            cadaTres = tres;
 
             dias = r.daily.time.map((f, i) => ({
                 fecha: f,
                 max: Math.round(r.daily.temperature_2m_max[i]),
                 min: Math.round(r.daily.temperature_2m_min[i]),
                 codigo: r.daily.weather_code[i],
-                lluvia: r.daily.precipitation_probability_max[i] ?? 0
+                lluvia: r.daily.precipitation_probability_max[i] ?? 0,
+                viento: Math.round(r.daily.wind_speed_10m_max[i] ?? 0),
+                humedad: Math.round(r.daily.relative_humidity_2m_mean[i] ?? 0),
+                sensacion: Math.round(r.daily.apparent_temperature_max[i] ?? 0)
             }));
             listo = true;
         });
