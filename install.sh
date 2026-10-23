@@ -255,6 +255,29 @@ satellite_sin_082() {
     fi
 }
 
+# Códecs completos: el ffmpeg de Fedora (ffmpeg-free) no trae H.265/HEVC,
+# ni H.264 completo, ni E-AC3, y mpv (y los navegadores, Nautilus...) no
+# pueden con muchos vídeos, sobre todo los .mkv. Se cambia por el de RPM
+# Fusion, que los tiene todos
+codecs_completos() {
+    paso "Códecs de vídeo completos (ffmpeg de RPM Fusion)"
+    if ! rpm -q rpmfusion-free-release >/dev/null 2>&1; then
+        local fedora
+        fedora="$(rpm -E %fedora)"
+        sudo dnf install -y "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$fedora.noarch.rpm" >/dev/null \
+            || { aviso "No se pudo activar RPM Fusion: los .mkv con H.265 no se verán"; return 0; }
+    fi
+    if rpm -q ffmpeg-free >/dev/null 2>&1; then
+        if sudo dnf swap -y ffmpeg-free ffmpeg --allowerasing >/dev/null; then
+            ok "ffmpeg completo (H.264, H.265, E-AC3...)"
+        else
+            aviso "No se pudo cambiar ffmpeg-free por ffmpeg: prueba «sudo dnf swap ffmpeg-free ffmpeg --allowerasing»"
+        fi
+    else
+        ok "ffmpeg completo (ya estaba)"
+    fi
+}
+
 # uosc, la interfaz de mpv: su última versión de GitHub, dentro de
 # config/mpv (que va enlazado en ~/.config/mpv). Sus archivos (scripts/uosc
 # y fonts/) no se suben al repo (.gitignore); se rehacen en cada ./install.sh
@@ -1109,6 +1132,7 @@ case "${1:-}" in
         repo_brave
         repo_quickshell
         instalar_paquetes
+        codecs_completos
         satellite_sin_082
         cliphist_si_falta
         instalar_yazi
