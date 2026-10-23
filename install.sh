@@ -238,6 +238,23 @@ instalar_paquetes() {
     fi
 }
 
+# xwayland-satellite 0.8.2 (Fedora 43-45) cierra los menús de Steam en cuanto
+# se abren: avisa de que el ratón ha salido de ellos ~35 ms después. Está
+# arreglado en la 0.8.3 (github.com/Supreeeme/xwayland-satellite/pull/494).
+# Mientras Fedora no la tenga, se vuelve a la 0.8.1 y se excluye SOLO la
+# 0.8.2: la 0.8.3 llegará con las actualizaciones normales
+satellite_sin_082() {
+    rpm -q xwayland-satellite >/dev/null 2>&1 || return 0
+    sudo dnf versionlock exclude 'xwayland-satellite-0.8.2*' >/dev/null 2>&1 || true
+    if [[ "$(rpm -q --qf '%{VERSION}' xwayland-satellite)" == 0.8.2 ]]; then
+        if sudo dnf downgrade -y 'xwayland-satellite-0.8.1*' >/dev/null 2>&1; then
+            ok "xwayland-satellite 0.8.1 (la 0.8.2 cierra los menús de Steam)"
+        else
+            aviso "No se pudo volver a xwayland-satellite 0.8.1: los menús de Steam se cerrarán solos"
+        fi
+    fi
+}
+
 # Apps de ArtCraft (artcraft.txt): no están en Fedora ni en Flathub, se
 # publican como .flatpak en GitHub. De cada una se baja la última versión
 # para este equipo, se comprueba con el SHA256SUMS.txt de su versión y se
@@ -576,6 +593,7 @@ configurar_sistema() {
     xdg-user-dirs-update 2>/dev/null && ok "Carpetas personales"
 
     brave_nvidia
+    steam_niri
     apps_predeterminadas
 
     pantalla_login
@@ -671,6 +689,20 @@ menu_grub() {
     else
         aviso "grub2-mkconfig ha fallado. Prueba a mano: sudo grub2-mkconfig -o /boot/grub2/grub.cfg"
     fi
+}
+
+# Steam con -system-composer (lo recomienda la guía de niri): sin él, con
+# xwayland-satellite el clic en sus menús se pierde (Steam › Ajustes no abre
+# nada) y en algunos equipos la ventana sale negra. Como Brave, se copia su
+# .desktop a ~/.local/share/applications con la opción en cada Exec; se
+# rehace en cada ./install.sh por si Steam cambia el suyo
+steam_niri() {
+    local origen=/usr/share/applications/steam.desktop
+    local destino="$HOME/.local/share/applications/steam.desktop"
+    [[ -f "$origen" ]] || return 0
+    mkdir -p "$(dirname "$destino")"
+    sed -E 's|^(Exec=[^ ]+)|\1 -system-composer|' "$origen" > "$destino"
+    ok "Steam con -system-composer (sus menús funcionan con niri)"
 }
 
 # Brave con NVIDIA: en Wayland parpadea y hace cosas raras al hacer scroll
@@ -1024,6 +1056,7 @@ case "${1:-}" in
         repo_brave
         repo_quickshell
         instalar_paquetes
+        satellite_sin_082
         cliphist_si_falta
         instalar_yazi
         repo_flathub

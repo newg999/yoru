@@ -1,0 +1,12 @@
+# Ajustes de Steam, abiertos sin pasar por su menú: con niri (XWayland) el
+# clic en los menús de Steam a veces se pierde y no se abre nada.
+# install.sh lo enlaza en ~/.local/share/applications para que salga en el lanzador
+[Desktop Entry]
+Type=Application
+Name=Ajustes de Steam
+Comment=Abre los ajustes de Steam (cuenta, descargas, compatibilidad...)
+Keywords=steam;ajustes;settings;configuración;proton;compatibilidad;descargas;
+Icon=steam
+Exec=steam steam://open/settings
+Terminal=false
+Categories=Game;

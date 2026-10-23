@@ -130,6 +130,23 @@ window-rule {
     default-window-height { fixed 650; }
 }
 
+// Ajustes de Steam: flotantes y centrados, como un diálogo. (Si su menú no
+// responde, falta -system-composer: install.sh → steam_niri. También se
+// abren con el lanzador → «Ajustes de Steam»)
+window-rule {
+    match app-id="^steam$" title="^(Steam Settings|Ajustes de Steam|Parámetros de Steam)$"
+    open-floating true
+    default-column-width { fixed 1100; }
+    default-window-height { fixed 760; }
+}
+
+// Avisos de Steam (logros, amigos...): no pasan por las notificaciones de
+// Yoru, son ventanas sueltas. Abajo a la derecha en vez de en el centro
+window-rule {
+    match app-id="steam" title=r#"^notificationtoasts_\d+_desktop$"#
+    default-floating-position x=10 y=10 relative-to="bottom-right"
+}
+
 // VirtualBox abre una ventana vacía un instante al arrancar (antes que el
 // administrador o la máquina). Invisible y flotante: así no parpadea ni
 // ocupa una columna
