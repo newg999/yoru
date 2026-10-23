@@ -4,6 +4,8 @@
 //  molestar».
 //
 //    lista        todas las que siguen abiertas, la más nueva primero
+//    sinLeer      las que han llegado desde la última vez que se abrió el
+//                 panel de notificaciones (el punto rojo de la campana)
 //    emergentes   las que se ven ahora arriba a la derecha (Avisos.qml)
 //    noMolestar   sin avisos emergentes (salvo las urgentes); se guardan igual
 //
@@ -27,6 +29,18 @@ Singleton {
     property var emergentes: []
     property bool noMolestar: false
     readonly property int cuantas: lista.length
+    property int sinLeer: 0
+    readonly property bool hayNuevas: sinLeer > 0 && cuantas > 0
+
+    // Abrir el panel = verlas todas
+    Connections {
+        target: Paneles
+        function onAbiertoChanged() {
+            if (Paneles.abierto === "notificaciones")
+                raiz.sinLeer = 0;
+        }
+    }
+    onCuantasChanged: if (cuantas === 0) sinLeer = 0
 
     // Para las horas relativas («hace 5 min»): se actualiza cada 30 s
     property date ahora: new Date()
@@ -61,6 +75,10 @@ Singleton {
                 Ajustes.appsAvisos = Ajustes.appsAvisos.concat([app]).sort((a, b) => a.localeCompare(b));
             if (Ajustes.silenciadas.includes(app))
                 return;
+            // Una nueva enciende el punto, salvo si el panel ya está abierto
+            // (las de apps silenciadas no llegan aquí: no lo encienden)
+            if (Paneles.abierto !== "notificaciones")
+                raiz.sinLeer++;
 
             const urgente = n.urgency === NotificationUrgency.Critical;
             if (!raiz.noMolestar || urgente)

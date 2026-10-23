@@ -2,7 +2,8 @@
 //  Portapapeles, notificaciones y apagado, cada uno en su isla
 //  (cual: "portapapeles" | "notificaciones" | "apagado")
 //    󰅌  = historial del portapapeles (Mod+Alt+V)
-//    󰂚  = panel de notificaciones (Mod+Alt+M), con un punto rojo si hay
+//    󰂚  = panel de notificaciones (Mod+Alt+M), con un punto rojo si han
+//         llegado nuevas desde la última vez que lo abriste
 //         clic derecho = no molestar (󰂛) · clic central = borrarlas todas
 //    󰐥  = bloquear, suspender, cerrar sesión, reiniciar o apagar
 //         (Mod+Shift+BackSpace)
@@ -33,7 +34,7 @@ Isla {
     Modulo {
         visible: isla.cual === "notificaciones"
         icono: Notificaciones.noMolestar ? "󰂛" : "󰂚"
-        punto: Notificaciones.cuantas > 0 && !Notificaciones.noMolestar
+        punto: Notificaciones.hayNuevas && !Notificaciones.noMolestar
         apagado: Notificaciones.noMolestar
         resaltado: Paneles.esta("notificaciones", isla.pantalla)
         onClic: boton => {
