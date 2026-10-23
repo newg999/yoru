@@ -44,7 +44,8 @@ PanelWindow {
     margins.bottom: margen
     implicitWidth: isla.width
     implicitHeight: alto
-    visible: Ajustes.dock !== "nunca"
+    // (con el estilo dock no: ese ya lleva las apps, barra/BarraDock.qml)
+    visible: Ajustes.dock !== "nunca" && !Ajustes.estiloDock
     exclusionMode: siempre ? ExclusionMode.Normal : ExclusionMode.Ignore
     exclusiveZone: siempre ? alto + margen : 0
     color: "transparent"

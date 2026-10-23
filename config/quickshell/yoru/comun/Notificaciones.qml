@@ -96,6 +96,8 @@ Singleton {
     // Al recargar la barra (guardar un .qml) el servidor conserva las
     // notificaciones, pero la lista empieza vacía: se rehace
     Component.onCompleted: {
+        // Para el estilo Dock (ver exportar)
+        Quickshell.execDetached(["mkdir", "-p", Quickshell.env("HOME") + "/.cache/quickshell"]);
         lista = servidor.trackedNotifications.values.slice().reverse().map(n => {
             n.closed.connect(() => raiz.quitar(n));
             return {n: n, hora: new Date()};
@@ -183,9 +185,79 @@ Singleton {
         onLoaded: raiz.noMolestar = text().trim() === "1"
     }
     onNoMolestarChanged: {
+        Qt.callLater(exportar);
         if (noMolestar)
             emergentes = emergentes.filter(e => e.n.urgency === NotificationUrgency.Critical);
         estado.setText(noMolestar ? "1\n" : "0\n");
+    }
+
+    // ------------------------------------------- Para el estilo Dock
+    // El dock (config/quickshell/yoru-dock, un port de LeyzS QsDock) no es
+    // servidor de notificaciones: lee esta lista y manda sus órdenes por
+    // «notifcenter». Mismo formato que su servidor original
+    readonly property string rutaLista: Quickshell.env("HOME") + "/.cache/quickshell/notif-list.json"
+    function exportar() {
+        if (!Ajustes.estiloDock)
+            return;
+        const items = lista.map(e => {
+            const n = e.n;
+            const img = imagen(n);
+            return {
+                id: n.id,
+                app: app(n) || "Notificación",
+                summary: n.summary || "",
+                body: n.body || "",
+                // Solo archivos: los iconos (image://icon/...) van en «icon»
+                image: n.image ? img : "",
+                icon: n.image ? "" : img,
+                time: e.hora.getTime(),
+                action: n.actions.some(a => a.identifier === "default")
+            };
+        });
+        archivoLista.setText(JSON.stringify({dnd: noMolestar, items: items}));
+    }
+    onListaChanged: Qt.callLater(exportar)
+    Connections {
+        target: Ajustes
+        function onEstiloDockChanged() {
+            Qt.callLater(raiz.exportar);
+        }
+    }
+    FileView {
+        id: archivoLista
+        path: raiz.rutaLista
+        atomicWrites: true
+        printErrors: false
+    }
+    function porId(id) {
+        return lista.find(e => String(e.n.id) === String(id)) ?? null;
+    }
+    IpcHandler {
+        target: "notifcenter"
+        function dismiss(id: string): void {
+            const e = raiz.porId(id);
+            if (e)
+                raiz.descartar(e);
+        }
+        function dismissApp(nombre: string): void {
+            for (const e of raiz.lista.slice())
+                if ((raiz.app(e.n) || "Notificación") === nombre)
+                    raiz.descartar(e);
+        }
+        function clearAll(): void {
+            raiz.borrarTodas();
+        }
+        function invoke(id: string): void {
+            const e = raiz.porId(id);
+            if (e)
+                raiz.abrir(e);
+        }
+        function setDnd(valor: string): void {
+            raiz.noMolestar = valor === "true";
+        }
+        function toggleDnd(): void {
+            raiz.noMolestar = !raiz.noMolestar;
+        }
     }
 
     // Desde fuera:  qs -c yoru ipc call notificaciones noMolestar

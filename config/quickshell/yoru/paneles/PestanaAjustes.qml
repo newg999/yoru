@@ -308,17 +308,39 @@ Item {
                 opciones: [
                     {id: "arriba", icono: "󰕮", texto: "Islas"},
                     {id: "pildora", icono: "󰍜", texto: "Píldora"},
-                    {id: "minimalista", icono: "󰖯", texto: "Minimalista"}
+                    {id: "minimalista", icono: "󰖯", texto: "Minimalista"},
+                    {id: "dock", icono: "󰍉", texto: "Dock"}
                 ]
                 valor: Ajustes.barra
                 onElegir: id => Ajustes.barra = id
+            }
+            // Estilo dock: de qué lado y si se esconde
+            Opciones {
+                visible: Ajustes.estiloDock
+                width: parent.width
+                opciones: [
+                    {id: "izquierda", icono: "󰁍", texto: "A la izquierda"},
+                    {id: "abajo", icono: "󰁅", texto: "Abajo"}
+                ]
+                valor: Ajustes.dockLado
+                onElegir: id => Ajustes.ponerDockLado(id)
+            }
+            Interruptor {
+                visible: Ajustes.estiloDock
+                width: parent.width
+                titulo: "Esconder solo"
+                detalle: "Se mete en el borde y sale al acercar el ratón (o si ninguna ventana lo tapa)"
+                activo: Ajustes.dockEsconder
+                onCambiar: v => Ajustes.ponerDockEsconder(v)
             }
             Texto {
                 visible: Ajustes.centrada
                 width: parent.width
                 leftPadding: 12
                 wrapMode: Text.WordWrap
-                text: Ajustes.pildora
+                text: Ajustes.estiloDock
+                    ? "El dock de LeyzS QsDock, adaptado a Yoru: pegado al borde, con tus apps, lo que suena y la hora; se transforma en cada panel. Doble clic en 夜 lo cambia de lado."
+                    : Ajustes.pildora
                     ? "Una sola píldora arriba (escritorios, hora y lo que suena). Al pulsarla se convierte en el centro de control, con los temas y los fondos."
                     : "Una barra fina de lado a lado: escritorios y ventana a la izquierda, la hora en el centro y la bandeja a la derecha. Al pulsarla, el centro de control se abre debajo."
                 font.bold: false

@@ -176,6 +176,8 @@ debug {
 include "rules.kdl"
 // Esquinas de las ventanas elegidas en Ajustes → Aspecto (lo escribe la barra)
 include optional=true "~/.local/state/yoru/niri-ventanas.kdl"
+// Con la barra en estilo Dock, el espacio que reserva (lo escribe yoru-dock)
+include optional=true "~/.local/state/yoru/niri-dock.kdl"
 
 // Ajustes solo de este equipo (monitores, escala...). No existe por defecto.
 // Copia local.kdl.example a local.kdl y edítalo.

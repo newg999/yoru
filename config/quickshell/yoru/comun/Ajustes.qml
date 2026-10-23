@@ -15,7 +15,7 @@ Singleton {
     id: ajustes
 
     // ------------------------------------------------------- Barra y dock
-    property alias barra: datos.barra                 // "arriba" · "izquierda" (islas) · "pildora" · "minimalista"
+    property alias barra: datos.barra                 // "arriba" · "izquierda" (islas) · "pildora" · "minimalista" · "dock"
     property alias dock: datos.dock                   // "overview" · "siempre" · "nunca"
     property alias islaTitulo: datos.islaTitulo
     property alias ventanas: datos.ventanas           // "activa" (icono y título) · "abiertas" (todas)
@@ -61,9 +61,41 @@ Singleton {
     readonly property bool vertical: barra === "izquierda"
     readonly property bool pildora: barra === "pildora"
     readonly property bool minimalista: barra === "minimalista"
-    // Píldora y minimalista: sin islas; los paneles salen centrados bajo la
-    // barra y sus páginas son las de paneles/Paginas.qml
-    readonly property bool centrada: pildora || minimalista
+    // Estilo dock: el dock de config/quickshell/yoru-dock (un port de LeyzS
+    // QsDock), que la barra arranca aparte (shell.qml)
+    readonly property bool estiloDock: barra === "dock"
+    // Píldora, minimalista y dock: sin islas
+    readonly property bool centrada: pildora || minimalista || estiloDock
+
+    // Su lado y si se esconde los guarda el propio dock; aquí se leen y se
+    // cambian (Ajustes › Barra y dock)
+    readonly property string carpetaDock: Quickshell.env("HOME") + "/.local/share/quickshell"
+    property string dockLado: "izquierda"     // dock-yon: «dikey» (izquierda) o «yatay» (abajo)
+    property bool dockEsconder: true          // dock-mod: «gizli» (se esconde) o «sabit»
+    FileView {
+        path: ajustes.carpetaDock + "/dock-yon"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: ajustes.dockLado = text().trim() === "yatay" ? "abajo" : "izquierda"
+    }
+    FileView {
+        id: archivoModoDock
+        path: ajustes.carpetaDock + "/dock-mod"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: ajustes.dockEsconder = text().trim() !== "sabit"
+    }
+    // Cambiar de lado: el dock lo hace con su animación (la «serpiente»)
+    function ponerDockLado(lado) {
+        if (lado !== dockLado)
+            Quickshell.execDetached(["qs", "-c", "yoru-dock", "ipc", "call", "dock", "yon"]);
+    }
+    function ponerDockEsconder(si) {
+        Quickshell.execDetached(["sh", "-c", 'mkdir -p "$1" && printf "%s\n" "$2" > "$1/dock-mod"',
+            "sh", carpetaDock, si ? "gizli" : "sabit"]);
+    }
 
     // Vuelve a dejar el aspecto (no la barra ni el dock) como al principio
     function restablecerAspecto() {

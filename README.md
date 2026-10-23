@@ -14,6 +14,7 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 |---|---|---|
 | Compositor | `niri` | `config/niri/` |
 | Barra y paneles | `quickshell` | `config/quickshell/yoru/` |
+| Estilo Dock de la barra | port de [LeyzS QsDock](https://github.com/L3yzs/LeyzS-QsDock) (MIT) adaptado a niri y a Yoru | `config/quickshell/yoru-dock/` |
 | Capturas con editor | `slurp` + `swappy` | `config/swappy/` |
 | Tienda de apps | `quickshell` + `flatpak` + `dnf` | `config/quickshell/yoru/paneles/Tienda.qml` |
 | Test de velocidad | `quickshell` + Cloudflare | `config/quickshell/yoru/paneles/Velocidad.qml` |

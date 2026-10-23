@@ -25,8 +25,9 @@ PanelWindow {
     screen: modelData
 
     readonly property bool enfocada: (Niri.escritorios.find(e => e.is_focused)?.output ?? modelData.name) === modelData.name
+    // (con el estilo Dock no: los saca el propio dock, yoru-dock)
     readonly property bool mostrar: enfocada && !Paneles.esta("notificaciones", modelData)
-        && Notificaciones.emergentes.length > 0
+        && Notificaciones.emergentes.length > 0 && !Ajustes.estiloDock
 
     readonly property bool minima: Ajustes.minimalista
     readonly property bool aLaDerecha: Ajustes.avisosLado !== "centro" && !Ajustes.pildora
