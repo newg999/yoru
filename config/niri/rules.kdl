@@ -158,13 +158,15 @@ window-rule {
 }
 
 // --- Juegos -----------------------------------------------------------------
-// Los de Steam (steam_app_<número>), los de gamescope y los de Lutris/Heroic
+// Los de Steam (steam_app_<número>), los de gamescope, los nativos (cs2...) y los de Lutris/Heroic
 // por Wine: siempre opacos (también sin el foco, p. ej. en otra pantalla) y
 // con frecuencia variable (VRR) si el monitor la tiene: niri solo la activa
 // mientras el juego se ve (variable-refresh-rate on-demand=true en local.kdl)
 window-rule {
     match app-id=r#"^steam_app_\d+$"#
     match app-id="^gamescope$"
+    // Juegos nativos de Linux con su propio app-id (niri msg windows)
+    match app-id="^cs2$"
     match app-id=r#"\.exe$"#
     opacity 1.0
     variable-refresh-rate true

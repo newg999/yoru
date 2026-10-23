@@ -15,6 +15,10 @@
 #                       modo, lo reaplica. También desde Ajustes (Mod+Alt+T)
 #    yoru copias        lista las copias del sistema (se hacen con cada dnf)
 #    yoru volver <n>    deja el sistema como estaba en la copia <n>
+#    yoru juego [ANCHOxALTO] -- %command%
+#                       para las opciones de lanzamiento de Steam: el juego
+#                       en gamescope a pantalla completa (estirado si das
+#                       una resolución), con gamemode y el overlay de Steam
 #    yoru ayuda
 # ============================================================================
 
@@ -265,6 +269,53 @@ cmd_volver() {
     fi
 }
 
+# ------------------------------------------------------------------- juego
+# Para las opciones de lanzamiento de Steam:  yoru juego [ANCHOxALTO] -- %command%
+# El juego corre dentro de gamescope a pantalla completa, a la resolución y
+# los Hz de la pantalla con el foco (o a ANCHOxALTO, estirado como en
+# Windows), con gamemode. El overlay de Steam (Mayús+Tab) entra por
+# LD_PRELOAD: gamescope no lo pasa al juego, así que se le quita a gamescope
+# y se le devuelve al juego.
+cmd_juego() {
+    local res=""
+    if [[ "${1:-}" =~ ^[0-9]+x[0-9]+$ ]]; then
+        res="$1"
+        shift
+    fi
+    [[ "${1:-}" == "--" ]] && shift
+    if (( $# == 0 )); then
+        error "Uso (en Steam › Propiedades › Opciones de lanzamiento):"
+        echo "    yoru juego -- %command%              a la resolución de la pantalla"
+        echo "    yoru juego 1440x1080 -- %command%    a 1440x1080, estirado"
+        return 1
+    fi
+
+    # La pantalla con el foco: su resolución y sus Hz
+    local w h r
+    read -r w h r < <(niri msg -j focused-output 2>/dev/null | python3 -c '
+import json, sys
+o = json.load(sys.stdin)
+m = o["modes"][o["current_mode"]]
+print(m["width"], m["height"], round(m["refresh_rate"] / 1000))' 2>/dev/null)
+    w="${w:-1920}" h="${h:-1080}" r="${r:-60}"
+
+    local jw="$w" jh="$h" estirar=()
+    if [[ -n "$res" ]]; then
+        jw="${res%x*}" jh="${res#*x}"
+        estirar=(-S stretch)
+    fi
+
+    local juego=("$@")
+    command -v gamemoderun >/dev/null && juego=(gamemoderun "${juego[@]}")
+    local precarga="${LD_PRELOAD:-}"
+
+    if ! command -v gamescope >/dev/null; then
+        exec "${juego[@]}"
+    fi
+    exec env -u LD_PRELOAD gamescope -w "$jw" -h "$jh" -W "$w" -H "$h" -r "$r" "${estirar[@]}" \
+        -f --force-grab-cursor --backend sdl -- env LD_PRELOAD="$precarga" "${juego[@]}"
+}
+
 # ---------------------------------------------------------------------- Main
 case "${1:-ayuda}" in
     update|actualizar)  cmd_update ;;
@@ -273,6 +324,7 @@ case "${1:-ayuda}" in
     tema)               shift; cmd_tema "$@" ;;
     copias)             cmd_copias ;;
     volver)             cmd_volver "${2:-}" ;;
+    juego)              shift; cmd_juego "$@" ;;
     ayuda|-h|--help|help)
         awk 'NR > 1 && !/^#/ { exit } NR > 1' "$0" | sed 's/^# \{0,1\}//' ;;
     *)

@@ -711,7 +711,8 @@ ajustes_juegos() {
 # xwayland-satellite el clic en sus menús se pierde (Steam › Ajustes no abre
 # nada) y en algunos equipos la ventana sale negra. Como Brave, se copia su
 # .desktop a ~/.local/share/applications con la opción en cada Exec; se
-# rehace en cada ./install.sh por si Steam cambia el suyo
+# rehace en cada ./install.sh por si Steam cambia el suyo. Y los sombreadores
+# de Vulkan, con menos hilos (ver abajo)
 steam_niri() {
     local origen=/usr/share/applications/steam.desktop
     local destino="$HOME/.local/share/applications/steam.desktop"
@@ -719,6 +720,14 @@ steam_niri() {
     mkdir -p "$(dirname "$destino")"
     sed -E 's|^(Exec=[^ ]+)|\1 -system-composer|' "$origen" > "$destino"
     ok "Steam con -system-composer (sus menús funcionan con niri)"
+
+    # Sombreadores de Vulkan (los que precompila antes de jugar): con 4 hilos
+    # en vez de todos. Tarda algo más, pero la CPU no se pone a 95 °C
+    local dev="$HOME/.local/share/Steam/steam_dev.cfg"
+    if [[ -d "$(dirname "$dev")" ]] && ! grep -q unShaderBackgroundProcessingThreads "$dev" 2>/dev/null; then
+        echo "unShaderBackgroundProcessingThreads 4" >> "$dev"
+        ok "Steam compila los sombreadores con 4 hilos (menos calor)"
+    fi
 }
 
 # Brave con NVIDIA: en Wayland parpadea y hace cosas raras al hacer scroll
