@@ -433,8 +433,21 @@ Item {
                 }
             }
 
-            // Esquinas: 0-20 px
+            // Esquinas: 0-20 px. Con la minimalista no se tocan: todo recto
+            Texto {
+                visible: Ajustes.minimalista
+                width: parent.width
+                leftPadding: 12
+                topPadding: 4
+                bottomPadding: 4
+                wrapMode: Text.WordWrap
+                text: "Con la barra minimalista, las esquinas de la barra, los paneles y las ventanas son siempre rectas."
+                font.bold: false
+                font.pixelSize: 12
+                color: Tema.gris
+            }
             Regulador {
+                visible: !Ajustes.minimalista
                 titulo: "Esquinas de la barra"
                 valor: Ajustes.radio / 20
                 mostrado: Ajustes.radio + " px"
@@ -442,6 +455,7 @@ Item {
             }
             // Las de niri: 0 (en ángulo recto) a 24 px
             Regulador {
+                visible: !Ajustes.minimalista
                 titulo: "Esquinas de las ventanas"
                 valor: Ajustes.radioVentanas / 24
                 mostrado: Ajustes.radioVentanas + " px"

@@ -94,10 +94,11 @@ Singleton {
     // ------------------------------- Esquinas y huecos de las ventanas
     // Los dibuja niri: se le escribe este archivo, que config/niri/config.kdl
     // incluye después de rules.kdl (gana lo último). Con la barra
-    // minimalista, sin huecos entre ventanas ni con los bordes: todo recto
+    // minimalista, sin huecos entre ventanas ni con los bordes y sin
+    // esquinas redondas (no se pueden cambiar: todo recto, como ella)
     readonly property string niriVentanas: `// Generado por la barra (Ajustes → Aspecto y Barra). No lo edites: se sobrescribe.
 window-rule {
-    geometry-corner-radius ${datos.radioVentanas}
+    geometry-corner-radius ${datos.barra === "minimalista" ? 0 : datos.radioVentanas}
     clip-to-geometry true
 }
 ` + (datos.barra === "minimalista" ? `layout {

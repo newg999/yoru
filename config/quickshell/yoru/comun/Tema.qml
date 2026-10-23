@@ -95,11 +95,12 @@ Singleton {
     readonly property int zonaBarra: margenBarra + grosor + aVentanas - gaps
     readonly property int hueco: margenBarra + grosor + aVentanas
     readonly property int separacion: 6      // entre islas
-    readonly property int radio: Ajustes.radio
+    // Con la minimalista, todo recto (Ajustes › Aspecto no lo cambia)
+    readonly property int radio: Ajustes.minimalista ? 0 : Ajustes.radio
     // Grosor del borde de islas, paneles y ayudas: 0 si se quitan en Ajustes.
     // (Los bordes de dentro, que marcan lo elegido, no dependen de esto)
     function borde(ancho) { return Ajustes.bordes ? ancho : 0; }
-    readonly property int radioPanel: Ajustes.radio + 4
+    readonly property int radioPanel: Ajustes.minimalista ? 0 : Ajustes.radio + 4
     // Esquinas de tarjetas, botones y cajas de los paneles: con la barra
     // minimalista, rectas, como ella (los círculos y las píldoras no: no
     // son esquinas). Uso:  radius: Tema.esquina(12)
