@@ -54,6 +54,10 @@ Singleton {
     property alias appsAvisos: datos.appsAvisos         // las apps que han avisado alguna vez
     property alias silenciadas: datos.silenciadas       // esas, sin aviso ni sonido (sí en el panel)
 
+    // ------------------------------------------- Grabar la pantalla (Mod+Alt+R)
+    property alias grabarSonido: datos.grabarSonido     // lo que suena
+    property alias grabarMicro: datos.grabarMicro       // el micrófono (en vez de lo que suena)
+
     readonly property bool vertical: barra === "izquierda"
 
     // Vuelve a dejar el aspecto (no la barra ni el dock) como al principio
@@ -165,6 +169,9 @@ window-rule {
             property bool avisosSonido: false
             property var appsAvisos: []
             property var silenciadas: []
+
+            property bool grabarSonido: true
+            property bool grabarMicro: false
         }
     }
 }

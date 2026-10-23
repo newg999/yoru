@@ -68,6 +68,7 @@ PanelWindow {
         Region { item: musica; radius: Tema.radio }
         Region { item: reloj; radius: Tema.radio }
         Region { item: clima; radius: Tema.radio }
+        Region { item: grabando; radius: Tema.radio }
         Region { item: bandeja; radius: Tema.radio }
         Region { item: cafe; radius: Tema.radio }
         Region { item: novedades; radius: Tema.radio }
@@ -272,6 +273,7 @@ PanelWindow {
             x: barra.vertical ? 0 : Math.round(contenido.width - largo)
             y: barra.vertical ? Math.round(contenido.height - largo) : contenido.centrado(height)
 
+            Grabando { id: grabando }
             Bandeja { id: bandeja; ventana: barra; oculta: !Ajustes.islaBandeja }
             Cafe { id: cafe }
             Novedades { id: novedades; pantalla: barra.modelData }

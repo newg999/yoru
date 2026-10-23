@@ -4,6 +4,7 @@
 //    Salida:    volumen y el dispositivo (altavoces, auriculares, HDMI...)
 //    Micrófono: volumen, el dispositivo y una barra que se mueve al hablar
 //    Apps:      el volumen de cada app que está sonando ahora
+//    Al grabar la pantalla: con el sonido de las apps o con el micrófono
 //
 //  Todo va directo a PipeWire (Quickshell.Services.Pipewire): no se guarda
 //  nada aparte, WirePlumber recuerda lo elegido.
@@ -92,6 +93,33 @@ Item {
                         color: nivel.peak > 0.8 ? Tema.amarillo : Tema.blanco
                         Behavior on width { NumberAnimation { duration: 80 } }
                     }
+                }
+            }
+
+            // Al grabar la pantalla (Mod+Alt+R): wf-recorder graba una sola
+            // fuente, así que es o lo que suena o el micrófono
+            Item { width: 1; height: 10 }
+            Titular { texto: "Al grabar la pantalla"; width: parent.width }
+            Interruptor {
+                width: parent.width
+                titulo: "Grabar lo que suena"
+                detalle: "El sonido de las apps (vídeos, juegos...)"
+                activo: Ajustes.grabarSonido
+                onCambiar: v => {
+                    Ajustes.grabarSonido = v;
+                    if (v)
+                        Ajustes.grabarMicro = false;
+                }
+            }
+            Interruptor {
+                width: parent.width
+                titulo: "Grabar el micrófono"
+                detalle: "Tu voz, en lugar del sonido de las apps"
+                activo: Ajustes.grabarMicro
+                onCambiar: v => {
+                    Ajustes.grabarMicro = v;
+                    if (v)
+                        Ajustes.grabarSonido = false;
                 }
             }
         }

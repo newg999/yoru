@@ -69,6 +69,9 @@ binds {
     Alt+Print  { screenshot-window; }
     // Captura con editor: eliges la zona y se abre en swappy (flechas, texto...)
     Mod+Shift+S hotkey-overlay-title="Captura con editor (swappy)" { spawn-sh "~/.config/niri/scripts/captura-editor.sh"; }
+    // Grabar la pantalla: clic = pantalla entera, arrastrar = zona; otra vez = parar
+    // (se guarda en ~/Vídeos/Grabaciones; la isla roja de la barra también para)
+    Mod+Alt+R hotkey-overlay-title="Grabar la pantalla (otra vez: parar)" { spawn "qs" "-c" "yoru" "ipc" "call" "grabacion" "alternar"; }
 
     // ------------------------------------------------------------ Ventanas
     Mod+Q repeat=false { close-window; }

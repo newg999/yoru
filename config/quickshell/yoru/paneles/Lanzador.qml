@@ -68,6 +68,7 @@ Panel {
         ["󰅶", "No suspender", "Centro de control: que no se bloquee ni se apague la pantalla", "no suspender cafeína cafeina caffeine despierto inhibir pantalla encendida presentación", "conexion", ""],
         ["󰂚", "Notificaciones", "Historial y no molestar", "notificaciones notifications no molestar", "notificaciones", ""],
         ["󰅌", "Portapapeles", "Historial de lo copiado", "portapapeles clipboard copiado pegar", "portapapeles", ""],
+        ["󰑋", "Grabar la pantalla", "Clic = pantalla entera, arrastrar = una zona · Mod+Alt+R", "grabar grabación grabacion vídeo video record recorder pantalla screencast", "grabar", ""],
         ["󰐥", "Apagar o reiniciar", "Bloquear, suspender, cerrar sesión...", "apagar reiniciar suspender bloquear cerrar sesión sesion power shutdown reboot logout", "apagado", ""]
     ].filter(a => a[4] !== "bateria" || (UPower.displayDevice?.isLaptopBattery ?? false))
      .map(a => ({ajuste: true, glifo: a[0], name: a[1], comment: a[2], keywords: a[3].split(" "), panel: a[4], seccion: a[5], id: "yoru:" + a[1]}))
@@ -97,7 +98,12 @@ Panel {
     function abrir(app) {
         if (!app)
             return;
-        // Un ajuste de Yoru: se abre su panel (en vez del lanzador)
+        // Un ajuste de Yoru: se abre su panel (en vez del lanzador), o se
+        // empieza a grabar
+        if (app.ajuste && app.panel === "grabar") {
+            Grabacion.alternar();
+            return;
+        }
         if (app.ajuste) {
             Paneles.alternar(app.panel, panel.modelData, app.seccion);
             return;
