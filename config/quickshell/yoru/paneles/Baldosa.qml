@@ -15,6 +15,7 @@ Rectangle {
     property string detalle: ""
     property bool encendida: false
     property bool elegida: false         // su lista está abierta
+    property bool conFlecha: true        // la 󰅀 de la derecha (la píldora no la lleva)
     signal alternar()                    // encender / apagar
     signal elegir()                      // abrir su lista
 
@@ -84,6 +85,8 @@ Rectangle {
 
     Texto {
         id: flecha
+        visible: baldosa.conFlecha
+        width: visible ? implicitWidth : 0
         text: "󰅀"
         font.pixelSize: 14
         color: baldosa.elegida ? Tema.blanco : Tema.gris

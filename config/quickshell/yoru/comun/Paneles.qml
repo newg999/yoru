@@ -13,6 +13,19 @@ Singleton {
     property string abierto: ""      // "" = ninguno · "conexion"
     property var pantalla: null      // ShellScreen donde se abrió
     property string seccion: ""      // dentro del panel: "wifi", "bluetooth", "audio"...
+    // Islas y minimalista: de qué lado sale el panel de páginas (el del
+    // botón que se pulsó: «derecha» el centro de control, «centro» la hora,
+    // la canción o el tiempo)
+    property string origen: "centro"
+
+    // Abre una página del panel «pildora» (paneles/Paginas.qml: control,
+    // calendario, multimedia, clima...) bajo el botón pulsado. Si ya está
+    // abierta en esa página, se cierra
+    function abrirPagina(enPantalla, pagina, lado) {
+        if (abierto !== "pildora" || pantalla !== enPantalla)
+            origen = lado ?? "centro";
+        alternar("pildora", enPantalla, pagina);
+    }
 
     // Ajustes es una ventana aparte (paneles/VentanaAjustes.qml), con una
     // sección elegida en su barra lateral. «ajustes» la abre en una de estas

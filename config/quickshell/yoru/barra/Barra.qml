@@ -43,6 +43,9 @@ PanelWindow {
     implicitWidth: Tema.margenBarra + Tema.anchoBarra
     exclusiveZone: Tema.zonaBarra
     color: "transparent"
+    // Con la barra en píldora o minimalista (Ajustes › Barra y dock) se ven
+    // paneles/Pildora.qml o barra/BarraMinima.qml
+    visible: !Ajustes.centrada
     WlrLayershell.namespace: "yoru-barra"
     WlrLayershell.layer: WlrLayer.Top
 

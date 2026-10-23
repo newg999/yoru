@@ -31,18 +31,26 @@ ShellRoot {
         model: Quickshell.screens
         Barra {}
     }
+    // O la barra en una sola píldora que se abre en panel (Ajustes › Barra y dock)
+    Variants {
+        model: Quickshell.screens
+        Pildora {}
+    }
+    // O una barra fina de lado a lado
+    Variants {
+        model: Quickshell.screens
+        BarraMinima {}
+    }
+    // Las páginas (control, calendario, multimedia, clima...) bajo las
+    // islas o la minimalista; la píldora las lleva dentro
+    Variants {
+        model: Quickshell.screens
+        PanelPaginas {}
+    }
     // Dock de apps abajo (barra/Dock.qml)
     Variants {
         model: Quickshell.screens
         Dock {}
-    }
-    Variants {
-        model: Quickshell.screens
-        CentroControl {}
-    }
-    Variants {
-        model: Quickshell.screens
-        PanelCentral {}
     }
     // Ajustes: una ventana aparte, una sola (no una por pantalla)
     VentanaAjustes {}
@@ -105,8 +113,8 @@ ShellRoot {
     }
 
     // Abrir paneles desde fuera (atajos de niri, scripts...):
-    //   qs -c yoru ipc call panel alternar conexion wifi     (o bluetooth, audio, micro)
-    //   qs -c yoru ipc call panel alternar centro resumen     (o clima)
+    //   qs -c yoru ipc call panel alternar pildora control    (o wifi, bluetooth, audio, micro,
+    //                                                          calendario, multimedia, clima, sistema...)
     //   qs -c yoru ipc call panel alternar lanzador ""        (o medio: en mitad de la pantalla)
     //   qs -c yoru ipc call panel alternar monitor procesos   (o rendimiento)
     //   qs -c yoru ipc call panel alternar uso cpu            (o memoria)
@@ -121,7 +129,13 @@ ShellRoot {
             // Se abre en la pantalla que tiene el foco
             const salida = Niri.escritorios.find(e => e.is_focused)?.output;
             const pantalla = Quickshell.screens.find(s => s.name === salida) ?? Quickshell.screens[0];
-            Paneles.alternar(nombre, pantalla, seccion);
+            // Las páginas: el control y sus listas a la derecha (bajo la
+            // conexión o el 󰍜), el resto en el centro
+            if (nombre === "pildora")
+                Paneles.abrirPagina(pantalla, seccion,
+                    ["control", "wifi", "bluetooth", "audio", "micro", ""].includes(seccion) ? "derecha" : "centro");
+            else
+                Paneles.alternar(nombre, pantalla, seccion);
         }
         function cerrar(): void {
             Paneles.cerrar();

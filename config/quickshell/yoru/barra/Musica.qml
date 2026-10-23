@@ -2,7 +2,7 @@
 //  Música/vídeo que suena (Spotify, YouTube en Brave, mpv...)
 //  Visualizador · canción · anterior · play/pausa · siguiente
 //  Sin reproductor (o parado), la isla desaparece.
-//  En la canción: clic = pestaña Multimedia · clic dcho = siguiente · clic central = pausa
+//  En la canción: clic = página Multimedia · clic dcho = siguiente · clic central = pausa
 //  Con la barra a la izquierda, solo los botones (la canción, en la ayuda)
 // ============================================================================
 import QtQuick
@@ -129,7 +129,7 @@ Isla {
                 else if (e.button === Qt.MiddleButton)
                     isla.reproductor.togglePlaying();
                 else
-                    Paneles.alternar("centro", isla.pantalla, "multimedia");
+                    Paneles.abrirPagina(isla.pantalla, "multimedia", "centro");
             }
         }
     }
@@ -166,10 +166,10 @@ Isla {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             acceptedButtons: Qt.LeftButton | Qt.RightButton
-            // Clic derecho = pestaña Multimedia (a la izquierda no hay título donde pulsar)
+            // Clic derecho = página Multimedia (a la izquierda no hay título donde pulsar)
             onClicked: e => {
                 if (e.button === Qt.RightButton)
-                    Paneles.alternar("centro", isla.pantalla, "multimedia");
+                    Paneles.abrirPagina(isla.pantalla, "multimedia", "centro");
                 else
                     isla.reproductor.togglePlaying();
             }

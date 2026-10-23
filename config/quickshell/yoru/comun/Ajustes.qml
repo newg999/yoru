@@ -15,7 +15,7 @@ Singleton {
     id: ajustes
 
     // ------------------------------------------------------- Barra y dock
-    property alias barra: datos.barra                 // "arriba" · "izquierda"
+    property alias barra: datos.barra                 // "arriba" · "izquierda" (islas) · "pildora" · "minimalista"
     property alias dock: datos.dock                   // "overview" · "siempre" · "nunca"
     property alias islaTitulo: datos.islaTitulo
     property alias ventanas: datos.ventanas           // "activa" (icono y título) · "abiertas" (todas)
@@ -59,6 +59,11 @@ Singleton {
     property alias grabarMicro: datos.grabarMicro       // el micrófono (en vez de lo que suena)
 
     readonly property bool vertical: barra === "izquierda"
+    readonly property bool pildora: barra === "pildora"
+    readonly property bool minimalista: barra === "minimalista"
+    // Píldora y minimalista: sin islas; los paneles salen centrados bajo la
+    // barra y sus páginas son las de paneles/Paginas.qml
+    readonly property bool centrada: pildora || minimalista
 
     // Vuelve a dejar el aspecto (no la barra ni el dock) como al principio
     function restablecerAspecto() {

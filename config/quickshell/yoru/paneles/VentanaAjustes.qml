@@ -40,7 +40,7 @@ Scope {
                     {id: "tema", icono: "󰏘", texto: "Tema", detalle: "Colores de todo el escritorio"},
                     {id: "fondo", icono: "󰸉", texto: "Fondo", detalle: "El fondo de pantalla"},
                     {id: "aspecto", icono: "󰙵", texto: "Aspecto", detalle: "Esquinas, transparencias, letra, animaciones y luz nocturna"},
-                    {id: "barra", icono: "󰕮", texto: "Barra y dock", detalle: "Dónde va la barra, qué se ve en ella y el dock"}
+                    {id: "barra", icono: "󰕮", texto: "Barra y dock", detalle: "Estilo de la barra (islas, píldora o minimalista), qué se ve y el dock"}
                 ]},
                 {titulo: "Dispositivos", secciones: [
                     {id: "pantallas", icono: "󰍹", texto: "Pantallas", detalle: "Colocar los monitores, resolución y escala"},

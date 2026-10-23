@@ -16,7 +16,7 @@ Isla {
         visible: Tiempo.listo
         icono: Tiempo.icono
         texto: Tiempo.temperatura + (isla.vertical ? "°" : "°C")
-        resaltado: Paneles.esta("centro", isla.pantalla, "clima")
-        onClic: Paneles.alternar("centro", isla.pantalla, "clima")
+        resaltado: Paneles.esta("pildora", isla.pantalla, "clima")
+        onClic: Paneles.abrirPagina(isla.pantalla, "clima", "centro")
     }
 }

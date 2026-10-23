@@ -40,7 +40,7 @@ PanelWindow {
 
     function avisar(que) {
         // Al arrancar, Pipewire «cambia» todo de golpe: eso no cuenta
-        if (!listo || !enfocada || Paneles.abierto === "conexion")
+        if (!listo || !enfocada || Paneles.abierto === "pildora")
             return;
         tipo = que;
         mostrar = true;

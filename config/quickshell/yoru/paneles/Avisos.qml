@@ -25,7 +25,9 @@ PanelWindow {
         && Notificaciones.emergentes.length > 0
 
     visible: mostrar
-    anchors { top: true; right: Ajustes.avisosLado !== "centro" }
+    // A la derecha o en el centro (Ajustes › Notificaciones); con la barra
+    // en píldora, siempre en el centro, bajo ella
+    anchors { top: true; right: Ajustes.avisosLado !== "centro" && !Ajustes.pildora }
     // Bajo la barra; con la barra a la izquierda, arriba del todo
     margins.top: Ajustes.vertical ? Tema.margenLados + 6 : Tema.hueco
     margins.right: Tema.margenLados

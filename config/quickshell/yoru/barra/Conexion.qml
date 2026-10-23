@@ -16,7 +16,7 @@ Isla {
     relleno: 5
     pulsable: true
     // Iluminada también con su panel abierto (ver Paneles.esta)
-    readonly property bool iluminada: hover || Paneles.esta("conexion", pantalla)
+    readonly property bool iluminada: hover || Paneles.esta("pildora", pantalla, "control")
 
     // Los tres iconos con el mismo margen, para que queden a la misma distancia
     readonly property int margenIcono: 6
@@ -27,7 +27,7 @@ Isla {
         else if (boton === Qt.RightButton)
             Niri.lanzar(["pavucontrol"]);
         else
-            Paneles.alternar("conexion", isla.pantalla, "");
+            Paneles.abrirPagina(isla.pantalla, "control", "derecha");
     }
     onRueda: pasos => cambiarVolumen(pasos)
 

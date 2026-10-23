@@ -22,10 +22,10 @@ binds {
 
     // --------------------------------------------------------- Menús propios
     Mod+Shift+BackSpace hotkey-overlay-title="Menú de apagado" { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "apagado" ""; }
-    Mod+Alt+N           hotkey-overlay-title="Wifi"            { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "conexion" "wifi"; }
-    Mod+Alt+B           hotkey-overlay-title="Bluetooth"       { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "conexion" "bluetooth"; }
-    Mod+Alt+A           hotkey-overlay-title="Audio"           { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "conexion" "audio"; }
-    Mod+Alt+C           hotkey-overlay-title="Calendario"      { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "centro" "resumen"; }
+    Mod+Alt+N           hotkey-overlay-title="Wifi"            { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "pildora" "wifi"; }
+    Mod+Alt+B           hotkey-overlay-title="Bluetooth"       { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "pildora" "bluetooth"; }
+    Mod+Alt+A           hotkey-overlay-title="Audio"           { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "pildora" "audio"; }
+    Mod+Alt+C           hotkey-overlay-title="Calendario"      { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "pildora" "calendario"; }
     Mod+Alt+V           hotkey-overlay-title="Portapapeles"    { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "portapapeles" ""; }
     Mod+Alt+M           hotkey-overlay-title="Notificaciones"  { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "notificaciones" ""; }
     Mod+Alt+S           hotkey-overlay-title="Tienda de apps"  { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "tienda" ""; }

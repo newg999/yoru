@@ -10,6 +10,8 @@ import qs.comun
 Item {
     id: cal
 
+    property bool conApp: true    // el botón 󰃭 que abre GNOME Calendar (la píldora no lo lleva)
+
     readonly property var meses: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
         "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
     readonly property var semana: ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"]
@@ -94,6 +96,7 @@ Item {
                 onClic: cal.mover(1)
             }
             BotonIcono {
+                visible: cal.conApp
                 anchors { right: siguiente.left; verticalCenter: parent.verticalCenter }
                 icono: "󰃭"
                 ayuda: "Abrir Calendario (eventos)"

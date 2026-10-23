@@ -11,6 +11,8 @@
 //        nombre: "conexion"     // el que abre Paneles.alternar("conexion", ...)
 //        lado: "derecha"        // "izquierda", "centro", "derecha"
 //                               // o "medio" (en mitad de la pantalla)
+//                               // (con la barra en píldora, todos menos
+//                               // «medio» salen centrados bajo ella)
 //        MiContenido {}
 //    }
 // ============================================================================
@@ -69,30 +71,50 @@ PanelWindow {
         width: ventana.ancho
         height: interior.implicitHeight + 32
         readonly property bool enMedio: ventana.lado === "medio"
+        // Con la barra minimalista, pegado a ella: sin hueco, esquinas de
+        // arriba rectas, su mismo fondo y un borde fino
+        readonly property bool pegado: Ajustes.minimalista && !enMedio
+        // Con la barra en píldora, todo sale centrado bajo ella (con la
+        // minimalista, cada uno bajo su botón, como con las islas)
+        readonly property string sitio: Ajustes.pildora && !enMedio ? "centro" : ventana.lado
 
         // Al abrirse se desliza un poco desde la barra
         readonly property real deslizar: (1 - ventana.progreso) * 14
 
         x: enMedio ? Math.round((parent.width - width) / 2)
             : ventana.vertical ? Tema.hueco - deslizar
-            : ventana.lado === "izquierda" ? Tema.margenLados
-            : ventana.lado === "centro" ? (parent.width - width) / 2
+            : sitio === "izquierda" ? Tema.margenLados
+            : sitio === "centro" ? (parent.width - width) / 2
             : parent.width - width - Tema.margenLados
         y: enMedio ? Math.round((parent.height - height) / 2)
+            : pegado ? Tema.altoBarra + 2
             : !ventana.vertical ? Tema.hueco - deslizar
-            : ventana.lado === "izquierda" ? Tema.margenLados + 6
-            : ventana.lado === "centro" ? Math.round((parent.height - height) / 2)
+            : sitio === "izquierda" ? Tema.margenLados + 6
+            : sitio === "centro" ? Math.round((parent.height - height) / 2)
             : parent.height - height - Tema.margenLados - 6
 
         opacity: ventana.progreso
-        scale: (enMedio ? 0.94 : 0.96) + (enMedio ? 0.06 : 0.04) * ventana.progreso
+        // Pegado a la barra no encoge (se despegaría de ella): solo aparece
+        scale: pegado ? 1 : (enMedio ? 0.94 : 0.96) + (enMedio ? 0.06 : 0.04) * ventana.progreso
         transformOrigin: enMedio ? Item.Center : ventana.vertical ? Item.Left : Item.Top
 
         radius: Tema.radioPanel
+        topLeftRadius: pegado ? 0 : radius
+        topRightRadius: pegado ? 0 : radius
         color: Tema.panel
-        border.width: Tema.borde(2)
-        border.color: Tema.panelBorde
+        border.width: pegado ? Tema.borde(1) : Tema.borde(2)
+        border.color: pegado ? Tema.claro(0.08) : Tema.panelBorde
         clip: true
+
+        // Pegado: sin borde arriba (se funde con la barra)
+        Rectangle {
+            visible: caja.pegado && caja.border.width > 0
+            x: caja.border.width
+            width: parent.width - 2 * caja.border.width
+            height: caja.border.width
+            color: caja.color
+            z: 1
+        }
 
         Behavior on height { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
 

@@ -300,21 +300,37 @@ Item {
             width: parent.width
             spacing: 8
 
-            Titular { texto: "Posición de la barra"; width: parent.width }
+            // (La barra a la izquierda sigue funcionando si se pone a mano en
+            // ajustes.json: «"barra": "izquierda"», pero ya no se ofrece)
+            Titular { texto: "Estilo de la barra"; width: parent.width }
             Opciones {
                 width: parent.width
                 opciones: [
-                    {id: "arriba", icono: "󰁝", texto: "Arriba"},
-                    {id: "izquierda", icono: "󰁍", texto: "A la izquierda"}
+                    {id: "arriba", icono: "󰕮", texto: "Islas"},
+                    {id: "pildora", icono: "󰍜", texto: "Píldora"},
+                    {id: "minimalista", icono: "󰖯", texto: "Minimalista"}
                 ]
                 valor: Ajustes.barra
                 onElegir: id => Ajustes.barra = id
             }
+            Texto {
+                visible: Ajustes.centrada
+                width: parent.width
+                leftPadding: 12
+                wrapMode: Text.WordWrap
+                text: Ajustes.pildora
+                    ? "Una sola píldora arriba (escritorios, hora y lo que suena). Al pulsarla se convierte en el centro de control, con los temas y los fondos."
+                    : "Una barra fina de lado a lado: escritorios y ventana a la izquierda, la hora en el centro y la bandeja a la derecha. Al pulsarla, el centro de control se abre debajo."
+                font.bold: false
+                font.pixelSize: 12
+                color: Tema.gris
+            }
 
-            Item { width: 1; height: 6 }
-            Titular { texto: "Qué se ve en la barra"; width: parent.width }
+            Item { width: 1; height: 6; visible: !Ajustes.centrada }
+            Titular { texto: "Qué se ve en la barra"; width: parent.width; visible: !Ajustes.centrada }
             Interruptor {
                 width: parent.width
+                visible: !Ajustes.centrada
                 titulo: "Ventanas"
                 detalle: Ajustes.ventanas === "abiertas" ? "Un icono por cada app abierta"
                     : Ajustes.vertical ? "La activa: a la izquierda, solo su icono" : "La activa: icono y título"
@@ -323,7 +339,7 @@ Item {
             }
             Opciones {
                 width: parent.width
-                visible: Ajustes.islaTitulo
+                visible: Ajustes.islaTitulo && !Ajustes.centrada
                 opciones: [
                     {id: "activa", icono: "󰖯", texto: "Ventana activa"},
                     {id: "abiertas", icono: "󰕰", texto: "Apps abiertas"}
@@ -333,6 +349,7 @@ Item {
             }
             Interruptor {
                 width: parent.width
+                visible: !Ajustes.centrada
                 titulo: "Música"
                 detalle: "Lo que suena y sus botones"
                 activo: Ajustes.islaMusica
@@ -340,18 +357,21 @@ Item {
             }
             Interruptor {
                 width: parent.width
+                visible: !Ajustes.centrada
                 titulo: "Clima"
                 activo: Ajustes.islaClima
                 onCambiar: v => Ajustes.islaClima = v
             }
             Interruptor {
                 width: parent.width
+                visible: !Ajustes.centrada
                 titulo: "CPU, memoria y batería"
                 activo: Ajustes.islaRecursos
                 onCambiar: v => Ajustes.islaRecursos = v
             }
             Interruptor {
                 width: parent.width
+                visible: !Ajustes.centrada
                 titulo: "Bandeja del sistema"
                 detalle: "Apps en segundo plano (Discord, Telegram...)"
                 activo: Ajustes.islaBandeja

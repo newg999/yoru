@@ -1,4 +1,4 @@
-// Reloj y fecha · Clic = panel central (calendario, clima, música...)
+// Reloj y fecha · Clic = el calendario, debajo
 // Hora y día son un solo botón: la isla entera se ilumina y se pulsa
 // Con la barra a la izquierda, las horas sobre los minutos y el día debajo
 import QtQuick
@@ -10,8 +10,8 @@ Isla {
     required property var pantalla
     relleno: 7
     pulsable: true
-    onClic: Paneles.alternar("centro", isla.pantalla, "resumen")
-    readonly property bool iluminada: isla.hover || Paneles.esta("centro", isla.pantalla, "resumen")
+    onClic: Paneles.abrirPagina(isla.pantalla, "calendario", "centro")
+    readonly property bool iluminada: isla.hover || Paneles.esta("pildora", isla.pantalla, "calendario")
 
     SystemClock {
         id: reloj

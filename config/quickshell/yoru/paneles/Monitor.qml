@@ -16,7 +16,9 @@ import qs.comun
 Panel {
     id: panel
     nombre: "monitor"
-    lado: "derecha"
+    // Con la barra en píldora, en mitad de la pantalla (no hay botón de
+    // CPU/RAM a la derecha del que salir); con islas o minimalista, a la derecha
+    lado: Ajustes.pildora ? "medio" : "derecha"
     ancho: 780
 
     readonly property string pestana: Paneles.seccion === "rendimiento" ? "rendimiento" : "procesos"
