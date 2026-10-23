@@ -90,6 +90,12 @@ pavucontrol               # mezclador de audio
 blueman                   # bluetooth
 network-manager-applet    # icono de red y editor de conexiones
 
+# --- Juegos ------------------------------------------------------------------
+gamemode                  # el sistema a tope mientras juegas (config/gamemode.ini)
+mangohud                  # FPS, temperaturas y tiempos en el juego (Mayús+F12)
+gamescope                 # para juegos que dan guerra con el ratón o la pantalla completa
+vulkan-tools              # vulkaninfo: ver qué gráfica usan los juegos
+
 # --- Utilidades --------------------------------------------------------------
 wl-clipboard              # copiar/pegar desde la terminal (wl-copy, wl-paste)
 cliphist                  # historial del portapapeles

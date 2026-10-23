@@ -534,6 +534,8 @@ enlazar_todo() {
 
     # Colores oscuros para las apps Qt y KDE: es un archivo, no una carpeta
     enlazar "$REPO/config/kdeglobals" "$CONFIG_DIR/kdeglobals"
+    # Lo que hace gamemode al jugar (y el modo juego de Yoru): también un archivo
+    enlazar "$REPO/config/gamemode.ini" "$CONFIG_DIR/gamemode.ini"
     # Variables de la sesión (las apps Qt usan esos colores). Al volver a entrar
     enlazar "$REPO/system/environment.d/yoru.conf" "$CONFIG_DIR/environment.d/yoru.conf"
 
@@ -594,6 +596,7 @@ configurar_sistema() {
 
     brave_nvidia
     steam_niri
+    ajustes_juegos
     apps_predeterminadas
 
     pantalla_login
@@ -689,6 +692,19 @@ menu_grub() {
     else
         aviso "grub2-mkconfig ha fallado. Prueba a mano: sudo grub2-mkconfig -o /boot/grub2/grub.cfg"
     fi
+}
+
+# Para jugar: el kernel sin la mitigación de split locks, que da tirones en
+# algunos juegos (system/sysctl/99-yoru-juegos.conf), y tu usuario en el
+# grupo gamemode: sin él, gamemode no puede poner la CPU a tope ni dar más
+# prioridad al juego (vale al volver a entrar en la sesión)
+ajustes_juegos() {
+    if getent group gamemode >/dev/null && ! id -nG "$USER" | grep -qw gamemode; then
+        sudo usermod -aG gamemode "$USER" && ok "Tu usuario, en el grupo gamemode"
+    fi
+    sudo install -D -m 644 "$REPO/system/sysctl/99-yoru-juegos.conf" /etc/sysctl.d/99-yoru-juegos.conf
+    sudo sysctl -q -p /etc/sysctl.d/99-yoru-juegos.conf >/dev/null 2>&1 || true
+    ok "Kernel ajustado para jugar (split locks)"
 }
 
 # Steam con -system-composer (lo recomienda la guía de niri): sin él, con

@@ -158,6 +158,9 @@ def bloque(datos):
             cuerpo.append("position x=%d y=%d" % (p["x"], p["y"]))
         if p.get("principal"):
             cuerpo.append("focus-at-startup")
+        # VRR solo con los juegos (la regla de config/niri/rules.kdl): en el
+        # escritorio, frecuencia fija. Si el monitor no tiene VRR, no hace nada
+        cuerpo.append("variable-refresh-rate on-demand=true")
         lineas.append('output "%s" {' % p["id"].replace('"', '\\"'))
         lineas += ["    " + c for c in cuerpo]
         lineas.append("}")
