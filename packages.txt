@@ -79,8 +79,8 @@ kitty                     # terminal
 brave-browser             # navegador (install.sh añade antes su repositorio)
 nautilus                  # gestor de archivos (Mod+E)
 file-roller               # comprimir/descomprimir (integrado en Nautilus)
-loupe                     # visor de imágenes
-mpv                       # vídeo
+swayimg                   # visor de imágenes (config/swayimg, con los colores de Yoru)
+mpv                       # vídeo, con la interfaz uosc (config/mpv; la baja install.sh)
 okular                    # visor de PDF (colores oscuros: config/kdeglobals)
 gnome-text-editor         # editor de texto sencillo
 gnome-calculator          # calculadora

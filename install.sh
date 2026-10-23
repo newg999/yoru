@@ -255,6 +255,22 @@ satellite_sin_082() {
     fi
 }
 
+# uosc, la interfaz de mpv: su última versión de GitHub, dentro de
+# config/mpv (que va enlazado en ~/.config/mpv). Sus archivos (scripts/uosc
+# y fonts/) no se suben al repo (.gitignore); se rehacen en cada ./install.sh
+uosc_bajar() {
+    paso "uosc (la interfaz de mpv)"
+    local tmp
+    tmp="$(mktemp -d)"
+    if curl -fsSL -o "$tmp/uosc.zip" https://github.com/tomasklaen/uosc/releases/latest/download/uosc.zip \
+        && unzip -qo "$tmp/uosc.zip" -d "$REPO/config/mpv"; then
+        ok "uosc al día"
+    else
+        aviso "No se pudo bajar uosc (¿sin conexión?): mpv usará su interfaz de siempre"
+    fi
+    rm -rf "$tmp"
+}
+
 # Apps de ArtCraft (artcraft.txt): no están en Fedora ni en Flathub, se
 # publican como .flatpak en GitHub. De cada una se baja la última versión
 # para este equipo, se comprueba con el SHA256SUMS.txt de su versión y se
@@ -781,6 +797,17 @@ apps_predeterminadas() {
         application/vnd.ms-excel.sheet.macroEnabled.12 \
         application/vnd.ms-excel.sheet.binary.macroEnabled.12 \
         application/vnd.oasis.opendocument.spreadsheet text/csv text/tab-separated-values
+    # Imágenes → swayimg y vídeos → mpv (con uosc), los dos con los colores
+    # de Yoru y en una sola ventana: a través de «yoru abrir»
+    # (system/applications/yoru-imagenes.desktop y yoru-videos.desktop)
+    [[ -f /usr/share/applications/swayimg.desktop ]] \
+        && xdg-mime default yoru-imagenes.desktop image/jpeg image/png image/gif image/webp image/avif \
+            image/heif image/heic image/bmp image/tiff image/svg+xml image/x-icon image/jxl 2>/dev/null \
+        && ok "Imágenes → swayimg"
+    [[ -f /usr/share/applications/mpv.desktop ]] \
+        && xdg-mime default yoru-videos.desktop video/mp4 video/x-matroska video/webm video/quicktime \
+            video/x-msvideo video/mpeg video/ogg video/x-flv video/3gpp video/mp2t 2>/dev/null \
+        && ok "Vídeos → mpv"
     # Texto plano: sin esto, .txt y .md acaban en WordCraft (que también los acepta)
     [[ -f /usr/share/applications/org.gnome.TextEditor.desktop ]] \
         && xdg-mime default org.gnome.TextEditor.desktop text/plain text/markdown text/x-log 2>/dev/null \
@@ -1069,6 +1096,7 @@ case "${1:-}" in
         instalar_cursor
         enlazar_todo
         bajar_fondos
+        uosc_bajar
         activar_barra
         ajustes_gtk
         shell_zsh
@@ -1091,6 +1119,7 @@ case "${1:-}" in
         instalar_cursor
         enlazar_todo
         bajar_fondos
+        uosc_bajar
         configurar_sistema
         activar_barra
         ajustes_gtk

@@ -16,6 +16,8 @@
 #    kitty.conf  ← config/kitty/kitty.conf     (include)
 #    colores.json ← Quickshell (comun/Tema.qml)
 #    fastfetch.zsh ← config/zsh/zshrc (colores del logo de fastfetch)
+#    mpv.conf    ← config/mpv/mpv.conf         (include: colores de uosc)
+#    swayimg     ← config/swayimg/config       (include: colores del visor)
 #  Fuera del repo a propósito: cambiar de fondo no deja cambios en git.
 #
 #  En modo fondo, rojo y amarillo no cambian: son los avisos y tienen que
@@ -139,6 +141,27 @@ ff_colores=(
     --logo-color-2 '{ansi(p['gris'])}'
     --color-keys '{ansi(a)}'
 )
+""")
+
+    # uosc (la interfaz de mpv): sus colores van sin «#»
+    h = lambda c: c.lstrip("#")
+    escribir("mpv.conf", f"""# Generado por tema/aplicar.py ({modo}). No lo edites: se sobrescribe.
+script-opts-append=uosc-color=foreground={h(a)},foreground_text={h(p['fondo'])},background={h(p['fondo'])},background_text={h(p['texto'])},curtain={h(p['velo'])},success={h(a)},error={h(p['rojo'])}
+background-color="{p['velo']}"
+""")
+
+    # swayimg (visor de imágenes): colores ARGB, 0xAARRGGBB
+    argb = lambda c, alfa="ff": "0x" + alfa + c.lstrip("#")
+    escribir("swayimg.lua", f"""-- Generado por tema/aplicar.py ({modo}). No lo edites: se sobrescribe.
+swayimg.viewer.set_window_background({argb(p['velo'])})
+swayimg.slideshow.set_window_background({argb(p['velo'])})
+swayimg.viewer.mark_color = {argb(a)}
+swayimg.gallery.window_color = {argb(p['velo'])}
+swayimg.gallery.unselected_color = {argb(p['fondo2'])}
+swayimg.gallery.selected_color = {argb(p['fondo2'])}
+swayimg.gallery.border_color = {argb(a)}
+swayimg.text.color = {argb(p['texto'])}
+swayimg.text.background = {argb(p['fondo'], 'cc')}
 """)
 
     escribir("kitty.conf", f"""# Generado por tema/aplicar.py ({modo}). No lo edites: se sobrescribe.

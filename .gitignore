@@ -23,3 +23,7 @@ wallpapers/.bajando-*
 
 # Ajustes locales de Claude Code (permisos de este equipo)
 .claude/settings.local.json
+
+# uosc (la interfaz de mpv): lo baja install.sh de su última versión
+config/mpv/scripts/
+config/mpv/fonts/

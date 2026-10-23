@@ -1,0 +1,13 @@
+# Vídeos con mpv, en una sola ventana: «yoru abrir» (bin/yoru) los carga en
+# el reproductor que ya esté abierto. Es la app predeterminada para vídeos
+# (install.sh → apps_predeterminadas). No sale en el lanzador: está mpv
+[Desktop Entry]
+Type=Application
+Name=Reproductor de vídeo
+Comment=Abre el vídeo en el reproductor que ya esté abierto (mpv)
+Icon=mpv
+Exec=yoru abrir %f
+Terminal=false
+NoDisplay=true
+MimeType=video/mp4;video/x-matroska;video/webm;video/quicktime;video/x-msvideo;video/mpeg;video/ogg;video/x-flv;video/3gpp;video/mp2t;
+Categories=AudioVideo;Video;Player;

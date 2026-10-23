@@ -1,0 +1,13 @@
+# Imágenes con swayimg, en una sola ventana: «yoru abrir» (bin/yoru) las abre
+# en el visor que ya esté abierto. Es la app predeterminada para imágenes
+# (install.sh → apps_predeterminadas). No sale en el lanzador: está swayimg
+[Desktop Entry]
+Type=Application
+Name=Visor de imágenes
+Comment=Abre la imagen en el visor que ya esté abierto (swayimg)
+Icon=swayimg
+Exec=yoru abrir %f
+Terminal=false
+NoDisplay=true
+MimeType=image/jpeg;image/png;image/gif;image/webp;image/avif;image/heif;image/heic;image/bmp;image/tiff;image/svg+xml;image/x-icon;image/jxl;
+Categories=Graphics;Viewer;

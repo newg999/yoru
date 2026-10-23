@@ -61,7 +61,7 @@ window-rule {
 
 // Navegadores y reproductores siempre opacos (vídeos, fotos...)
 window-rule {
-    match app-id=r#"(?i)(firefox|brave|chrom|mpv|vlc|celluloid|loupe)"#
+    match app-id=r#"(?i)(firefox|brave|chrom|mpv|vlc|celluloid|loupe|swayimg)"#
     opacity 1.0
 }
 

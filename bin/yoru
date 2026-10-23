@@ -19,6 +19,10 @@
 #                       para las opciones de lanzamiento de Steam: el juego
 #                       en gamescope a pantalla completa (estirado si das
 #                       una resolución), con gamemode y el overlay de Steam
+#    yoru abrir <archivo>
+#                       imagen o vídeo en una sola ventana: si ya hay un
+#                       visor (swayimg) o reproductor (mpv) abierto, se abre
+#                       en él (es la app predeterminada para los dos)
 #    yoru ayuda
 # ============================================================================
 
@@ -316,6 +320,58 @@ print(m["width"], m["height"], round(m["refresh_rate"] / 1000))' 2>/dev/null)
         -f --force-grab-cursor --backend sdl -- env LD_PRELOAD="$precarga" "${juego[@]}"
 }
 
+# ------------------------------------------------------------------- abrir
+# Imágenes y vídeos en una sola ventana: si ya hay un visor (swayimg) o un
+# reproductor (mpv) abierto, el archivo se abre en él y se trae al frente;
+# si no, se abre uno. Es la app predeterminada para imágenes y vídeos
+# (system/applications/yoru-imagenes.desktop y yoru-videos.desktop)
+cmd_abrir() {
+    local archivo="${1:-}"
+    [[ -n "$archivo" ]] || { error "Uso: yoru abrir <imagen o vídeo>"; return 1; }
+    [[ "$archivo" == file://* ]] && archivo="$(python3 -c 'import sys, urllib.parse; print(urllib.parse.unquote(sys.argv[1][7:]))' "$archivo")"
+    archivo="$(readlink -f "$archivo")"
+    local tipo run="${XDG_RUNTIME_DIR:-/tmp}"
+    tipo="$(xdg-mime query filetype "$archivo" 2>/dev/null)"
+
+    # Trae al frente la ventana de esa app (el primer argumento: su app-id)
+    _al_frente() {
+        local id
+        id="$(niri msg -j windows 2>/dev/null | python3 -c '
+import json, sys
+print(next((w["id"] for w in json.load(sys.stdin) if w.get("app_id") == sys.argv[1]), ""))' "$1")"
+        [[ -n "$id" ]] && niri msg action focus-window --id "$id"
+    }
+
+    if [[ "$tipo" == image/* ]]; then
+        local pid
+        pid="$(pgrep -u "$USER" -x swayimg | head -n1)"
+        if [[ -n "$pid" ]]; then
+            # config/swayimg/init.lua lo lee al recibir USR1
+            printf '%s\n' "$archivo" > "$run/yoru-swayimg-abrir"
+            kill -USR1 "$pid"
+            _al_frente swayimg
+        else
+            exec swayimg "$archivo"
+        fi
+    else
+        local sock="$run/yoru-mpv.sock"
+        # ¿Hay un mpv escuchando? Entonces, que cargue este y siga
+        if python3 - "$sock" "$archivo" <<'PY' 2>/dev/null
+import json, socket, sys
+s = socket.socket(socket.AF_UNIX)
+s.connect(sys.argv[1])
+s.sendall((json.dumps({"command": ["loadfile", sys.argv[2], "replace"]}) + "\n").encode())
+s.sendall((json.dumps({"command": ["set_property", "pause", False]}) + "\n").encode())
+PY
+        then
+            _al_frente mpv
+        else
+            rm -f "$sock"
+            exec mpv --input-ipc-server="$sock" "$archivo"
+        fi
+    fi
+}
+
 # ---------------------------------------------------------------------- Main
 case "${1:-ayuda}" in
     update|actualizar)  cmd_update ;;
@@ -325,6 +381,7 @@ case "${1:-ayuda}" in
     copias)             cmd_copias ;;
     volver)             cmd_volver "${2:-}" ;;
     juego)              shift; cmd_juego "$@" ;;
+    abrir)              shift; cmd_abrir "$@" ;;
     ayuda|-h|--help|help)
         awk 'NR > 1 && !/^#/ { exit } NR > 1' "$0" | sed 's/^# \{0,1\}//' ;;
     *)
