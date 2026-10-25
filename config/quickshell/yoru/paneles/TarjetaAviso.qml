@@ -23,7 +23,7 @@ Rectangle {
     required property var entrada           // {n, hora} de Notificaciones
     // Al descartarla, la notificación desaparece un instante antes que su
     // tarjeta: de ahí los «n?.»
-    readonly property var n: entrada.n
+    readonly property var n: entrada?.n ?? null
     property int lineas: 4                  // del texto, como mucho
     readonly property bool hover: encima.hovered
     readonly property bool urgente: n?.urgency === NotificationUrgency.Critical
@@ -99,7 +99,7 @@ Rectangle {
             Texto {
                 anchors { left: parent.left; right: cerrar.left; rightMargin: 6; verticalCenter: parent.verticalCenter }
                 text: Tema.html(tarjeta.n?.appName || "Aviso")
-                    + Tema.suave("  ·  " + Notificaciones.hace(tarjeta.entrada.hora))
+                    + Tema.suave("  ·  " + Notificaciones.hace(tarjeta.entrada?.hora ?? new Date()))
                 textFormat: Text.StyledText
                 font.pixelSize: 11
                 font.bold: false

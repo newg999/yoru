@@ -3,6 +3,8 @@
 //  con fundido al cambiar y el alto ajustándose suave
 //
 //    control · calendario · multimedia · clima · sistema · temas · fondos
+//    y, solo en la píldora, lanzador · portapapeles · apagado (Mod+Espacio,
+//    Mod+Alt+V y Mod+Shift+Retroceso: ver Paneles.alternar)
 //
 //  La página es la sección del panel «pildora» (Paneles.seccion):
 //      Paneles.alternar("pildora", pantalla, "clima")
@@ -18,11 +20,13 @@ Item {
     required property var pantalla
     property bool abierta: false
 
-    readonly property var todas: ["control", "calendario", "multimedia", "clima", "sistema", "temas", "fondos"]
+    readonly property var todas: ["control", "calendario", "multimedia", "clima", "sistema", "temas", "fondos",
+        "lanzador", "portapapeles", "apagado"]
     // (wifi, bluetooth, audio y micro son el control con esa lista abierta)
     readonly property string pagina: todas.includes(Paneles.seccion) ? Paneles.seccion : "control"
     // Multimedia y Clima son las pestañas del panel central: piden más sitio
-    readonly property int anchoPedido: ["multimedia", "clima"].includes(pagina) ? 620 : 460
+    readonly property int anchoPedido: ["multimedia", "clima"].includes(pagina) ? 620
+        : pagina === "portapapeles" ? 560 : pagina === "lanzador" ? 520 : 460
     // Ir a una página (la que ya se ve: volver a control)
     function ir(p) {
         Paneles.alternar("pildora", pantalla, abierta && pagina === p ? "control" : p);
@@ -34,6 +38,9 @@ Item {
         : pagina === "sistema" ? sistema.implicitHeight
         : pagina === "temas" ? temas.implicitHeight
         : pagina === "fondos" ? fondos.implicitHeight
+        : pagina === "lanzador" ? lanzador.implicitHeight
+        : pagina === "portapapeles" ? portapapeles.implicitHeight
+        : pagina === "apagado" ? apagado.implicitHeight
         : control.implicitHeight
     height: implicitHeight
     Behavior on height {
@@ -110,6 +117,31 @@ Item {
         // Solo la elegida: la que se va se oculta al momento (con un fundido
         // se veía un instante encima de la nueva); la que llega, con fundido
         visible: raiz.pagina === "fondos"
+        opacity: visible ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Tema.normal } }
+    }
+    PaginaLanzador {
+        id: lanzador
+        width: parent.width
+        pantalla: raiz.pantalla
+        activa: raiz.abierta && raiz.pagina === "lanzador"
+        visible: raiz.pagina === "lanzador"
+        opacity: visible ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Tema.normal } }
+    }
+    PaginaPortapapeles {
+        id: portapapeles
+        width: parent.width
+        activa: raiz.abierta && raiz.pagina === "portapapeles"
+        visible: raiz.pagina === "portapapeles"
+        opacity: visible ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Tema.normal } }
+    }
+    PaginaApagado {
+        id: apagado
+        width: parent.width
+        activa: raiz.abierta && raiz.pagina === "apagado"
+        visible: raiz.pagina === "apagado"
         opacity: visible ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Tema.normal } }
     }

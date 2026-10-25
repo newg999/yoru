@@ -4,6 +4,7 @@
 //
 //    Escribe para buscar · ↑ ↓ para moverte · Enter copia (pega con Ctrl+V)
 //    Supr borra la entrada del historial · Esc para cerrar
+//  (con la barra en píldora es una página de la píldora: PaginaPortapapeles.qml)
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -16,52 +17,30 @@ Panel {
     lado: "derecha"
     ancho: 640
 
-    // Cada entrada: {linea: "id\ttexto" tal cual la da cliphist, texto, imagen}
-    property var entradas: []
-    property bool hayCliphist: true
-
-    readonly property var resultados: {
-        const q = busqueda.text.trim().toLowerCase();
-        return q === "" ? entradas : entradas.filter(e => e.texto.toLowerCase().includes(q));
-    }
+    // El historial: comun/Copiados.qml (lo comparte con la píldora)
+    readonly property var entradas: Copiados.entradas
+    readonly property bool hayCliphist: Copiados.hayCliphist
+    readonly property var resultados: Copiados.buscar(busqueda.text)
 
     onAbiertoChanged: {
         if (abierto) {
             busqueda.text = "";
             lista.currentIndex = 0;
             busqueda.forceActiveFocus();
-            leer.running = true;
+            Copiados.leer();
         }
     }
 
     function copiar(e) {
-        if (!e)
-            return;
-        Quickshell.execDetached(["sh", "-c", 'printf "%s" "$1" | cliphist decode | wl-copy', "_", e.linea]);
-        Paneles.cerrar();
+        Copiados.copiar(e);
     }
 
     function borrar(e) {
         if (!e)
             return;
-        Quickshell.execDetached(["sh", "-c", 'printf "%s" "$1" | cliphist delete', "_", e.linea]);
         const i = lista.currentIndex;
-        entradas = entradas.filter(x => x !== e);
+        Copiados.borrar(e);
         lista.currentIndex = Math.min(i, resultados.length - 1);
-    }
-
-    Process {
-        id: leer
-        command: ["sh", "-c", "command -v cliphist >/dev/null || exit 3; cliphist list"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                panel.entradas = text.split("\n").filter(l => l.includes("\t")).map(l => {
-                    const texto = l.slice(l.indexOf("\t") + 1);
-                    return {linea: l, texto: texto, imagen: texto.startsWith("[[ binary data")};
-                });
-            }
-        }
-        onExited: codigo => panel.hayCliphist = codigo !== 3
     }
 
     Column {
@@ -129,10 +108,7 @@ Panel {
                 ayuda: "Borrar todo"
                 colorIcono: Tema.gris
                 visible: panel.entradas.length > 0
-                onClic: {
-                    Quickshell.execDetached(["cliphist", "wipe"]);
-                    panel.entradas = [];
-                }
+                onClic: Copiados.borrarTodo()
             }
         }
 

@@ -61,6 +61,10 @@ Singleton {
     readonly property bool vertical: barra === "izquierda"
     readonly property bool pildora: barra === "pildora"
     readonly property bool minimalista: barra === "minimalista"
+    // La píldora, también recta si se quiere (Ajustes › Barra y dock)
+    property alias pildoraRecta: datos.pildoraRecta
+    // Todo recto: la minimalista siempre; la píldora, si se elige
+    readonly property bool recto: minimalista || (pildora && pildoraRecta)
     // Estilo dock: el dock de config/quickshell/yoru-dock (un port de LeyzS
     // QsDock), que la barra arranca aparte (shell.qml)
     readonly property bool estiloDock: barra === "dock"
@@ -127,10 +131,11 @@ Singleton {
     // Los dibuja niri: se le escribe este archivo, que config/niri/config.kdl
     // incluye después de rules.kdl (gana lo último). Con la barra
     // minimalista, sin huecos entre ventanas ni con los bordes y sin
-    // esquinas redondas (no se pueden cambiar: todo recto, como ella)
+    // esquinas redondas (no se pueden cambiar: todo recto, como ella); con
+    // la píldora recta, las esquinas también rectas (los huecos, como siempre)
     readonly property string niriVentanas: `// Generado por la barra (Ajustes → Aspecto y Barra). No lo edites: se sobrescribe.
 window-rule {
-    geometry-corner-radius ${datos.barra === "minimalista" ? 0 : datos.radioVentanas}
+    geometry-corner-radius ${datos.barra === "minimalista" || (datos.barra === "pildora" && datos.pildoraRecta) ? 0 : datos.radioVentanas}
     clip-to-geometry true
 }
 ` + (datos.barra === "minimalista" ? `layout {
@@ -158,6 +163,7 @@ window-rule {
     // Un momento después: al avisar del cambio, niriVentanas aún no está al día
     onRadioVentanasChanged: if (_ventanasLeido) Qt.callLater(escribirVentanas, true)
     onBarraChanged: if (_ventanasLeido) Qt.callLater(escribirVentanas, true)
+    onPildoraRectaChanged: if (_ventanasLeido) Qt.callLater(escribirVentanas, true)
     Timer {
         id: recargarNiri
         interval: 150
@@ -185,6 +191,7 @@ window-rule {
         JsonAdapter {
             id: datos
             property string barra: "arriba"
+            property bool pildoraRecta: true
             property string dock: "overview"
             property bool islaTitulo: true
             property string ventanas: "activa"

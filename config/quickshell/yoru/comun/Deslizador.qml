@@ -14,10 +14,12 @@ Item {
     property bool apagado: false
     property bool ondas: false
     property bool conOndas: false      // dibuja la parte hecha como onda (plana si ondas es false)
+    // Sin bola y algo más gruesa (como ChillPill): con la barra en píldora
+    property bool grueso: Ajustes.pildora && !conOndas
     readonly property bool arrastrando: raton.pressed
     signal movido(real nuevo)
 
-    implicitHeight: 22
+    implicitHeight: grueso ? 28 : 22
     implicitWidth: 200
 
     // Mientras se arrastra se muestra la posición del ratón (sin esperar al sistema)
@@ -40,7 +42,7 @@ Item {
         anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter }
         // Con onda, el carril solo se ve en la parte que falta
         anchors.leftMargin: deslizador.conOndas ? deslizador.mostrado * deslizador.width : 0
-        height: deslizador.conOndas ? 4 : 6
+        height: deslizador.conOndas ? 4 : deslizador.grueso ? 8 : 6
         radius: height / 2
         color: Tema.claro(0.18)
 
@@ -95,6 +97,7 @@ Item {
 
     Rectangle {
         id: bola
+        visible: !deslizador.grueso
         width: raton.containsMouse || deslizador.arrastrando ? 18 : 14
         height: width
         radius: width / 2

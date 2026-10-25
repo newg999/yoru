@@ -5,7 +5,8 @@
 //    o la letra subrayada: B bloquear, S suspender, C cerrar sesión,
 //    R reiniciar, A apagar
 //
-//  Para añadir opciones: una línea en «opciones».
+//  Para añadir opciones: una línea en «opciones» de comun/Sesion.qml.
+//  (con la barra en píldora es una página de la píldora: PaginaApagado.qml)
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -18,39 +19,20 @@ Panel {
     lado: "derecha"
     ancho: 340
 
-    readonly property var opciones: [
-        {icono: "󰌾", titulo: "Bloquear", tecla: "b", orden: ["sh", "-c", "~/.config/niri/scripts/bloquear.sh"]},
-        {icono: "󰤄", titulo: "Suspender", tecla: "s", orden: ["sh", "-c", "~/.config/niri/scripts/bloquear.sh && systemctl suspend"]},
-        {icono: "󰍃", titulo: "Cerrar sesión", tecla: "c", orden: ["niri", "msg", "action", "quit", "--skip-confirmation"]},
-        {icono: "󰜉", titulo: "Reiniciar", tecla: "r", orden: ["systemctl", "reboot"]},
-        {icono: "󰐥", titulo: "Apagar", tecla: "a", orden: ["systemctl", "poweroff"]},
-    ]
-
-    property string encendido: ""     // "3 h 20 min", de /proc/uptime
+    // Las opciones: comun/Sesion.qml (las comparte con la píldora)
+    readonly property var opciones: Sesion.opciones
+    readonly property string encendido: Sesion.encendido
 
     onAbiertoChanged: {
         if (abierto) {
             lista.currentIndex = 0;
             lista.forceActiveFocus();
-            uptime.reload();
+            Sesion.leerEncendido();
         }
     }
 
     function elegir(opcion) {
-        if (!opcion)
-            return;
-        Paneles.cerrar();
-        Quickshell.execDetached(opcion.orden);
-    }
-
-    FileView {
-        id: uptime
-        path: "/proc/uptime"
-        onLoaded: {
-            const min = Math.floor(parseFloat(text()) / 60);
-            const h = Math.floor(min / 60);
-            panel.encendido = (h > 0 ? h + " h " : "") + (min % 60) + " min";
-        }
+        Sesion.elegir(opcion);
     }
 
     Column {

@@ -19,6 +19,7 @@ Singleton {
 
     // Se ha abierto una ventana nueva (no un cambio de título o de foco)
     signal ventanaNueva(var ventana)
+    signal captura(string ruta)        // una captura de pantalla (Imprimir), ya guardada
 
     // Escritorios de una pantalla, en orden
     function escritoriosDe(salida) {
@@ -113,6 +114,8 @@ Singleton {
             ventanas = vs;
             if (enfocada && enfocada.id === ev.WindowClosed.id)
                 enfocada = null;
+        } else if (ev.ScreenshotCaptured) {
+            captura(ev.ScreenshotCaptured.path ?? "");
         } else if (ev.OverviewOpenedOrClosed) {
             overview = ev.OverviewOpenedOrClosed.is_open;
         } else if (ev.WindowFocusChanged) {

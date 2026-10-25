@@ -50,6 +50,15 @@ PanelWindow {
         enabled: Despierto.activo
     }
 
+    // Un clic en un hueco de la barra (no en una isla) cierra el panel que
+    // haya abierto: la franja de la barra no es del panel (Panel.qml) y si
+    // no, ese clic no hacía nada. Va debajo de todo lo demás
+    MouseArea {
+        anchors.fill: parent
+        enabled: Paneles.abierto !== ""
+        onClicked: Paneles.cerrar()
+    }
+
     SystemClock {
         id: reloj
         precision: Ajustes.relojSegundos ? SystemClock.Seconds : SystemClock.Minutes
