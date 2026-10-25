@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ----------------------------------------------------------------------------
-#  wallpaper.sh — Pone el fondo de pantalla con swaybg
+#  wallpaper.sh — Pone el fondo de pantalla (lo pinta Yoru, con transición;
+#  si la barra no está, swaybg)
 #
 #  Uso:
 #    wallpaper.sh          -> pone el último fondo usado (o el primero)
@@ -49,12 +50,17 @@ case "${1:-}" in
         ;;
 esac
 
-pkill -x swaybg
+# El fondo lo pinta Yoru (quickshell/yoru/barra/Fondo.qml, con transición):
+# lee $STATE al cambiar. Si la barra no responde, swaybg, de reserva
+con_yoru=false
+[[ "$(timeout 1 qs -c yoru ipc call fondo listo 2>/dev/null)" == true ]] && con_yoru=true
+
+$con_yoru || pkill -x swaybg
 
 if [[ -n "$img" && -f "$img" ]]; then
     mkdir -p "$(dirname "$STATE")"
     echo "$img" > "$STATE"
-    setsid -f swaybg -m fill -i "$img" >/dev/null 2>&1
+    $con_yoru || setsid -f swaybg -m fill -i "$img" >/dev/null 2>&1
     ln -sfn "$(realpath "$img")" "$BLOQUEO"
     # Pantalla de bloqueo: el fondo ya desenfocado y pequeño. Desenfocarlo al
     # bloquear (con la imagen entera) tardaba y se veía aparecer de golpe

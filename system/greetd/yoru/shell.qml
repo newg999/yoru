@@ -145,7 +145,6 @@ ShellRoot {
                 colorOscuro: raiz.estilo.fondo
                 colorRojo: raiz.estilo.rojo
                 fuente: raiz.estilo.fuente
-                esconderContrasena: false   // al iniciar sesión, siempre a la vista
                 nombre: raiz.usuario.visible
                 mensaje: raiz.mensaje
                 error: raiz.error
@@ -187,7 +186,7 @@ ShellRoot {
                         text: raiz.usuario.visible
                         color: raiz.estilo.texto
                         font.family: raiz.estilo.fuente
-                        font.pixelSize: 16
+                        font.pixelSize: 20
                         font.bold: true
                     }
                     Text {

@@ -26,6 +26,20 @@ import qs.bloqueo
 ShellRoot {
     id: raiz
 
+    // El fondo de pantalla, con transición al cambiarlo (barra/Fondo.qml)
+    Variants {
+        model: Quickshell.screens
+        Fondo {}
+    }
+    // Para wallpaper.sh: si responde, el fondo lo pone Yoru (si no, swaybg)
+    IpcHandler {
+        target: "fondo"
+
+        function listo(): bool {
+            return true;
+        }
+    }
+
     // Una barra y un juego de paneles por pantalla
     Variants {
         model: Quickshell.screens
