@@ -552,15 +552,21 @@ Scope {
     }
 
     // ---- Spotify'in kendi ses akisi (PipeWire): sistem sesine dokunmaz ----
+    // Yoru: el sonido del reproductor que suena (Brave, Elisa, mpv...), no
+    // solo el de Spotify: si no, con otro la barra de volumen salía vacía
+    // (el nombre «spotifyNode» es el del original)
     readonly property var spotifyNode: {
-        const ns = Pipewire.nodes.values;
-        for (let i = 0; i < ns.length; i++) {
-            const n = ns[i];
-            if (!n || !n.isStream) continue;
-            const pr = n.properties || {};
-            const hay = ((n.name || "") + " " + (n.description || "") + " "
-                + (pr["application.name"] || "") + " " + (pr["application.process.binary"] || "")).toLowerCase();
-            if (hay.indexOf("spotify") >= 0) return n;
+        const p = root.player;
+        const nombres = [p?.identity, p?.desktopEntry, (p?.dbusName || "").replace("org.mpris.MediaPlayer2.", "").split(".")[0], "spotify"]
+            .filter(x => x).map(x => String(x).toLowerCase());
+        const ns = Pipewire.nodes.values.filter(n => n && n.isStream);
+        for (const nombre of nombres) {
+            for (const n of ns) {
+                const pr = n.properties || {};
+                const hay = ((n.name || "") + " " + (n.description || "") + " "
+                    + (pr["application.name"] || "") + " " + (pr["application.process.binary"] || "")).toLowerCase();
+                if (hay.indexOf(nombre) >= 0) return n;
+            }
         }
         return null;
     }
@@ -601,7 +607,7 @@ Scope {
     function closeMode() { root.dmode = ""; }
     property string lastMode: "walls"
     onDmodeChanged: if (root.dmode !== "") root.lastMode = root.dmode
-    readonly property int morphW: root.lastMode === "ezan" ? root.ezW : (root.lastMode === "dash" ? root.dashW : (root.lastMode === "net" ? root.netW : (root.lastMode === "notif" ? root.notifW : (root.lastMode === "toast" ? root.toastW : (root.lastMode === "bat" ? root.batW : (root.lastMode === "audio" ? root.audioW : (root.horiz && root.lastMode === "walls" ? root.wallHW : (root.horiz && root.lastMode === "apps" ? root.appHW : root.wallW))))))))
+    readonly property int morphW: root.lastMode === "ezan" ? root.ezW : (root.lastMode === "dash" ? root.dashW : (root.lastMode === "net" ? root.netW : (root.lastMode === "notif" ? root.notifW : (root.lastMode === "toast" ? root.toastW : (root.lastMode === "bat" ? root.batW : (root.lastMode === "audio" ? root.audioW : (root.lastMode === "clima" ? root.climaW : (root.lastMode === "cal" ? root.calW : (root.horiz && root.lastMode === "walls" ? root.wallHW : (root.horiz && root.lastMode === "apps" ? root.appHW : root.wallW))))))))))
     function openEzan() {
         if (!root.ezAcik) return;                          // namaz vakitleri ayarlardan kapali
         if (root.dmode === "ezan") { root.closeMode(); return; }
@@ -1586,6 +1592,191 @@ Scope {
     }
     Timer { id: batAgain; interval: 600; onTriggered: if (!batProc.running) batProc.running = true }
 
+    // Yoru: el calendario: al pulsar la hora, el dock se hace el mes
+    // (‹ › o la rueda cambian de mes; «Hoy» vuelve)
+    readonly property int calW: 340
+    readonly property int calH: 540
+    property int calAnio: 2000
+    property int calMes: 0
+    readonly property var calMeses: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+        "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+    function openCal() {
+        if (root.dmode === "cal") { root.closeMode(); return; }
+        root.calHoy();
+        root.dmode = "cal";
+    }
+    function calHoy() { const d = new Date(); root.calAnio = d.getFullYear(); root.calMes = d.getMonth(); }
+    function calMover(n) { const d = new Date(root.calAnio, root.calMes + n, 1); root.calAnio = d.getFullYear(); root.calMes = d.getMonth(); }
+    // 42 casillas (6 semanas) empezando en lunes: {dia, delMes, hoy, finde}
+    readonly property var calCasillas: {
+        const hoy = clock.date;
+        const primero = new Date(root.calAnio, root.calMes, 1);
+        const desde = new Date(root.calAnio, root.calMes, 1 - (primero.getDay() + 6) % 7);
+        const r = [];
+        for (let i = 0; i < 42; i++) {
+            const d = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate() + i);
+            r.push({ dia: d.getDate(), delMes: d.getMonth() === root.calMes,
+                     hoy: d.toDateString() === hoy.toDateString(), finde: i % 7 >= 5 });
+        }
+        return r;
+    }
+
+    // Yoru: el tiempo, como en la barra (Open-Meteo, cada 15 min). El lugar es
+    // el de Yoru (yoru/lugar.json, el que eliges en su pestaña Clima); si no
+    // hay, se adivina por la IP. Clic: el dock se hace el panel del clima
+    readonly property int climaW: 340
+    readonly property int climaH: 646
+    function openClima() {
+        if (root.dmode === "clima") { root.closeMode(); return; }
+        root.clBuscando = false;
+        root.dmode = "clima";
+        root.clActualizar();
+    }
+    property bool clListo: false
+    property bool clCargando: false
+    property int clSensacion: 0
+    property int clHumedad: 0
+    property int clViento: 0
+    property string clAmanecer: ""
+    property string clAtardecer: ""
+    property var clHoras: []        // próximas 12 h: [{hora, temp, codigo, dia}]
+    property var clDias: []         // 7 días: [{fecha, max, min, codigo, lluvia}]
+    function clIconoDe(c, d) {
+        if (c === 0) return d ? 0xF0599 : 0xF0594;
+        if (c <= 2) return d ? 0xF0595 : 0xF0F31;
+        if (c === 3) return 0xF0590;
+        if (c <= 48) return 0xF0591;
+        if (c <= 57) return 0xF0597;
+        if (c <= 67 || (c >= 80 && c <= 82)) return 0xF0596;
+        if (c <= 86) return 0xF0598;
+        return 0xF0593;
+    }
+    function clDescripcion(c) {
+        if (c === 0) return "Despejado";
+        if (c === 1) return "Casi despejado";
+        if (c === 2) return "Parcialmente nublado";
+        if (c === 3) return "Nublado";
+        if (c <= 48) return "Niebla";
+        if (c <= 57) return "Llovizna";
+        if (c <= 67) return "Lluvia";
+        if (c <= 77) return "Nieve";
+        if (c <= 82) return "Chubascos";
+        if (c <= 86) return "Chubascos de nieve";
+        return "Tormenta";
+    }
+    function clDia(i, fecha) {
+        if (i === 0) return "Hoy";
+        if (i === 1) return "Mañana";
+        return ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"][new Date(fecha + "T12:00").getDay()];
+    }
+    property int clTemp: 0
+    property int clCodigo: 0
+    property bool clDeDia: true
+    property real clLat: NaN
+    property real clLon: NaN
+    property string clLugar: ""
+    // Códigos WMO -> icono y texto (los mismos que comun/Tiempo.qml)
+    readonly property int clIcono: root.clIconoDe(root.clCodigo, root.clDeDia)
+    function clPedir(url, alLlegar) {
+        const xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState !== XMLHttpRequest.DONE) return;
+            root.clCargando = false;
+            if (xhr.status === 200) {
+                try { alLlegar(JSON.parse(xhr.responseText)); } catch (e) { console.warn("Clima:", e); }
+            } else clReintento.restart();
+        };
+        xhr.open("GET", url);
+        xhr.send();
+    }
+    // El lugar se elige en el mismo panel: se guarda en yoru/lugar.json y así
+    // Yoru (la barra, la píldora) usa el mismo
+    property bool clBuscando: false
+    property var clResultados: []
+    property bool clAuto: false     // sin lugar.json: sale de la IP
+    function clBuscar(texto) {
+        if (texto.trim().length < 2) { root.clResultados = []; return; }
+        const xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState !== XMLHttpRequest.DONE) return;
+            try {
+                const r = xhr.status === 200 ? JSON.parse(xhr.responseText).results ?? [] : [];
+                root.clResultados = r.map(l => ({ nombre: l.name, zona: [l.admin1, l.country].filter(z => z && z !== l.name).join(", "),
+                                                  latitud: l.latitude, longitud: l.longitude }));
+            } catch (e) { root.clResultados = []; }
+        };
+        xhr.open("GET", "https://geocoding-api.open-meteo.com/v1/search?count=6&language=es&format=json&name=" + encodeURIComponent(texto));
+        xhr.send();
+    }
+    function clElegir(l) {
+        clLugarArchivo.setText(JSON.stringify({ nombre: l.nombre, latitud: l.latitud, longitud: l.longitud }, null, 4) + "\n");
+        root.clAuto = false;
+        root.clLugar = l.nombre; root.clLat = l.latitud; root.clLon = l.longitud;
+        root.clBuscando = false;
+        root.clActualizar();
+    }
+    function clUsarIp() {
+        Quickshell.execDetached(["rm", "-f", Quickshell.env("HOME") + "/.config/quickshell/yoru/lugar.json"]);
+        root.clBuscando = false;
+        root.clPorIp();
+    }
+    function clPorIp() {
+        root.clPedir("http://ip-api.com/json/?fields=city,lat,lon", r => {
+            root.clAuto = true;
+            root.clLugar = r.city; root.clLat = r.lat; root.clLon = r.lon;
+            root.clActualizar();
+        });
+    }
+    function clActualizar() {
+        if (isNaN(root.clLat) || root.clCargando) return;
+        root.clCargando = true;
+        root.clPedir("https://api.open-meteo.com/v1/forecast?latitude=" + root.clLat + "&longitude=" + root.clLon
+            + "&timezone=auto&forecast_days=7"
+            + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,is_day"
+            + "&hourly=temperature_2m,weather_code,is_day"
+            + "&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max", r => {
+            const a = r.current;
+            root.clTemp = Math.round(a.temperature_2m);
+            root.clSensacion = Math.round(a.apparent_temperature);
+            root.clHumedad = a.relative_humidity_2m;
+            root.clViento = Math.round(a.wind_speed_10m);
+            root.clCodigo = a.weather_code;
+            root.clDeDia = a.is_day === 1;
+            root.clAmanecer = r.daily.sunrise[0].slice(11, 16);
+            root.clAtardecer = r.daily.sunset[0].slice(11, 16);
+            // próximas 12 horas desde la actual
+            const desde = Math.max(0, r.hourly.time.findIndex(t => t.slice(0, 13) === a.time.slice(0, 13)));
+            const hs = [];
+            for (let i = desde; i < Math.min(desde + 12, r.hourly.time.length); i++)
+                hs.push({ hora: i === desde ? "Ahora" : r.hourly.time[i].slice(11, 16), temp: Math.round(r.hourly.temperature_2m[i]),
+                          codigo: r.hourly.weather_code[i], dia: r.hourly.is_day[i] === 1 });
+            root.clHoras = hs;
+            root.clDias = r.daily.time.map((f, i) => ({ fecha: f, max: Math.round(r.daily.temperature_2m_max[i]),
+                min: Math.round(r.daily.temperature_2m_min[i]), codigo: r.daily.weather_code[i],
+                lluvia: r.daily.precipitation_probability_max[i] ?? 0 }));
+            root.clListo = true;
+        });
+    }
+    FileView {
+        id: clLugarArchivo
+        path: Quickshell.env("HOME") + "/.config/quickshell/yoru/lugar.json"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                const l = JSON.parse(text());
+                root.clAuto = false;
+                root.clLugar = l.nombre ?? ""; root.clLat = l.latitud; root.clLon = l.longitud;
+                root.clActualizar();
+            } catch (e) { root.clPorIp(); }
+        }
+        onLoadFailed: root.clPorIp()
+    }
+    Timer { interval: 15 * 60 * 1000; running: true; repeat: true; onTriggered: root.clActualizar() }
+    // sin conexión (al arrancar antes que el wifi): otra vez en 1 min
+    Timer { id: clReintento; interval: 60 * 1000; onTriggered: isNaN(root.clLat) ? root.clPorIp() : root.clActualizar() }
+
 
     // ================= SES MODU: hoparlore tiklayinca dock ses paneline donusur =================
     // yatayda: solda baslik + ana ses karti + sekmeler, sagda liste
@@ -1763,6 +1954,8 @@ Scope {
         function notif(): void { root.openNotif(); }
         // batarya paneli (batarya menun Dock seciliyken buraya yonlendirir)
         function bat(): void { root.openBat(); }
+        function clima(): void { root.openClima(); }
+        function calendario(): void { root.openCal(); }
         // ses paneli (ses menun Dock seciliyken buraya yonlendirir)
         function audio(): void { root.openAudio(); }
         // dikey <-> yatay
@@ -2250,7 +2443,7 @@ Scope {
                 // duvar kagidi modunda genisleyip uzar (yaylanarak), kapaninca yine ince dock
                 readonly property real rawW: root.wallShape ? root.morphW : (root.horiz ? Math.round(col.implicitWidth) + 28 : root.dockW)
                 width: dock.softOpen ? dock.softW : dock.rawW
-                readonly property real rawH: root.wallShape ? (root.lastMode === "ezan" ? root.ezH : (root.lastMode === "dash" ? root.dashH : (root.lastMode === "net" ? (root.horiz ? root.netHH : Math.min(win.height - 110, 660)) : (root.lastMode === "notif" ? (root.horiz ? root.notifHH : Math.min(win.height - 110, 700)) : (root.lastMode === "toast" ? root.toastH : (root.lastMode === "bat" ? root.batH : (root.lastMode === "audio" ? root.audioH : (root.horiz ? (root.lastMode === "walls" ? root.wallHH : (root.lastMode === "apps" ? root.appHH : Math.min(win.height - 110, 780))) : Math.min(win.height - 110, 780))))))))) : (root.horiz ? root.barH : Math.round(col.implicitHeight) + 24)
+                readonly property real rawH: root.wallShape ? (root.lastMode === "ezan" ? root.ezH : (root.lastMode === "dash" ? root.dashH : (root.lastMode === "net" ? (root.horiz ? root.netHH : Math.min(win.height - 110, 660)) : (root.lastMode === "notif" ? (root.horiz ? root.notifHH : Math.min(win.height - 110, 700)) : (root.lastMode === "toast" ? root.toastH : (root.lastMode === "bat" ? root.batH : (root.lastMode === "audio" ? root.audioH : (root.lastMode === "clima" ? root.climaH : (root.lastMode === "cal" ? root.calH : (root.horiz ? (root.lastMode === "walls" ? root.wallHH : (root.lastMode === "apps" ? root.appHH : Math.min(win.height - 110, 780))) : Math.min(win.height - 110, 780))))))))))) : (root.horiz ? root.barH : Math.round(col.implicitHeight) + 24)
                 height: dock.softOpen ? dock.softH : dock.rawH
                 // yumusak acilis icin ayri, tasmasiz animasyonlu kopyalar (easing'i kosullu baglamak calismiyordu:
                 // animasyon hep OutBack ile basliyor, sonda tasip geri cekiliyordu)
@@ -2640,7 +2833,8 @@ Scope {
                                 readonly property real overflow: Math.max(0, m2PlName.implicitWidth - width)
                                 Text {
                                     id: m2PlName
-                                    text: root.plShown ? root.plName : "Spotify"
+                                    // Yoru: el reproductor que suena (el original ponía siempre «Spotify»)
+                                    text: root.plShown ? root.plName : (root.player?.identity || "Spotify")
                                     font.pixelSize: 12; font.weight: Font.DemiBold
                                     color: root.accent
                                 }
@@ -3811,10 +4005,33 @@ Scope {
                             CGlyph { anchors.centerIn: parent; text: root.g(0xF0176); size: 18; color: root.accent }
                             onLeftClicked: root.toggleCafe()
                         }
-                        // Yoru: sin batería, un botón de energía con el perfil puesto
-                        // (hoja = ahorro, velocímetro = equilibrado, rayo = rendimiento)
+                        // Yoru: el tiempo (clic: la previsión de Yoru)
                         DockBtn {
-                            visible: root.sinBat
+                            visible: root.clListo
+                            w: win
+                            height: 46
+                            width: root.horiz ? 64 : root.cell
+                            tip: root.clLugar !== "" ? root.clLugar + " · " + root.clTemp + "°C" : root.clTemp + "°C"
+                            Grid {
+                                anchors.centerIn: parent
+                                columns: root.horiz ? 2 : 1
+                                spacing: root.horiz ? 4 : 1
+                                horizontalItemAlignment: Grid.AlignHCenter
+                                verticalItemAlignment: Grid.AlignVCenter
+                                CGlyph { text: root.g(root.clIcono); size: 18 }
+                                Label2 {
+                                    text: root.clTemp + "°"
+                                    font.pixelSize: 12
+                                    font.weight: Font.DemiBold
+                                }
+                            }
+                            onLeftClicked: root.openClima()
+                        }
+                        // Yoru: sin batería, el perfil de energía solo se ve si no es
+                        // el de siempre, como aviso (hoja = ahorro, rayo = rendimiento).
+                        // El panel de Energía se abre desde el panel de 夜
+                        DockBtn {
+                            visible: root.sinBat && root.bProfIdx !== 1
                             w: win
                             height: 46
                             width: root.horiz ? 48 : root.cell
@@ -3851,7 +4068,8 @@ Scope {
                     DockBtn {
                         id: clockBtn
                         w: win
-                        onLeftClicked: root.openEzan()
+                        // Yoru: el calendario (con los rezos activados, como antes)
+                        onLeftClicked: root.ezAcik ? root.openEzan() : root.openCal()
                         height: clk.implicitHeight + 6
                         width: root.horiz ? clk.implicitWidth + 16 : root.cell
                         tip: root.gunler[clock.date.getDay()] + ", " + clock.date.getDate() + " " + root.aylar[clock.date.getMonth()]
@@ -5102,6 +5320,16 @@ Scope {
                                 font.pixelSize: 11; font.bold: true; font.letterSpacing: 1.6
                                 color: root.dashArm >= 0 ? "#ff8a8a" : "#8a8a8a"
                             }
+                            // Yoru: sin batería, aquí se entra al panel de Energía
+                            // (perfil y «No suspender»)
+                            DText {
+                                visible: root.sinBat
+                                anchors.right: parent.right; anchors.rightMargin: root.horiz ? 24 : 18; y: 0
+                                text: "ENERGÍA  ›"
+                                font.pixelSize: 11; font.bold: true; font.letterSpacing: 1.6
+                                color: enMa.containsMouse ? root.accent : "#8a8a8a"
+                                MouseArea { id: enMa; anchors { fill: parent; margins: -6 } hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openBat() }
+                            }
                             Row {
                                 x: 16; y: 22; spacing: 9.5
                                 Repeater {
@@ -5132,6 +5360,586 @@ Scope {
                                             }
                                         }
                                         DText { anchors.horizontalCenter: parent.horizontalCenter; text: pb.armed ? root.t("Emin?", "Sure?") : pb.names[pb.index]; font.pixelSize: 10; color: pb.armed ? "#ff8a8a" : "#a8a8a8" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                // ================= Yoru: CALENDARIO: el dock se hace el mes =================
+                Item {
+                    width: dock.width; height: dock.height
+                    clip: true
+                    visible: root.dmode === "cal" || calUi.opacity > 0.01
+                    MouseArea { anchors.fill: parent; enabled: root.dmode === "cal" }
+                    FocusScope {
+                        id: calUi
+                        width: root.calW
+                        height: dock.height
+                        focus: root.dmode === "cal"
+                        opacity: root.dmode === "cal" && dock.width > root.calW - 30 ? 1 : 0
+                        enabled: root.dmode === "cal"
+                        Behavior on opacity { NumberAnimation { duration: root.dmode === "cal" ? 220 : 90; easing.type: Easing.OutCubic } }
+                        transform: Translate { x: root.dmode === "cal" ? 0 : -10; Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } } }
+                        Keys.onEscapePressed: root.closeMode()
+                        Keys.onLeftPressed: root.calMover(-1)
+                        Keys.onRightPressed: root.calMover(1)
+                        Keys.onPressed: e => { if (e.key === Qt.Key_Home) root.calHoy(); }
+                        Timer { id: calFocus; interval: 80; onTriggered: calUi.forceActiveFocus() }
+                        Connections { target: root; function onDmodeChanged() { if (root.dmode === "cal") { calFocus.restart(); calIn.restart(); } } }
+                        property real rise: 0
+                        SequentialAnimation {
+                            id: calIn
+                            PropertyAction { target: calUi; property: "rise"; value: 1 }
+                            PauseAnimation { duration: 120 }
+                            NumberAnimation { target: calUi; property: "rise"; to: 0; duration: 520; easing.type: Easing.OutCubic }
+                        }
+                        readonly property int cw: root.calW - 32
+                        readonly property bool enHoy: root.calAnio === clock.date.getFullYear() && root.calMes === clock.date.getMonth()
+
+                        Rectangle {
+                            anchors.fill: parent
+                            topLeftRadius: root.horiz ? 22 : 0; topRightRadius: 22; bottomRightRadius: root.horiz ? 0 : 22
+                            gradient: Gradient {
+                                GradientStop { position: 0.0; color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.16) }
+                                GradientStop { position: 0.30; color: "transparent" }
+                            }
+                        }
+
+                        // ---- volver + título ----
+                        Item {
+                            x: 8; y: 16
+                            width: 26; height: 26
+                            z: 5
+                            opacity: 1 - calUi.rise
+                            CGlyph {
+                                anchors.centerIn: parent
+                                size: 20
+                                text: root.g(root.horiz ? 0xF0140 : 0xF0141)
+                                color: calBackMa.containsMouse ? root.accent : "#e6e6e6"
+                                scale: calBackMa.pressed ? 0.85 : (calBackMa.containsMouse ? 1.12 : 1)
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
+                            }
+                            MouseArea { id: calBackMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.closeMode() }
+                        }
+                        NText {
+                            x: 40; y: 18
+                            text: "Calendario"
+                            font.pixelSize: 16; font.bold: true; color: "#ffffff"
+                            opacity: 1 - calUi.rise
+                        }
+
+                        // ---- hoy, en grande ----
+                        Rectangle {
+                            x: 16; y: 56; width: calUi.cw; height: 84; radius: 18
+                            color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.13)
+                            border.width: 1
+                            border.color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.35)
+                            opacity: 1 - calUi.rise
+                            transform: Translate { y: calUi.rise * 16 }
+                            Rectangle {
+                                x: 14; anchors.verticalCenter: parent.verticalCenter
+                                width: 52; height: 52; radius: 26
+                                color: root.accent
+                                NText { anchors.centerIn: parent; text: clock.date.getDate(); font.pixelSize: 22; font.bold: true; color: "#0b1530" }
+                            }
+                            Column {
+                                x: 80; anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width - 80 - 14
+                                spacing: 2
+                                NText {
+                                    text: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"][clock.date.getDay()]
+                                    font.pixelSize: 16; font.bold: true; color: "#ffffff"
+                                }
+                                NText {
+                                    text: clock.date.getDate() + " de " + root.calMeses[clock.date.getMonth()] + " de " + clock.date.getFullYear()
+                                    font.pixelSize: 11; color: "#cfd8ff"
+                                }
+                            }
+                        }
+
+                        // ---- el mes ----
+                        Rectangle {
+                            x: 16; y: 152; width: calUi.cw; height: 318; radius: 18
+                            color: "#101010"
+                            border.width: 1; border.color: "#1e1e1e"
+                            opacity: 1 - calUi.rise
+                            transform: Translate { y: calUi.rise * 26 }
+                            // la rueda cambia de mes
+                            WheelHandler {
+                                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                onWheel: e => root.calMover(e.angleDelta.y > 0 ? -1 : 1)
+                            }
+                            // ‹ octubre 2026 ›
+                            Item {
+                                x: 8; y: 8; width: parent.width - 16; height: 34
+                                Repeater {
+                                    model: [-1, 1]
+                                    Rectangle {
+                                        required property int modelData
+                                        x: modelData < 0 ? 0 : parent.width - width
+                                        width: 34; height: 34; radius: 12
+                                        color: calNavMa.containsMouse ? "#1c1c1c" : "transparent"
+                                        CGlyph { anchors.centerIn: parent; text: root.g(parent.modelData < 0 ? 0xF0141 : 0xF0142); size: 18; color: calNavMa.containsMouse ? root.accent : "#bdbdbd" }
+                                        MouseArea { id: calNavMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.calMover(parent.modelData) }
+                                    }
+                                }
+                                // clic en el mes: volver a hoy
+                                NText {
+                                    anchors.centerIn: parent
+                                    text: root.calMeses[root.calMes].charAt(0).toUpperCase() + root.calMeses[root.calMes].slice(1) + " " + root.calAnio
+                                    font.pixelSize: 14; font.bold: true
+                                    color: calMesMa.containsMouse && !calUi.enHoy ? root.accent : "#ffffff"
+                                    MouseArea { id: calMesMa; anchors.fill: parent; anchors.margins: -6; hoverEnabled: true; cursorShape: calUi.enHoy ? Qt.ArrowCursor : Qt.PointingHandCursor; onClicked: root.calHoy() }
+                                }
+                            }
+                            Grid {
+                                x: 8; y: 50
+                                columns: 7
+                                Repeater {
+                                    model: ["L", "M", "X", "J", "V", "S", "D"]
+                                    NText {
+                                        required property var modelData
+                                        required property int index
+                                        width: (calUi.cw - 16) / 7; height: 24
+                                        horizontalAlignment: Text.AlignHCenter
+                                        text: modelData
+                                        font.pixelSize: 10; font.bold: true; font.letterSpacing: 1
+                                        color: index >= 5 ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.8) : "#6a6a6a"
+                                    }
+                                }
+                                Repeater {
+                                    model: root.calCasillas
+                                    Item {
+                                        id: casilla
+                                        required property var modelData
+                                        width: (calUi.cw - 16) / 7; height: 40
+                                        Rectangle {
+                                            anchors.centerIn: parent
+                                            width: 34; height: 34; radius: 17
+                                            color: casilla.modelData.hoy ? root.accent : (casMa.containsMouse && casilla.modelData.delMes ? "#1c1c1c" : "transparent")
+                                            Behavior on color { ColorAnimation { duration: 120 } }
+                                        }
+                                        NText {
+                                            anchors.centerIn: parent
+                                            text: casilla.modelData.dia
+                                            font.pixelSize: 12
+                                            font.bold: casilla.modelData.hoy
+                                            color: casilla.modelData.hoy ? "#0b1530"
+                                                 : !casilla.modelData.delMes ? "#3a3a3a"
+                                                 : casilla.modelData.finde ? "#9a9a9a" : "#ededed"
+                                        }
+                                        MouseArea { id: casMa; anchors.fill: parent; hoverEnabled: true }
+                                    }
+                                }
+                            }
+                        }
+
+                        // ---- abajo: volver a hoy y la app de Calendario (eventos) ----
+                        Row {
+                            x: 16; y: 480; spacing: 8
+                            opacity: 1 - calUi.rise
+                            transform: Translate { y: calUi.rise * 34 }
+                            Repeater {
+                                model: [
+                                    { ic: 0xF00F6, n: "Hoy" },
+                                    { ic: 0xF00ED, n: "Abrir Calendario" }
+                                ]
+                                Rectangle {
+                                    id: calBtn
+                                    required property var modelData
+                                    required property int index
+                                    readonly property bool apagado: index === 0 && calUi.enHoy
+                                    width: index === 0 ? 96 : calUi.cw - 96 - 8; height: 44; radius: 14
+                                    color: calBtnMa.containsMouse && !apagado ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.2) : "#101010"
+                                    border.width: 1
+                                    border.color: calBtnMa.containsMouse && !apagado ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.5) : "#1e1e1e"
+                                    opacity: apagado ? 0.45 : 1
+                                    scale: calBtnMa.pressed && !apagado ? 0.95 : 1
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                                    Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                                    Row {
+                                        anchors.centerIn: parent
+                                        spacing: 8
+                                        CGlyph { anchors.verticalCenter: parent.verticalCenter; text: root.g(calBtn.modelData.ic); size: 16; color: root.accent }
+                                        NText { anchors.verticalCenter: parent.verticalCenter; text: calBtn.modelData.n; font.pixelSize: 12; font.bold: true; color: "#ffffff" }
+                                    }
+                                    MouseArea {
+                                        id: calBtnMa; anchors.fill: parent; hoverEnabled: true
+                                        cursorShape: calBtn.apagado ? Qt.ArrowCursor : Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (calBtn.index === 0) root.calHoy();
+                                            else { root.closeMode(); Quickshell.execDetached(["gnome-calendar"]); }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                // ================= Yoru: CLIMA: el dock se hace el panel del tiempo =================
+                Item {
+                    width: dock.width; height: dock.height
+                    clip: true
+                    visible: root.dmode === "clima" || climaUi.opacity > 0.01
+                    MouseArea { anchors.fill: parent; enabled: root.dmode === "clima" }
+                    FocusScope {
+                        id: climaUi
+                        width: root.climaW
+                        height: dock.height
+                        focus: root.dmode === "clima"
+                        opacity: root.dmode === "clima" && dock.width > root.climaW - 30 ? 1 : 0
+                        enabled: root.dmode === "clima"
+                        Behavior on opacity { NumberAnimation { duration: root.dmode === "clima" ? 220 : 90; easing.type: Easing.OutCubic } }
+                        transform: Translate { x: root.dmode === "clima" ? 0 : -10; Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } } }
+                        Keys.onEscapePressed: { if (root.clBuscando) root.clBuscando = false; else root.closeMode(); }
+                        Timer { id: climaFocus; interval: 80; onTriggered: climaUi.forceActiveFocus() }
+                        Connections { target: root; function onDmodeChanged() { if (root.dmode === "clima") { climaFocus.restart(); climaIn.restart(); } } }
+                        property real rise: 0
+                        SequentialAnimation {
+                            id: climaIn
+                            PropertyAction { target: climaUi; property: "rise"; value: 1 }
+                            PauseAnimation { duration: 120 }
+                            NumberAnimation { target: climaUi; property: "rise"; to: 0; duration: 520; easing.type: Easing.OutCubic }
+                        }
+                        readonly property int cw: root.climaW - 32
+                        // 0 = el tiempo, 1 = buscando el lugar
+                        property real busca: root.clBuscando ? 1 : 0
+                        Behavior on busca { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+
+                        // arriba, la luz del color del tema (como en Red)
+                        Rectangle {
+                            anchors.fill: parent
+                            topLeftRadius: root.horiz ? 22 : 0; topRightRadius: 22; bottomRightRadius: root.horiz ? 0 : 22
+                            gradient: Gradient {
+                                GradientStop { position: 0.0; color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.16) }
+                                GradientStop { position: 0.30; color: "transparent" }
+                            }
+                        }
+
+                        // ---- volver + título + actualizar ----
+                        Item {
+                            x: 8; y: 16
+                            width: 26; height: 26
+                            z: 5
+                            opacity: 1 - climaUi.rise
+                            CGlyph {
+                                anchors.centerIn: parent
+                                size: 20
+                                text: root.g(root.horiz ? 0xF0140 : 0xF0141)
+                                color: clBackMa.containsMouse ? root.accent : "#e6e6e6"
+                                scale: clBackMa.pressed ? 0.85 : (clBackMa.containsMouse ? 1.12 : 1)
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
+                            }
+                            MouseArea { id: clBackMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.closeMode() }
+                        }
+                        NText {
+                            x: 40; y: 18
+                            text: root.clBuscando ? "Elegir lugar" : "Clima"
+                            font.pixelSize: 16; font.bold: true; color: "#ffffff"
+                            opacity: 1 - climaUi.rise
+                        }
+                        Item {
+                            x: root.climaW - 16 - 26; y: 16
+                            width: 26; height: 26
+                            opacity: 1 - climaUi.rise
+                            CGlyph {
+                                id: clScanIc
+                                anchors.centerIn: parent
+                                size: 18
+                                text: root.g(0xF0450)
+                                color: clScanMa.containsMouse || root.clCargando ? root.accent : "#bdbdbd"
+                                RotationAnimation on rotation { running: root.clCargando; from: 0; to: 360; duration: 900; loops: Animation.Infinite }
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                            }
+                            MouseArea {
+                                id: clScanMa; anchors.fill: parent; hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: { clScanIc.rotation = 0; root.clActualizar(); }
+                            }
+                        }
+
+                        // ---- ahora: icono, temperatura y lugar ----
+                        Rectangle {
+                            x: 16; y: 56; width: climaUi.cw; height: 92; radius: 18
+                            color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.13)
+                            border.width: 1
+                            border.color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.35)
+                            opacity: (1 - climaUi.rise) * (1 - climaUi.busca)
+                            visible: climaUi.busca < 0.99
+                            transform: Translate { y: climaUi.rise * 16 }
+                            Rectangle {
+                                x: 14; anchors.verticalCenter: parent.verticalCenter
+                                width: 52; height: 52; radius: 26
+                                color: root.accent
+                                CGlyph { anchors.centerIn: parent; text: root.g(root.clIcono); size: 28; color: "#0b1530" }
+                            }
+                            Column {
+                                x: 80; anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width - 80 - 14
+                                spacing: 1
+                                Row {
+                                    spacing: 8
+                                    NText { text: root.clTemp + "°"; font.pixelSize: 30; font.bold: true; color: "#ffffff" }
+                                    NText {
+                                        anchors.baseline: parent.children[0].baseline
+                                        text: root.clDias.length ? root.clDias[0].max + "° / " + root.clDias[0].min + "°" : ""
+                                        font.pixelSize: 11; color: "#cfd8ff"
+                                    }
+                                }
+                                NText {
+                                    width: parent.width; elide: Text.ElideRight
+                                    text: root.clDescripcion(root.clCodigo)
+                                    font.pixelSize: 12; font.bold: true; color: "#ededed"
+                                }
+                                // el lugar: clic -> la pestaña Clima de Yoru, donde se cambia
+                                NText {
+                                    width: parent.width; elide: Text.ElideRight
+                                    text: root.g(0xF034E) + " " + (root.clLugar || "—") + "  " + root.g(0xF03EB)
+                                    font.pixelSize: 11; color: clLugarMa.containsMouse ? root.accent : "#cfd8ff"
+                                    MouseArea {
+                                        id: clLugarMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.clBuscando = true
+                                    }
+                                }
+                            }
+                        }
+
+                        // ---- sensación, humedad, viento, sol ----
+                        Row {
+                            x: 16; y: 158; spacing: 8
+                            opacity: (1 - climaUi.rise) * (1 - climaUi.busca)
+                            visible: climaUi.busca < 0.99
+                            transform: Translate { y: climaUi.rise * 22 }
+                            Repeater {
+                                model: [
+                                    { ic: 0xF050F, v: root.clSensacion + "°", n: "Sensación" },
+                                    { ic: 0xF058E, v: root.clHumedad + "%", n: "Humedad" },
+                                    { ic: 0xF059D, v: root.clViento + " km/h", n: "Viento" },
+                                    { ic: root.clDeDia ? 0xF059B : 0xF059C, v: root.clDeDia ? root.clAtardecer : root.clAmanecer, n: root.clDeDia ? "Se pone" : "Sale" }
+                                ]
+                                Rectangle {
+                                    required property var modelData
+                                    width: (climaUi.cw - 24) / 4; height: 62; radius: 16
+                                    color: "#101010"
+                                    border.width: 1; border.color: "#1e1e1e"
+                                    Column {
+                                        anchors.centerIn: parent
+                                        spacing: 2
+                                        CGlyph { anchors.horizontalCenter: parent.horizontalCenter; text: root.g(parent.parent.modelData.ic); size: 14; color: root.accent }
+                                        NText { anchors.horizontalCenter: parent.horizontalCenter; text: parent.parent.modelData.v; font.pixelSize: 12; font.bold: true; color: "#ffffff" }
+                                        NText { anchors.horizontalCenter: parent.horizontalCenter; text: parent.parent.modelData.n; font.pixelSize: 9; color: "#8a8a8a" }
+                                    }
+                                }
+                            }
+                        }
+
+                        // ---- próximas horas (se desliza de lado) ----
+                        NText {
+                            x: 18; y: 236
+                            text: "PRÓXIMAS HORAS"
+                            font.pixelSize: 11; font.bold: true; font.letterSpacing: 1.6; color: "#8a8a8a"
+                            opacity: (1 - climaUi.rise) * (1 - climaUi.busca)
+                            visible: climaUi.busca < 0.99
+                        }
+                        Rectangle {
+                            x: 16; y: 258; width: climaUi.cw; height: 84; radius: 16
+                            color: "#101010"
+                            border.width: 1; border.color: "#1e1e1e"
+                            opacity: (1 - climaUi.rise) * (1 - climaUi.busca)
+                            visible: climaUi.busca < 0.99
+                            transform: Translate { y: climaUi.rise * 28 }
+                            ListView {
+                                anchors.fill: parent; anchors.margins: 6
+                                orientation: ListView.Horizontal
+                                clip: true
+                                boundsBehavior: Flickable.StopAtBounds
+                                model: root.clHoras
+                                delegate: Item {
+                                    required property var modelData
+                                    required property int index
+                                    width: 50; height: 72
+                                    Rectangle {
+                                        anchors.fill: parent; radius: 12
+                                        visible: parent.index === 0
+                                        color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.16)
+                                    }
+                                    Column {
+                                        anchors.centerIn: parent
+                                        spacing: 4
+                                        NText { anchors.horizontalCenter: parent.horizontalCenter; text: parent.parent.modelData.hora; font.pixelSize: 10; color: parent.parent.index === 0 ? root.accent : "#8a8a8a" }
+                                        CGlyph { anchors.horizontalCenter: parent.horizontalCenter; text: root.g(root.clIconoDe(parent.parent.modelData.codigo, parent.parent.modelData.dia)); size: 18 }
+                                        NText { anchors.horizontalCenter: parent.horizontalCenter; text: parent.parent.modelData.temp + "°"; font.pixelSize: 12; font.bold: true; color: "#ffffff" }
+                                    }
+                                }
+                            }
+                        }
+
+                        // ---- 7 días, con la barra de mínima a máxima ----
+                        NText {
+                            x: 18; y: 356
+                            text: "7 DÍAS"
+                            font.pixelSize: 11; font.bold: true; font.letterSpacing: 1.6; color: "#8a8a8a"
+                            opacity: (1 - climaUi.rise) * (1 - climaUi.busca)
+                            visible: climaUi.busca < 0.99
+                        }
+                        Column {
+                            id: clSemana
+                            x: 10; y: 376; width: root.climaW - 20
+                            opacity: (1 - climaUi.rise) * (1 - climaUi.busca)
+                            visible: climaUi.busca < 0.99
+                            transform: Translate { y: climaUi.rise * 34 }
+                            readonly property int tMin: root.clDias.length ? Math.min(...root.clDias.map(d => d.min)) : 0
+                            readonly property int tMax: root.clDias.length ? Math.max(...root.clDias.map(d => d.max)) : 1
+                            Repeater {
+                                model: root.clDias
+                                Rectangle {
+                                    id: cdia
+                                    required property var modelData
+                                    required property int index
+                                    width: clSemana.width; height: 36; radius: 12
+                                    color: index === 0 ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.10) : (cdMa.containsMouse ? "#141414" : "transparent")
+                                    MouseArea { id: cdMa; anchors.fill: parent; hoverEnabled: true }
+                                    NText {
+                                        x: 10; anchors.verticalCenter: parent.verticalCenter
+                                        width: 74; elide: Text.ElideRight
+                                        text: root.clDia(cdia.index, cdia.modelData.fecha)
+                                        font.pixelSize: 12; font.bold: true; color: cdia.index === 0 ? root.accent : "#ededed"
+                                    }
+                                    CGlyph { x: 86; anchors.verticalCenter: parent.verticalCenter; text: root.g(root.clIconoDe(cdia.modelData.codigo, true)); size: 17 }
+                                    NText {
+                                        x: 112; anchors.verticalCenter: parent.verticalCenter
+                                        width: 34
+                                        text: cdia.modelData.lluvia >= 10 ? cdia.modelData.lluvia + "%" : ""
+                                        font.pixelSize: 10; color: "#7fb4ff"
+                                    }
+                                    NText {
+                                        x: 150; width: 26; horizontalAlignment: Text.AlignRight
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: cdia.modelData.min + "°"; font.pixelSize: 11; color: "#8a8a8a"
+                                    }
+                                    // barra de la semana: de la más fría a la más cálida
+                                    Rectangle {
+                                        id: clPista
+                                        x: 184; anchors.verticalCenter: parent.verticalCenter
+                                        width: parent.width - 184 - 44; height: 5; radius: 2.5
+                                        color: "#1c1c1c"
+                                        readonly property real k: clPista.width / Math.max(1, clSemana.tMax - clSemana.tMin)
+                                        Rectangle {
+                                            x: (cdia.modelData.min - clSemana.tMin) * clPista.k
+                                            width: Math.max(6, (cdia.modelData.max - cdia.modelData.min) * clPista.k)
+                                            height: parent.height; radius: 2.5
+                                            gradient: Gradient {
+                                                orientation: Gradient.Horizontal
+                                                GradientStop { position: 0; color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.55) }
+                                                GradientStop { position: 1; color: root.accent }
+                                            }
+                                        }
+                                    }
+                                    NText {
+                                        anchors.right: parent.right; anchors.rightMargin: 10
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: cdia.modelData.max + "°"; font.pixelSize: 12; font.bold: true; color: "#ffffff"
+                                    }
+                                }
+                            }
+                        }
+
+                        // ---- elegir el lugar: buscar la ciudad o usar la conexión ----
+                        Item {
+                            x: 16; y: 56; width: climaUi.cw; height: parent.height - 56 - 14
+                            opacity: (1 - climaUi.rise) * climaUi.busca
+                            visible: climaUi.busca > 0.01
+                            transform: Translate { y: (1 - climaUi.busca) * 18 }
+                            Rectangle {
+                                id: clCaja
+                                width: parent.width; height: 40; radius: 14
+                                color: "#0d0d0d"
+                                border.width: 1
+                                border.color: clIn.activeFocus ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.6) : "#262626"
+                                CGlyph { id: clLupa; x: 10; anchors.verticalCenter: parent.verticalCenter; text: root.g(0xF0349); size: 16; color: root.accent }
+                                TextInput {
+                                    id: clIn
+                                    anchors.left: clLupa.right; anchors.leftMargin: 6
+                                    anchors.right: parent.right; anchors.rightMargin: 12
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    color: "#ffffff"
+                                    font.family: root.fontName; font.pixelSize: 13
+                                    selectionColor: root.accent
+                                    clip: true
+                                    // se busca al dejar de escribir un momento
+                                    onTextChanged: clEspera.restart()
+                                    Timer { id: clEspera; interval: 350; onTriggered: root.clBuscar(clIn.text) }
+                                    Keys.onReturnPressed: e => { if (root.clResultados.length) root.clElegir(root.clResultados[0]); e.accepted = true; }
+                                    Keys.onEnterPressed: e => { if (root.clResultados.length) root.clElegir(root.clResultados[0]); e.accepted = true; }
+                                    Keys.onEscapePressed: e => { root.clBuscando = false; climaUi.forceActiveFocus(); e.accepted = true; }
+                                    Connections {
+                                        target: root
+                                        function onClBuscandoChanged() {
+                                            if (root.clBuscando) { clIn.text = ""; root.clResultados = []; clIn.forceActiveFocus(); }
+                                        }
+                                    }
+                                    NText {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: "Busca tu ciudad…"
+                                        color: "#5a5a5a"; font.pixelSize: 13
+                                        visible: clIn.text.length === 0
+                                    }
+                                }
+                            }
+                            // usar la conexión a internet (como al principio)
+                            Rectangle {
+                                id: clIp
+                                y: 50; width: parent.width; height: 50; radius: 14
+                                color: root.clAuto ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.13) : (clIpMa.containsMouse ? "#181818" : "#101010")
+                                border.width: 1
+                                border.color: root.clAuto ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.35) : "#1e1e1e"
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                                CGlyph { x: 12; anchors.verticalCenter: parent.verticalCenter; text: root.g(0xF01A4); size: 17; color: root.accent }
+                                Column {
+                                    x: 40; anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 1
+                                    NText { text: "Usar mi ubicación"; font.pixelSize: 12; font.bold: true; color: "#ffffff" }
+                                    NText { text: root.clAuto ? "Ahora mismo: " + root.clLugar : "Se adivina por tu conexión"; font.pixelSize: 10; color: "#8a8a8a" }
+                                }
+                                MouseArea { id: clIpMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.clUsarIp() }
+                            }
+                            NText {
+                                x: 2; y: 116
+                                text: "RESULTADOS"
+                                visible: root.clResultados.length > 0
+                                font.pixelSize: 11; font.bold: true; font.letterSpacing: 1.6; color: "#8a8a8a"
+                            }
+                            NText {
+                                x: 2; y: 116
+                                visible: root.clResultados.length === 0 && clIn.text.trim().length >= 2 && !clEspera.running
+                                text: "No encuentro ningún sitio así"
+                                font.pixelSize: 11; color: "#6a6a6a"
+                            }
+                            Column {
+                                x: -6; y: 136; width: parent.width + 12
+                                spacing: 4
+                                Repeater {
+                                    model: root.clResultados
+                                    Rectangle {
+                                        id: clRes
+                                        required property var modelData
+                                        required property int index
+                                        width: parent.width; height: 46; radius: 12
+                                        color: clResMa.containsMouse || (index === 0 && !clResMa.containsMouse && clIn.activeFocus) ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.13) : "transparent"
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+                                        CGlyph { x: 12; anchors.verticalCenter: parent.verticalCenter; text: root.g(0xF034E); size: 16; color: clResMa.containsMouse ? root.accent : "#bdbdbd" }
+                                        Column {
+                                            x: 40; anchors.verticalCenter: parent.verticalCenter
+                                            width: parent.width - 52
+                                            spacing: 1
+                                            NText { width: parent.width; elide: Text.ElideRight; text: clRes.modelData.nombre; font.pixelSize: 12; font.bold: true; color: "#ffffff" }
+                                            NText { width: parent.width; elide: Text.ElideRight; text: clRes.modelData.zona; font.pixelSize: 10; color: "#8a8a8a" }
+                                        }
+                                        MouseArea { id: clResMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.clElegir(clRes.modelData) }
                                     }
                                 }
                             }

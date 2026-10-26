@@ -18,6 +18,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 import qs.comun
 import qs.barra
 import qs.paneles
@@ -37,6 +38,42 @@ ShellRoot {
 
         function listo(): bool {
             return true;
+        }
+    }
+
+    // Captura congelada (niri/scripts/captura-editor.sh): una foto de cada
+    // pantalla encima de todo, para que no se mueva nada mientras eliges la
+    // zona con slurp. (La captura de niri también congela, pero se acuerda del
+    // último rectángulo.)
+    //   qs -c yoru ipc call congelar mostrar <carpeta con SALIDA.png>
+    //   qs -c yoru ipc call congelar quitar
+    property string congelada: ""
+    Variants {
+        model: raiz.congelada !== "" ? Quickshell.screens : []
+        PanelWindow {
+            required property var modelData
+            screen: modelData
+            anchors { top: true; bottom: true; left: true; right: true }
+            exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.namespace: "yoru-congelado"
+            color: "black"
+            Image {
+                anchors.fill: parent
+                source: raiz.congelada !== "" ? "file://" + raiz.congelada + "/" + modelData.name + ".png" : ""
+                cache: false
+                smooth: false
+            }
+        }
+    }
+    IpcHandler {
+        target: "congelar"
+
+        function mostrar(carpeta: string): void {
+            raiz.congelada = carpeta;
+        }
+        function quitar(): void {
+            raiz.congelada = "";
         }
     }
 
