@@ -479,7 +479,7 @@ Item {
                 color: Tema.gris
             }
             Regulador {
-                visible: !Ajustes.minimalista
+                visible: !Ajustes.recto
                 titulo: "Esquinas de la barra"
                 valor: Ajustes.radio / 20
                 mostrado: Ajustes.radio + " px"
@@ -487,11 +487,18 @@ Item {
             }
             // Las de niri: 0 (en ángulo recto) a 24 px
             Regulador {
-                visible: !Ajustes.minimalista
+                visible: !Ajustes.recto
                 titulo: "Esquinas de las ventanas"
                 valor: Ajustes.radioVentanas / 24
                 mostrado: Ajustes.radioVentanas + " px"
                 onMovido: nuevo => Ajustes.radioVentanas = Math.round(nuevo * 24)
+            }
+            Interruptor {
+                width: parent.width
+                titulo: "Ventanas a pares"
+                detalle: "Con dos ventanas que llenan la pantalla, al agrandar una la otra se encoge (como en Windows)"
+                activo: Ajustes.ventanasAPares
+                onCambiar: v => Ajustes.ventanasAPares = v
             }
             // Transparencias: de 0 (invisible) a 1 (sólido)
             Regulador {

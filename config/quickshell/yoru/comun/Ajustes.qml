@@ -27,6 +27,7 @@ Singleton {
     // ------------------------------------------------------------ Aspecto
     property alias radio: datos.radio                 // esquinas de islas y paneles (px)
     property alias radioVentanas: datos.radioVentanas // esquinas de las ventanas (px, ver abajo)
+    property alias ventanasAPares: datos.ventanasAPares // dos ventanas que llenan la pantalla: al agrandar una, la otra se encoge (Niri.qml)
     property alias opacidadIslas: datos.opacidadIslas
     property alias opacidadPaneles: datos.opacidadPaneles
     property alias letra: datos.letra                 // texto de la barra (px)
@@ -202,6 +203,7 @@ window-rule {
 
             property int radio: 10
             property int radioVentanas: 10
+            property bool ventanasAPares: true
             property real opacidadIslas: 0.45
             property real opacidadPaneles: 0.90
             property int letra: 13

@@ -69,6 +69,65 @@ Singleton {
         enfocada = id !== null && vs[id] ? vs[id] : null;
     }
 
+    // ------------------------------------------------- Ventanas a pares
+    // Como en Windows: con dos columnas que llenan la pantalla, al cambiar el
+    // ancho de una (Mod+R, Mod+- / Mod+=, o arrastrando su borde), la otra
+    // se ajusta para que sigan llenándola. Con más de dos, o si no la
+    // llenaban, nada (Ajustes › Aspecto › Ventanas a pares)
+    property var _anchoPedido: ({})   // id → ancho que le hemos pedido (su aviso no cuenta)
+    function _aPares(cambios) {
+        if (!Ajustes.ventanasAPares)
+            return;
+        const hechas = [];             // una vez por columna (sus ventanas cambian a la vez)
+        for (const c of cambios) {
+            const v = ventanas[c.id];
+            if (!v || v.is_floating || !c.antes?.pos_in_scrolling_layout || !c.ahora?.pos_in_scrolling_layout)
+                continue;
+            const antes = c.antes.tile_size[0], ahora = c.ahora.tile_size[0];
+            if (Math.abs(ahora - antes) < 1)
+                continue;
+            // El cambio que pedimos nosotros a la otra
+            if (c.id in _anchoPedido) {
+                const pedido = _anchoPedido[c.id];
+                delete _anchoPedido[c.id];
+                if (Math.abs(pedido - ahora) <= 2)
+                    continue;
+            }
+            const columna = c.ahora.pos_in_scrolling_layout[0];
+            const clave = v.workspace_id + ":" + columna;
+            if (hechas.includes(clave))
+                continue;
+            hechas.push(clave);
+
+            // Las columnas del escritorio: tienen que ser justo dos
+            const delEscritorio = Object.values(ventanas).filter(w => w.workspace_id === v.workspace_id
+                && !w.is_floating && w.layout?.pos_in_scrolling_layout);
+            const columnas = [...new Set(delEscritorio.map(w => w.layout.pos_in_scrolling_layout[0]))];
+            if (columnas.length !== 2)
+                continue;
+            const otra = delEscritorio.find(w => w.layout.pos_in_scrolling_layout[0] !== columna);
+
+            // El ancho útil: la pantalla, menos lo que reserva el dock y los
+            // tres huecos (bordes y entre las dos)
+            const salida = escritorios.find(e => e.id === v.workspace_id)?.output;
+            const pantalla = Quickshell.screens.find(p => p.name === salida);
+            if (!pantalla)
+                continue;
+            const hueco = Ajustes.minimalista ? 0 : Tema.gaps;
+            const dock = Ajustes.estiloDock && !Ajustes.dockEsconder && Ajustes.dockLado === "izquierda" ? 56 : 0;
+            const util = pantalla.width - dock - 3 * hueco;
+            // ¿Llenaban la pantalla antes de este cambio?
+            const deLaOtra = otra.layout.tile_size[0];
+            if (Math.abs(antes + deLaOtra - util) > 4)
+                continue;
+            const nuevo = Math.max(240, Math.round(util - ahora));
+            if (Math.abs(nuevo - deLaOtra) < 2)
+                continue;
+            _anchoPedido = Object.assign({}, _anchoPedido, {[otra.id]: nuevo});
+            accion("set-window-width", "--id", String(otra.id), String(nuevo));
+        }
+    }
+
     function _procesar(linea) {
         let ev;
         try {
@@ -114,6 +173,18 @@ Singleton {
             ventanas = vs;
             if (enfocada && enfocada.id === ev.WindowClosed.id)
                 enfocada = null;
+        } else if (ev.WindowLayoutsChanged) {
+            // Cambió el tamaño o el sitio de algunas ventanas
+            const vs = Object.assign({}, ventanas);
+            const cambios = [];
+            for (const [id, layout] of ev.WindowLayoutsChanged.changes) {
+                if (!vs[id])
+                    continue;
+                cambios.push({id: id, antes: vs[id].layout, ahora: layout});
+                vs[id] = Object.assign({}, vs[id], {layout: layout});
+            }
+            ventanas = vs;
+            _aPares(cambios);
         } else if (ev.ScreenshotCaptured) {
             captura(ev.ScreenshotCaptured.path ?? "");
         } else if (ev.OverviewOpenedOrClosed) {

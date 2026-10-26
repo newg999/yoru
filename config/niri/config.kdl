@@ -155,6 +155,52 @@ blur {
 animations {
     slowdown 0.8
     // off
+
+    // Al abrir una app, la ventana «surge»: crece desde el 90 %, sube unos
+    // píxeles y aparece con un fundido, con un rebote suave al final (el
+    // muelle). Al cerrarla, al revés, sin rebote.
+    window-open {
+        // Más blando (stiffness) = más lento
+        spring damping-ratio=0.75 stiffness=300 epsilon=0.0001
+        custom-shader r"
+            vec4 open_color(vec3 coords_geo, vec3 size_geo) {
+                // p puede pasar de 1 con el muelle (el rebote); a, no
+                float p = niri_progress;
+                float a = niri_clamped_progress;
+                float escala = 0.9 + 0.1 * p;
+                float subida = (1.0 - p) * 28.0 / size_geo.y;
+                vec2 geo = vec2(0.5) + (coords_geo.xy - vec2(0.5) - vec2(0.0, subida)) / escala;
+                // Se recorta por la imagen (que lleva también el borde de foco,
+                // por fuera de la ventana), no por la ventana: así el borde
+                // crece con ella en vez de aparecer de golpe al final
+                vec2 tex = (niri_geo_to_tex * vec3(geo, 1.0)).st;
+                if (tex.x < 0.0 || tex.x > 1.0 || tex.y < 0.0 || tex.y > 1.0)
+                    return vec4(0.0);
+                vec4 color = texture2D(niri_tex, tex);
+                return color * a;
+            }
+        "
+    }
+    window-close {
+        duration-ms 310
+        curve "ease-out-quad"
+        custom-shader r"
+            vec4 close_color(vec3 coords_geo, vec3 size_geo) {
+                float p = 1.0 - niri_clamped_progress;
+                float escala = 0.92 + 0.08 * p;
+                float bajada = (1.0 - p) * 20.0 / size_geo.y;
+                vec2 geo = vec2(0.5) + (coords_geo.xy - vec2(0.5) - vec2(0.0, bajada)) / escala;
+                // Se recorta por la imagen (que lleva también el borde de foco,
+                // por fuera de la ventana), no por la ventana: así el borde
+                // crece con ella en vez de aparecer de golpe al final
+                vec2 tex = (niri_geo_to_tex * vec3(geo, 1.0)).st;
+                if (tex.x < 0.0 || tex.x > 1.0 || tex.y < 0.0 || tex.y > 1.0)
+                    return vec4(0.0);
+                vec4 color = texture2D(niri_tex, tex);
+                return color * p;
+            }
+        "
+    }
 }
 
 // Por defecto, llevar el ratón a la esquina superior izquierda abre el
