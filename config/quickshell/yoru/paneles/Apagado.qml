@@ -6,7 +6,6 @@
 //    R reiniciar, A apagar
 //
 //  Para añadir opciones: una línea en «opciones» de comun/Sesion.qml.
-//  (con la barra en píldora es una página de la píldora: PaginaApagado.qml)
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -19,7 +18,7 @@ Panel {
     lado: "derecha"
     ancho: 340
 
-    // Las opciones: comun/Sesion.qml (las comparte con la píldora)
+    // Las opciones: comun/Sesion.qml
     readonly property var opciones: Sesion.opciones
     readonly property string encendido: Sesion.encendido
 

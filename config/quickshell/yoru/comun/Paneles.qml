@@ -50,13 +50,6 @@ Singleton {
             alternarAjustes(enSeccion);
             return;
         }
-        // Con la barra en píldora, el lanzador, el portapapeles, los fondos
-        // y el apagado no son paneles aparte: la píldora se transforma en
-        // ellos (páginas de paneles/Paginas.qml)
-        if (Ajustes.pildora && ["lanzador", "portapapeles", "fondos", "apagado"].includes(nombre)) {
-            enSeccion = nombre;
-            nombre = "pildora";
-        }
         if (abierto === nombre && pantalla === enPantalla && seccion === (enSeccion ?? "")) {
             cerrar();
             return;

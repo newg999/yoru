@@ -11,8 +11,6 @@
 //        nombre: "conexion"     // el que abre Paneles.alternar("conexion", ...)
 //        lado: "derecha"        // "izquierda", "centro", "derecha"
 //                               // o "medio" (en mitad de la pantalla)
-//                               // (con la barra en píldora, todos menos
-//                               // «medio» salen centrados bajo ella)
 //        MiContenido {}
 //    }
 // ============================================================================
@@ -95,9 +93,7 @@ PanelWindow {
             // Con la barra minimalista, pegado a ella: sin hueco, esquinas
             // rectas, su mismo fondo y un borde fino
             readonly property bool pegado: Ajustes.minimalista && !enMedio
-            // Con la barra en píldora, todo sale centrado bajo ella (con la
-            // minimalista, cada uno bajo su botón, como con las islas)
-            readonly property string sitio: Ajustes.pildora && !enMedio ? "centro" : ventana.lado
+            readonly property string sitio: ventana.lado
 
             // Al abrirse se desliza un poco desde la barra
             readonly property real deslizar: (1 - ventana.progreso) * 14

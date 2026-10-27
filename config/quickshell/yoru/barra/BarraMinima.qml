@@ -1,6 +1,6 @@
 // ============================================================================
 //  Barra minimalista — una franja fina de lado a lado (Ajustes › Barra y
-//  dock › Minimalista). Lo mismo que la píldora, sin transformarse:
+//  dock › Minimalista):
 //
 //    ━ • •  Ventana     ( ♪ Canción ⏮⏯⏭ )  14:02  󰖐 16°     󰘚 4% 󰍛 21% 󰔏 50°  󰅌 󰓓 󰂚  󰕾 󰖩 󰂯
 //
@@ -9,7 +9,7 @@
 //  hora = calendario · en el tiempo = clima · en la CPU o la RAM = monitor ·
 //  audio/red/bluetooth = el centro de control (un hueco libre cierra lo abierto)
 //  Se abre debajo de lo pulsado: la hora y la canción en el centro; la conexión y los
-//  avisos, a la derecha (paneles/PanelPaginas.qml, con las páginas de la píldora).
+//  avisos, a la derecha (paneles/PanelPaginas.qml).
 // ============================================================================
 import QtQuick
 import Quickshell

@@ -26,13 +26,11 @@ PanelWindow {
 
     readonly property bool enfocada: (Niri.escritorios.find(e => e.is_focused)?.output ?? modelData.name) === modelData.name
     // (con el estilo Dock no: los saca el propio dock, yoru-dock)
-    // (con la píldora abierta tampoco: saldrían encima de ella; esperan)
     readonly property bool mostrar: enfocada && !Paneles.esta("notificaciones", modelData)
-        && !(Ajustes.pildora && Paneles.esta("pildora", modelData))
         && Notificaciones.emergentes.length > 0 && !Ajustes.estiloDock
 
     readonly property bool minima: Ajustes.minimalista
-    readonly property bool aLaDerecha: Ajustes.avisosLado !== "centro" && !Ajustes.pildora
+    readonly property bool aLaDerecha: Ajustes.avisosLado !== "centro"
     readonly property int relleno: minima ? 10 : 0
 
     // Al aparecer, el recuadro de la minimalista baja desde la barra
@@ -53,8 +51,7 @@ PanelWindow {
     }
 
     visible: mostrar
-    // A la derecha o en el centro (Ajustes › Notificaciones); con la barra
-    // en píldora, siempre en el centro, bajo ella
+    // A la derecha o en el centro (Ajustes › Notificaciones)
     anchors { top: true; right: aLaDerecha }
     // Bajo la barra (pegados a ella con la minimalista); con la barra a la
     // izquierda, arriba del todo

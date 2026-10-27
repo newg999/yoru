@@ -3,8 +3,7 @@ pragma Singleton
 // ============================================================================
 //  Copiados — el historial del portapapeles (cliphist)
 //
-//  Lo usan el panel del portapapeles (paneles/Portapapeles.qml) y la página
-//  «portapapeles» de la píldora (paneles/PaginaPortapapeles.qml):
+//  Lo usa el panel del portapapeles (paneles/Portapapeles.qml):
 //      Copiados.leer()       al abrir (se vuelve a pedir a cliphist)
 //      Copiados.copiar(e)    la vuelve a copiar (pega con Ctrl+V)
 //      Copiados.borrar(e)    la quita del historial · borrarTodo()

@@ -1,6 +1,6 @@
 // ============================================================================
-//  Página «control»: el centro de control de las tres barras (Islas, Píldora
-//  y Minimalista; ver Paginas.qml)
+//  Página «control»: el centro de control de las islas y la minimalista
+//  (ver Paginas.qml)
 //
 //    [󰖩 Wi-Fi      ] [󰂚 No molestar ]     icono = on/off · resto = su lista,
 //    [󰂯 Bluetooth  ] [󰊴 Modo juego  ]     desplegada aquí debajo (SeccionWifi/Bluetooth)
@@ -12,10 +12,6 @@
 //    [󰅌] [󰒓] [󰐥]                       portapapeles, ajustes y apagar
 //    Notificaciones           Borrar
 //    las tres últimas, o «Todo al día»
-//
-//  Con la barra en píldora (como ChillPill): arriba lo que suena y las
-//  baldosas son botones anchos, de tres en tres: clic = encender/apagar ·
-//  clic en › (o derecho) = su lista (wifi, bluetooth)
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -23,7 +19,6 @@ import Quickshell.Networking
 import Quickshell.Bluetooth
 import Quickshell.Services.Pipewire
 import qs.comun
-import qs.bloqueo
 
 Column {
     id: pagina
@@ -42,146 +37,8 @@ Column {
     readonly property var adaptador: Bluetooth.defaultAdapter
     readonly property var btConectados: Bluetooth.devices.values.filter(d => d.connected)
 
-    component Redondo: Rectangle {
-        id: redondo
-        property string icono
-        property string titulo
-        property bool encendida: false
-        property bool conLista: false
-        property bool elegida: false
-        signal alternar()
-        signal elegir()
-        height: 46
-        radius: Tema.esquina(23)
-        color: redondo.encendida ? Tema.claro(redondoRaton.containsMouse ? 0.20 : 0.15)
-            : redondoRaton.containsMouse ? Tema.cajaHover : Tema.caja
-        Behavior on color { ColorAnimation { duration: Tema.rapida } }
-        border.width: redondo.elegida ? 1 : 0
-        border.color: Tema.claro(0.5)
-        scale: redondoRaton.pressed ? 0.96 : 1
-        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutBack } }
-
-        MouseArea {
-            id: redondoRaton
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
-            onClicked: e => e.button === Qt.RightButton && redondo.conLista ? redondo.elegir() : redondo.alternar()
-        }
-        Texto {
-            id: redondoIcono
-            anchors { left: parent.left; leftMargin: 16; verticalCenter: parent.verticalCenter }
-            text: redondo.icono
-            font.pixelSize: 16
-            color: redondo.encendida ? Tema.blanco : Tema.gris
-        }
-        Texto {
-            anchors { left: redondoIcono.right; leftMargin: 10; right: flecha.left; rightMargin: 4; verticalCenter: parent.verticalCenter }
-            elide: Text.ElideRight
-            text: redondo.titulo
-            font.pixelSize: 12
-            color: redondo.encendida ? Tema.texto : Tema.gris
-        }
-        // › = su lista
-        Texto {
-            id: flecha
-            anchors { right: parent.right; rightMargin: redondo.conLista ? 14 : 0; verticalCenter: parent.verticalCenter }
-            visible: redondo.conLista
-            width: redondo.conLista ? implicitWidth : 0
-            text: "󰅂"
-            font.pixelSize: 14
-            color: flechaRaton.containsMouse ? Tema.blanco : Tema.gris
-            MouseArea {
-                id: flechaRaton
-                anchors { fill: parent; margins: -8 }
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: redondo.elegir()
-            }
-        }
-    }
-
-    // Lo que suena, arriba (como ChillPill; solo con la píldora)
-    Loader {
-        width: parent.width
-        active: Ajustes.pildora
-        visible: item?.visible ?? false
-        sourceComponent: MusicaBloqueo {
-            width: pagina.width
-            color: Tema.caja
-            border.width: 0
-        }
-    }
-
-    // ------------------------------------- Botones anchos (píldora)
-    Grid {
-        visible: Ajustes.pildora
-        width: parent.width
-        columns: 3
-        spacing: 8
-        readonly property real ancho: (width - 2 * spacing) / 3
-        Redondo {
-            width: parent.ancho
-            icono: Networking.wifiEnabled ? "󰖩" : "󰖪"
-            titulo: pagina.redWifi ? pagina.redWifi.name : "Wi-Fi"
-            encendida: Networking.wifiEnabled
-            conLista: true
-            elegida: pagina.lista === "wifi"
-            onAlternar: Networking.wifiEnabled = !Networking.wifiEnabled
-            onElegir: pagina.elegir("wifi")
-        }
-        Redondo {
-            width: parent.ancho
-            icono: pagina.adaptador?.enabled ? "󰂯" : "󰂲"
-            titulo: pagina.btConectados.length === 1 ? pagina.btConectados[0].name : "Bluetooth"
-            encendida: pagina.adaptador?.enabled ?? false
-            conLista: true
-            elegida: pagina.lista === "bluetooth"
-            onAlternar: Radios.alternarBluetooth()
-            onElegir: pagina.elegir("bluetooth")
-        }
-        Redondo {
-            width: parent.ancho
-            icono: Notificaciones.noMolestar ? "󰂛" : "󰂚"
-            titulo: "No molestar"
-            encendida: Notificaciones.noMolestar
-            onAlternar: Notificaciones.noMolestar = !Notificaciones.noMolestar
-        }
-        Redondo {
-            width: parent.ancho
-            icono: "󰊴"
-            titulo: "Juego"
-            encendida: Juego.activo
-            onAlternar: Juego.activo ? Juego.terminar() : Juego.empezar()
-        }
-        Redondo {
-            width: parent.ancho
-            icono: "󰖔"
-            titulo: "Luz noct."
-            encendida: LuzNocturna.encendida
-            property string ultimo: "auto"
-            onAlternar: {
-                if (LuzNocturna.encendida) {
-                    ultimo = Ajustes.luzNocturna;
-                    Ajustes.luzNocturna = "apagada";
-                } else {
-                    Ajustes.luzNocturna = ultimo;
-                }
-            }
-        }
-        Redondo {
-            width: parent.ancho
-            icono: "󰅶"
-            titulo: "Despierto"
-            encendida: Despierto.activo
-            onAlternar: Despierto.activo = !Despierto.activo
-        }
-    }
-
     // ------------------------------------------------------------ Baldosas
     Grid {
-        visible: !Ajustes.pildora
         width: parent.width
         columns: 2
         spacing: 8

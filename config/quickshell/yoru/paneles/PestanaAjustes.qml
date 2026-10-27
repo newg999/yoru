@@ -307,7 +307,6 @@ Item {
                 width: parent.width
                 opciones: [
                     {id: "arriba", icono: "󰕮", texto: "Islas"},
-                    {id: "pildora", icono: "󰍜", texto: "Píldora"},
                     {id: "minimalista", icono: "󰖯", texto: "Minimalista"},
                     {id: "dock", icono: "󰍉", texto: "Dock"}
                 ]
@@ -333,16 +332,6 @@ Item {
                 activo: Ajustes.dockEsconder
                 onCambiar: v => Ajustes.ponerDockEsconder(v)
             }
-            // Píldora: redonda o recta (como la minimalista: pegada arriba y
-            // sin esquinas redondas, tampoco las de las ventanas)
-            Interruptor {
-                visible: Ajustes.pildora
-                width: parent.width
-                titulo: "Recta"
-                detalle: "Pegada al borde de arriba y todo con esquinas rectas, como la minimalista"
-                activo: Ajustes.pildoraRecta
-                onCambiar: v => Ajustes.pildoraRecta = v
-            }
             Texto {
                 visible: Ajustes.centrada
                 width: parent.width
@@ -350,8 +339,6 @@ Item {
                 wrapMode: Text.WordWrap
                 text: Ajustes.estiloDock
                     ? "El dock de LeyzS QsDock, adaptado a Yoru: pegado al borde, con tus apps, lo que suena y la hora; se transforma en cada panel. Doble clic en 夜 lo cambia de lado."
-                    : Ajustes.pildora
-                    ? "Una sola píldora arriba (escritorios, hora y lo que suena) que se transforma en todo: el centro de control, el lanzador, el portapapeles, los fondos, el apagado y los avisos."
                     : "Una barra fina de lado a lado: escritorios y ventana a la izquierda, la hora en el centro y la bandeja a la derecha. Al pulsarla, el centro de control se abre debajo."
                 font.bold: false
                 font.pixelSize: 12

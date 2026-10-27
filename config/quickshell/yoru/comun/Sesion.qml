@@ -3,9 +3,8 @@ pragma Singleton
 // ============================================================================
 //  Sesion — bloquear, suspender, cerrar sesión, reiniciar y apagar
 //
-//  Lo usan el menú de apagado (paneles/Apagado.qml) y la página «apagado»
-//  de la píldora (paneles/PaginaApagado.qml). Para añadir opciones: una
-//  línea en «opciones» (peligrosa: pide confirmar en la píldora).
+//  Lo usa el menú de apagado (paneles/Apagado.qml). Para añadir opciones:
+//  una línea en «opciones».
 // ============================================================================
 import QtQuick
 import Quickshell

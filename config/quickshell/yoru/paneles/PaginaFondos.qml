@@ -1,5 +1,5 @@
 // ============================================================================
-//  Página «fondos» de la píldora (Pildora.qml): los fondos en cuadrícula,
+//  Página «fondos» (Paginas.qml): los fondos en cuadrícula,
 //  cuatro por fila (rueda = bajar). Clic = ponerlo; el puesto va con borde.
 //  (El selector grande, con más opciones: Mod+Alt+W)
 // ============================================================================
@@ -27,7 +27,7 @@ Item {
     }
 
     function poner(f) {
-        console.info("Píldora › fondo:", f.ruta);
+        console.info("Fondos › fondo:", f.ruta);
         actual = f.ruta;
         Niri.lanzar([casa + "/.config/niri/scripts/wallpaper.sh", f.ruta]);
     }

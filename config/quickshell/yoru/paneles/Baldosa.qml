@@ -15,7 +15,7 @@ Rectangle {
     property string detalle: ""
     property bool encendida: false
     property bool elegida: false         // su lista está abierta
-    property bool conFlecha: true        // la 󰅀 de la derecha (la píldora no la lleva)
+    property bool conFlecha: true        // la 󰅀 de la derecha
     signal alternar()                    // encender / apagar
     signal elegir()                      // abrir su lista
 

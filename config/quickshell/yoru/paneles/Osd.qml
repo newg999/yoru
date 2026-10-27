@@ -41,8 +41,7 @@ PanelWindow {
 
     function avisar(que) {
         // Al arrancar, Pipewire «cambia» todo de golpe: eso no cuenta
-        // (con la píldora no: lo enseña ella, Pildora.qml)
-        if (!listo || !enfocada || Ajustes.pildora)
+        if (!listo || !enfocada)
             return;
         tipo = que;
         mostrar = true;

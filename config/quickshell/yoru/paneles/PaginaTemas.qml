@@ -1,5 +1,5 @@
 // ============================================================================
-//  Página «temas» de la píldora (Pildora.qml): las paletas de «yoru tema»,
+//  Página «temas» (Paginas.qml): las paletas de «yoru tema»,
 //  con buscador y sus colores en puntitos. Clic = ponerla (tarda un poco:
 //  regenera los colores de todo). La que está puesta va resaltada.
 // ============================================================================

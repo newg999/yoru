@@ -1,5 +1,5 @@
 // ============================================================================
-//  Página «sistema» de la píldora (Pildora.qml): lo que en la barra de islas
+//  Página «sistema» (Paginas.qml): lo que en la barra de islas
 //  está siempre a la vista
 //
 //    [ CPU 12% ━━── ] [ RAM 40% ━━━━─ ] [ 52° ━━━── ]   clic = monitor

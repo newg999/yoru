@@ -10,7 +10,7 @@ import qs.comun
 Item {
     id: cal
 
-    property bool conApp: true    // el botón 󰃭 que abre GNOME Calendar (la píldora no lo lleva)
+    property bool conApp: true    // el botón 󰃭 que abre GNOME Calendar
 
     readonly property var meses: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
         "agosto", "septiembre", "octubre", "noviembre", "diciembre"]

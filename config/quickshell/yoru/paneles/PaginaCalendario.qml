@@ -1,6 +1,6 @@
 // ============================================================================
-//  Página «calendario» de la píldora (Pildora.qml): el mes, como en el panel
-//  central (Calendario.qml). Se abre al pulsar la hora con la píldora abierta.
+//  Página «calendario» (Paginas.qml): el mes, como en el panel central
+//  (Calendario.qml).
 //    󰅁 󰅂, rueda o ← → = cambiar de mes · clic en el título o Inicio = hoy
 // ============================================================================
 import QtQuick

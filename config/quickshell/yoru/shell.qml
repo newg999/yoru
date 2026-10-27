@@ -82,11 +82,6 @@ ShellRoot {
         model: Quickshell.screens
         Barra {}
     }
-    // O la barra en una sola píldora que se abre en panel (Ajustes › Barra y dock)
-    Variants {
-        model: Quickshell.screens
-        Pildora {}
-    }
     // O una barra fina de lado a lado
     Variants {
         model: Quickshell.screens
@@ -117,7 +112,7 @@ ShellRoot {
     }
     Component.onCompleted: estiloDock()
     // Las páginas (control, calendario, multimedia, clima...) bajo las
-    // islas o la minimalista; la píldora las lleva dentro
+    // islas o la minimalista
     Variants {
         model: Quickshell.screens
         PanelPaginas {}

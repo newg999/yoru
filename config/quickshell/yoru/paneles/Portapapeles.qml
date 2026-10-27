@@ -4,7 +4,6 @@
 //
 //    Escribe para buscar · ↑ ↓ para moverte · Enter copia (pega con Ctrl+V)
 //    Supr borra la entrada del historial · Esc para cerrar
-//  (con la barra en píldora es una página de la píldora: PaginaPortapapeles.qml)
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -17,7 +16,7 @@ Panel {
     lado: "derecha"
     ancho: 640
 
-    // El historial: comun/Copiados.qml (lo comparte con la píldora)
+    // El historial: comun/Copiados.qml
     readonly property var entradas: Copiados.entradas
     readonly property bool hayCliphist: Copiados.hayCliphist
     readonly property var resultados: Copiados.buscar(busqueda.text)

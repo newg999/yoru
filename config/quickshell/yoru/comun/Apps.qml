@@ -4,8 +4,7 @@ pragma Singleton
 //  Apps — lo que busca el lanzador: las apps instaladas y, al escribir algo,
 //  los ajustes de Yoru («ajustes», «wifi», «pantallas», «letra»...)
 //
-//  Lo usan el panel del lanzador (paneles/Lanzador.qml) y la página
-//  «lanzador» de la píldora (paneles/PaginaLanzador.qml):
+//  Lo usa el panel del lanzador (paneles/Lanzador.qml):
 //      Apps.buscar("fire")       → [apps y ajustes, los mejores primero]
 //      Apps.abrir(app, pantalla) → la abre (o abre el panel del ajuste)
 //

@@ -7,8 +7,7 @@
 //    ↑ ↓ ← → para moverte · Enter para abrir · Esc para cerrar
 //
 //  Las apps que más abres salen primero, y al buscar salen también los
-//  ajustes de Yoru: comun/Apps.qml. Con la barra en píldora, el lanzador es
-//  una página de la píldora (PaginaLanzador.qml) y este no sale.
+//  ajustes de Yoru: comun/Apps.qml.
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -26,7 +25,7 @@ Panel {
     readonly property bool medio: Paneles.seccion === "medio"
     readonly property int columnas: medio ? 2 : 1
 
-    // Qué sale y cómo se abre: comun/Apps.qml (lo comparte con la píldora)
+    // Qué sale y cómo se abre: comun/Apps.qml
     readonly property var resultados: Apps.buscar(busqueda.text)
     function abrir(app) {
         Apps.abrir(app, panel.modelData);
