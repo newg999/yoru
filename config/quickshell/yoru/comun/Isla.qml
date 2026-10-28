@@ -48,7 +48,7 @@ Rectangle {
 
     implicitWidth: vertical ? Tema.anchoBarra : vacia ? 0 : ocupado + 2 * relleno
     implicitHeight: !vertical ? Tema.altoBarra : vacia ? 0 : ocupado + 2 * rellenoVertical
-    radius: Tema.radio
+    radius: Tema.radioIsla
     color: Tema.isla
     border.width: Tema.borde(1)
     border.color: Tema.islaBorde

@@ -45,7 +45,9 @@ PanelWindow {
     color: "transparent"
     // Con la barra minimalista o la dock (Ajustes › Barra y dock) se ven
     // barra/BarraMinima.qml o el dock
-    visible: !Ajustes.centrada
+    // Arriba, con píldoras, se ve barra/BarraIslas.qml: esta queda para la
+    // barra a la izquierda
+    visible: !Ajustes.centrada && !Ajustes.pildoras
     WlrLayershell.namespace: "yoru-barra"
     WlrLayershell.layer: WlrLayer.Top
 

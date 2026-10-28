@@ -60,6 +60,9 @@ Singleton {
     property alias grabarMicro: datos.grabarMicro       // el micrófono (en vez de lo que suena)
 
     readonly property bool vertical: barra === "izquierda"
+    // Islas arriba: en píldoras con fichas dentro y widgets en el escritorio
+    // (barra/BarraIslas.qml y barra/Escritorio.qml)
+    readonly property bool pildoras: barra === "arriba"
     readonly property bool minimalista: barra === "minimalista"
     // Todo recto: con la minimalista
     readonly property bool recto: minimalista

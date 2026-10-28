@@ -140,6 +140,15 @@ window-rule {
     default-window-height { fixed 760; }
 }
 
+// Ajustes de Yoru: flotantes y en el centro, como un diálogo (no como una
+// columna más al lado de las ventanas). Mod+V la vuelve columna
+window-rule {
+    match title="^Ajustes de Yoru$"
+    open-floating true
+    default-column-width { proportion 0.8; }
+    default-window-height { proportion 0.85; }
+}
+
 // Avisos de Steam (logros, amigos...): no pasan por las notificaciones de
 // Yoru, son ventanas sueltas. Abajo a la derecha en vez de en el centro
 window-rule {

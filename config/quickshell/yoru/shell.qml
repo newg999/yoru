@@ -117,6 +117,16 @@ ShellRoot {
         model: Quickshell.screens
         PanelPaginas {}
     }
+    // Islas arriba en píldoras, y sus widgets sobre el fondo
+    // (barra/BarraIslas.qml y barra/Escritorio.qml)
+    Variants {
+        model: Quickshell.screens
+        BarraIslas {}
+    }
+    Variants {
+        model: Quickshell.screens
+        Escritorio {}
+    }
     // Dock de apps abajo (barra/Dock.qml)
     Variants {
         model: Quickshell.screens

@@ -76,6 +76,8 @@ Singleton {
     readonly property string fuente: Ajustes.fuente
     readonly property int letra: Ajustes.letra   // texto normal de la barra
     readonly property int icono: 16        // iconos solos (wifi, bluetooth...)
+    // Monoespaciada: la de las píldoras y los widgets del escritorio
+    readonly property string mono: "JetBrainsMono Nerd Font"
 
     // --------------------------------------------------------------- Medidas
     // La barra va arriba o a la izquierda (Ajustes.barra). «grosor» es lo
@@ -101,6 +103,8 @@ Singleton {
     // Grosor del borde de islas, paneles y ayudas: 0 si se quitan en Ajustes.
     // (Los bordes de dentro, que marcan lo elegido, no dependen de esto)
     function borde(ancho) { return Ajustes.bordes ? ancho : 0; }
+    // Islas: con las píldoras, redondas del todo
+    readonly property int radioIsla: Ajustes.pildoras ? altoBarra / 2 : radio
     readonly property int radioPanel: Ajustes.recto ? 0 : Ajustes.radio + 4
     // Esquinas de tarjetas, botones y cajas de los paneles: con la barra
     // minimalista, rectas, como ella (los círculos no:

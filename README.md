@@ -36,6 +36,8 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 
 Tema: **blanco sobre oscuro translúcido**, con barra en islas, menús que salen bajo la barra (y se cierran con un clic fuera) y fondos de naturaleza y paisajes anime sin personajes. El color se reserva para los avisos. Fuente: **JetBrainsMono Nerd Font** (se cambia en Ajustes › Aspecto; los iconos salen siempre de ella).
 
+Con las islas arriba (Ajustes › Barra y dock), la barra va en **píldoras**: casi negras y redondas, con fichas dentro que se tiñen del color del tema cuando algo está encendido (wifi, bluetooth, batería…) y que abren solo lo suyo, como en el dock (wifi: la red y las VPN; bluetooth: sus dispositivos; volumen: salidas y micrófonos; 󰍜: el Centro de control entero); lo que está apagado no sale (bluetooth apagado, sonido silenciado, wifi apagado, teclado con un solo idioma), la hora con la fecha (y, solo mientras grabas la pantalla, lo que llevas). Y en el escritorio, bajo las ventanas: la hora grande, tarjetas de disco, temperatura, RAM y CPU que se llenan según el uso, y lo que suena (si suena algo).
+
 ## Instalación
 
 Hay dos caminos. Lo ideal es el primero: un sistema limpio con solo lo necesario.

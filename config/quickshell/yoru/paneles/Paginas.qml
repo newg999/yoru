@@ -3,6 +3,7 @@
 //  con fundido al cambiar y el alto ajustándose suave
 //
 //    control · calendario · multimedia · clima · sistema · temas · fondos
+//    red · bt · sonido   (solo eso: las fichas de las píldoras, PaginaSola.qml)
 //
 //  La página es la sección del panel «pildora» (el nombre es de cuando
 //  existía la píldora; Paneles.seccion):
@@ -18,7 +19,8 @@ Item {
     required property var pantalla
     property bool abierta: false
 
-    readonly property var todas: ["control", "calendario", "multimedia", "clima", "sistema", "temas", "fondos"]
+    readonly property var todas: ["control", "calendario", "multimedia", "clima", "sistema", "temas", "fondos", "red", "bt", "sonido"]
+    readonly property bool sola: ["red", "bt", "sonido"].includes(pagina)
     // (wifi, bluetooth, audio y micro son el control con esa lista abierta)
     readonly property string pagina: todas.includes(Paneles.seccion) ? Paneles.seccion : "control"
     // Multimedia y Clima son las pestañas del panel central: piden más sitio
@@ -34,6 +36,7 @@ Item {
         : pagina === "sistema" ? sistema.implicitHeight
         : pagina === "temas" ? temas.implicitHeight
         : pagina === "fondos" ? fondos.implicitHeight
+        : sola ? solo.implicitHeight
         : control.implicitHeight
     height: implicitHeight
     Behavior on height {
@@ -100,6 +103,17 @@ Item {
         // Solo la elegida: la que se va se oculta al momento (con un fundido
         // se veía un instante encima de la nueva); la que llega, con fundido
         visible: raiz.pagina === "temas"
+        opacity: visible ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Tema.normal } }
+    }
+    PaginaSola {
+        id: solo
+        width: parent.width
+        cual: raiz.sola ? raiz.pagina : "red"
+        activa: raiz.abierta && raiz.sola
+        // Solo la elegida: la que se va se oculta al momento (con un fundido
+        // se veía un instante encima de la nueva); la que llega, con fundido
+        visible: raiz.sola
         opacity: visible ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Tema.normal } }
     }
