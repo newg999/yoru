@@ -1,7 +1,8 @@
 // ============================================================================
 //  Lanzador de apps — sale por la izquierda, bajo el botón 󰀻 de la barra.
 //  Con Mod+Space (sección "medio") sale en mitad de la pantalla, más ancho
-//  y con las apps en dos columnas.
+//  y con las apps en dos columnas. Con la barra de píldoras (islas arriba o
+//  minimalista), no: sale siempre arriba a la izquierda, bajo su ficha 󰍉.
 //
 //    Escribe para buscar (nombre, descripción o palabras clave)
 //    ↑ ↓ ← → para moverte · Enter para abrir · Esc para cerrar
@@ -19,10 +20,10 @@ import qs.comun
 Panel {
     id: panel
     nombre: "lanzador"
-    lado: Paneles.seccion === "medio" ? "medio" : "izquierda"
+    lado: medio ? "medio" : "izquierda"
     ancho: medio ? 820 : 480
 
-    readonly property bool medio: Paneles.seccion === "medio"
+    readonly property bool medio: Paneles.seccion === "medio" && !Ajustes.conPildoras
     readonly property int columnas: medio ? 2 : 1
 
     // Qué sale y cómo se abre: comun/Apps.qml

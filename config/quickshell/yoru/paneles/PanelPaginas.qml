@@ -19,6 +19,8 @@ Panel {
     nombre: "pildora"
     lado: Paneles.origen   // bajo el botón que lo abrió (lo pone la barra)
     ancho: paginas.anchoPedido + 4
+    // Bajo la isla pulsada, de su ancho (la música en las píldoras)
+    ancla: Paneles.seccion === "musica" ? Paneles.ancla : null
     visible: abierto || progreso > 0
 
     Column {

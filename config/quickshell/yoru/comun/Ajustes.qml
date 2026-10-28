@@ -63,6 +63,9 @@ Singleton {
     // Islas arriba: en píldoras con fichas dentro y widgets en el escritorio
     // (barra/BarraIslas.qml y barra/Escritorio.qml)
     readonly property bool pildoras: barra === "arriba"
+    // La barra de píldoras: las islas arriba, o la minimalista (la misma,
+    // sobre una franja entera de lado a lado)
+    readonly property bool conPildoras: pildoras || barra === "minimalista"
     readonly property bool minimalista: barra === "minimalista"
     // Todo recto: con la minimalista
     readonly property bool recto: minimalista

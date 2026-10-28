@@ -82,11 +82,6 @@ ShellRoot {
         model: Quickshell.screens
         Barra {}
     }
-    // O una barra fina de lado a lado
-    Variants {
-        model: Quickshell.screens
-        BarraMinima {}
-    }
     // O el estilo Dock: un Quickshell aparte (config/quickshell/yoru-dock, un
     // port de LeyzS QsDock) que se arranca y se para con el estilo. Al
     // pararlo, se quita el espacio que reservaba en niri
@@ -117,8 +112,9 @@ ShellRoot {
         model: Quickshell.screens
         PanelPaginas {}
     }
-    // Islas arriba en píldoras, y sus widgets sobre el fondo
-    // (barra/BarraIslas.qml y barra/Escritorio.qml)
+    // O la barra de píldoras: las islas arriba, o la minimalista (la misma
+    // en una franja entera) (barra/BarraIslas.qml). Y los widgets sobre el
+    // fondo, con cualquier estilo (barra/Escritorio.qml)
     Variants {
         model: Quickshell.screens
         BarraIslas {}
@@ -126,6 +122,12 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
         Escritorio {}
+    }
+    // Notas adhesivas en el escritorio (barra/NotasEscritorio.qml), con
+    // cualquier estilo de barra
+    Variants {
+        model: Quickshell.screens
+        NotasEscritorio {}
     }
     // Dock de apps abajo (barra/Dock.qml)
     Variants {

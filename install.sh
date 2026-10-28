@@ -205,8 +205,12 @@ instalar_paquetes() {
     mapfile -t PAQUETES < <(sed -e 's/#.*//' -e 's/[[:space:]]*$//' "$REPO/packages.txt" | grep -v '^[[:space:]]*$' | awk '{print $1}')
 
     # Todos de golpe (rápido). --skip-unavailable: si alguno no existe en esta
-    # versión de Fedora (p. ej. cliphist en Fedora 43), se instala el resto
-    if sudo dnf install -y --skip-unavailable "${PAQUETES[@]}"; then
+    # versión de Fedora (p. ej. cliphist en Fedora 43), se instala el resto.
+    # --exclude: plasma-integration «recomienda» el escritorio Plasma entero
+    # (96 paquetes: su sesión, Centro de bienvenida...) y no hace falta: solo
+    # se quiere el tema de las apps Qt
+    if sudo dnf install -y --skip-unavailable --exclude=plasma-workspace,plasma-desktop,plasma-welcome \
+        "${PAQUETES[@]}"; then
         local faltan=()
         for p in "${PAQUETES[@]}"; do
             rpm -q --whatprovides "$p" >/dev/null 2>&1 || faltan+=("$p")

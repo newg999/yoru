@@ -49,8 +49,9 @@ Rectangle {
     implicitWidth: vertical ? Tema.anchoBarra : vacia ? 0 : ocupado + 2 * relleno
     implicitHeight: !vertical ? Tema.altoBarra : vacia ? 0 : ocupado + 2 * rellenoVertical
     radius: Tema.radioIsla
-    color: Tema.isla
-    border.width: Tema.borde(1)
+    // Con la minimalista, sin fondo: las islas van sobre su franja entera
+    color: Ajustes.minimalista ? "transparent" : Tema.isla
+    border.width: Ajustes.minimalista ? 0 : Tema.borde(1)
     border.color: Tema.islaBorde
     clip: true
 

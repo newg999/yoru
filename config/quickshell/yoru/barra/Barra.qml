@@ -44,7 +44,7 @@ PanelWindow {
     exclusiveZone: Tema.zonaBarra
     color: "transparent"
     // Con la barra minimalista o la dock (Ajustes › Barra y dock) se ven
-    // barra/BarraMinima.qml o el dock
+    // barra/BarraIslas.qml (en una franja entera) o el dock
     // Arriba, con píldoras, se ve barra/BarraIslas.qml: esta queda para la
     // barra a la izquierda
     visible: !Ajustes.centrada && !Ajustes.pildoras

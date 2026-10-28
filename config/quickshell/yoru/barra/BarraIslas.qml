@@ -9,6 +9,10 @@
 //  los widgets del escritorio (Escritorio.qml).
 //  La música y la grabación solo salen cuando hay algo.
 //  La barra a la izquierda sigue siendo Barra.qml.
+//
+//  Con la minimalista es esta misma barra, pero sobre una franja entera de
+//  lado a lado, pegada arriba (las islas, sin fondo: Isla.qml). Los paneles
+//  se abren pegados a ella (Panel.qml).
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -26,12 +30,16 @@ PanelWindow {
     screen: modelData
 
     readonly property bool pequena: modelData.width < 1800
+    // Minimalista: una franja entera, pegada arriba
+    readonly property bool entera: Ajustes.minimalista
+    readonly property int altoFranja: Tema.altoBarra + 2
 
     anchors { top: true; left: true; right: true }
-    implicitHeight: Tema.margenBarra + Tema.altoBarra
-    exclusiveZone: Tema.zonaBarra
+    implicitHeight: entera ? altoFranja : Tema.margenBarra + Tema.altoBarra
+    // (con la minimalista, niri no deja huecos: las ventanas, justo debajo)
+    exclusiveZone: entera ? altoFranja : Tema.zonaBarra
     color: "transparent"
-    visible: Ajustes.pildoras
+    visible: Ajustes.conPildoras
     WlrLayershell.namespace: "yoru-barra"
     WlrLayershell.layer: WlrLayer.Top
 
@@ -49,7 +57,8 @@ PanelWindow {
         onClicked: Paneles.cerrar()
     }
 
-    BackgroundEffect.blurRegion: Niri.overview || !Ajustes.desenfoque ? null : islas
+    BackgroundEffect.blurRegion: Niri.overview || !Ajustes.desenfoque ? null : barra.entera ? todo : islas
+    Region { id: todo; item: franja }
     Region {
         id: islas
         Region { item: botones; radius: Tema.radioIsla }
@@ -73,6 +82,27 @@ PanelWindow {
         verticalAlignment: Text.AlignVCenter
     }
 
+    // La franja de la minimalista: el mismo fondo que los paneles, que se
+    // abren pegados a ella
+    Rectangle {
+        id: franja
+        visible: barra.entera
+        width: parent.width
+        height: barra.altoFranja
+        color: Tema.panel
+        opacity: Niri.overview ? 0 : 1
+        Behavior on opacity { NumberAnimation { duration: Tema.normal } }
+        transform: Translate {
+            y: Niri.overview ? -barra.altoFranja : 0
+            Behavior on y { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
+        }
+        // Clic en un hueco libre: cierra el panel que haya abierto
+        MouseArea {
+            anchors.fill: parent
+            onClicked: Paneles.cerrar()
+        }
+    }
+
     Item {
         id: contenido
         opacity: Niri.overview ? 0 : 1
@@ -83,7 +113,7 @@ PanelWindow {
         Behavior on opacity { NumberAnimation { duration: Tema.normal } }
         anchors {
             fill: parent
-            topMargin: Tema.margenBarra
+            topMargin: barra.entera ? 1 : Tema.margenBarra
             leftMargin: Tema.margenLados
             rightMargin: Tema.margenLados
         }
@@ -123,6 +153,11 @@ PanelWindow {
                 relleno: 4
                 espacio: 4
                 readonly property var reproductor: Reproductor.actual
+                // Su panel, justo debajo y de su mismo ancho
+                function abrir() {
+                    const p = musica.mapToItem(null, 0, 0);
+                    Paneles.abrirPagina(barra.modelData, "musica", "centro", {x: p.x, ancho: musica.width});
+                }
                 readonly property string cancion: {
                     const r = reproductor;
                     if (!r)
@@ -133,7 +168,7 @@ PanelWindow {
                 Ficha {
                     icono: "󰝚"
                     activa: musica.reproductor?.isPlaying ?? false
-                    onClic: Paneles.abrirPagina(barra.modelData, "multimedia", "centro")
+                    onClic: musica.abrir()
                 }
                 Item {
                     implicitWidth: textoMusica.width + 16
@@ -153,7 +188,7 @@ PanelWindow {
                         cursorShape: Qt.PointingHandCursor
                         acceptedButtons: Qt.LeftButton | Qt.MiddleButton
                         onClicked: e => e.button === Qt.MiddleButton ? musica.reproductor.togglePlaying()
-                            : Paneles.abrirPagina(barra.modelData, "multimedia", "centro")
+                            : musica.abrir()
                     }
                 }
                 Ficha {
@@ -428,6 +463,8 @@ PanelWindow {
                     icono: estado.cargando ? "󰂄" : "󰁹"
                     texto: estado.carga + "%"
                     carga: estado.carga / 100
+                    // Cargando: el relleno ondea, como agua entrando
+                    ola: estado.cargando && estado.carga < 100
                     colorIcono: !estado.cargando && estado.carga <= 15 ? Tema.rojo : tinta
                     onClic: Paneles.alternar("bateria", barra.modelData, "")
                 }

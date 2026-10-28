@@ -17,12 +17,16 @@ Singleton {
     // botón que se pulsó: «derecha» el centro de control, «centro» la hora,
     // la canción o el tiempo)
     property string origen: "centro"
+    // Islas en píldoras: el panel justo debajo de la isla pulsada y de su
+    // mismo ancho ({x, ancho} en la pantalla; null = según «origen»)
+    property var ancla: null
 
     // Abre una página del panel «pildora» (paneles/Paginas.qml: control,
     // calendario, multimedia, clima...) bajo el botón pulsado, aunque ya
     // estuviera abierto con otra (se mueve). Si ya está en esa página, se cierra
-    function abrirPagina(enPantalla, pagina, lado) {
+    function abrirPagina(enPantalla, pagina, lado, bajoIsla) {
         origen = lado ?? "centro";
+        ancla = bajoIsla ?? null;
         alternar("pildora", enPantalla, pagina);
     }
 

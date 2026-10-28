@@ -3,7 +3,7 @@
 //  con fundido al cambiar y el alto ajustándose suave
 //
 //    control · calendario · multimedia · clima · sistema · temas · fondos
-//    red · bt · sonido   (solo eso: las fichas de las píldoras, PaginaSola.qml)
+//    red · bt · sonido · musica   (solo eso: las islas en píldoras, PaginaSola.qml)
 //
 //  La página es la sección del panel «pildora» (el nombre es de cuando
 //  existía la píldora; Paneles.seccion):
@@ -19,8 +19,8 @@ Item {
     required property var pantalla
     property bool abierta: false
 
-    readonly property var todas: ["control", "calendario", "multimedia", "clima", "sistema", "temas", "fondos", "red", "bt", "sonido"]
-    readonly property bool sola: ["red", "bt", "sonido"].includes(pagina)
+    readonly property var todas: ["control", "calendario", "multimedia", "clima", "sistema", "temas", "fondos", "red", "bt", "sonido", "musica"]
+    readonly property bool sola: ["red", "bt", "sonido", "musica"].includes(pagina)
     // (wifi, bluetooth, audio y micro son el control con esa lista abierta)
     readonly property string pagina: todas.includes(Paneles.seccion) ? Paneles.seccion : "control"
     // Multimedia y Clima son las pestañas del panel central: piden más sitio

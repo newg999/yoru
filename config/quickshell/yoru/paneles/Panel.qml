@@ -26,6 +26,8 @@ PanelWindow {
     property string nombre: ""
     property string lado: "derecha"
     property int ancho: 420
+    // {x, ancho}: justo debajo de una isla y de su ancho (Paneles.ancla)
+    property var ancla: null
     default property alias contenido: interior.data
 
     readonly property bool abierto: Paneles.abierto === nombre && Paneles.pantalla === modelData
@@ -87,7 +89,8 @@ PanelWindow {
         Rectangle {
             id: caja
 
-            width: ventana.ancho
+            readonly property bool anclado: ventana.ancla !== null && !ventana.vertical
+            width: anclado ? ventana.ancla.ancho : ventana.ancho
             height: interior.implicitHeight + 32
             readonly property bool enMedio: ventana.lado === "medio"
             // Con la barra minimalista, pegado a ella: sin hueco, esquinas
@@ -99,6 +102,7 @@ PanelWindow {
             readonly property real deslizar: (1 - ventana.progreso) * 14
 
             x: enMedio ? Math.round((parent.width - width) / 2)
+                : anclado ? ventana.ancla.x
                 : ventana.vertical ? Tema.hueco - deslizar
                 // Pegado al borde de la pantalla, su borde de ese lado queda
                 // fuera (si no, se veía una línea fina contra el borde)

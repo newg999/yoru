@@ -43,6 +43,7 @@ Singleton {
         ["󰂯", "Bluetooth", "Conectar auriculares, ratones...", "bluetooth auriculares cascos", "pildora", "bluetooth"],
         ["󰕾", "Sonido", "Salida de audio y volumen", "sonido audio volumen sound altavoces salida", "pildora", "audio"],
         ["󰍬", "Micrófono", "Entrada de audio", "micrófono microfono micro mic entrada", "pildora", "micro"],
+        ["󰎞", "Nota nueva", "Una nota adhesiva en el escritorio (Mod+Alt+K)", "nota notas apuntar apunte sticky post-it postit recordatorio escribir", "nota", ""],
         ["󰁹", "Batería y energía", "Salud, consumo y perfil de energía", "batería bateria battery energía energia power perfil ahorro rendimiento", "bateria", ""],
         ["󰚰", "Actualizaciones", "Actualizar Fedora y las apps", "actualizar actualizaciones updates update upgrade dnf flatpak", "actualizaciones", ""],
         ["󰕓", "Memorias USB y discos", "Abrir o expulsar los conectados", "usb pendrive memoria disco externo expulsar tarjeta sd", "discos", ""],

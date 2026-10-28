@@ -1,12 +1,12 @@
 // ============================================================================
-//  Escritorio — widgets sobre el fondo de pantalla, con las islas en
-//  píldoras (Ajustes.pildoras). Van por debajo de las ventanas: se ven en
-//  los escritorios vacíos.
+//  Escritorio — widgets sobre el fondo de pantalla, con cualquier estilo de
+//  barra. Van por debajo de las ventanas: se ven en los escritorios vacíos.
 //
-//    Abajo a la izquierda: la hora grande y cuatro tarjetas (disco,
-//    temperatura, memoria y CPU) que se llenan de color según el uso.
-//    Abajo a la derecha: lo que suena, con anterior · play · siguiente
-//    (sin nada sonando, no sale).
+//  En una columna a la derecha, a media pantalla:
+//    la hora grande
+//    cuatro tarjetas (disco, temperatura, memoria y CPU) que se llenan de
+//    agua según el uso (comun/Agua.qml: se mece solo con el escritorio a la vista)
+//    lo que suena, con anterior · play · siguiente (sin nada sonando, no sale)
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -42,7 +42,7 @@ Scope {
     Timer {
         interval: 60000
         repeat: true
-        running: Ajustes.pildoras
+        running: true
         triggeredOnStart: true
         onTriggered: df.running = true
     }
@@ -57,6 +57,9 @@ Scope {
 
     // Tarjeta: icono arriba a la izquierda, nombre arriba a la derecha, y el
     // color subiendo desde abajo hasta «uso» (de 0 a 1)
+    // Sin ventanas en esta pantalla: los widgets se ven (y el agua se mueve)
+    readonly property bool aLaVista: Niri.ventanaEn(modelData.name) === null
+
     component Tarjeta: Rectangle {
         id: tarjeta
         property string icono: ""
@@ -72,18 +75,18 @@ Scope {
         radius: Math.round(14 * escritorio.escala)
         color: Tema.sombra(Math.max(0.75, Ajustes.opacidadIslas))
 
-        // Recto por arriba, redondo por abajo como la tarjeta
-        Item {
-            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-            height: tarjeta.height * Math.max(0, Math.min(1, tarjeta.uso))
-            clip: true
-            Behavior on height { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
-            Rectangle {
-                anchors.bottom: parent.bottom
-                width: tarjeta.width
-                height: tarjeta.height
-                radius: tarjeta.radius
+        // El uso, como agua que sube desde abajo (y ondea con el
+        // escritorio a la vista)
+        ClippingRectangle {
+            anchors.fill: parent
+            radius: tarjeta.radius
+            color: "transparent"
+            Agua {
+                anchors.fill: parent
+                nivel: tarjeta.uso
                 color: Tema.blanco
+                inclinacion: 2.5 * escritorio.escala
+                moviendo: escritorio.aLaVista
             }
         }
 
@@ -115,12 +118,12 @@ Scope {
         }
     }
 
-    // ------------------------------------------------ Hora y tarjetas
+    // Todo en una columna a la derecha (solo anclada a la derecha: la capa
+    // queda centrada en alto)
     PanelWindow {
         screen: escritorio.modelData
-        visible: Ajustes.pildoras
-        anchors { left: true; bottom: true }
-        margins { left: escritorio.margen; bottom: escritorio.margen }
+        anchors { right: true }
+        margins { right: escritorio.margen }
         implicitWidth: rejilla.width
         implicitHeight: columna.height
         color: "transparent"
@@ -178,117 +181,109 @@ Scope {
                     uso: Sistema.cpu / 100
                 }
             }
-        }
-    }
 
-    // ---------------------------------------------------------- Música
-    PanelWindow {
-        id: musica
-        screen: escritorio.modelData
-        // Solo con algo sonando (o en pausa)
-        visible: Ajustes.pildoras && Ajustes.islaMusica && reproductor !== null
-        anchors { right: true; bottom: true }
-        margins { right: escritorio.margen; bottom: escritorio.margen }
-        implicitWidth: tarjetaMusica.width
-        implicitHeight: tarjetaMusica.height
-        color: "transparent"
-        exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.namespace: "yoru-escritorio"
-        WlrLayershell.layer: WlrLayer.Bottom
+            // ---------------------------------------------------- Música
+            // Solo con algo sonando (o en pausa)
+            Item {
+                id: musica
+                visible: Ajustes.islaMusica && reproductor !== null
+                width: tarjetaMusica.width
+                height: tarjetaMusica.height
+                readonly property var reproductor: Reproductor.actual
+                readonly property string caratula: Reproductor.caratula(reproductor)
 
-        readonly property var reproductor: Reproductor.actual
-        readonly property string caratula: Reproductor.caratula(reproductor)
+                Rectangle {
+                    id: tarjetaMusica
+                    readonly property int lado: Math.round(56 * escritorio.escala)
+                    width: rejilla.width
+                    height: lado + 2 * Math.round(12 * escritorio.escala)
+                    radius: Math.round(16 * escritorio.escala)
+                    color: Tema.sombra(Math.max(0.75, Ajustes.opacidadIslas))
 
-        Rectangle {
-            id: tarjetaMusica
-            readonly property int lado: Math.round(56 * escritorio.escala)
-            width: Math.round(250 * escritorio.escala)
-            height: lado + 2 * Math.round(12 * escritorio.escala)
-            radius: Math.round(16 * escritorio.escala)
-            color: Tema.sombra(Math.max(0.75, Ajustes.opacidadIslas))
-
-            // Carátula, o una nota
-            ClippingRectangle {
-                id: caja
-                x: Math.round(12 * escritorio.escala)
-                anchors.verticalCenter: parent.verticalCenter
-                width: tarjetaMusica.lado; height: tarjetaMusica.lado
-                radius: Math.round(10 * escritorio.escala)
-                color: Tema.claro(0.07)
-                Text {
-                    anchors.centerIn: parent
-                    visible: musica.caratula === ""
-                    text: "󰝚"
-                    font.family: Tema.mono
-                    font.pixelSize: Math.round(22 * escritorio.escala)
-                    color: Tema.texto
-                }
-                Image {
-                    anchors.fill: parent
-                    visible: musica.caratula !== ""
-                    source: musica.caratula
-                    fillMode: Image.PreserveAspectCrop
-                    sourceSize: Qt.size(width * 2, height * 2)
-                    asynchronous: true
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Paneles.abrirPagina(escritorio.modelData, "multimedia", "centro")
-                }
-            }
-
-            Column {
-                anchors { left: caja.right; leftMargin: Math.round(12 * escritorio.escala); right: parent.right; rightMargin: Math.round(12 * escritorio.escala) }
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: Math.round(8 * escritorio.escala)
-
-                Column {
-                    width: parent.width
-                    Mono {
-                        width: parent.width
-                        elide: Text.ElideRight
-                        text: musica.reproductor ? (Reproductor.titulo(musica.reproductor) || Reproductor.nombre(musica.reproductor)) : "Nada sonando"
+                    // Carátula, o una nota
+                    ClippingRectangle {
+                        id: caja
+                        x: Math.round(12 * escritorio.escala)
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: tarjetaMusica.lado; height: tarjetaMusica.lado
+                        radius: Math.round(10 * escritorio.escala)
+                        color: Tema.claro(0.07)
+                        Text {
+                            anchors.centerIn: parent
+                            visible: musica.caratula === ""
+                            text: "󰝚"
+                            font.family: Tema.mono
+                            font.pixelSize: Math.round(22 * escritorio.escala)
+                            color: Tema.texto
+                        }
+                        Image {
+                            anchors.fill: parent
+                            visible: musica.caratula !== ""
+                            source: musica.caratula
+                            fillMode: Image.PreserveAspectCrop
+                            sourceSize: Qt.size(width * 2, height * 2)
+                            asynchronous: true
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Paneles.abrirPagina(escritorio.modelData, "multimedia", "centro")
+                        }
                     }
-                    Mono {
-                        width: parent.width
-                        visible: text !== ""
-                        elide: Text.ElideRight
-                        text: musica.reproductor?.trackArtist ?? ""
-                        font.bold: false
-                        font.pixelSize: Math.round(9 * escritorio.escala)
-                        color: Tema.gris
-                    }
-                }
 
-                Row {
-                    spacing: Math.round(6 * escritorio.escala)
-                    Repeater {
-                        model: [
-                            {icono: "󰒮", accion: "previous"},
-                            {icono: "", accion: "togglePlaying"},
-                            {icono: "󰒭", accion: "next"}
-                        ]
-                        Rectangle {
-                            id: boton
-                            required property var modelData
-                            width: Math.round(22 * escritorio.escala); height: width
-                            radius: Math.round(6 * escritorio.escala)
-                            color: botonRaton.containsMouse && musica.reproductor ? Tema.claro(0.14) : Tema.claro(0.07)
-                            Text {
-                                anchors.centerIn: parent
-                                text: boton.modelData.icono || (musica.reproductor?.isPlaying ? "󰏤" : "󰐊")
-                                font.family: Tema.mono
-                                font.pixelSize: Math.round(11 * escritorio.escala)
-                                color: musica.reproductor ? Tema.texto : Tema.tenue
+                    Column {
+                        anchors { left: caja.right; leftMargin: Math.round(12 * escritorio.escala); right: parent.right; rightMargin: Math.round(12 * escritorio.escala) }
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: Math.round(8 * escritorio.escala)
+
+                        Column {
+                            width: parent.width
+                            Mono {
+                                width: parent.width
+                                elide: Text.ElideRight
+                                text: musica.reproductor ? (Reproductor.titulo(musica.reproductor) || Reproductor.nombre(musica.reproductor)) : "Nada sonando"
                             }
-                            MouseArea {
-                                id: botonRaton
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                enabled: musica.reproductor !== null
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: musica.reproductor[boton.modelData.accion]()
+                            Mono {
+                                width: parent.width
+                                visible: text !== ""
+                                elide: Text.ElideRight
+                                text: musica.reproductor?.trackArtist ?? ""
+                                font.bold: false
+                                font.pixelSize: Math.round(9 * escritorio.escala)
+                                color: Tema.gris
+                            }
+                        }
+
+                        Row {
+                            spacing: Math.round(6 * escritorio.escala)
+                            Repeater {
+                                model: [
+                                    {icono: "󰒮", accion: "previous"},
+                                    {icono: "", accion: "togglePlaying"},
+                                    {icono: "󰒭", accion: "next"}
+                                ]
+                                Rectangle {
+                                    id: boton
+                                    required property var modelData
+                                    width: Math.round(22 * escritorio.escala); height: width
+                                    radius: Math.round(6 * escritorio.escala)
+                                    color: botonRaton.containsMouse && musica.reproductor ? Tema.claro(0.14) : Tema.claro(0.07)
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: boton.modelData.icono || (musica.reproductor?.isPlaying ? "󰏤" : "󰐊")
+                                        font.family: Tema.mono
+                                        font.pixelSize: Math.round(11 * escritorio.escala)
+                                        color: musica.reproductor ? Tema.texto : Tema.tenue
+                                    }
+                                    MouseArea {
+                                        id: botonRaton
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        enabled: musica.reproductor !== null
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: musica.reproductor[boton.modelData.accion]()
+                                    }
+                                }
                             }
                         }
                     }
