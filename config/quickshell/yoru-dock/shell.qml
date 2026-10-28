@@ -139,6 +139,19 @@ Scope {
         "Bluetooth off": "Bluetooth apagado",
         "Searching devices…": "Buscando dispositivos…",
         "No devices found": "No hay dispositivos",
+        "Couldn't do it": "No se pudo",
+        "Added: ": "Añadida: ",
+        "Connected to ": "Conectada: ",
+        "Press again to delete": "Pulsa otra vez para borrarla",
+        "Switching…": "Cambiando…",
+        "No VPN yet": "Ninguna todavía",
+        "Cancel": "Cancelar",
+        "Add VPN": "Añadir VPN",
+        "Looking…": "Buscando…",
+        "Pick the VPN file": "Elige el archivo de la VPN",
+        "No VPN files in your home folder": "No he encontrado archivos de VPN en tu carpeta",
+        "Or type its path  ·  Enter": "O escribe su ruta  ·  Enter",
+        "It stays saved in the system: you can delete the file (it holds your key) afterwards.": "Queda guardada en el sistema: después puedes borrar el archivo, que lleva tu clave.",
         "Notifications": "Notificaciones",
         "Turn off": "Quitar",
         "Collapse": "Recoger",
@@ -364,12 +377,15 @@ Scope {
     property string netKind: "none"                        // wifi | eth | none
     property string ssid: ""
     property int signal: 0
+    property bool vpnUp: false                              // Yoru: alguna VPN conectada (escudo en el botón)
     Process {
         id: netProc
-        command: ["sh", "-c", "LC_ALL=C nmcli -t -f TYPE,STATE device 2>/dev/null | grep -q '^ethernet:connected' && echo ETH; LC_ALL=C nmcli -t -f ACTIVE,SSID,SIGNAL dev wifi 2>/dev/null | grep '^yes' | head -1"]
+        command: ["sh", "-c", "LC_ALL=C nmcli -t -f TYPE,STATE device 2>/dev/null | grep -q '^ethernet:connected' && echo ETH; LC_ALL=C nmcli -t -f ACTIVE,SSID,SIGNAL dev wifi 2>/dev/null | grep '^yes' | head -1; " +
+                         "LC_ALL=C nmcli -t -f TYPE connection show --active 2>/dev/null | grep -qE '^(vpn|wireguard)$' && echo VPNUP"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const t = this.text;
+                root.vpnUp = t.indexOf("VPNUP") >= 0;
                 if (t.indexOf("ETH") === 0) { root.netKind = "eth"; root.ssid = "Ethernet"; return; }
                 const m = t.match(/^yes:(.*):(\d+)\s*$/m);
                 if (m) { root.netKind = "wifi"; root.ssid = m[1].replace(/\\:/g, ":"); root.signal = parseInt(m[2]) || 0; }
@@ -1142,7 +1158,9 @@ Scope {
         if (root.dmode === "net") { root.closeMode(); return; }
         root.nPass = ""; root.nMsg = ""; root.nMsgBad = false;
         root.dmode = "net";
+        root.vAdding = false;
         netRefresh();
+        vpnRefresh();
         if (root.nView === "bt") { root.btRefresh(); if (!btScan.running) btScan.running = true; }
         else netScan.running = true;
     }
@@ -1236,7 +1254,7 @@ Scope {
     }
     function netRefresh() { if (!netProc2.running) netProc2.running = true; else netAgain.restart(); }
     Timer { id: netAgain; interval: 400; onTriggered: root.netRefresh() }
-    Timer { interval: 4000; repeat: true; running: root.dmode === "net"; onTriggered: root.netRefresh() }
+    Timer { interval: 4000; repeat: true; running: root.dmode === "net"; onTriggered: { root.netRefresh(); root.vpnRefresh(); } }
     // tarama: bitince listeyi tazele
     Process { id: netScan; command: ["env", "LC_ALL=C", "nmcli", "device", "wifi", "rescan"]; onExited: root.netRefresh() }
     readonly property bool nScanning: netScan.running
@@ -1293,13 +1311,89 @@ Scope {
         if (!root.nBtOn) root.bList = [];
     }
 
+    // ---- Yoru: las VPN de NetworkManager, con el vpn.py de Yoru (el mismo
+    // que usa su Centro de control): conectar, desconectar, borrar y añadir
+    // un .conf de WireGuard o un .ovpn de OpenVPN ----
+    readonly property string vpnScript: Quickshell.env("HOME") + "/.config/quickshell/yoru/scripts/vpn.py"
+    property var vList: []                 // [{ nombre, uuid, tipo, estado: "activa" | "activando" | "" }]
+    readonly property var vOn: root.vList.filter(v => v.estado === "activa")
+    property string vBusy: ""              // uuid que se conecta / desconecta
+    property string vDel: ""               // uuid esperando el 2.º clic para borrar
+    Timer { id: vDelOff; interval: 3000; onTriggered: root.vDel = "" }
+    property bool vAdding: false           // lista de archivos para añadir una
+    property var vFiles: []                // [{ ruta, archivo, carpeta, tipo }] de vpn.py buscar
+    Process {
+        id: vpnRead
+        command: [root.vpnScript, "leer"]
+        stdout: StdioCollector { onStreamFinished: { try { root.vList = JSON.parse(this.text); } catch (e) { } } }
+    }
+    function vpnRefresh() { if (!vpnRead.running) vpnRead.running = true; }
+    Process {
+        id: vpnFind
+        command: [root.vpnScript, "buscar"]
+        stdout: StdioCollector { onStreamFinished: { try { root.vFiles = JSON.parse(this.text); } catch (e) { root.vFiles = []; } } }
+    }
+    Process {
+        id: vpnAct
+        property string what: ""
+        property string label: ""
+        stderr: StdioCollector { id: vpnActErr }
+        onExited: code => {
+            if (code !== 0) root.nSay(vpnActErr.text.trim() || root.t("Olmadı", "Couldn't do it"), true);
+            else if (vpnAct.what === "importar") { root.vAdding = false; root.nSay(root.t("Eklendi: ", "Added: ") + vpnAct.label); }
+            else if (vpnAct.what === "conectar") root.nSay(root.t("Bağlandı: ", "Connected to ") + vpnAct.label);
+            root.vBusy = "";
+            vpnAct.what = "";
+            root.vpnRefresh();
+            netProc.running = true;
+        }
+    }
+    function _vRun(what, args, label) {
+        if (vpnAct.running) return;
+        vpnAct.what = what;
+        vpnAct.label = label;
+        vpnAct.command = [root.vpnScript, what].concat(args);
+        vpnAct.running = true;
+    }
+    function vpnToggle(v) {
+        if (!v || root.vBusy !== "") return;
+        root.vBusy = v.uuid;
+        root._vRun(v.estado === "" ? "conectar" : "desconectar", [v.uuid], v.nombre);
+    }
+    // la baldosa: con una conectada la desconecta; si solo hay una, la
+    // conecta; si no, enseña la lista
+    function vpnTile() {
+        if (root.vOn.length) root.vpnToggle(root.vOn[0]);
+        else if (root.vList.length === 1) root.vpnToggle(root.vList[0]);
+        else root.netShow("vpn");
+    }
+    function vpnForget(v) {
+        if (root.vDel !== v.uuid) { root.vDel = v.uuid; vDelOff.restart(); return; }
+        root.vDel = "";
+        root._vRun("borrar", [v.uuid], v.nombre);
+    }
+    // «Casa_wg-0.conf» → «Casa wg 0»
+    function vpnName(archivo) { return archivo.replace(/\.(conf|ovpn)$/i, "").replace(/[_-]+/g, " ").trim(); }
+    function vpnImport(ruta) {
+        ruta = ruta.trim();
+        if (ruta === "") return;
+        const nombre = root.vpnName(ruta.split("/").pop());
+        root._vRun("importar", [ruta, nombre], nombre);
+    }
+    function vpnAdd() {
+        root.vAdding = !root.vAdding;
+        if (root.vAdding) vpnFind.running = true;
+    }
+
 
     // ---- ag menusu: alt liste Wi-Fi aglari mi, Bluetooth cihazlari mi ----
     property string nView: "wifi"
     function netShow(v) {
         root.nView = v;
         root.nPass = "";
-        if (v === "bt") { root.btRefresh(); if (root.nBtOn && !btScan.running) btScan.running = true; }
+        root.vAdding = false;
+        if (v === "vpn") root.vpnRefresh();
+        else if (v === "bt") { root.btRefresh(); if (root.nBtOn && !btScan.running) btScan.running = true; }
         else if (root.nWifiOn && !netScan.running) netScan.running = true;
     }
     property var bList: []                 // [{ mac, name, paired, conn, icon, bat }]
@@ -1950,6 +2044,8 @@ Scope {
         function dash(): void { root.openDash(); }
         // ag menusu
         function net(): void { root.openNet(); }
+        // Yoru: el panel de red, ya en la lista de VPN
+        function vpn(): void { root.nView = "vpn"; if (root.dmode !== "net") root.openNet(); else root.netShow("vpn"); }
         // bildirim paneli (bildirim merkezin Dock seciliyken buraya yonlendirir)
         function notif(): void { root.openNotif(); }
         // batarya paneli (batarya menun Dock seciliyken buraya yonlendirir)
@@ -3938,6 +4034,13 @@ Scope {
                             tip: root.ssid
                             CGlyph { anchors.centerIn: parent; visible: root.netKind !== "eth"; text: root.wifiIcon; size: 20 }
                             EthLogo { anchors.centerIn: parent; anchors.horizontalCenterOffset: 1; visible: root.netKind === "eth"; size: 20 }
+                            // Yoru: VPN conectada: un escudo pequeño en la esquina
+                            CGlyph {
+                                visible: root.vpnUp
+                                anchors.right: parent.right; anchors.bottom: parent.bottom
+                                anchors.rightMargin: 3; anchors.bottomMargin: 3
+                                text: root.g(0xF099D); size: 11; color: root.accent
+                            }
                             // tik: dock ag menusune donusur; sag tik: eski wi-fi menusu
                             onLeftClicked: root.openNet()
                             onRightClicked: cy => Quickshell.execDetached(["nm-connection-editor"])   // Yoru: el editor de conexiones
@@ -5961,7 +6064,7 @@ Scope {
                         enabled: root.dmode === "net"
                         Behavior on opacity { NumberAnimation { duration: root.dmode === "net" ? 220 : 90; easing.type: Easing.OutCubic } }
                         transform: Translate { x: root.dmode === "net" ? 0 : -10; Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } } }
-                        Keys.onEscapePressed: { if (root.nPass !== "") root.nPass = ""; else root.closeMode(); }
+                        Keys.onEscapePressed: { if (root.nPass !== "") root.nPass = ""; else if (root.vAdding) root.vAdding = false; else root.closeMode(); }
                         Timer { id: netFocus; interval: 80; onTriggered: netUi.forceActiveFocus() }
                         Connections { target: root; function onDmodeChanged() { if (root.dmode === "net") { netFocus.restart(); netIn.restart(); } } }
                         property real rise: 0
@@ -6030,8 +6133,8 @@ Scope {
                         Item {
                             x: root.netW - 16 - 26; y: 16
                             width: 26; height: 26
-                            readonly property bool can: root.nView === "bt" ? root.nBtOn : root.nWifiOn
-                            readonly property bool busy: root.nView === "bt" ? root.bScanning : root.nScanning
+                            readonly property bool can: root.nView === "vpn" || (root.nView === "bt" ? root.nBtOn : root.nWifiOn)
+                            readonly property bool busy: root.nView === "vpn" ? vpnRead.running : root.nView === "bt" ? root.bScanning : root.nScanning
                             opacity: (1 - netUi.rise) * (can ? 1 : 0.3)
                             CGlyph {
                                 id: scanIc
@@ -6048,7 +6151,7 @@ Scope {
                                 onClicked: {
                                     if (!parent.can || parent.busy) return;
                                     scanIc.rotation = 0;
-                                    if (root.nView === "bt") btScan.running = true; else netScan.running = true;
+                                    if (root.nView === "vpn") root.vpnRefresh(); else if (root.nView === "bt") btScan.running = true; else netScan.running = true;
                                 }
                             }
                         }
@@ -6119,21 +6222,22 @@ Scope {
                             }
                         }
 
-                        // ---- anahtarlar: Wi-Fi / Ethernet / Bluetooth ----
+                        // ---- anahtarlar: Wi-Fi / Ethernet / Bluetooth / VPN (Yoru) ----
                         Row {
                             id: nTog
                             x: 16; y: 146; spacing: 8
                             opacity: 1 - netUi.rise
                             transform: Translate { y: netUi.rise * 22 }
                             Repeater {
-                                model: 3
+                                model: 4
                                 Rectangle {
                                     id: tg
                                     required property int index
-                                    readonly property bool present: index === 0 ? root.nWifiDev !== "" : index === 1 ? root.nEthDev !== "" : root.nBtPresent
-                                    readonly property bool on: index === 0 ? root.nWifiOn : index === 1 ? root.nEthOn : root.nBtOn
-                                    readonly property var names: ["Wi-Fi", "Ethernet", "Bluetooth"]
-                                    width: ((root.horiz ? root.netCol : root.netW - 32) - 16) / 3; height: 62; radius: 16
+                                    readonly property bool present: index === 0 ? root.nWifiDev !== "" : index === 1 ? root.nEthDev !== "" : index === 2 ? root.nBtPresent : true
+                                    readonly property bool on: index === 0 ? root.nWifiOn : index === 1 ? root.nEthOn : index === 2 ? root.nBtOn : root.vOn.length > 0
+                                    readonly property var names: ["Wi-Fi", "Ethernet", "Bluetooth", "VPN"]
+                                    // Yoru: cuatro en fila: más altas, con la flecha bajo el nombre
+                                    width: ((root.horiz ? root.netCol : root.netW - 32) - 24) / 4; height: 80; radius: 16
                                     color: on ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, tgMa.containsMouse ? 0.28 : 0.2) : (tgMa.containsMouse ? "#181818" : "#101010")
                                     border.width: 1
                                     border.color: on ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.5) : "#1e1e1e"
@@ -6145,8 +6249,14 @@ Scope {
                                         x: 10; y: 10; width: 22; height: 22
                                         CGlyph {
                                             anchors.centerIn: parent; visible: tg.index !== 1
-                                            text: root.g(tg.index === 0 ? (tg.on ? 0xF05A9 : 0xF05AA) : (tg.on ? 0xF00AF : 0xF00B2))
+                                            text: root.g(tg.index === 0 ? (tg.on ? 0xF05A9 : 0xF05AA) : tg.index === 3 ? 0xF099D : (tg.on ? 0xF00AF : 0xF00B2))
                                             size: 18; color: tg.on ? root.accent : "#8a8a8a"
+                                            opacity: tg.index === 3 && root.vBusy !== "" ? 0.4 : 1
+                                            SequentialAnimation on opacity {
+                                                running: tg.index === 3 && root.vBusy !== ""; loops: Animation.Infinite
+                                                NumberAnimation { to: 1; duration: 450 }
+                                                NumberAnimation { to: 0.4; duration: 450 }
+                                            }
                                         }
                                         EthLogo { anchors.centerIn: parent; visible: tg.index === 1; size: 17 }
                                     }
@@ -6175,12 +6285,12 @@ Scope {
                                         hoverEnabled: true
                                         enabled: tg.present
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: tg.index === 0 ? root.netToggleWifi() : tg.index === 1 ? root.netToggleEth() : root.netToggleBt()
+                                        onClicked: tg.index === 0 ? root.netToggleWifi() : tg.index === 1 ? root.netToggleEth() : tg.index === 2 ? root.netToggleBt() : root.vpnTile()
                                     }
                                     // ok: alttaki listeyi bu kutunun listesine cevirir (Wi-Fi aglari / Bluetooth cihazlari)
                                     Rectangle {
                                         id: tgArrow
-                                        readonly property string view: tg.index === 0 ? "wifi" : "bt"
+                                        readonly property string view: tg.index === 0 ? "wifi" : tg.index === 3 ? "vpn" : "bt"
                                         readonly property bool active: root.nView === view
                                         visible: tg.index !== 1
                                         enabled: tg.present
@@ -6206,22 +6316,22 @@ Scope {
 
                         // ---- aglar ----
                         NText {
-                            x: root.horiz ? root.netRx + 2 : 18; y: root.horiz ? 22 : 222
-                            text: root.nView === "bt" ? root.t("CİHAZLAR", "DEVICES") : root.t("AĞLAR", "NETWORKS")
+                            x: root.horiz ? root.netRx + 2 : 18; y: root.horiz ? 22 : 240
+                            text: root.nView === "vpn" ? "VPN" : root.nView === "bt" ? root.t("CİHAZLAR", "DEVICES") : root.t("AĞLAR", "NETWORKS")
                             font.pixelSize: 11; font.bold: true; font.letterSpacing: 1.6; color: "#8a8a8a"
                             opacity: 1 - netUi.rise
                         }
                         NText {
-                            anchors.right: parent.right; anchors.rightMargin: root.horiz ? 18 + 26 + 10 : 18; y: root.horiz ? 22 : 222
-                            readonly property bool scan: root.nView === "bt" ? root.bScanning : root.nScanning
-                            text: scan ? root.t("taranıyor…", "scanning…") : (root.nView === "bt" ? (root.nBtOn && root.bList.length > 0 ? root.bList.length + root.t(" cihaz", " devices") : "")
+                            anchors.right: parent.right; anchors.rightMargin: root.horiz ? 18 + 26 + 10 : 18; y: root.horiz ? 22 : 240
+                            readonly property bool scan: root.nView === "vpn" ? false : root.nView === "bt" ? root.bScanning : root.nScanning
+                            text: scan ? root.t("taranıyor…", "scanning…") : root.nView === "vpn" ? (root.vList.length > 0 ? root.vList.length + " VPN" : "") : (root.nView === "bt" ? (root.nBtOn && root.bList.length > 0 ? root.bList.length + root.t(" cihaz", " devices") : "")
                                                                                  : (root.nList.length > 0 ? root.nList.length + root.t(" ağ", " networks") : ""))
                             font.pixelSize: 10; color: scan ? root.accent : "#6a6a6a"
                             opacity: 1 - netUi.rise
                         }
                         ListView {
                             id: nListView
-                            x: root.horiz ? root.netRx - 6 : 10; y: root.horiz ? 46 : 244
+                            x: root.horiz ? root.netRx - 6 : 10; y: root.horiz ? 46 : 262
                             width: root.horiz ? root.netW - root.netRx - 4 : root.netW - 20
                             // yatayda mesaj kutusu sol sutunda: liste boydan boya
                             height: parent.height - y - (nMsgBox.visible && !root.horiz ? 50 : 14)
@@ -6398,7 +6508,7 @@ Scope {
                         // ---- bluetooth cihazlari ----
                         ListView {
                             id: bListView
-                            x: root.horiz ? root.netRx - 6 : 10; y: root.horiz ? 46 : 244
+                            x: root.horiz ? root.netRx - 6 : 10; y: root.horiz ? 46 : 262
                             width: root.horiz ? root.netW - root.netRx - 4 : root.netW - 20
                             // yatayda mesaj kutusu sol sutunda: liste boydan boya
                             height: parent.height - y - (nMsgBox.visible && !root.horiz ? 50 : 14)
@@ -6514,6 +6624,185 @@ Scope {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: !root.nBtOn ? root.t("Bluetooth kapalı", "Bluetooth off") : (root.bScanning ? root.t("Cihazlar aranıyor…", "Searching devices…") : root.t("Cihaz bulunamadı", "No devices found"))
                                 font.pixelSize: 12; color: "#6a6a6a"
+                            }
+                        }
+
+                        // ---- Yoru: VPN (y, al final, añadir una) ----
+                        ListView {
+                            id: vListView
+                            x: root.horiz ? root.netRx - 6 : 10; y: root.horiz ? 46 : 262
+                            width: root.horiz ? root.netW - root.netRx - 4 : root.netW - 20
+                            height: parent.height - y - (nMsgBox.visible && !root.horiz ? 50 : 14)
+                            Behavior on height { NumberAnimation { duration: 200 } }
+                            clip: true
+                            spacing: 4
+                            boundsBehavior: Flickable.StopAtBounds
+                            property real show: root.nView === "vpn" ? 1 : 0
+                            Behavior on show { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                            opacity: (1 - netUi.rise) * show
+                            visible: show > 0.01
+                            transform: Translate { y: netUi.rise * 30; x: (1 - vListView.show) * 24 }
+                            model: root.vList.length
+                            delegate: Item {
+                                id: vr
+                                required property int index
+                                readonly property var v: root.vList[index] || null
+                                readonly property bool up: v !== null && v.estado === "activa"
+                                readonly property bool busy: v !== null && (v.estado === "activando" || root.vBusy === v.uuid)
+                                readonly property bool deleting: v !== null && root.vDel === v.uuid
+                                width: vListView.width
+                                height: 50
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: 14
+                                    color: vr.up ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.14) : (vrMa.containsMouse ? "#151515" : "transparent")
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                }
+                                Rectangle {
+                                    x: 0; y: 15; width: 3; height: 20; radius: 1.5
+                                    color: root.accent
+                                    visible: vr.up
+                                }
+                                Rectangle {
+                                    x: 10; anchors.verticalCenter: parent.verticalCenter
+                                    width: 30; height: 30; radius: 10
+                                    color: vr.up ? root.accent : "#1a1a1a"
+                                    CGlyph { anchors.centerIn: parent; text: root.g(0xF099D); size: 16; color: vr.up ? "#0b1530" : "#cfcfcf" }
+                                }
+                                Column {
+                                    x: 50; y: 9
+                                    width: parent.width - 50 - 64
+                                    spacing: 2
+                                    NText {
+                                        width: parent.width; elide: Text.ElideRight
+                                        text: vr.v ? vr.v.nombre : ""
+                                        font.pixelSize: 13; font.bold: vr.up
+                                        color: vr.up ? root.accent : "#ededed"
+                                    }
+                                    NText {
+                                        text: !vr.v ? "" : vr.deleting ? root.t("Silmek için tekrar bas", "Press again to delete")
+                                             : vr.busy ? (vr.up ? root.t("Değişiyor…", "Switching…") : root.t("Bağlanıyor…", "Connecting…"))
+                                             : vr.v.tipo + (vr.up ? " · " + root.t("Bağlı", "Connected") : "")
+                                        font.pixelSize: 10
+                                        color: vr.deleting ? "#ff6b6b" : vr.busy ? root.accent : "#8a8a8a"
+                                    }
+                                }
+                                Row {
+                                    anchors.right: parent.right; anchors.rightMargin: 12
+                                    y: 14
+                                    spacing: 6
+                                    CGlyph {
+                                        visible: vr.busy
+                                        text: root.g(0xF0772); size: 14; color: root.accent
+                                        RotationAnimation on rotation { running: vr.busy; from: 0; to: 360; duration: 800; loops: Animation.Infinite }
+                                    }
+                                    // borrar (pide un 2.º clic: se pierde su clave)
+                                    Rectangle {
+                                        visible: vr.v !== null && !vr.up && !vr.busy && (vrMa.containsMouse || vr.deleting)
+                                        width: 22; height: 22; radius: 7
+                                        color: vfMa.containsMouse || vr.deleting ? "#3a1818" : "#1c1c1c"
+                                        CGlyph { anchors.centerIn: parent; text: root.g(0xF01B4); size: 13; color: vfMa.containsMouse || vr.deleting ? "#ff6b6b" : "#9a9a9a" }
+                                        MouseArea { id: vfMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.vpnForget(vr.v) }
+                                    }
+                                    Rectangle {
+                                        visible: vr.up && !vr.busy
+                                        width: vdText.implicitWidth + 16; height: 22; radius: 7
+                                        color: vdMa.containsMouse ? "#3a1818" : "#1c1c1c"
+                                        NText { id: vdText; anchors.centerIn: parent; text: root.t("Kes", "Disconnect"); font.pixelSize: 10; font.bold: true; color: vdMa.containsMouse ? "#ff6b6b" : "#cfcfcf" }
+                                        MouseArea { id: vdMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.vpnToggle(vr.v) }
+                                    }
+                                }
+                                MouseArea {
+                                    id: vrMa
+                                    anchors.fill: parent
+                                    z: -1
+                                    hoverEnabled: true
+                                    cursorShape: vr.v && !vr.up ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                    onClicked: if (vr.v && !vr.up) root.vpnToggle(vr.v)
+                                }
+                            }
+                            footer: Column {
+                                width: vListView.width
+                                topPadding: root.vList.length ? 6 : 0
+                                spacing: 4
+                                NText {
+                                    visible: root.vList.length === 0 && !root.vAdding
+                                    width: parent.width; height: 40
+                                    horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
+                                    text: root.t("Henüz VPN yok", "No VPN yet")
+                                    font.pixelSize: 12; color: "#6a6a6a"
+                                }
+                                // añadir / cancelar
+                                Rectangle {
+                                    width: parent.width; height: 40; radius: 14
+                                    color: vaMa.containsMouse ? "#151515" : "transparent"
+                                    border.width: 1; border.color: "#1e1e1e"
+                                    Row {
+                                        anchors.centerIn: parent
+                                        spacing: 8
+                                        CGlyph { anchors.verticalCenter: parent.verticalCenter; text: root.g(root.vAdding ? 0xF0156 : 0xF0415); size: 15; color: root.accent }
+                                        NText { anchors.verticalCenter: parent.verticalCenter; text: root.vAdding ? root.t("Vazgeç", "Cancel") : root.t("VPN ekle", "Add VPN"); font.pixelSize: 12; font.bold: true; color: "#ededed" }
+                                    }
+                                    MouseArea { id: vaMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.vpnAdd() }
+                                }
+                                NText {
+                                    visible: root.vAdding
+                                    width: parent.width; leftPadding: 6; topPadding: 4
+                                    text: vpnFind.running ? root.t("Aranıyor…", "Looking…") : root.vFiles.length ? root.t("VPN dosyasını seç", "Pick the VPN file") : root.t("Ev klasöründe VPN dosyası yok", "No VPN files in your home folder")
+                                    font.pixelSize: 10; color: "#8a8a8a"
+                                }
+                                Repeater {
+                                    model: root.vAdding ? root.vFiles : []
+                                    Rectangle {
+                                        id: vfile
+                                        required property var modelData
+                                        width: parent.width; height: 44; radius: 12
+                                        color: vfileMa.containsMouse ? "#151515" : "transparent"
+                                        CGlyph { x: 14; anchors.verticalCenter: parent.verticalCenter; text: root.g(0xF0219); size: 16; color: "#8a8a8a" }
+                                        Column {
+                                            x: 42; anchors.verticalCenter: parent.verticalCenter
+                                            width: parent.width - 42 - 12
+                                            spacing: 1
+                                            NText { width: parent.width; elide: Text.ElideRight; text: vfile.modelData.archivo; font.pixelSize: 12; color: "#ededed" }
+                                            NText { width: parent.width; elide: Text.ElideMiddle; text: vfile.modelData.tipo + " · " + vfile.modelData.carpeta; font.pixelSize: 10; color: "#8a8a8a" }
+                                        }
+                                        MouseArea { id: vfileMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.vpnImport(vfile.modelData.ruta) }
+                                    }
+                                }
+                                // o la ruta a mano
+                                Rectangle {
+                                    visible: root.vAdding
+                                    width: parent.width; height: 34; radius: 10
+                                    color: "#0d0d0d"
+                                    border.width: 1
+                                    border.color: vpIn.activeFocus ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.6) : "#262626"
+                                    TextInput {
+                                        id: vpIn
+                                        anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 12
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        color: "#ffffff"
+                                        font.family: root.fontName; font.pixelSize: 12
+                                        selectionColor: root.accent
+                                        clip: true
+                                        onVisibleChanged: text = ""
+                                        Keys.onReturnPressed: e => { root.vpnImport(text); e.accepted = true; }
+                                        Keys.onEnterPressed: e => { root.vpnImport(text); e.accepted = true; }
+                                        Keys.onEscapePressed: e => { root.vAdding = false; netUi.forceActiveFocus(); e.accepted = true; }
+                                        NText {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: root.t("Ya da yolu yaz  ·  Enter", "Or type its path  ·  Enter")
+                                            color: "#5a5a5a"; font.pixelSize: 11
+                                            visible: vpIn.text.length === 0
+                                        }
+                                    }
+                                }
+                                NText {
+                                    visible: root.vAdding
+                                    width: parent.width; leftPadding: 6; rightPadding: 6
+                                    wrapMode: Text.Wrap
+                                    text: root.t("Sistemde kalır: sonra anahtarını taşıyan dosyayı silebilirsin.", "It stays saved in the system: you can delete the file (it holds your key) afterwards.")
+                                    font.pixelSize: 10; color: "#6a6a6a"
+                                }
                             }
                         }
 
