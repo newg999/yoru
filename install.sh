@@ -761,7 +761,8 @@ menu_grub() {
 # Para jugar: el kernel sin la mitigación de split locks, que da tirones en
 # algunos juegos (system/sysctl/99-yoru-juegos.conf), y tu usuario en el
 # grupo gamemode: sin él, gamemode no puede poner la CPU a tope ni dar más
-# prioridad al juego (vale al volver a entrar en la sesión)
+# prioridad al juego (vale al volver a entrar en la sesión). Y el firewall,
+# abierto para jugar en línea
 ajustes_juegos() {
     if getent group gamemode >/dev/null && ! id -nG "$USER" | grep -qw gamemode; then
         sudo usermod -aG gamemode "$USER" && ok "Tu usuario, en el grupo gamemode"
@@ -769,6 +770,21 @@ ajustes_juegos() {
     sudo install -D -m 644 "$REPO/system/sysctl/99-yoru-juegos.conf" /etc/sysctl.d/99-yoru-juegos.conf
     sudo sysctl -q -p /etc/sysctl.d/99-yoru-juegos.conf >/dev/null 2>&1 || true
     ok "Kernel ajustado para jugar (split locks)"
+
+    # El firewall: la zona public de una Fedora mínima solo deja entrar ssh,
+    # y así las partidas P2P (Call of Duty...) no conectan. Se abren los
+    # puertos de los juegos (system/firewalld/yoru-juegos.xml) y las
+    # respuestas de UPnP del router (los juegos piden con él que les abra
+    # sus puertos; sin esto, el NAT se queda en «estricto»)
+    if systemctl is-active -q firewalld; then
+        sudo install -D -m 644 "$REPO/system/firewalld/yoru-juegos.xml" /etc/firewalld/services/yoru-juegos.xml
+        sudo firewall-cmd -q --reload
+        local zona
+        zona="$(firewall-cmd --get-default-zone)"
+        sudo firewall-cmd -q --permanent --zone="$zona" --add-service=yoru-juegos --add-service=upnp-client
+        sudo firewall-cmd -q --reload
+        ok "Firewall abierto para jugar en línea (zona $zona)"
+    fi
 }
 
 # Steam con -system-composer (lo recomienda la guía de niri): sin él, con

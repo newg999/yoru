@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Puertos para jugar en línea (install.sh lo copia a /etc/firewalld/services/
+     y lo abre en la zona del sistema: ajustes_juegos). Sin ellos, la zona
+     public de una Fedora mínima corta todo lo que entra y las partidas P2P
+     (Call of Duty, juegos de Steam con servidor en tu equipo) no conectan.
+     Son los que pide Activision para Call of Duty en PC, más los de Steam -->
+<service>
+  <short>Yoru · juegos en línea</short>
+  <description>Call of Duty (Demonware) y Steam: partidas P2P y servidores de juego</description>
+  <port protocol="tcp" port="3074"/>
+  <port protocol="udp" port="3074"/>
+  <port protocol="udp" port="3478"/>
+  <port protocol="udp" port="4379-4380"/>
+  <port protocol="tcp" port="27014-27050"/>
+  <port protocol="udp" port="27000-27036"/>
+</service>

@@ -92,6 +92,7 @@ network-manager-applet    # icono de red y editor de conexiones
 
 # --- Juegos ------------------------------------------------------------------
 gamemode                  # el sistema a tope mientras juegas (config/gamemode.ini)
+gamemode(x86-32)          # el de 32 bits: sin él, gamemoderun falla con los juegos de Proton
 mangohud                  # FPS, temperaturas y tiempos en el juego (Mayús+F12)
 gamescope                 # para juegos que dan guerra con el ratón o la pantalla completa
 vulkan-tools              # vulkaninfo: ver qué gráfica usan los juegos
