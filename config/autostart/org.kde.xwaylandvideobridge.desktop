@@ -1,8 +1,13 @@
-# Anula /etc/xdg/autostart/org.kde.xwaylandvideobridge.desktop: no arrancar
-# la «Pasarela de vídeo Xwayland» de KDE. Al iniciar pedía permiso para
-# grabar la pantalla (una ventana negra). En niri no hace falta: las apps
-# comparten pantalla con el portal (xdg-desktop-portal-gnome).
+# Anula /etc/xdg/autostart/org.kde.xwaylandvideobridge.desktop: la «Pasarela
+# de vídeo Xwayland» de KDE solo arranca en Plasma. En niri pedía permiso para
+# grabar la pantalla al iniciar (una ventana negra) y no hace falta: las apps
+# comparten pantalla con el portal (xdg-desktop-portal-gnome). En Plasma sí:
+# sin ella, las apps X11 (Discord...) no pueden compartir pantalla.
 [Desktop Entry]
 Type=Application
 Name=Xwayland Video Bridge
-Hidden=true
+Exec=xwaylandvideobridge
+NoDisplay=true
+StartupNotify=false
+X-KDE-autostart-phase=2
+OnlyShowIn=KDE;

@@ -9,6 +9,11 @@
 #    aplicar.py fondo-claro  lo mismo, en claro
 #    aplicar.py <paleta>     una de tema/paletas/ (nord, catppuccin...)
 #    aplicar.py --lista      los temas que hay, en JSON (para el panel de Ajustes)
+#    aplicar.py --kde        solo ~/.config/kdeglobals: las claves de
+#                            config/kdeglobals (iconos...) y los colores del
+#                            tema de ahora. Lo demás que tenga ese archivo (lo
+#                            que cambies en Plasma) se queda. La barra lo
+#                            ejecuta al arrancar en niri (yoru kdeglobals)
 #
 #  Escribe en ~/.local/state/yoru/tema/ un archivo por programa. Las configs
 #  del repo los incluyen y, si no existen, usan sus colores de siempre:
@@ -16,6 +21,9 @@
 #    kitty.conf  ← config/kitty/kitty.conf     (include)
 #    colores.json ← Quickshell (comun/Tema.qml)
 #    fastfetch.zsh ← config/zsh/zshrc (colores del logo de fastfetch)
+#    Yoru.colors ← esquema de color de KDE (apps Qt y Plasma): se copia en
+#                 ~/.local/share/color-schemes/ y sus colores, en
+#                 ~/.config/kdeglobals (ver «aplicar.py --kde»)
 #    mpv.conf    ← config/mpv/mpv.conf         (include: colores de uosc)
 #    swayimg     ← config/swayimg/config       (include: colores del visor)
 #  Fuera del repo a propósito: cambiar de fondo no deja cambios en git.
@@ -24,6 +32,7 @@
 #  reconocerse siempre.
 # ============================================================================
 
+import hashlib
 import json
 import os
 import subprocess
@@ -35,6 +44,9 @@ BLANCO = REPO / "tema" / "blanco.json"
 PALETAS = REPO / "tema" / "paletas"
 ESTADO = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "yoru" / "tema"
 FONDO_ACTUAL = Path.home() / ".cache" / "wallpaper-actual"
+KDEGLOBALS_BASE = REPO / "config" / "kdeglobals"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+ESQUEMAS = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "color-schemes"
 
 # Colores de matugen (Material You) → nombres de Yoru
 DESDE_MATUGEN = {
@@ -100,6 +112,142 @@ def paleta_fondo(claro=False):
     return p
 
 
+def mezcla(c1, c2, t):
+    """Del color c1 (t=0) al c2 (t=1)"""
+    a = [int(c1[i:i + 2], 16) for i in (1, 3, 5)]
+    b = [int(c2[i:i + 2], 16) for i in (1, 3, 5)]
+    return "#" + "".join(f"{round(x + (y - x) * t):02x}" for x, y in zip(a, b))
+
+
+def rgb(color):
+    """#rrggbb → «r,g,b», como lo quieren los archivos de KDE"""
+    return ",".join(str(int(color[i:i + 2], 16)) for i in (1, 3, 5))
+
+
+def luminancia(color):
+    r, g, b = (int(color[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+# ------------------------------------------------------------------- KDE
+# Un archivo de KDE (kdeglobals, .colors): [grupos] con clave=valor. Se lee
+# y se escribe a mano, conservando el orden y las mayúsculas de las claves
+def leer_ini(texto):
+    grupos, actual = {}, None
+    for linea in texto.splitlines():
+        linea = linea.strip()
+        if not linea or linea.startswith("#"):
+            continue
+        if linea.startswith("["):
+            actual = grupos.setdefault(linea, {})
+        elif "=" in linea and actual is not None:
+            clave, valor = linea.split("=", 1)
+            actual[clave] = valor
+    return grupos
+
+
+def escribir_ini(grupos):
+    return "\n".join(g + "\n" + "".join(f"{k}={v}\n" for k, v in claves.items())
+                     for g, claves in grupos.items())
+
+
+def esquema_kde(p):
+    """El esquema de color «Yoru» con los mismos papeles que Breeze Dark:
+    velo en las vistas (lo más oscuro), fondo en las ventanas, fondo2 en
+    botones y cabeceras, y el acento en la selección y el foco"""
+    a, texto, gris = p["acento"], p["texto"], p["gris"]
+    # Sobre el acento, el texto que mejor se lea
+    sobre_acento = p["fondo"] if luminancia(a) > luminancia(p["fondo"]) else p["texto"]
+    if abs(luminancia(sobre_acento) - luminancia(a)) < 0.3:
+        sobre_acento = p["velo"] if luminancia(a) > 0.5 else p["texto"]
+    # No hay verde en la paleta: el de Nord, más o menos apagado según el tema
+    verde = mezcla("#a3be8c", texto, 0.15)
+
+    def grupo(fondo, alterno, primero=texto, inactivo=gris):
+        return {
+            "BackgroundAlternate": rgb(alterno),
+            "BackgroundNormal": rgb(fondo),
+            "DecorationFocus": rgb(a),
+            "DecorationHover": rgb(mezcla(a, fondo, 0.4)),
+            "ForegroundActive": rgb(a),
+            "ForegroundInactive": rgb(inactivo),
+            "ForegroundLink": rgb(a),
+            "ForegroundNegative": rgb(p["rojo"]),
+            "ForegroundNeutral": rgb(p["amarillo"]),
+            "ForegroundNormal": rgb(primero),
+            "ForegroundPositive": rgb(verde),
+            "ForegroundVisited": rgb(mezcla(a, gris, 0.5)),
+        }
+
+    seleccion = grupo(a, mezcla(a, p["fondo"], 0.5), primero=sobre_acento,
+                      inactivo=mezcla(sobre_acento, a, 0.4))
+    seleccion["ForegroundActive"] = rgb(sobre_acento)
+    seleccion["ForegroundLink"] = rgb(sobre_acento)
+    return {
+        "[ColorEffects:Disabled]": {
+            "Color": "56,56,56", "ColorAmount": "0", "ColorEffect": "0",
+            "ContrastAmount": "0.65", "ContrastEffect": "1",
+            "IntensityAmount": "0.1", "IntensityEffect": "2",
+        },
+        "[ColorEffects:Inactive]": {
+            "ChangeSelectionColor": "true", "Color": "112,111,110", "ColorAmount": "0.025",
+            "ColorEffect": "2", "ContrastAmount": "0.1", "ContrastEffect": "2", "Enable": "false",
+            "IntensityAmount": "0", "IntensityEffect": "0",
+        },
+        "[Colors:Button]": grupo(p["fondo2"], mezcla(p["fondo2"], a, 0.15)),
+        "[Colors:Complementary]": grupo(p["velo"], p["fondo"]),
+        "[Colors:Header]": grupo(p["fondo2"], p["fondo"]),
+        "[Colors:Header][Inactive]": grupo(p["fondo"], p["fondo2"]),
+        "[Colors:Selection]": seleccion,
+        "[Colors:Tooltip]": grupo(p["fondo2"], p["fondo"]),
+        "[Colors:View]": grupo(p["velo"], mezcla(p["velo"], p["fondo"], 0.5)),
+        "[Colors:Window]": grupo(p["fondo"], p["fondo2"]),
+        "[General]": {"ColorScheme": "Yoru", "Name": "Yoru", "shadeSortColumn": "true"},
+        "[KDE]": {"contrast": "4"},
+        "[WM]": {
+            "activeBackground": rgb(p["fondo"]),
+            "activeBlend": rgb(texto),
+            "activeForeground": rgb(texto),
+            "inactiveBackground": rgb(p["velo"]),
+            "inactiveBlend": rgb(gris),
+            "inactiveForeground": rgb(gris),
+        },
+    }
+
+
+def aplicar_kde(p):
+    """Escribe el esquema Yoru.colors y lo pone en ~/.config/kdeglobals junto
+    con las claves de config/kdeglobals. Avisa a las apps de KDE abiertas"""
+    esquema = esquema_kde(p)
+    texto_esquema = escribir_ini(esquema)
+    ESQUEMAS.mkdir(parents=True, exist_ok=True)
+    (ESQUEMAS / "Yoru.colors").write_text(texto_esquema)
+
+    destino = CONFIG / "kdeglobals"
+    actual = {}
+    if destino.is_symlink():      # de cuando era un enlace al repo
+        destino.unlink()
+    elif destino.exists():
+        actual = leer_ini(destino.read_text())
+    for nombre, claves in esquema.items():
+        if nombre.startswith("[Colors:") or nombre.startswith("[ColorEffects:"):
+            actual[nombre] = dict(claves)          # los colores, enteros
+        else:
+            actual.setdefault(nombre, {}).update(claves)
+    for nombre, claves in leer_ini(KDEGLOBALS_BASE.read_text()).items():
+        actual.setdefault(nombre, {}).update(claves)
+    # Plasma compara esta huella con la del esquema: si no coincide, cree que
+    # el esquema ha cambiado y vuelve a aplicar el suyo
+    actual["[General]"]["ColorSchemeHash"] = hashlib.sha1(texto_esquema.encode()).hexdigest()
+    temporal = destino.with_suffix(".tmp")
+    temporal.write_text(escribir_ini(actual))
+    temporal.replace(destino)
+    # Las apps de KDE abiertas cambian de colores al momento (0 = la paleta)
+    subprocess.run(["dbus-send", "--session", "--type=signal", "/KGlobalSettings",
+                    "org.kde.KGlobalSettings.notifyChange", "int32:0", "int32:0"],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
 def ansi(color):
     """#rrggbb → código de color de terminal (38;2;r;g;b), como lo pide fastfetch"""
     r, g, b = (int(color[i:i + 2], 16) for i in (1, 3, 5))
@@ -116,6 +264,7 @@ def escribir(nombre, texto):
 def generar(p, modo):
     a = p["acento"]
     escribir("colores.json", json.dumps({**p, "modo": modo}, indent=4) + "\n")
+    aplicar_kde(p)
 
     escribir("niri.kdl", f"""// Generado por tema/aplicar.py ({modo}). No lo edites: se sobrescribe.
 layout {{
@@ -195,6 +344,16 @@ def recargar(primera_vez):
 def main():
     if sys.argv[1:] == ["--lista"]:
         lista()
+        return
+    if sys.argv[1:] == ["--kde"]:
+        # Los colores del tema de ahora (o los de Yoru, si aún no hay)
+        colores = ESTADO / "colores.json"
+        try:
+            p = json.loads(colores.read_text())
+            p.pop("modo", None)
+        except (OSError, ValueError):
+            p = paleta_blanco()
+        aplicar_kde(p)
         return
     ESTADO.mkdir(parents=True, exist_ok=True)
     archivo_modo = ESTADO / "modo"

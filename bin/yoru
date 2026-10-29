@@ -13,6 +13,9 @@
 #                       «fondo-claro» (sacados del fondo de pantalla) o una
 #                       paleta de tema/paletas/ (nord, catppuccin...); sin
 #                       modo, lo reaplica. También desde Ajustes (Mod+Alt+T)
+#    yoru kdeglobals    pone en ~/.config/kdeglobals los iconos y los colores
+#                       de Yoru (apps Qt y Plasma), sin tocar lo demás; la
+#                       barra lo hace sola al arrancar
 #    yoru copias        lista las copias del sistema (se hacen con cada dnf)
 #    yoru volver <n>    deja el sistema como estaba en la copia <n>
 #    yoru juego [ANCHOxALTO] -- %command%
@@ -113,10 +116,22 @@ cmd_doctor() {
     local carpeta
     for carpeta in "$REPO"/config/*/; do
         carpeta="${carpeta%/}"
-        [[ "$(basename "$carpeta")" == "zsh" ]] && continue
+        case "$(basename "$carpeta")" in zsh|quickshell) continue ;; esac
         enlace_ok "$CONFIG_DIR/$(basename "$carpeta")" "$carpeta"
     done
-    enlace_ok "$CONFIG_DIR/kdeglobals" "$REPO/config/kdeglobals"
+    # Quickshell: una carpeta de verdad con un enlace por shell (así otros
+    # shells, como el de NextKDE, no se instalan dentro del repo)
+    for carpeta in "$REPO"/config/quickshell/*/; do
+        carpeta="${carpeta%/}"
+        enlace_ok "$CONFIG_DIR/quickshell/$(basename "$carpeta")" "$carpeta"
+    done
+    if [[ -L "$CONFIG_DIR/kdeglobals" ]]; then
+        mal "~/.config/kdeglobals es un enlace (Plasma cambiaría el del repo) → yoru kdeglobals"
+    elif [[ -f "$CONFIG_DIR/kdeglobals" ]]; then
+        bien "~/.config/kdeglobals"
+    else
+        mal "~/.config/kdeglobals no existe → yoru kdeglobals"
+    fi
     enlace_ok "$CONFIG_DIR/environment.d/yoru.conf" "$REPO/system/environment.d/yoru.conf"
     enlace_ok "$HOME/.zshrc" "$REPO/config/zsh/zshrc"
     enlace_ok "$HOME/.local/share/wallpapers" "$REPO/wallpapers"
@@ -372,12 +387,23 @@ PY
     fi
 }
 
+# -------------------------------------------------------------- kdeglobals
+# ~/.config/kdeglobals no es un enlace al repo: Plasma (en una sesión de KDE)
+# reescribe ese archivo, y con un enlace cambiaba el del repo. Se le ponen
+# las claves de config/kdeglobals y los colores del tema, y lo demás (lo que
+# cambies en Plasma) se queda. La barra lo hace al arrancar en niri
+# (yoru-shell.service) y «yoru tema» al cambiar de colores
+cmd_kdeglobals() {
+    python3 "$REPO/tema/aplicar.py" --kde
+}
+
 # ---------------------------------------------------------------------- Main
 case "${1:-ayuda}" in
     update|actualizar)  cmd_update ;;
     reload|recargar)    cmd_reload ;;
     doctor|revisar)     cmd_doctor ;;
     tema)               shift; cmd_tema "$@" ;;
+    kdeglobals)         cmd_kdeglobals ;;
     copias)             cmd_copias ;;
     volver)             cmd_volver "${2:-}" ;;
     juego)              shift; cmd_juego "$@" ;;

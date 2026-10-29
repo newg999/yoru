@@ -11,6 +11,9 @@ Description=Yoru · barra y paneles (Quickshell)
 PartOf=graphical-session.target
 After=graphical-session.target niri.service
 Requisite=graphical-session.target
+# Solo en niri: el archivo de D-Bus de las notificaciones (system/dbus) podría
+# arrancarla también en una sesión de KDE, donde se pondría encima de Plasma
+ConditionEnvironment=XDG_CURRENT_DESKTOP=niri
 
 [Service]
 # El mismo cursor que niri (si no, Qt pone el suyo en la barra y el bloqueo)
@@ -21,6 +24,8 @@ Environment=XCURSOR_SIZE=24
 # queda en ~60 fps: en un monitor de 240 Hz, todas las animaciones a 60.
 # Se ve con el contador de fotogramas (Mod+Alt+F).
 Environment=QSG_RENDER_LOOP=threaded
+# Los iconos y colores de Yoru en ~/.config/kdeglobals (ver «yoru kdeglobals»)
+ExecStartPre=-%h/.local/bin/yoru kdeglobals
 ExecStart=/usr/bin/qs -c yoru
 Restart=on-failure
 RestartSec=1

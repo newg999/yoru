@@ -564,19 +564,40 @@ enlazar_todo() {
     for carpeta in "$REPO"/config/*/; do
         carpeta="${carpeta%/}"
         # zsh no lee ~/.config/zsh: su archivo se enlaza en ~/.zshrc (shell_zsh)
-        [[ "$(basename "$carpeta")" == "zsh" ]] && continue
+        # quickshell va aparte (abajo)
+        case "$(basename "$carpeta")" in zsh|quickshell) continue ;; esac
         enlazar "$carpeta" "$CONFIG_DIR/$(basename "$carpeta")"
+    done
+    # Quickshell: ~/.config/quickshell es una carpeta de verdad con un enlace
+    # por shell (yoru, yoru-dock). Si fuera un enlace al repo, otros shells
+    # (el de NextKDE en la sesión de KDE) se instalarían dentro del repo
+    if [[ -L "$CONFIG_DIR/quickshell" && "$(readlink -f "$CONFIG_DIR/quickshell")" == "$REPO/config/quickshell" ]]; then
+        rm "$CONFIG_DIR/quickshell"
+    fi
+    for carpeta in "$REPO"/config/quickshell/*/; do
+        carpeta="${carpeta%/}"
+        enlazar "$carpeta" "$CONFIG_DIR/quickshell/$(basename "$carpeta")"
     done
     # Enlaces a carpetas que ya no están en el repo (waybar, rofi...): se quitan
     local enlace
-    for enlace in "$CONFIG_DIR"/*; do
+    for enlace in "$CONFIG_DIR"/* "$CONFIG_DIR"/quickshell/*; do
         if [[ -L "$enlace" && ! -e "$enlace" && "$(readlink "$enlace")" == "$REPO"/config/* ]]; then
             rm "$enlace" && ok "Quitado $enlace (ya no se usa)"
         fi
     done
 
-    # Colores oscuros para las apps Qt y KDE: es un archivo, no una carpeta
-    enlazar "$REPO/config/kdeglobals" "$CONFIG_DIR/kdeglobals"
+    # Colores para las apps Qt y KDE. No se enlaza: Plasma (en una sesión de
+    # KDE) reescribe ~/.config/kdeglobals, y con un enlace cambiaba el del
+    # repo. Se le ponen las claves de config/kdeglobals y los colores del tema
+    # (tema/aplicar.py --kde) y lo demás se queda
+    if [[ -L "$CONFIG_DIR/kdeglobals" ]]; then
+        rm "$CONFIG_DIR/kdeglobals"
+    elif [[ -e "$CONFIG_DIR/kdeglobals" ]] && ! grep -q '^ColorScheme=Yoru$' "$CONFIG_DIR/kdeglobals"; then
+        # La primera vez: se guarda el que había
+        mkdir -p "$BACKUP_DIR"
+        cp "$CONFIG_DIR/kdeglobals" "$BACKUP_DIR/"
+    fi
+    python3 "$REPO/tema/aplicar.py" --kde && ok "kdeglobals (iconos y colores de Yoru)"
     # Lo que hace gamemode al jugar (y el modo juego de Yoru): también un archivo
     enlazar "$REPO/config/gamemode.ini" "$CONFIG_DIR/gamemode.ini"
     # Variables de la sesión (las apps Qt usan esos colores). Al volver a entrar
@@ -1080,8 +1101,9 @@ deshacer() {
                     "$CONFIG_DIR/environment.d/yoru.conf"
                     "$CONFIG_DIR/systemd/user/yoru-shell.service" "$HOME/.local/bin/yoru"
                     "$HOME/.local/share/dbus-1/services/org.freedesktop.Notifications.service")
-    for carpeta in "$REPO"/config/*/; do
-        destinos+=("$CONFIG_DIR/$(basename "${carpeta%/}")")
+    for carpeta in "$REPO"/config/*/ "$REPO"/config/quickshell/*/; do
+        carpeta="${carpeta%/}"
+        destinos+=("$CONFIG_DIR/${carpeta#"$REPO"/config/}")
     done
     for d in "${destinos[@]}"; do
         if [[ -L "$d" && "$(readlink -f "$d")" == "$REPO"/* ]]; then
