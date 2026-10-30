@@ -188,6 +188,31 @@ cmd_doctor() {
     fi
     systemctl is-enabled -q bluetooth 2>/dev/null && bien "bluetooth" || mal "bluetooth no está activado"
 
+    paso "Juegos"
+    if command -v gamemoded >/dev/null; then
+        id -nG | grep -qw gamemode && bien "gamemode (y tu usuario en su grupo)" \
+            || mal "No estás en el grupo gamemode (el juego no sube de prioridad) → ./install.sh y vuelve a entrar"
+    else
+        mal "gamemode no está instalado → ./install.sh"
+    fi
+    [[ "$(sysctl -n kernel.split_lock_mitigate 2>/dev/null)" == 0 ]] && bien "Kernel sin la mitigación de split locks" \
+        || mal "El kernel frena los split locks (tirones con Proton) → ./install.sh"
+    [[ -r /dev/ntsync && -w /dev/ntsync ]] && bien "NTSync (Proton sincroniza los hilos en el kernel)" \
+        || aviso "Sin /dev/ntsync: Proton usa la sincronización de antes (algo más lenta)"
+    # VRR: niri solo lo enciende si el driver dice que el monitor lo tiene. Con
+    # NVIDIA a veces no lo ve hasta reconectar el monitor (o apagar y encender
+    # el Adaptive-Sync en su menú)
+    if [[ -n "${NIRI_SOCKET:-}" ]]; then
+        local pantalla vrr
+        while IFS=$'\t' read -r pantalla vrr; do
+            [[ "$vrr" == 1 ]] && bien "$pantalla: frecuencia variable (VRR)" \
+                || aviso "$pantalla: sin VRR. Si el monitor tiene FreeSync/G-Sync, actívalo en su menú o reconéctalo"
+        done < <(niri msg -j outputs 2>/dev/null | python3 -c '
+import json, sys
+for nombre, o in json.load(sys.stdin).items():
+    print(nombre, int(o.get("vrr_supported", False)), sep="\t")' 2>/dev/null)
+    fi
+
     paso "Tema de colores"
     local modo_tema="$HOME/.local/state/yoru/tema/modo"
     if [[ -f "$modo_tema" ]]; then
@@ -295,6 +320,9 @@ cmd_volver() {
 # Windows), con gamemode. El overlay de Steam (Mayús+Tab) entra por
 # LD_PRELOAD: gamescope no lo pasa al juego, así que se le quita a gamescope
 # y se le devuelve al juego.
+# gamescope va como ventana de Wayland directamente sobre niri (sin SDL de
+# por medio: menos latencia) y con MangoHud (config/MangoHud/), que dentro de
+# gamescope va con --mangoapp: «mangohud %command%» ahí no funciona bien.
 cmd_juego() {
     local res=""
     if [[ "${1:-}" =~ ^[0-9]+x[0-9]+$ ]]; then
@@ -331,8 +359,10 @@ print(m["width"], m["height"], round(m["refresh_rate"] / 1000))' 2>/dev/null)
     if ! command -v gamescope >/dev/null; then
         exec "${juego[@]}"
     fi
-    exec env -u LD_PRELOAD gamescope -w "$jw" -h "$jh" -W "$w" -H "$h" -r "$r" "${estirar[@]}" \
-        -f --force-grab-cursor --backend sdl -- env LD_PRELOAD="$precarga" "${juego[@]}"
+    local hud=()
+    command -v mangoapp >/dev/null && hud=(--mangoapp)
+    exec env -u LD_PRELOAD gamescope -w "$jw" -h "$jh" -W "$w" -H "$h" -r "$r" "${estirar[@]}" "${hud[@]}" \
+        -f --force-grab-cursor --backend wayland -- env LD_PRELOAD="$precarga" "${juego[@]}"
 }
 
 # ------------------------------------------------------------------- abrir
