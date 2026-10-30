@@ -73,11 +73,11 @@ PanelWindow {
         Region { item: estado; radius: Tema.radioIsla }
     }
 
-    // Texto monoespaciado de las píldoras
+    // Texto monoespaciado de las píldoras (del tamaño de Ajustes › Aspecto › Letra)
     component Mono: Text {
         color: Tema.texto
         font.family: Tema.mono
-        font.pixelSize: 11
+        font.pixelSize: Tema.letra
         font.bold: true
         verticalAlignment: Text.AlignVCenter
     }
@@ -236,12 +236,13 @@ PanelWindow {
                     Mono {
                         text: Qt.formatDateTime(reloj.date, Ajustes.reloj24 ? "HH:mm:ss" : "h:mm:ss AP")
                         color: horaRaton.containsMouse || Paneles.esta("pildora", barra.modelData, "calendario") ? Tema.texto : Tema.blanco
-                        font.pixelSize: 12
+                        font.pixelSize: Tema.letra + 1
                     }
                     Mono {
                         text: `${centro.dias[reloj.date.getDay()]}, ${reloj.date.getDate()} de ${centro.meses[reloj.date.getMonth()]}`
                         color: Tema.gris
-                        font.pixelSize: 8
+                        // (hasta 10: más no cabe bajo la hora)
+                        font.pixelSize: Math.min(10, Tema.letra - 3)
                     }
                 }
                 MouseArea {
@@ -300,7 +301,7 @@ PanelWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         text: Tiempo.icono
                         font.family: Tema.mono
-                        font.pixelSize: 15
+                        font.pixelSize: Tema.letra + 4
                         color: Tema.blanco
                     }
                     Mono {

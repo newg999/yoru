@@ -27,7 +27,7 @@ ClippingRectangle {
     property bool pulsable: true
     property bool apagada: false        // gris (sin reproductor...)
     property color colorIcono: tinta
-    property int tamIcono: 13
+    property int tamIcono: Tema.letra + 2
     property int anchoTexto: 0          // > 0 = recorta el texto con "…"
     readonly property alias hover: raton.containsMouse
 
@@ -74,7 +74,7 @@ ClippingRectangle {
             text: ficha.texto
             color: parent.tintaTexto
             font.family: Tema.mono
-            font.pixelSize: 11
+            font.pixelSize: Tema.letra
             font.bold: true
             elide: Text.ElideRight
             width: ficha.anchoTexto > 0 ? Math.min(implicitWidth, ficha.anchoTexto) : implicitWidth
