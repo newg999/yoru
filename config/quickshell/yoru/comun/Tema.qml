@@ -80,18 +80,20 @@ Singleton {
     readonly property string mono: "JetBrainsMono Nerd Font"
 
     // --------------------------------------------------------------- Medidas
-    // La barra va arriba o a la izquierda (Ajustes.barra). «grosor» es lo
-    // que ocupa desde su borde: el alto de las islas arriba, su ancho a la
-    // izquierda. «hueco» es donde empiezan los paneles y avisos, al lado.
+    // La barra va arriba, a la izquierda o (la de Windows) abajo
+    // (Ajustes.barra). «grosor» es lo que ocupa desde su borde: el alto de
+    // las islas arriba, su ancho a la izquierda, el de la barra de tareas
+    // abajo. «hueco» es donde empiezan los paneles y avisos, al lado.
     readonly property int altoBarra: 30      // islas de la barra de arriba
     readonly property int anchoBarra: 40     // islas de la barra de la izquierda
-    readonly property int grosor: Ajustes.vertical ? anchoBarra : altoBarra
+    readonly property int altoTareas: 48     // la barra de tareas (Windows)
+    readonly property int grosor: Ajustes.vertical ? anchoBarra : Ajustes.abajo ? altoTareas : altoBarra
     // A los lados, la barra deja los «gaps» de niri (layout en config.kdl):
     // así empieza y acaba donde las ventanas (si cambias uno, cambia el otro).
     // En alto va más apretada: poco margen al borde y a las ventanas.
     readonly property int gaps: 12
     readonly property int margenLados: gaps
-    readonly property int margenBarra: 6     // de la barra a su borde
+    readonly property int margenBarra: Ajustes.abajo ? 0 : 6   // de la barra a su borde (la de tareas, pegada)
     readonly property int aVentanas: 6       // de la barra a las ventanas
     // niri ya pone «gaps» tras la zona reservada: se reserva eso de menos
     readonly property int zonaBarra: margenBarra + grosor + aVentanas - gaps

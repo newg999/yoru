@@ -10,7 +10,8 @@
 //
 //  Con la barra minimalista, dentro de un recuadro pegado a ella (mismo
 //  fondo, esquinas rectas, hasta el borde de la pantalla) que baja como una
-//  persiana, como sus paneles.
+//  persiana, como sus paneles. Con la de Windows, igual pero abajo a la
+//  derecha, subiendo desde ella.
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -29,11 +30,12 @@ PanelWindow {
     readonly property bool mostrar: enfocada && !Paneles.esta("notificaciones", modelData)
         && Notificaciones.emergentes.length > 0 && !Ajustes.estiloDock
 
-    readonly property bool minima: Ajustes.minimalista
+    readonly property bool pegada: Ajustes.minimalista || abajo
+    readonly property bool abajo: Ajustes.abajo
     readonly property bool aLaDerecha: Ajustes.avisosLado !== "centro"
-    readonly property int relleno: minima ? 10 : 0
+    readonly property int relleno: pegada ? 10 : 0
 
-    // Al aparecer, el recuadro de la minimalista baja desde la barra
+    // Al aparecer, el recuadro pegado baja desde la barra (o sube, abajo)
     property real aparecer: 0
     onMostrarChanged: {
         if (mostrar) {
@@ -52,40 +54,45 @@ PanelWindow {
 
     visible: mostrar
     // A la derecha o en el centro (Ajustes › Notificaciones)
-    anchors { top: true; right: aLaDerecha }
+    anchors { top: !abajo; bottom: abajo; right: aLaDerecha }
     // Bajo la barra (pegados a ella con la minimalista); con la barra a la
-    // izquierda, arriba del todo
-    margins.top: minima ? Tema.altoBarra + 2 : Ajustes.vertical ? Tema.margenLados + 6 : Tema.hueco
-    margins.right: minima ? 0 : Tema.margenLados
-    implicitWidth: minima ? 400 : 380
-    implicitHeight: Math.max(1, minima ? fondo.height : pila.height)
+    // izquierda, arriba del todo; con la de abajo, encima de ella, tapando
+    // su línea de arriba
+    margins.top: Ajustes.minimalista ? Tema.altoBarra + 2 : Ajustes.vertical ? Tema.margenLados + 6 : Tema.hueco
+    margins.bottom: Tema.altoTareas - 1
+    margins.right: pegada ? 0 : Tema.margenLados
+    implicitWidth: pegada ? 400 : 380
+    implicitHeight: Math.max(1, pegada ? fondo.height : pila.height)
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "yoru-avisos"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     // Solo se pueden pulsar las tarjetas (o su recuadro); el resto deja pasar los clics
-    mask: Region { item: ventana.minima ? fondo : pila }
+    mask: Region { item: ventana.pegada ? fondo : pila }
 
-    // Minimalista: el recuadro pegado a la barra
+    // Minimalista o Windows: el recuadro pegado a la barra
     Rectangle {
         id: fondo
-        visible: ventana.minima
+        visible: ventana.pegada
         // Pegado al borde de la pantalla, su borde de ese lado queda fuera
         width: parent.width + (ventana.aLaDerecha ? border.width : 0)
         height: pila.height + 2 * ventana.relleno
-        y: -(1 - ventana.aparecer) * height
+        y: (ventana.abajo ? 1 : -1) * (1 - ventana.aparecer) * height
         color: Tema.panel
-        // Todo recto, como la barra minimalista
+        // Todo recto, como la barra minimalista; con la de Windows, como sus
+        // paneles: redonda solo la esquina de arriba hacia dentro
         radius: 0
+        topLeftRadius: ventana.abajo && ventana.aLaDerecha ? Tema.radioPanel : 0
         border.width: Tema.borde(1)
         border.color: Tema.claro(0.08)
         Behavior on height { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
 
-        // Sin borde arriba: se funde con la barra
+        // Sin borde del lado de la barra: se funde con ella
         Rectangle {
             visible: parent.border.width > 0
             x: parent.border.width
+            y: ventana.abajo ? parent.height - height : 0
             width: parent.width - 2 * parent.border.width
             height: parent.border.width
             color: parent.color
@@ -95,7 +102,7 @@ PanelWindow {
     ListView {
         id: pila
         x: ventana.relleno
-        y: ventana.minima ? fondo.y + ventana.relleno : 0
+        y: ventana.pegada ? fondo.y + ventana.relleno : 0
         width: parent.width - 2 * ventana.relleno
         height: Math.min(contentHeight, ventana.modelData.height * 0.7)
         spacing: 8
@@ -116,17 +123,17 @@ PanelWindow {
             lineas: 3
             // Sueltas, con el fondo y el borde de un panel; en la minimalista,
             // dentro de su recuadro, como las del centro de control
-            color: ventana.minima ? (hover ? Tema.cajaHover : Tema.caja) : hover ? Tema.sombra(0.95) : Tema.panel
-            border.color: urgente ? Tema.rojo : ventana.minima ? Tema.claro(0.06) : Tema.panelBorde
-            border.width: urgente ? 2 : ventana.minima ? 1 : Tema.borde(2)
-            radius: ventana.minima ? 12 : Tema.radioPanel
+            color: ventana.pegada ? (hover ? Tema.cajaHover : Tema.caja) : hover ? Tema.sombra(0.95) : Tema.panel
+            border.color: urgente ? Tema.rojo : ventana.pegada ? Tema.claro(0.06) : Tema.panelBorde
+            border.width: urgente ? 2 : ventana.pegada ? 1 : Tema.borde(2)
+            radius: ventana.pegada ? 12 : Tema.radioPanel
 
             // Entra desde la derecha (aquí y no en «add» de la lista: si
             // llegan varias seguidas, esa animación se cortaba a medias)
             transform: Translate { id: desliz; x: 0 }
             ParallelAnimation {
                 running: true
-                NumberAnimation { target: desliz; property: "x"; from: ventana.minima ? 0 : 60; to: 0; duration: Tema.normal; easing.type: Easing.OutCubic }
+                NumberAnimation { target: desliz; property: "x"; from: ventana.pegada ? 0 : 60; to: 0; duration: Tema.normal; easing.type: Easing.OutCubic }
                 NumberAnimation { target: aviso; property: "opacity"; from: 0; to: 1; duration: Tema.normal }
             }
 

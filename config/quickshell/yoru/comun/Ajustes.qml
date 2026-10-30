@@ -15,7 +15,7 @@ Singleton {
     id: ajustes
 
     // ------------------------------------------------------- Barra y dock
-    property alias barra: datos.barra                 // "arriba" · "izquierda" (islas) · "minimalista" · "dock"
+    property alias barra: datos.barra                 // "arriba" · "izquierda" (islas) · "minimalista" · "dock" · "windows"
     property alias dock: datos.dock                   // "overview" · "siempre" · "nunca"
     property alias islaTitulo: datos.islaTitulo
     property alias ventanas: datos.ventanas           // "activa" (icono y título) · "abiertas" (todas)
@@ -72,8 +72,12 @@ Singleton {
     // Estilo dock: el dock de config/quickshell/yoru-dock (un port de LeyzS
     // QsDock), que la barra arranca aparte (shell.qml)
     readonly property bool estiloDock: barra === "dock"
-    // Minimalista y dock: sin islas
-    readonly property bool centrada: minimalista || estiloDock
+    // Barra de tareas como la de Windows 11, abajo (barra/BarraWindows.qml):
+    // la única que va abajo, así que los paneles salen hacia arriba
+    readonly property bool windows: barra === "windows"
+    readonly property bool abajo: windows
+    // Minimalista, dock y Windows: sin islas
+    readonly property bool centrada: minimalista || estiloDock || windows
 
     // Su lado y si se esconde los guarda el propio dock; aquí se leen y se
     // cambian (Ajustes › Barra y dock)

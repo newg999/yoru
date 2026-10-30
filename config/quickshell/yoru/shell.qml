@@ -119,6 +119,11 @@ ShellRoot {
         model: Quickshell.screens
         BarraIslas {}
     }
+    // O la barra de tareas abajo, como la de Windows 11
+    Variants {
+        model: Quickshell.screens
+        BarraWindows {}
+    }
     Variants {
         model: Quickshell.screens
         Escritorio {}

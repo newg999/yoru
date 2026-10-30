@@ -3,6 +3,7 @@
 //  Con Mod+Space (sección "medio") sale en mitad de la pantalla, más ancho
 //  y con las apps en dos columnas. Con la barra de píldoras (islas arriba o
 //  minimalista), no: sale siempre arriba a la izquierda, bajo su ficha 󰍉.
+//  Con la de Windows tampoco: sale siempre fundido con ella, sobre 夜.
 //
 //    Escribe para buscar (nombre, descripción o palabras clave)
 //    ↑ ↓ ← → para moverte · Enter para abrir · Esc para cerrar
@@ -20,10 +21,12 @@ import qs.comun
 Panel {
     id: panel
     nombre: "lanzador"
-    lado: medio ? "medio" : "izquierda"
+    // (con la barra de Windows, en el centro y fundido con ella, como su Inicio)
+    lado: medio ? "medio" : Ajustes.windows ? "centro" : "izquierda"
     ancho: medio ? 820 : 480
 
-    readonly property bool medio: Paneles.seccion === "medio" && !Ajustes.conPildoras
+    // (con la barra de Windows, Mod+Space también lo abre sobre 夜)
+    readonly property bool medio: Paneles.seccion === "medio" && !Ajustes.conPildoras && !Ajustes.windows
     readonly property int columnas: medio ? 2 : 1
 
     // Qué sale y cómo se abre: comun/Apps.qml
@@ -102,8 +105,9 @@ Panel {
         GridView {
             id: lista
             width: parent.width
-            // 560, o menos si la pantalla es pequeña (117 = resto del panel)
-            height: Math.min(560, panel.altoMax - 117)
+            // 560, o menos si la pantalla es pequeña (117 = resto del panel),
+            // en filas enteras: sin una a medias cortada abajo
+            height: Math.floor(Math.min(560, panel.altoMax - 117) / cellHeight) * cellHeight - 2
             clip: true
             cellWidth: Math.floor(width / panel.columnas)
             cellHeight: 58

@@ -1,7 +1,8 @@
 // ============================================================================
 //  Panel — recuadro que se despliega bajo la barra (como los de DMS)
 //  Con la barra a la izquierda, sale a su derecha: «izquierda» arriba,
-//  «centro» en medio y «derecha» abajo (donde quedan sus botones).
+//  «centro» en medio y «derecha» abajo (donde quedan sus botones). Con la
+//  barra de tareas (abajo), sube encima de ella.
 //
 //  La ventana ocupa la pantalla entera pero es invisible: así un clic fuera
 //  del recuadro lo cierra.
@@ -13,6 +14,9 @@
 //                               // o "medio" (en mitad de la pantalla)
 //        MiContenido {}
 //    }
+//
+//  Con la barra de Windows (fundido), todos se pegan a ella, sin hueco ni
+//  borde entre los dos, y suben desde ella como una persiana.
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -28,10 +32,12 @@ PanelWindow {
     property int ancho: 420
     // {x, ancho}: justo debajo de una isla y de su ancho (Paneles.ancla)
     property var ancla: null
+    property bool fundido: Ajustes.windows
     default property alias contenido: interior.data
 
     readonly property bool abierto: Paneles.abierto === nombre && Paneles.pantalla === modelData
     readonly property bool vertical: Ajustes.vertical
+    readonly property bool abajo: Ajustes.abajo
 
     // Alto máximo del recuadro en ESTA pantalla (bajo la barra, con margen).
     // Los paneles con listas largas las acortan con esto para caber también
@@ -70,7 +76,9 @@ PanelWindow {
     Item {
         id: franjaBarra
         width: ventana.vertical ? Tema.margenBarra + Tema.anchoBarra : parent.width
+        y: ventana.abajo ? parent.height - height : 0
         height: ventana.vertical ? parent.height
+            : ventana.abajo ? Tema.altoTareas
             : Ajustes.minimalista ? Tema.altoBarra + 2 : Tema.margenBarra + Tema.altoBarra
     }
     MouseArea {
@@ -79,12 +87,14 @@ PanelWindow {
     }
 
     // Con la minimalista, el panel baja desde la barra como una persiana: se
-    // recorta justo por debajo de ella para no pintarse encima mientras baja
+    // recorta justo por debajo de ella para no pintarse encima mientras baja.
+    // Fundido con la de abajo, igual pero subiendo (y tapando su línea de arriba)
     Item {
         id: recorte
         anchors.fill: parent
         anchors.topMargin: Ajustes.minimalista ? Tema.altoBarra + 2 : 0
-        clip: Ajustes.minimalista
+        anchors.bottomMargin: ventana.fundido ? Tema.altoTareas - 1 : 0
+        clip: Ajustes.minimalista || ventana.fundido
 
         Rectangle {
             id: caja
@@ -95,10 +105,11 @@ PanelWindow {
             readonly property bool enMedio: ventana.lado === "medio"
             // Con la barra minimalista, pegado a ella: sin hueco, esquinas
             // rectas, su mismo fondo y un borde fino
-            readonly property bool pegado: Ajustes.minimalista && !enMedio
+            readonly property bool pegado: (Ajustes.minimalista || ventana.fundido) && !enMedio
+            readonly property bool fundido: ventana.fundido && !enMedio
             readonly property string sitio: ventana.lado
 
-            // Al abrirse se desliza un poco desde la barra
+            // Al abrirse se desliza un poco desde la barra (abajo: hacia arriba)
             readonly property real deslizar: (1 - ventana.progreso) * 14
 
             x: enMedio ? Math.round((parent.width - width) / 2)
@@ -111,7 +122,9 @@ PanelWindow {
                 : parent.width - width - (pegado ? -border.width : Tema.margenLados)
             // (en el recorte, que con la minimalista empieza bajo la barra)
             y: enMedio ? Math.round((ventana.height - height) / 2) - recorte.y
+                : fundido ? parent.height - ventana.progreso * height
                 : pegado ? -(1 - ventana.progreso) * height
+                : ventana.abajo ? parent.height - height - Tema.hueco + deslizar
                 : !ventana.vertical ? Tema.hueco - deslizar
                 : sitio === "izquierda" ? Tema.margenLados + 6
                 : sitio === "centro" ? Math.round((parent.height - height) / 2)
@@ -121,12 +134,14 @@ PanelWindow {
             // fundido ni encoger (se despegaría de ella)
             opacity: pegado ? 1 : ventana.progreso
             scale: pegado ? 1 : (enMedio ? 0.94 : 0.96) + (enMedio ? 0.06 : 0.04) * ventana.progreso
-            transformOrigin: enMedio ? Item.Center : ventana.vertical ? Item.Left : Item.Top
+            transformOrigin: enMedio ? Item.Center : ventana.vertical ? Item.Left : ventana.abajo ? Item.Bottom : Item.Top
 
             radius: Tema.radioPanel
             // Pegado a la barra minimalista: todo recto, como ella
-            topLeftRadius: pegado ? 0 : radius
-            topRightRadius: pegado ? 0 : radius
+            // (fundido con la de abajo: redondo arriba, recto contra ella y
+            // contra el borde de la pantalla)
+            topLeftRadius: pegado && (!fundido || sitio === "izquierda") ? 0 : radius
+            topRightRadius: pegado && (!fundido || sitio === "derecha") ? 0 : radius
             bottomLeftRadius: pegado ? 0 : radius
             bottomRightRadius: pegado ? 0 : radius
             color: Tema.panel
@@ -134,10 +149,11 @@ PanelWindow {
             border.color: pegado ? Tema.claro(0.08) : Tema.panelBorde
             clip: true
 
-            // Pegado: sin borde arriba (se funde con la barra)
+            // Pegado: sin borde del lado de la barra (se funde con ella)
             Rectangle {
                 visible: caja.pegado && caja.border.width > 0
                 x: caja.border.width
+                y: caja.fundido ? parent.height - height : 0
                 width: parent.width - 2 * caja.border.width
                 height: caja.border.width
                 color: caja.color

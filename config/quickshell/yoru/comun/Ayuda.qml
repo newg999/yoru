@@ -21,10 +21,12 @@ LazyLoader {
 
     PopupWindow {
         anchor.item: ayuda.objetivo
+        // (con la barra abajo, encima)
+        anchor.rect.y: Ajustes.abajo ? -6 : 0
         anchor.rect.width: ayuda.objetivo.width + (Ajustes.vertical ? 6 : 0)
-        anchor.rect.height: ayuda.objetivo.height + (Ajustes.vertical ? 0 : 6)
-        anchor.edges: Ajustes.vertical ? Edges.Right : Edges.Bottom
-        anchor.gravity: Ajustes.vertical ? Edges.Right : Edges.Bottom
+        anchor.rect.height: ayuda.objetivo.height + (Ajustes.vertical || Ajustes.abajo ? 0 : 6)
+        anchor.edges: Ajustes.vertical ? Edges.Right : Ajustes.abajo ? Edges.Top : Edges.Bottom
+        anchor.gravity: Ajustes.vertical ? Edges.Right : Ajustes.abajo ? Edges.Top : Edges.Bottom
         implicitWidth: caja.width
         implicitHeight: caja.height
         color: "transparent"

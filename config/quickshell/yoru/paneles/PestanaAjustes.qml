@@ -308,7 +308,8 @@ Item {
                 opciones: [
                     {id: "arriba", icono: "󰕮", texto: "Islas"},
                     {id: "minimalista", icono: "󰖯", texto: "Minimalista"},
-                    {id: "dock", icono: "󰍉", texto: "Dock"}
+                    {id: "dock", icono: "󰍉", texto: "Dock"},
+                    {id: "windows", icono: "󰖳", texto: "Windows"}
                 ]
                 valor: Ajustes.barra
                 onElegir: id => Ajustes.barra = id
@@ -339,6 +340,8 @@ Item {
                 wrapMode: Text.WordWrap
                 text: Ajustes.estiloDock
                     ? "El dock de LeyzS QsDock, adaptado a Yoru: pegado al borde, con tus apps, lo que suena y la hora; se transforma en cada panel. Doble clic en 夜 lo cambia de lado."
+                    : Ajustes.windows
+                    ? "Una barra de tareas abajo, como la de Windows 11: 夜 (Inicio), buscar y tus apps en el centro; el tiempo a la izquierda; la bandeja, la conexión y la hora a la derecha. Los paneles suben encima de ella."
                     : "Una barra fina de lado a lado: escritorios y ventana a la izquierda, la hora en el centro y la bandeja a la derecha. Al pulsarla, el centro de control se abre debajo."
                 font.bold: false
                 font.pixelSize: 12

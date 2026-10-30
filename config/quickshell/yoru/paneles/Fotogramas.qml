@@ -26,7 +26,7 @@ PanelWindow {
     visible: activo
     color: "transparent"
     anchors { top: true; right: true }
-    margins { top: Tema.hueco + 8; right: 16 }
+    margins { top: Ajustes.abajo ? Tema.margenLados + 8 : Tema.hueco + 8; right: 16 }
     implicitWidth: caja.width
     implicitHeight: caja.height
     exclusionMode: ExclusionMode.Ignore
