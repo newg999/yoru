@@ -7,8 +7,9 @@
 //    夜           el lanzador, centrado y fundido con la barra (su Inicio)
 //    apps         las fijadas y las abiertas (comun/Tareas.qml); la raya de
 //                 debajo marca las abiertas, larga y del color del tema la del
-//                 foco. Clic = ir (con varias ventanas, elegir) · central =
-//                 ventana nueva · derecho = menú (fijar, cerrar...)
+//                 foco. Clic = ir (otra vez: a la ventana anterior; con
+//                 varias, a la siguiente) · central = ventana nueva ·
+//                 derecho = menú (sus ventanas, fijar, cerrar...)
 //    󰖩 󰕾 󰁹       el centro de control (rueda = volumen)
 //    hora         el calendario · 󰂚 las notificaciones (derecho: no molestar)
 //  Los paneles suben encima de ella (Panel.qml, con Ajustes.abajo).
@@ -232,7 +233,8 @@ PanelWindow {
                             menu.cerrar();
                             Tareas.lanzar(app);
                         } else {
-                            menu.pulsar(app, tarea);
+                            menu.cerrar();
+                            Tareas.alternar(app);
                         }
                     }
 

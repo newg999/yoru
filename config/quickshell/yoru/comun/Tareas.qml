@@ -7,6 +7,7 @@ pragma Singleton
 //
 //    Tareas.apps          [{clave, entrada, appId, fija, ventanas: [...]}]
 //    Tareas.lanzar(app)   abre otra ventana · Tareas.irA(ventana)
+//    Tareas.alternar(app) el clic de la barra de Windows (como el del dock)
 //    Tareas.cerrarTodas(app)
 //  El menú de clic derecho de las dos: barra/MenuApp.qml
 // ============================================================================
@@ -76,6 +77,20 @@ Singleton {
     function irA(v) {
         Quickshell.execDetached(["sh", "-c",
             `niri msg action focus-window --id ${v.id} && niri msg action close-overview`]);
+    }
+
+    // Como el dock (yoru-dock): sin ventanas la abre; si su única ventana ya
+    // tiene el foco, vuelve a la anterior; con varias, cada clic pasa a la
+    // siguiente
+    function alternar(app) {
+        const vs = app.ventanas;
+        if (vs.length === 0)
+            return lanzar(app);
+        const i = vs.findIndex(v => v.id === Niri.enfocada?.id);
+        if (vs.length === 1 && i === 0)
+            Niri.accion("focus-window-previous");
+        else
+            irA(vs[(i + 1) % vs.length]);
     }
 
     function cerrarTodas(app) {
