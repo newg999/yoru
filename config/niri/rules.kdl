@@ -201,3 +201,14 @@ layer-rule {
     match namespace="^yoru-avisos$"
     block-out-from "screencast"
 }
+
+// MEGAsync: su ventana es un recuadro pensado para salir junto a la bandeja.
+// En columna, niri la estiraba a todo el alto (con un gran fondo negro):
+// flotante, de su tamaño y arriba a la derecha, junto a la bandeja
+window-rule {
+    match app-id=r#"(?i)mega"#
+    open-floating true
+    default-column-width { fixed 400; }
+    default-window-height { fixed 570; }
+    default-floating-position x=12 y=12 relative-to="top-right"
+}
