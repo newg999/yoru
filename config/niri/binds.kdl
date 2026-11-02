@@ -76,6 +76,8 @@ binds {
 
     // ------------------------------------------------------------ Ventanas
     Mod+Q repeat=false { close-window; }
+    // Matar una ventana colgada: eliges cuál con el ratón (como xkill)
+    Ctrl+Alt+Escape hotkey-overlay-title="Matar una ventana (como xkill)" { spawn-sh "~/.config/niri/scripts/xkill.sh"; }
     // Overview (todas las ventanas en pequeño): la barra se esconde mientras
     Mod+Tab repeat=false hotkey-overlay-title="Overview" { toggle-overview; }
     Mod+O   repeat=false { toggle-overview; }

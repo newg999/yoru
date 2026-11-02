@@ -9,6 +9,8 @@
 #  Sin el archivo, lo de siempre: bloquea a los 5 min, apaga la pantalla a
 #  los 10 y suspende a los 15, solo si va con batería (suspender.sh).
 #  Bloquea siempre antes de suspender (y con «loginctl lock-session»).
+#  Los 15 s antes de bloquear, la pantalla se va oscureciendo (Bloqueo.qml);
+#  si tocas algo, vuelve y vuelve a contar.
 #  Un vídeo a pantalla completa (o una app que lo pida) lo detiene todo.
 # ----------------------------------------------------------------------------
 
@@ -27,7 +29,11 @@ PY
 )
 
 args=(-w)
-(( bloquear > 0 )) && args+=(timeout $((bloquear * 60)) "$dir/bloquear.sh")
+if (( bloquear > 0 )); then
+    args+=(timeout $((bloquear * 60 - 15)) "qs -c yoru ipc call bloqueo atenuar"
+           resume "qs -c yoru ipc call bloqueo despertar"
+           timeout $((bloquear * 60)) "$dir/bloquear.sh")
+fi
 (( pantalla > 0 )) && args+=(timeout $((pantalla * 60)) "niri msg action power-off-monitors"
                              resume "niri msg action power-on-monitors")
 if (( suspender > 0 )); then

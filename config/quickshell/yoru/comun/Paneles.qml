@@ -21,6 +21,23 @@ Singleton {
     // mismo ancho ({x, ancho} en la pantalla; null = según «origen»)
     property var ancla: null
 
+    // Islas en píldoras: el panel sale de la isla que lo abre, fundido con
+    // ella (Panel.qml). BarraIslas apunta aquí sus islas, por pantalla
+    property var islas: ({})
+    function islaDe(enPantalla, nombre, enSeccion) {
+        if (!Ajustes.pildoras)
+            return null;
+        const i = islas[enPantalla?.name];
+        if (!i)
+            return null;
+        const it = nombre === "pildora"
+            ? (enSeccion === "musica" ? i.musica
+                : ["calendario", "clima"].includes(enSeccion) || origen !== "derecha" ? i.centro : i.estado)
+            : {lanzador: i.botones, bateria: i.estado, actualizaciones: i.novedades, discos: i.discos,
+               notificaciones: i.notificaciones, portapapeles: i.notificaciones, apagado: i.notificaciones}[nombre];
+        return it && it.visible && it.width > 0 ? it : null;
+    }
+
     // Abre una página del panel «pildora» (paneles/Paginas.qml: control,
     // calendario, multimedia, clima...) bajo el botón pulsado, aunque ya
     // estuviera abierto con otra (se mueve). Si ya está en esa página, se cierra

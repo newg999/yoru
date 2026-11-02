@@ -10,6 +10,8 @@
 //  La música y la grabación solo salen cuando hay algo.
 //  La barra a la izquierda sigue siendo Barra.qml.
 //
+//  Cada panel sale de la isla que lo abre, fundido con ella (Panel.qml).
+//
 //  Con la minimalista es esta misma barra, pero sobre una franja entera de
 //  lado a lado, pegada arriba (las islas, sin fondo: Isla.qml). Los paneles
 //  se abren pegados a ella (Panel.qml).
@@ -49,6 +51,11 @@ PanelWindow {
     IdleInhibitor {
         window: barra
         enabled: Despierto.activo
+    }
+
+    // De qué isla sale cada panel (para fundirlo con ella: Panel.qml)
+    Component.onCompleted: Paneles.islas[modelData.name] = {
+        botones, musica, centro, estado, notificaciones, novedades, discos
     }
 
     MouseArea {

@@ -8,6 +8,9 @@
 //  (resaltado: isla.hover), sin cambiar el fondo.
 //  Con ayuda: "...", al dejar el ratón encima sale un recuadro con más
 //  información (ver Ayuda.qml).
+//  Con un panel colgando de ella (fusion: 0-1, al ritmo de su animación;
+//  lo lleva Panel.qml con aportar()), sus esquinas de abajo se vuelven
+//  rectas y toma el color del panel: los dos son una sola pieza.
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -45,14 +48,30 @@ Rectangle {
     property string ayuda: ""
     signal clic(int boton)
     signal rueda(int pasos)
+    // Cada panel aporta su progreso; manda el mayor (al pasar de un panel a
+    // otro de la misma isla, uno se cierra mientras el otro se abre)
+    property var aportes: ({})
+    property real fusion: 0
+    function aportar(clave, cuanto) {
+        aportes[clave] = cuanto;
+        let mayor = 0;
+        for (const k in aportes)
+            mayor = Math.max(mayor, aportes[k]);
+        fusion = mayor;
+    }
+    function mezcla(a, b, t) {
+        return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, a.a + (b.a - a.a) * t);
+    }
 
     implicitWidth: vertical ? Tema.anchoBarra : vacia ? 0 : ocupado + 2 * relleno
     implicitHeight: !vertical ? Tema.altoBarra : vacia ? 0 : ocupado + 2 * rellenoVertical
     radius: Tema.radioIsla
+    bottomLeftRadius: radius * (1 - fusion)
+    bottomRightRadius: radius * (1 - fusion)
     // Con la minimalista, sin fondo: las islas van sobre su franja entera
-    color: Ajustes.minimalista ? "transparent" : Tema.isla
-    border.width: Ajustes.minimalista ? 0 : Tema.borde(1)
-    border.color: Tema.islaBorde
+    color: Ajustes.minimalista ? "transparent" : mezcla(Tema.isla, Tema.panel, fusion)
+    border.width: Ajustes.minimalista || fusion >= 1 ? 0 : Tema.borde(1)
+    border.color: Qt.rgba(Tema.islaBorde.r, Tema.islaBorde.g, Tema.islaBorde.b, Tema.islaBorde.a * (1 - fusion))
     clip: true
 
     opacity: vacia ? 0 : 1

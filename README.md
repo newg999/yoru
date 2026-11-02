@@ -122,6 +122,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | `Mod+E` | Archivos |
 | `Mod+B` | Navegador (Brave) |
 | `Mod+Q` | Cerrar ventana |
+| `Ctrl+Alt+Esc` | Matar una ventana colgada: haz clic en ella (como xkill) |
 | `Mod+O` | Overview (vista de todo) |
 | `Mod+←/→` o `Mod+H/L` | Moverse entre columnas |
 | `Mod+↑/↓` o `Mod+K/J` | Moverse entre ventanas y escritorios |

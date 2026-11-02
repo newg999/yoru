@@ -7,6 +7,10 @@
 //  contraseña sea correcta, niri no enseña nada más. La contraseña la
 //  comprueba PAM con la misma regla que swaylock (/etc/pam.d/swaylock).
 //
+//  Por inactividad, antes de bloquear la pantalla se va oscureciendo poco a
+//  poco (swayidle lo pide unos segundos antes); si tocas algo, vuelve:
+//      qs -c yoru ipc call bloqueo atenuar     (y despertar)
+//
 //  Si la barra se cae con la pantalla bloqueada, niri la deja bloqueada (en
 //  negro). Al volver a arrancar, la barra ve $XDG_RUNTIME_DIR/yoru-bloqueado
 //  y bloquea otra vez, para poder entrar. Si aun así no vuelve: Ctrl+Alt+F3,
@@ -125,7 +129,63 @@ Scope {
             }
         }
     }
-    onActivoChanged: if (activo) leerTeclado.running = true
+    onActivoChanged: {
+        if (activo)
+            leerTeclado.running = true;
+        else
+            quitarOscuro();
+    }
+
+    // ------------------------------------------- Atenuar antes de bloquear
+    // Una capa negra encima de todo que se va oscureciendo (15 s, lo que
+    // falta para que swayidle bloquee). No coge clics ni teclas: al tocar
+    // algo, swayidle lo nota y pide «despertar»
+    property real oscuro: 0
+    function atenuar() {
+        if (activo)
+            return;
+        aclarar.stop();
+        oscurecer.start();
+    }
+    function despertar() {
+        oscurecer.stop();
+        aclarar.start();
+    }
+    function quitarOscuro() {
+        oscurecer.stop();
+        aclarar.stop();
+        oscuro = 0;
+    }
+    NumberAnimation {
+        id: oscurecer
+        target: bloqueo
+        property: "oscuro"
+        to: 0.9
+        duration: 15000
+        easing.type: Easing.InOutSine
+    }
+    NumberAnimation {
+        id: aclarar
+        target: bloqueo
+        property: "oscuro"
+        to: 0
+        duration: 250
+        easing.type: Easing.OutCubic
+    }
+    Variants {
+        model: bloqueo.oscuro > 0 ? Quickshell.screens : []
+        PanelWindow {
+            required property var modelData
+            screen: modelData
+            anchors { top: true; bottom: true; left: true; right: true }
+            exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.namespace: "yoru-atenuar"
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+            mask: Region {}
+            color: Qt.rgba(0, 0, 0, bloqueo.oscuro)
+        }
+    }
 
     WlSessionLock {
         id: cerrojo
@@ -190,6 +250,14 @@ Scope {
         // (si no, al suspender se vería el escritorio un instante al volver)
         function bloqueada(): bool {
             return cerrojo.secure;
+        }
+        // Para inactividad.sh: oscurecer poco a poco antes de bloquear, y
+        // volver si tocas algo
+        function atenuar(): void {
+            bloqueo.atenuar();
+        }
+        function despertar(): void {
+            bloqueo.despertar();
         }
     }
 }

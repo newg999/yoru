@@ -15,10 +15,14 @@
 //        MiContenido {}
 //    }
 //
+//  Con las islas en píldoras, cuelga de la isla que lo abre (Paneles.islaDe):
+//  la isla pierde sus esquinas de abajo, unas curvas unen los dos y el panel
+//  baja desde ella como una persiana.
 //  Con la barra de Windows (fundido), todos se pegan a ella, sin hueco ni
 //  borde entre los dos, y suben desde ella como una persiana.
 // ============================================================================
 import QtQuick
+import QtQuick.Shapes
 import Quickshell
 import Quickshell.Wayland
 import qs.comun
@@ -36,6 +40,40 @@ PanelWindow {
     default property alias contenido: interior.data
 
     readonly property bool abierto: Paneles.abierto === nombre && Paneles.pantalla === modelData
+
+    // La isla de la que cuelga (islas en píldoras). Se toma al abrirse (o al
+    // cambiar de página) y se guarda al cerrarse, para volver a ella
+    property Item isla: null
+    // La isla se transforma al ritmo del panel (Isla.aportar)
+    readonly property string clave: nombre + "@" + modelData.name
+    function tomarIsla() {
+        if (!abierto)
+            return;
+        const nueva = vertical || lado === "medio" ? null : Paneles.islaDe(modelData, nombre, Paneles.seccion);
+        if (isla && isla !== nueva)
+            isla.aportar(clave, 0);
+        isla = nueva;
+    }
+    onAbiertoChanged: tomarIsla()
+    onProgresoChanged: isla?.aportar(clave, progreso)
+    Connections {
+        target: Paneles
+        function onSeccionChanged() {
+            if (ventana.abierto)
+                ventana.tomarIsla();
+        }
+    }
+    Component.onDestruction: isla?.aportar(clave, 0)
+    // Dónde está (en la pantalla) y qué ancho tiene
+    readonly property real islaX: {
+        const it = isla;
+        if (!it)
+            return 0;
+        void (it.x + it.width + (it.parent?.x ?? 0));
+        return it.mapToItem(null, 0, 0).x;
+    }
+    readonly property real islaAncho: isla?.width ?? 0
+    readonly property int bajoIslas: Tema.margenBarra + Tema.altoBarra
     readonly property bool vertical: Ajustes.vertical
     readonly property bool abajo: Ajustes.abajo
 
@@ -46,9 +84,13 @@ PanelWindow {
 
     // 0 = cerrado · 1 = abierto. La ventana sigue visible hasta que termina
     // la animación de cierre.
+    // (colgando de una isla, algo más larga y suave: nace de ella)
     property real progreso: abierto ? 1 : 0
     Behavior on progreso {
-        NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic }
+        NumberAnimation {
+            duration: Tema.normal === 0 ? 0 : !caja.colgado ? Tema.normal : ventana.abierto ? 300 : 200
+            easing.type: !caja.colgado ? Easing.OutCubic : ventana.abierto ? Easing.OutQuint : Easing.InOutCubic
+        }
     }
 
     screen: modelData
@@ -92,15 +134,25 @@ PanelWindow {
     Item {
         id: recorte
         anchors.fill: parent
-        anchors.topMargin: Ajustes.minimalista ? Tema.altoBarra + 2 : 0
+        anchors.topMargin: Ajustes.minimalista ? Tema.altoBarra + 2 : caja.colgado ? ventana.bajoIslas : 0
         anchors.bottomMargin: ventana.fundido ? Tema.altoTareas - 1 : 0
-        clip: Ajustes.minimalista || ventana.fundido
+        clip: Ajustes.minimalista || ventana.fundido || caja.colgado
 
         Rectangle {
             id: caja
 
             readonly property bool anclado: ventana.ancla !== null && !ventana.vertical
-            width: anclado ? ventana.ancla.ancho : ventana.ancho
+            // Colgando de una isla: debajo de ella y al menos de su ancho
+            readonly property bool colgado: ventana.isla !== null && !enMedio
+            // Colgando, nace del ancho de la isla y se ensancha hasta el suyo
+            readonly property real anchoFinal: colgado ? Math.max(anclado ? ventana.ancla.ancho : ventana.ancho, ventana.islaAncho)
+                : anclado ? ventana.ancla.ancho : ventana.ancho
+            readonly property real xFinal: Math.round(Math.max(Tema.margenLados, Math.min(parent.width - anchoFinal - Tema.margenLados,
+                ventana.islaX + (ventana.islaAncho - anchoFinal) / 2)))
+            width: colgado ? ventana.islaAncho + (anchoFinal - ventana.islaAncho) * ventana.progreso : anchoFinal
+            // Lo que sobresale a cada lado de la isla (ahí van las curvas)
+            readonly property real sobraIzquierda: colgado ? ventana.islaX - x : 0
+            readonly property real sobraDerecha: colgado ? x + width - ventana.islaX - ventana.islaAncho : 0
             height: interior.implicitHeight + 32
             readonly property bool enMedio: ventana.lado === "medio"
             // Con la barra minimalista, pegado a ella: sin hueco, esquinas
@@ -113,6 +165,8 @@ PanelWindow {
             readonly property real deslizar: (1 - ventana.progreso) * 14
 
             x: enMedio ? Math.round((parent.width - width) / 2)
+                // Centrado bajo la isla, sin salirse de la pantalla
+                : colgado ? ventana.islaX + (xFinal - ventana.islaX) * ventana.progreso
                 : anclado ? ventana.ancla.x
                 : ventana.vertical ? Tema.hueco - deslizar
                 // Pegado al borde de la pantalla, su borde de ese lado queda
@@ -123,6 +177,7 @@ PanelWindow {
             // (en el recorte, que con la minimalista empieza bajo la barra)
             y: enMedio ? Math.round((ventana.height - height) / 2) - recorte.y
                 : fundido ? parent.height - ventana.progreso * height
+                : colgado ? -(1 - ventana.progreso) * height
                 : pegado ? -(1 - ventana.progreso) * height
                 : ventana.abajo ? parent.height - height - Tema.hueco + deslizar
                 : !ventana.vertical ? Tema.hueco - deslizar
@@ -132,20 +187,23 @@ PanelWindow {
 
             // Pegado a la barra baja como una persiana (ver «recorte»), sin
             // fundido ni encoger (se despegaría de ella)
-            opacity: pegado ? 1 : ventana.progreso
-            scale: pegado ? 1 : (enMedio ? 0.94 : 0.96) + (enMedio ? 0.06 : 0.04) * ventana.progreso
+            opacity: pegado || colgado ? 1 : ventana.progreso
+            scale: pegado || colgado ? 1 : (enMedio ? 0.94 : 0.96) + (enMedio ? 0.06 : 0.04) * ventana.progreso
             transformOrigin: enMedio ? Item.Center : ventana.vertical ? Item.Left : ventana.abajo ? Item.Bottom : Item.Top
 
             radius: Tema.radioPanel
             // Pegado a la barra minimalista: todo recto, como ella
             // (fundido con la de abajo: redondo arriba, recto contra ella y
             // contra el borde de la pantalla)
-            topLeftRadius: pegado && (!fundido || sitio === "izquierda") ? 0 : radius
-            topRightRadius: pegado && (!fundido || sitio === "derecha") ? 0 : radius
+            // (colgado de una isla: recto donde sigue su borde)
+            topLeftRadius: colgado ? Math.min(radius, Math.max(0, sobraIzquierda / 2))
+                : pegado && (!fundido || sitio === "izquierda") ? 0 : radius
+            topRightRadius: colgado ? Math.min(radius, Math.max(0, sobraDerecha / 2))
+                : pegado && (!fundido || sitio === "derecha") ? 0 : radius
             bottomLeftRadius: pegado ? 0 : radius
             bottomRightRadius: pegado ? 0 : radius
             color: Tema.panel
-            border.width: pegado ? Tema.borde(1) : Tema.borde(2)
+            border.width: colgado ? 0 : pegado ? Tema.borde(1) : Tema.borde(2)
             border.color: pegado ? Tema.claro(0.08) : Tema.panelBorde
             clip: true
 
@@ -178,13 +236,51 @@ PanelWindow {
                 focus: true
                 Keys.onEscapePressed: Paneles.cerrar()
 
+                // Colgando, el contenido no se mueve ni se recoloca mientras el
+                // recuadro se ensancha: está ya en su sitio y aparece con un fundido
                 Item {
                     id: interior
-                    x: 16; y: 16
-                    width: parent.width - 32
+                    x: 16 + (caja.colgado ? caja.xFinal - caja.x : 0)
+                    y: 16
+                    width: caja.anchoFinal - 32
+                    opacity: caja.colgado ? Math.max(0, Math.min(1, (ventana.progreso - 0.3) / 0.7)) : 1
                     implicitHeight: childrenRect.height
                 }
             }
         }
+    }
+
+    // Las curvas que unen la isla con el panel, a cada lado de la isla donde
+    // el panel sobresale (crecen con él al abrirse)
+    component Curva: Shape {
+        property bool derecha: false
+        property real r: 0
+        visible: caja.colgado && r > 0.5
+        y: ventana.bajoIslas - r
+        width: r
+        height: r
+        preferredRendererType: Shape.CurveRenderer
+        ShapePath {
+            fillColor: caja.color
+            strokeWidth: -1
+            // La esquina de abajo pegada a la isla, hacia fuera un cuarto de círculo
+            startX: derecha ? 0 : r; startY: 0
+            PathLine { x: derecha ? 0 : r; y: r }
+            PathLine { x: derecha ? r : 0; y: r }
+            PathArc {
+                x: derecha ? 0 : r; y: 0
+                radiusX: r; radiusY: r
+                direction: derecha ? PathArc.Clockwise : PathArc.Counterclockwise
+            }
+        }
+    }
+    Curva {
+        r: Math.min(12, Math.max(0, caja.sobraIzquierda / 2))
+        x: ventana.islaX - r
+    }
+    Curva {
+        derecha: true
+        r: Math.min(12, Math.max(0, caja.sobraDerecha / 2))
+        x: ventana.islaX + ventana.islaAncho
     }
 }
