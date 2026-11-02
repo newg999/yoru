@@ -226,30 +226,32 @@ PanelWindow {
 
             SystemClock {
                 id: reloj
-                precision: SystemClock.Seconds
+                precision: Ajustes.relojSegundos ? SystemClock.Seconds : SystemClock.Minutes
             }
             readonly property var dias: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
             readonly property var meses: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
                 "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
 
+            // Hora y fecha en una línea (segundos según Ajustes › Fecha y hora).
             // Clic = calendario
             Item {
                 implicitWidth: hora.implicitWidth
                 implicitHeight: Tema.altoBarra
-                Column {
+                Row {
                     id: hora
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: -3
+                    spacing: 10
                     Mono {
-                        text: Qt.formatDateTime(reloj.date, Ajustes.reloj24 ? "HH:mm:ss" : "h:mm:ss AP")
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Qt.formatDateTime(reloj.date, (Ajustes.reloj24 ? "HH:mm" : "h:mm AP") + (Ajustes.relojSegundos ? ":ss" : ""))
                         color: horaRaton.containsMouse || Paneles.esta("pildora", barra.modelData, "calendario") ? Tema.texto : Tema.blanco
                         font.pixelSize: Tema.letra + 1
                     }
                     Mono {
+                        anchors.verticalCenter: parent.verticalCenter
                         text: `${centro.dias[reloj.date.getDay()]}, ${reloj.date.getDate()} de ${centro.meses[reloj.date.getMonth()]}`
-                        color: Tema.gris
-                        // (hasta 10: más no cabe bajo la hora)
-                        font.pixelSize: Math.min(10, Tema.letra - 3)
+                        color: Tema.texto
+                        font.bold: false
                     }
                 }
                 MouseArea {
