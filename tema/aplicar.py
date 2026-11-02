@@ -21,6 +21,8 @@
 #    kitty.conf  ← config/kitty/kitty.conf     (include)
 #    colores.json ← Quickshell (comun/Tema.qml)
 #    fastfetch.zsh ← config/zsh/zshrc (colores del logo de fastfetch)
+#    fastfetch.png ← config/zsh/zshrc (en kitty, el logo de verdad: el 夜 de
+#                 pincel del color del tema con su sello rojo)
 #    Yoru.colors ← esquema de color de KDE (apps Qt y Plasma): se copia en
 #                 ~/.local/share/color-schemes/ y sus colores, en
 #                 ~/.config/kdeglobals (ver «aplicar.py --kde»)
@@ -261,6 +263,23 @@ def escribir(nombre, texto):
     temporal.replace(destino)   # de golpe: nadie lee un archivo a medias
 
 
+def logo_fastfetch(acento):
+    """El 夜 de pincel (config/fastfetch/yoru-pincel.png, en blanco) teñido del
+    acento y con el sello rojo encima, para fastfetch en kitty. Sin
+    ImageMagick no pasa nada: zshrc usa el logo de bloques"""
+    carpeta = REPO / "config" / "fastfetch"
+    destino = ESTADO / "fastfetch.png"
+    temporal = ESTADO / "fastfetch.tmp.png"
+    try:
+        subprocess.run(["magick", carpeta / "yoru-pincel.png", "-fill", acento, "-colorize", "100%",
+                        carpeta / "yoru-sello.png", "-gravity", "southeast", "-geometry", "+4+8",
+                        "-compose", "over", "-composite", f"PNG32:{temporal}"],
+                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        temporal.replace(destino)
+    except (OSError, subprocess.CalledProcessError):
+        pass
+
+
 def generar(p, modo):
     a = p["acento"]
     escribir("colores.json", json.dumps({**p, "modo": modo}, indent=4) + "\n")
@@ -291,6 +310,8 @@ ff_colores=(
     --color-keys '{ansi(a)}'
 )
 """)
+
+    logo_fastfetch(a)
 
     # uosc (la interfaz de mpv): sus colores van sin «#»
     h = lambda c: c.lstrip("#")

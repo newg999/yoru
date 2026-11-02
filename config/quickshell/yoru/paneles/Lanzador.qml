@@ -35,6 +35,16 @@ Panel {
         Apps.abrir(app, panel.modelData);
     }
 
+    // Cada vez que se abre, la búsqueda vacía y la lista desde arriba (al
+    // abrirse y no al cerrarse: así no cambia mientras se va)
+    onAbiertoChanged: {
+        if (!abierto)
+            return;
+        busqueda.text = "";
+        lista.currentIndex = 0;
+        lista.positionViewAtBeginning();
+    }
+
     Column {
         width: parent.width
         spacing: 12
