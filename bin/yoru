@@ -13,6 +13,8 @@
 #                       «fondo-claro» (sacados del fondo de pantalla) o una
 #                       paleta de tema/paletas/ (nord, catppuccin...); sin
 #                       modo, lo reaplica. También desde Ajustes (Mod+Alt+T)
+#    yoru iconos [tema] cambia el tema de iconos en todo (barra, dock, apps
+#                       Qt y GTK) al momento; sin tema, lista los que hay
 #    yoru kdeglobals    pone en ~/.config/kdeglobals los iconos y los colores
 #                       de Yoru (apps Qt y Plasma), sin tocar lo demás; la
 #                       barra lo hace sola al arrancar
@@ -260,6 +262,50 @@ cmd_tema() {
     python3 "$REPO/tema/aplicar.py" "$@"
 }
 
+# ------------------------------------------------------------------ iconos
+# Un solo tema para todo. Quickshell (barra y dock) y las apps Qt lo leen de
+# config/kdeglobals (con plasma-integration); las GTK, de gsettings y de
+# settings.ini. install.sh también lo coge de kdeglobals
+_temas_iconos() {
+    # Los que tienen iconos (los de cursores solo traen «cursors»), sin repetir
+    local d
+    for d in "$HOME/.local/share/icons"/*/ "$HOME/.icons"/*/ /usr/share/icons/*/; do
+        [[ -f "$d/index.theme" ]] && grep -q '^Directories=' "$d/index.theme" && basename "$d"
+    done | grep -vxE 'hicolor|locolor|default' | sort -u
+}
+cmd_iconos() {
+    local tema="${1:-}" actual
+    actual="$(awk -F= '/^\[Icons\]/ {e = 1; next} /^\[/ {e = 0} e && $1 == "Theme" {print $2; exit}' "$REPO/config/kdeglobals")"
+    if [[ -z "$tema" ]]; then
+        echo "  Temas de iconos (● el de ahora). Cambiar: yoru iconos <tema>"
+        _temas_iconos | while read -r t; do
+            [[ "$t" == "$actual" ]] && echo -e "  ${VERDE}●${NC} $t" || echo "    $t"
+        done
+        return
+    fi
+    if ! _temas_iconos | grep -qxF "$tema"; then
+        error "No tengo el tema «$tema». Mira los que hay con: yoru iconos"
+        return 1
+    fi
+
+    paso "Iconos: $tema"
+    # Se cambia el del repo y se pasa a ~/.config (ver cmd_kdeglobals)
+    sed -i "/^\[Icons\]/,/^\[/ s/^Theme=.*/Theme=$tema/" "$REPO/config/kdeglobals"
+    cmd_kdeglobals
+    gsettings set org.gnome.desktop.interface icon-theme "$tema" 2>/dev/null
+    local ini
+    for ini in "$HOME/.config/gtk-3.0/settings.ini" "$HOME/.config/gtk-4.0/settings.ini"; do
+        [[ -f "$ini" ]] && sed -i "s/^gtk-icon-theme-name=.*/gtk-icon-theme-name=$tema/" "$ini"
+    done
+    # La barra (y el dock, si está) lo leen al arrancar
+    systemctl --user restart yoru-shell
+    if pgrep -f "qs -c yoru-dock" >/dev/null; then
+        qs kill -c yoru-dock >/dev/null 2>&1
+        setsid -f qs -c yoru-dock -n -d >/dev/null 2>&1
+    fi
+    ok "Hecho. Las apps que ya estaban abiertas lo cogen al volver a abrirlas"
+}
+
 # ------------------------------------------------------------------ copias
 cmd_copias() {
     if ! command -v snapper >/dev/null; then
@@ -433,6 +479,7 @@ case "${1:-ayuda}" in
     reload|recargar)    cmd_reload ;;
     doctor|revisar)     cmd_doctor ;;
     tema)               shift; cmd_tema "$@" ;;
+    iconos)             shift; cmd_iconos "$@" ;;
     kdeglobals)         cmd_kdeglobals ;;
     copias)             cmd_copias ;;
     volver)             cmd_volver "${2:-}" ;;

@@ -1,4 +1,3 @@
-//@ pragma IconTheme Papirus-Dark
 // ============================================================================
 //  yoru-dock — el estilo «Dock» de la barra de Yoru
 //  Port de LeyzS QsDock (https://github.com/L3yzs/LeyzS-QsDock, MIT, © 2026

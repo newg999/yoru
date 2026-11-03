@@ -47,10 +47,14 @@ export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"
 if command -v fastfetch >/dev/null; then
     ff_colores=()
     [[ -f ~/.local/state/yoru/tema/fastfetch.zsh ]] && source ~/.local/state/yoru/tema/fastfetch.zsh
-    # En kitty, el 夜 de pincel de verdad (una imagen: tema/aplicar.py)
-    if [[ $TERM == xterm-kitty && -f ~/.local/state/yoru/tema/fastfetch.png ]]; then
+    # En kitty, el 夜 de pincel de verdad (una imagen: tema/aplicar.py), del
+    # tamaño justo para que el texto quepa al lado. En una terminal estrecha
+    # (menos de 60 columnas), sin logo: no hay sitio para los dos
+    if (( COLUMNS < 60 )); then
+        ff_colores+=(--logo none)
+    elif [[ $TERM == xterm-kitty && -f ~/.local/state/yoru/tema/fastfetch.png ]]; then
         ff_colores+=(--logo-type kitty-direct --logo ~/.local/state/yoru/tema/fastfetch.png
-                     --logo-width 30 --logo-height 14)
+                     --logo-width 16 --logo-height 8)
     fi
     fastfetch "${ff_colores[@]}"
     unset ff_colores

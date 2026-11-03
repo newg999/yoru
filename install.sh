@@ -989,10 +989,15 @@ activar_barra() {
 }
 
 # --------------------------------------------------------------- Apps GTK
-# Tema oscuro e iconos Papirus para Nautilus, Calendario, etc.
+# Tema oscuro e iconos para Nautilus, Calendario, etc.
 # (son ajustes del sistema: también se notan si vuelves a GNOME)
+# Los iconos, los de config/kdeglobals (Papirus-Dark de serie; se cambian
+# con «yoru iconos»): así todo usa el mismo tema
 ajustes_gtk() {
     paso "Tema oscuro para las apps GTK"
+    local iconos
+    iconos="$(awk -F= '/^\[Icons\]/ {e = 1; next} /^\[/ {e = 0} e && $1 == "Theme" {print $2; exit}' "$REPO/config/kdeglobals")"
+    iconos="${iconos:-Papirus-Dark}"
     if ! command -v gsettings >/dev/null; then
         aviso "gsettings no está disponible, me lo salto"
         return
@@ -1001,7 +1006,7 @@ ajustes_gtk() {
     # GTK3: "Adwaita-dark" ya no existe en GTK 3.24.5x (vuelve en silencio al
     # tema claro). adw-gtk3-dark además se ve igual que las apps GTK4.
     gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark'
-    gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark'
+    gsettings set org.gnome.desktop.interface icon-theme "$iconos"
     # El cursor, también en las apps (niri lo pone en config.kdl → cursor)
     gsettings set org.gnome.desktop.interface cursor-theme "$CURSOR_TEMA"
     gsettings set org.gnome.desktop.interface cursor-size 24
@@ -1014,7 +1019,7 @@ ajustes_gtk() {
 [Settings]
 gtk-theme-name=adw-gtk3-dark
 gtk-application-prefer-dark-theme=true
-gtk-icon-theme-name=Papirus-Dark
+gtk-icon-theme-name=$iconos
 gtk-cursor-theme-name=$CURSOR_TEMA
 gtk-cursor-theme-size=24
 gtk-decoration-layout=appmenu:maximize,close
@@ -1022,7 +1027,7 @@ INI
     # Apps X11 antiguas (Xwayland): leen el cursor «default»
     mkdir -p "$HOME/.icons/default"
     printf '[Icon Theme]\nInherits=%s\n' "$CURSOR_TEMA" > "$HOME/.icons/default/index.theme"
-    ok "Tema oscuro (adw-gtk3-dark), iconos Papirus-Dark y cursor $CURSOR_TEMA"
+    ok "Tema oscuro (adw-gtk3-dark), iconos $iconos y cursor $CURSOR_TEMA"
 
     # Blueman sin icono en la bandeja (la barra ya tiene su módulo).
     # El agente que muestra el PIN al emparejar sigue funcionando.

@@ -2,8 +2,8 @@
 # ============================================================================
 #  generar.py — Las imágenes del arranque de Yoru (GRUB y Plymouth)
 # ----------------------------------------------------------------------------
-#  Dibuja el logo 夜 a partir del mismo dibujo que fastfetch
-#  (config/fastfetch/yoru.txt), así los tres se ven iguales, y los recuadros
+#  El logo es el 夜 de pincel con su sello, el mismo que fastfetch en kitty
+#  (config/fastfetch/yoru-pincel.png y yoru-sello.png), y los recuadros
 #  del menú de GRUB con el estilo de los paneles. Las imágenes que genera
 #  están en el repositorio: solo hace falta volver a ejecutarlo si cambias
 #  el dibujo, los colores o las medidas de aquí.
@@ -18,29 +18,18 @@ from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
 REPO = AQUI.parent.parent
-DIBUJO = REPO / "config/fastfetch/yoru.txt"
+PINCEL = REPO / "config/fastfetch/yoru-pincel.png"
+SELLO = REPO / "config/fastfetch/yoru-sello.png"
 PLYMOUTH = REPO / "system/plymouth/yoru"
 GRUB = REPO / "system/grub/yoru"
-FUENTE = "/usr/share/fonts/jetbrains-mono-fonts/JetBrainsMono-Regular.otf"
 # Los iconos del menú de GRUB salen de la Nerd Font (la instala install.sh)
 NERD = Path.home() / ".local/share/fonts/JetBrainsMonoNerd/JetBrainsMonoNerdFont-Regular.ttf"
 
 # La paleta de tema/blanco.json
 BLANCO = "#ffffff"
-GRIS = "#8a8f98"
 FONDO = "#1a1b1e"
 FONDO2 = "#26272b"
 VELO = "#111214"
-
-# Los caracteres de bloque del dibujo, por cuartos de celda:
-# arriba-izquierda, arriba-derecha, abajo-izquierda, abajo-derecha
-CUARTOS = {
-    "█": "1111", "▀": "1100", "▄": "0011", "▌": "1010", "▐": "0101",
-    "▘": "1000", "▝": "0100", "▖": "0010", "▗": "0001",
-    "▙": "1011", "▛": "1110", "▜": "1101", "▟": "0111",
-    "▚": "1001", "▞": "0110",
-}
-
 
 def magick(*args, entrada=None):
     # Sin fechas ni metadatos: si la imagen no cambia, el archivo tampoco
@@ -50,65 +39,13 @@ def magick(*args, entrada=None):
                    input=entrada, check=True)
 
 
-def leer_dibujo():
-    """Las líneas del dibujo como [(carácter, color)], sin la de «よ る · yoru»."""
-    filas = []
-    for linea in DIBUJO.read_text().splitlines():
-        if "よ" in linea:
-            break
-        fila, color = [], BLANCO
-        i = 0
-        while i < len(linea):
-            if linea[i] == "$" and i + 1 < len(linea) and linea[i + 1] in "12":
-                color = BLANCO if linea[i + 1] == "1" else GRIS
-                i += 2
-                continue
-            fila.append((linea[i], color))
-            i += 1
-        filas.append(fila)
-    return filas
-
-
-def logo(destino, celda, texto=True):
-    """El 夜 con sus estrellas. celda = ancho de un carácter en píxeles (par);
-    el alto es el doble, como en la terminal."""
-    filas = leer_dibujo()
-    ancho_c, alto_c = celda, celda * 2
-    columnas = max(len(f) for f in filas)
-    ancho = columnas * ancho_c
-    alto_dibujo = len(filas) * alto_c
-    hueco_texto = celda * 5 if texto else 0
-    alto = alto_dibujo + hueco_texto
-
-    mvg = [f"viewbox 0 0 {ancho} {alto}", "stroke none"]
-    for y, fila in enumerate(filas):
-        for x, (c, color) in enumerate(fila):
-            x0, y0 = x * ancho_c, y * alto_c
-            if c in CUARTOS:
-                mvg.append(f"fill '{color}'")
-                for n, (dx, dy) in enumerate([(0, 0), (1, 0), (0, 1), (1, 1)]):
-                    if CUARTOS[c][n] == "1":
-                        qx, qy = x0 + dx * ancho_c / 2, y0 + dy * alto_c / 2
-                        mvg.append(f"rectangle {qx},{qy} {qx + ancho_c / 2 - 0.01},{qy + alto_c / 2 - 0.01}")
-            elif c == "✦":
-                # Estrella de cuatro puntas, centrada en la celda
-                cx, cy, r, r2 = x0 + ancho_c / 2, y0 + alto_c / 2, celda * 0.8, celda * 0.18
-                puntos = [(cx, cy - r), (cx + r2, cy - r2), (cx + r, cy), (cx + r2, cy + r2),
-                          (cx, cy + r), (cx - r2, cy + r2), (cx - r, cy), (cx - r2, cy - r2)]
-                mvg.append(f"fill '{color}'")
-                mvg.append("polygon " + " ".join(f"{px:.2f},{py:.2f}" for px, py in puntos))
-            elif c == "·":
-                cx, cy = x0 + ancho_c / 2, y0 + alto_c / 2
-                mvg.append(f"fill '{color}'")
-                mvg.append(f"circle {cx},{cy} {cx + celda * 0.22},{cy}")
-
-    magick("-size", f"{ancho}x{alto}", "xc:none", "-draw", "@-", f"png32:{destino}",
-           entrada="\n".join(mvg).encode())
-    if texto:
-        # «y o r u» debajo, en gris y espaciado, como en fastfetch
-        magick(destino, "-font", FUENTE, "-pointsize", str(celda * 2.4), "-fill", GRIS,
-               "-kerning", str(celda * 0.9), "-gravity", "south",
-               "-annotate", f"+0+{celda * 0.6}", "y o r u", f"png32:{destino}")
+def logo(destino, ancho=246, alto=222):
+    """El 夜 de pincel en blanco con su sello rojo, como el de fastfetch en
+    kitty (tema/aplicar.py), centrado en un lienzo de ancho×alto"""
+    magick(PINCEL, SELLO, "-gravity", "southeast", "-geometry", "+4+8",
+           "-compose", "over", "-composite",
+           "-resize", f"{ancho}x{alto}", "-background", "none", "-gravity", "center",
+           "-extent", f"{ancho}x{alto}", f"png32:{destino}")
 
 
 def caja(destino, prefijo, lado, radio, relleno, borde=None, grosor=0):
@@ -146,7 +83,7 @@ def main():
     GRUB.mkdir(parents=True, exist_ok=True)
 
     # --- Plymouth: el logo, el punto que late debajo y la caja de la contraseña
-    logo(PLYMOUTH / "logo.png", 6)
+    logo(PLYMOUTH / "logo.png")
     magick("-size", "12x12", "xc:none", "-fill", BLANCO, "-draw", "circle 6,6 6,1.5",
            f"png32:{PLYMOUTH / 'punto.png'}")
     magick("-size", "320x48", "xc:none", "-fill", "rgba(255,255,255,0.06)",
@@ -154,7 +91,7 @@ def main():
            "-draw", "roundrectangle 1,1 318,46 10,10", f"png32:{PLYMOUTH / 'caja.png'}")
 
     # --- GRUB: logo más pequeño, fondo y recuadros
-    logo(GRUB / "logo.png", 6)
+    logo(GRUB / "logo.png")
     # Degradado suave de arriba abajo, igual que el de Plymouth. GRUB lo estira
     # a la pantalla, así que da igual su tamaño
     magick("-size", "64x360", f"gradient:{FONDO}-{VELO}", f"png24:{GRUB / 'fondo.png'}")

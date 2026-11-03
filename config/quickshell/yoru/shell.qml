@@ -1,5 +1,4 @@
 //@ pragma UseQApplication
-//@ pragma IconTheme Papirus-Dark
 // ============================================================================
 //  Yoru 夜 · escritorio en Quickshell
 //

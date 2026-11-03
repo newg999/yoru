@@ -14,35 +14,38 @@
         },
         "padding": {
             "top": 1,
-            "left": 2,
-            "right": 4
+            "left": 1,
+            "right": 3
         }
     },
     "display": {
         "separator": " → ",
         "color": {
             "keys": "blue"
-        }
+        },
+        // Una línea que no cabe se corta, no salta a la siguiente (se
+        // montaba encima del logo)
+        "disableLinewrap": true
     },
+    // Textos cortos: así caben al lado del logo en una terminal estrecha
     "modules": [
         "title",
         "separator",
-        "os",
+        { "type": "os", "format": "{name} {version-id}" },
         "host",
-        "kernel",
+        { "type": "kernel", "format": "{release}" },
         "uptime",
-        "packages",
+        { "type": "packages", "format": "{all} ({flatpak-all} flatpak)" },
         "shell",
-        "display",
-        "de",
-        "wm",
+        { "type": "display", "key": "Display", "format": "{width}x{height} @ {refresh-rate} Hz" },
+        { "type": "wm", "key": "WM", "format": "{pretty-name} {version}" },
         "theme",
         "icons",
         "terminal",
-        "cpu",
-        "gpu",
+        { "type": "cpu", "format": "{name} ({cores-logical})" },
+        { "type": "gpu", "format": "{name}" },
         "memory",
-        "disk",
-        "battery",
+        { "type": "disk", "key": "Disk", "format": "{size-used} / {size-total} ({size-percentage})" },
+        { "type": "battery", "key": "Battery", "format": "{capacity} · {status}" }
     ]
 }
