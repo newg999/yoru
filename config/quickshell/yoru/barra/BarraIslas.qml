@@ -1,7 +1,7 @@
 // ============================================================================
 //  BarraIslas — las islas de arriba, en píldoras (Ajustes.pildoras)
 //
-//    [⚙ 󰍉] [escritorios] [música]   [hora · grabando · tiempo]   [… avisos] [bandeja · wifi · teclado · bluetooth · volumen · batería]
+//    [⚙ 󰍉] [escritorios] [tiempo] [música]   [hora · grabando]   [… avisos] [bandeja · wifi · teclado · bluetooth · volumen · batería]
 //
 //  Píldoras casi negras y redondas del todo, con fichas dentro (Ficha.qml):
 //  grises, o del color del tema cuando algo está encendido. Letra
@@ -72,6 +72,7 @@ PanelWindow {
         Region { item: escritorios; radius: Tema.radioIsla }
         Region { item: musica; radius: Tema.radioIsla }
         Region { item: centro; radius: Tema.radioIsla }
+        Region { item: clima; radius: Tema.radioIsla }
         Region { item: jugando; radius: Tema.radioIsla }
         Region { item: cafe; radius: Tema.radioIsla }
         Region { item: novedades; radius: Tema.radioIsla }
@@ -153,6 +154,40 @@ PanelWindow {
                 salida: barra.modelData.name
             }
 
+            // El tiempo (clic = previsión)
+            Isla {
+                id: clima
+                oculta: !Ajustes.islaClima || !Tiempo.listo
+                relleno: 10
+                Item {
+                    implicitWidth: filaClima.implicitWidth
+                    implicitHeight: 22
+                    Row {
+                        id: filaClima
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 7
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: Tiempo.icono
+                            font.family: Tema.mono
+                            font.pixelSize: Tema.letra + 4
+                            color: Tema.blanco
+                        }
+                        Mono {
+                            text: Tiempo.temperatura + "°C"
+                            color: climaRaton.containsMouse ? Tema.blanco : Tema.amarillo
+                        }
+                    }
+                    MouseArea {
+                        id: climaRaton
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Paneles.abrirPagina(barra.modelData, "clima", "izquierda")
+                    }
+                }
+            }
+
             // Música: solo con algo sonando (o en pausa)
             Isla {
                 id: musica
@@ -217,20 +252,20 @@ PanelWindow {
         }
 
         // ---------------------------------------------------------- Centro
-        // Hora (con la fecha debajo) · cronómetro · tiempo
+        // Hora y fecha (y la grabación, si se graba)
         Isla {
             id: centro
             x: Math.round((contenido.width - width) / 2)
-            relleno: 14
-            espacio: 14
+            relleno: 10
+            espacio: 10
 
             SystemClock {
                 id: reloj
                 precision: Ajustes.relojSegundos ? SystemClock.Seconds : SystemClock.Minutes
             }
-            readonly property var dias: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
-            readonly property var meses: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
-                "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+            readonly property var dias: ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"]
+            readonly property var meses: ["ene", "feb", "mar", "abr", "may", "jun", "jul",
+                "ago", "sep", "oct", "nov", "dic"]
 
             // Hora y fecha en una línea (segundos según Ajustes › Fecha y hora).
             // Clic = calendario
@@ -240,7 +275,7 @@ PanelWindow {
                 Row {
                     id: hora
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 10
+                    spacing: 8
                     Mono {
                         anchors.verticalCenter: parent.verticalCenter
                         text: Qt.formatDateTime(reloj.date, (Ajustes.reloj24 ? "HH:mm" : "h:mm AP") + (Ajustes.relojSegundos ? ":ss" : ""))
@@ -249,7 +284,7 @@ PanelWindow {
                     }
                     Mono {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: `${centro.dias[reloj.date.getDay()]}, ${reloj.date.getDate()} de ${centro.meses[reloj.date.getMonth()]}`
+                        text: `${centro.dias[reloj.date.getDay()]} ${reloj.date.getDate()} ${centro.meses[reloj.date.getMonth()]}`
                         color: Tema.texto
                         font.bold: false
                     }
@@ -295,35 +330,6 @@ PanelWindow {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: Grabacion.alternar()
-                }
-            }
-
-            Item {
-                visible: Ajustes.islaClima && Tiempo.listo
-                implicitWidth: filaClima.implicitWidth
-                implicitHeight: 22
-                Row {
-                    id: filaClima
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 7
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: Tiempo.icono
-                        font.family: Tema.mono
-                        font.pixelSize: Tema.letra + 4
-                        color: Tema.blanco
-                    }
-                    Mono {
-                        text: Tiempo.temperatura + "°C"
-                        color: climaRaton.containsMouse ? Tema.blanco : Tema.amarillo
-                    }
-                }
-                MouseArea {
-                    id: climaRaton
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Paneles.abrirPagina(barra.modelData, "clima", "centro")
                 }
             }
         }
