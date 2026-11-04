@@ -178,7 +178,7 @@ PanelWindow {
                         }
                         Mono {
                             text: Tiempo.temperatura + "°C"
-                            color: climaRaton.containsMouse ? Tema.blanco : Tema.amarillo
+                            color: climaRaton.containsMouse ? Tema.blanco : Tema.texto
                         }
                     }
                     MouseArea {
