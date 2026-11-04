@@ -48,9 +48,12 @@ PanelWindow {
     mask: Niri.overview ? vacia : null
     Region { id: vacia }
 
+    // Solo con la ventana ya a la vista: si se enciende antes (la cafeína
+    // ya estaba puesta al arrancar o al cambiar de estilo), Wayland no se
+    // entera y la pantalla se bloquea igual
     IdleInhibitor {
         window: barra
-        enabled: Despierto.activo
+        enabled: Despierto.activo && barra.backingWindowVisible
     }
 
     // De qué isla sale cada panel (para fundirlo con ella: Panel.qml)

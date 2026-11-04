@@ -2302,7 +2302,8 @@ Scope {
         PanelWindow {
             id: win
             // Yoru: «No suspender» (con el estilo Dock no hay barra de Yoru que lo haga)
-            IdleInhibitor { window: win; enabled: root.cafe }
+            // Solo con la ventana ya a la vista (si no, Wayland no se entera)
+            IdleInhibitor { window: win; enabled: root.cafe && win.backingWindowVisible }
             required property var modelData
             screen: modelData
             anchors { left: true; top: true; bottom: true }

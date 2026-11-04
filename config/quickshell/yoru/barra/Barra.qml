@@ -56,9 +56,12 @@ PanelWindow {
     Region { id: vacia }
 
     // «No suspender» (Centro de control): swayidle no hace nada mientras
+    // Solo con la ventana ya a la vista: si se enciende antes (la cafeína
+    // ya estaba puesta al arrancar o al cambiar de estilo), Wayland no se
+    // entera y la pantalla se bloquea igual
     IdleInhibitor {
         window: barra
-        enabled: Despierto.activo
+        enabled: Despierto.activo && barra.backingWindowVisible
     }
 
     // Un clic en un hueco de la barra (no en una isla) cierra el panel que

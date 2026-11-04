@@ -44,9 +44,12 @@ PanelWindow {
     BackgroundEffect.blurRegion: Niri.overview || !Ajustes.desenfoque ? null : todo
     Region { id: todo; item: fondo }
 
+    // Solo con la ventana ya a la vista: si se enciende antes (la cafeína
+    // ya estaba puesta al arrancar o al cambiar de estilo), Wayland no se
+    // entera y la pantalla se bloquea igual
     IdleInhibitor {
         window: barra
-        enabled: Despierto.activo
+        enabled: Despierto.activo && barra.backingWindowVisible
     }
 
     // Texto monoespaciado, como el de las píldoras

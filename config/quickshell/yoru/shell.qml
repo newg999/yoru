@@ -104,7 +104,11 @@ ShellRoot {
             raiz.estiloDock();
         }
     }
-    Component.onCompleted: estiloDock()
+    Component.onCompleted: {
+        estiloDock();
+        // Bluetooth: como lo dejaste la última vez (comun/Radios.qml)
+        Radios.recuerdo;
+    }
     // Las páginas (control, calendario, multimedia, clima...) bajo las
     // islas o la minimalista
     Variants {
