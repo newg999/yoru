@@ -7,9 +7,9 @@
 //    夜           el lanzador, centrado y fundido con la barra (su Inicio)
 //    apps         las fijadas y las abiertas (comun/Tareas.qml); la raya de
 //                 debajo marca las abiertas, larga y del color del tema la del
-//                 foco. Clic = ir (otra vez: a la ventana anterior; con
-//                 varias, a la siguiente) · central = ventana nueva ·
-//                 derecho = menú (sus ventanas, fijar, cerrar...)
+//                 foco. Clic = ir (otra vez: minimizarla, como en Windows)
+//                 · central = ventana nueva · derecho = menú (fijar,
+//                 cerrar...) · ratón encima = sus ventanas (Vistas.qml)
 //    󰖩 󰕾 󰁹       el centro de control (rueda = volumen)
 //    hora         el calendario · 󰂚 las notificaciones (derecho: no molestar)
 //  Los paneles suben encima de ella (Panel.qml, con Ajustes.abajo).
@@ -88,7 +88,7 @@ PanelWindow {
             transformOrigin: boton.crece ? Item.Bottom : Item.Center
             scale: boton.crece ? (botonRaton.pressed ? 1.05 : boton.hover ? 1.16 : 1)
                 : botonRaton.pressed ? 0.9 : 1
-            Behavior on scale { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutCubic } }
+            Behavior on scale { NumberAnimation { duration: Tema.rebote * 0.8; easing.type: Easing.OutBack; easing.overshoot: 2.6 } }
         }
         MouseArea {
             id: botonRaton
@@ -218,18 +218,22 @@ PanelWindow {
                 }
             }
             // Las apps
+            // (por su clave: Tareas.apps cambia con cada título de ventana, y
+            // con las apps de modelo los botones se rehacían cada vez y el
+            // ratón encima no llegaba a abrir sus tarjetas)
             Repeater {
-                model: Tareas.apps
+                model: ScriptModel { values: Tareas.apps.map(a => a.clave) }
 
                 Boton {
                     id: tarea
                     required property var modelData
-                    readonly property var app: modelData
+                    readonly property var app: Tareas.apps.find(a => a.clave === modelData) ?? ({clave: modelData, ventanas: []})
                     readonly property bool enfocada: Tareas.enfocada(app)
                     width: 44
                     crece: true
                     encendido: enfocada
                     onClic: boton => {
+                        vistas.cerrar();
                         if (boton === Qt.RightButton) {
                             menu.abrir(app, tarea, false);
                         } else if (boton === Qt.MiddleButton) {
@@ -257,21 +261,22 @@ PanelWindow {
                         height: 3
                         radius: 1.5
                         color: tarea.enfocada ? Tema.blanco : Tema.claro(0.5)
-                        Behavior on width { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
+                        Behavior on width { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
                         Behavior on color { ColorAnimation { duration: Tema.rapida } }
                     }
 
-                    // El nombre, encima, tras un momento con el ratón
+                    // Sus ventanas en tarjetas, encima (Vistas.qml), tras un
+                    // momento con el ratón; si ya se veían las de otra app,
+                    // al momento (como en Windows)
                     Timer {
                         id: retraso
-                        interval: 450
-                        running: tarea.hover && !menu.abierto
+                        interval: vistas.abierto ? 0 : 450
+                        running: tarea.hover && !menu.abierto && !tarea.pulsado
+                        onTriggered: vistas.mostrar(tarea.app, tarea)
                     }
-                    Ayuda {
-                        objetivo: tarea
-                        texto: Tareas.nombre(tarea.app)
-                            + (tarea.app.ventanas.length > 1 ? Tema.suave("  ×" + tarea.app.ventanas.length) : "")
-                        mostrar: tarea.hover && !retraso.running && !menu.abierto
+                    onHoverChanged: {
+                        if (!hover)
+                            vistas.soltar();
                     }
                 }
             }
@@ -428,11 +433,16 @@ PanelWindow {
         fijar: "Fijar en la barra"
         quitar: "Quitar de la barra"
     }
+    Vistas {
+        id: vistas
+    }
     Connections {
         target: Niri
         function onOverviewChanged() {
-            if (Niri.overview)
+            if (Niri.overview) {
                 menu.cerrar();
+                vistas.cerrar();
+            }
         }
     }
 }

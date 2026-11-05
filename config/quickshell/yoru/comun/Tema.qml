@@ -116,4 +116,7 @@ Singleton {
     // ----------------------------------------------------------- Animaciones
     readonly property int rapida: Ajustes.animaciones ? 120 : 0
     readonly property int normal: Ajustes.animaciones ? 220 : 0
+    // Con rebote (Easing.OutBack), como el dock: lo que crece, se abre o se
+    // pulsa se pasa un poco y vuelve
+    readonly property int rebote: Ajustes.animaciones ? 420 : 0
 }

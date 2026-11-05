@@ -77,8 +77,9 @@ Rectangle {
     opacity: vacia ? 0 : 1
     visible: opacity > 0
     Behavior on opacity { NumberAnimation { duration: Tema.normal } }
-    Behavior on implicitWidth { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
-    Behavior on implicitHeight { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
+    // Al crecer o encoger (sale la música, una ficha...), con un muelle suave
+    Behavior on implicitWidth { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
+    Behavior on implicitHeight { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
 
     MouseArea {
         id: raton

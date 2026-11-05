@@ -43,6 +43,22 @@ ClippingRectangle {
         : hover && pulsable ? Tema.claro(0.14) : Tema.claro(0.07)
     Behavior on color { ColorAnimation { duration: Tema.rapida } }
 
+    // Como en el dock: al pulsar se encoge y vuelve con rebote; con el ratón
+    // encima, crece un poco. Y al aparecer (wifi que se conecta, bluetooth
+    // que se enciende...), sale con un «pop» en vez de de golpe
+    property real aparecer: 1
+    scale: aparecer * (!pulsable ? 1 : raton.pressed ? 0.88 : hover ? 1.06 : 1)
+    Behavior on scale {
+        enabled: !entrada.running
+        NumberAnimation { duration: Tema.rebote * 0.8; easing.type: Easing.OutBack; easing.overshoot: 2.6 }
+    }
+    onVisibleChanged: if (visible && Tema.rebote > 0) entrada.restart()
+    ParallelAnimation {
+        id: entrada
+        NumberAnimation { target: ficha; property: "aparecer"; from: 0.4; to: 1; duration: Tema.rebote; easing.type: Easing.OutBack; easing.overshoot: 2 }
+        NumberAnimation { target: ficha; property: "opacity"; from: 0; to: 1; duration: Tema.normal; easing.type: Easing.OutCubic }
+    }
+
     // Lo cargado: del color del tema, de la izquierda hasta «carga»
     Agua {
         visible: ficha.carga >= 0 && !ficha.activa

@@ -7,8 +7,13 @@ pragma Singleton
 //
 //    Tareas.apps          [{clave, entrada, appId, fija, ventanas: [...]}]
 //    Tareas.lanzar(app)   abre otra ventana · Tareas.irA(ventana)
-//    Tareas.alternar(app) el clic de la barra de Windows (como el del dock)
+//    Tareas.alternar(app) el clic de la barra de Windows: abrir, ir a ella o,
+//                         si ya tiene el foco, minimizarla (como en Windows)
+//    Tareas.minimizar(v) · Tareas.minimizada(v) · Tareas.cerrar(v)
 //    Tareas.cerrarTodas(app)
+//  Niri no sabe minimizar: las minimizadas se van a un escritorio escondido
+//  («minimizadas», al final, que no sale en la barra) y al volver regresan
+//  al escritorio en el que estaban.
 //  El menú de clic derecho de las dos: barra/MenuApp.qml
 // ============================================================================
 import QtQuick
@@ -72,25 +77,70 @@ Singleton {
         Niri.accion("close-overview");
     }
 
-    // Ir a una ventana. Primero el foco y luego cerrar el overview: así se
-    // acerca a esa ventana
+    // ------------------------------------------------------ Minimizar
+    readonly property string escondido: "minimizadas"
+    property var origen: ({})     // id de la ventana → escritorio del que vino
+
+    function minimizada(v) {
+        return Niri.escritorios.find(e => e.id === v.workspace_id)?.name === escondido;
+    }
+
+    function minimizar(v) {
+        const desde = Niri.escritorios.find(e => e.id === v.workspace_id);
+        if (!desde || desde.name === escondido)
+            return;
+        origen = Object.assign({}, origen, {[v.id]: desde.id});
+        // El escritorio escondido, o si no lo hay, el vacío del final de su
+        // pantalla con ese nombre (así queda detrás de los de verdad)
+        const hay = Niri.escritorios.some(e => e.name === escondido);
+        const ultimo = Math.max(...Niri.escritoriosDe(desde.output).map(e => e.idx), 0) + 1;
+        Quickshell.execDetached(["sh", "-c",
+            (hay ? "" : `niri msg action set-workspace-name --workspace ${ultimo} ${escondido} && `)
+            + `niri msg action move-window-to-workspace --window-id ${v.id} --focus false ${escondido}`]);
+    }
+
+    // Vuelve a su escritorio (o al de ahora, si ya no existe) con el foco.
+    // Si era la última, el escondido pierde el nombre y niri lo quita
+    function restaurar(v) {
+        const vuelta = Niri.escritorios.find(e => e.id === origen[v.id] && e.name !== escondido)
+            ?? Niri.escritorios.find(e => e.is_focused && e.name !== escondido);
+        const o = Object.assign({}, origen);
+        delete o[v.id];
+        origen = o;
+        const quedan = Object.values(Niri.ventanas).some(w => w.id !== v.id && minimizada(w));
+        Quickshell.execDetached(["sh", "-c",
+            (vuelta ? `niri msg action move-window-to-workspace --window-id ${v.id} --focus false ${vuelta.idx} && ` : "")
+            + `niri msg action focus-window --id ${v.id} && niri msg action close-overview`
+            + (quedan ? "" : ` && niri msg action unset-workspace-name ${escondido}`)]);
+    }
+
+    // Ir a una ventana (si está minimizada, la trae). Primero el foco y
+    // luego cerrar el overview: así se acerca a esa ventana
     function irA(v) {
+        if (minimizada(v))
+            return restaurar(v);
         Quickshell.execDetached(["sh", "-c",
             `niri msg action focus-window --id ${v.id} && niri msg action close-overview`]);
     }
 
-    // Como el dock (yoru-dock): sin ventanas la abre; si su única ventana ya
-    // tiene el foco, vuelve a la anterior; con varias, cada clic pasa a la
-    // siguiente
+    // Como en Windows: sin ventanas la abre; si una suya tiene el foco, la
+    // minimiza; si no, va a la última que usaste (o trae una minimizada)
     function alternar(app) {
         const vs = app.ventanas;
         if (vs.length === 0)
             return lanzar(app);
-        const i = vs.findIndex(v => v.id === Niri.enfocada?.id);
-        if (vs.length === 1 && i === 0)
-            Niri.accion("focus-window-previous");
-        else
-            irA(vs[(i + 1) % vs.length]);
+        const enfocada = vs.find(v => v.id === Niri.enfocada?.id);
+        if (enfocada)
+            return minimizar(enfocada);
+        const visibles = vs.filter(v => !minimizada(v));
+        const ultima = (lista) => lista.slice().sort((a, b) =>
+            (b.focus_timestamp?.secs ?? 0) - (a.focus_timestamp?.secs ?? 0)
+            || (b.focus_timestamp?.nanos ?? 0) - (a.focus_timestamp?.nanos ?? 0))[0];
+        irA(ultima(visibles.length > 0 ? visibles : vs));
+    }
+
+    function cerrar(v) {
+        Niri.accion("close-window", "--id", String(v.id));
     }
 
     function cerrarTodas(app) {

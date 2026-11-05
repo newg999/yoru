@@ -22,8 +22,9 @@ Singleton {
     signal captura(string ruta)        // una captura de pantalla (Imprimir), ya guardada
 
     // Escritorios de una pantalla, en orden
+    // (sin el de las minimizadas de la barra de Windows: comun/Tareas.qml)
     function escritoriosDe(salida) {
-        return escritorios.filter(e => e.output === salida).sort((a, b) => a.idx - b.idx);
+        return escritorios.filter(e => e.output === salida && e.name !== "minimizadas").sort((a, b) => a.idx - b.idx);
     }
 
     // Ventana activa en una pantalla (cada barra muestra la suya), o null
@@ -70,10 +71,10 @@ Singleton {
     }
 
     // ------------------------------------------------- Ventanas a pares
-    // Como en Windows: con dos columnas que llenan la pantalla, al cambiar el
+    // Como en Windows: con dos columnas en un escritorio, al cambiar el
     // ancho de una (Mod+R, Mod+- / Mod+=, o arrastrando su borde), la otra
-    // se ajusta para que sigan llenándola. Con más de dos, o si no la
-    // llenaban, nada (Ajustes › Aspecto › Ventanas a pares)
+    // se ajusta para que entre las dos llenen la pantalla. Con más de dos,
+    // o si una se maximiza, nada (Ajustes › Aspecto › Ventanas a pares)
     property var _anchoPedido: ({})   // id → ancho que le hemos pedido (su aviso no cuenta)
     function _aPares(cambios) {
         if (!Ajustes.ventanasAPares)
@@ -116,9 +117,11 @@ Singleton {
             const hueco = Ajustes.minimalista ? 0 : Tema.gaps;
             const dock = Ajustes.estiloDock && !Ajustes.dockEsconder && Ajustes.dockLado === "izquierda" ? 56 : 0;
             const util = pantalla.width - dock - 3 * hueco;
-            // ¿Llenaban la pantalla antes de este cambio?
+            // Aunque antes no llenaran la pantalla (una casi entera y la otra
+            // asomando): desde ahora sí. Menos si esta se ha puesto casi
+            // entera (maximizar): no se aplasta la otra
             const deLaOtra = otra.layout.tile_size[0];
-            if (Math.abs(antes + deLaOtra - util) > 4)
+            if (ahora > util - 240)
                 continue;
             const nuevo = Math.max(240, Math.round(util - ahora));
             if (Math.abs(nuevo - deLaOtra) < 2)

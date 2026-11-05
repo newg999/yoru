@@ -84,14 +84,21 @@ PanelWindow {
 
     // 0 = cerrado · 1 = abierto. La ventana sigue visible hasta que termina
     // la animación de cierre.
-    // (colgando de una isla, algo más larga y suave: nace de ella)
+    // Al abrirse, con rebote (como el dock): se pasa un poco de 1 y vuelve,
+    // así crece de más y se asienta (colgando de una isla, se ensancha de
+    // más). Pegado a la minimalista, sin rebote: baja como una persiana.
+    // Al cerrarse, rápido y sin rebote
     property real progreso: abierto ? 1 : 0
     Behavior on progreso {
         NumberAnimation {
-            duration: Tema.normal === 0 ? 0 : !caja.colgado ? Tema.normal : ventana.abierto ? 300 : 200
-            easing.type: !caja.colgado ? Easing.OutCubic : ventana.abierto ? Easing.OutQuint : Easing.InOutCubic
+            duration: Tema.normal === 0 ? 0 : !ventana.abierto ? 170 : caja.pegado ? 300 : caja.colgado ? 440 : 380
+            easing.type: !ventana.abierto ? Easing.InCubic : caja.pegado ? Easing.OutQuint : Easing.OutBack
+            easing.overshoot: caja.colgado ? 0.9 : 1.4
         }
     }
+    // El progreso sin pasarse de 1: para lo que no debe rebotar (el sitio
+    // bajo la barra o la isla y la transparencia)
+    readonly property real hasta1: Math.min(1, progreso)
 
     screen: modelData
     visible: abierto || progreso > 0
@@ -162,7 +169,7 @@ PanelWindow {
             readonly property string sitio: ventana.lado
 
             // Al abrirse se desliza un poco desde la barra (abajo: hacia arriba)
-            readonly property real deslizar: (1 - ventana.progreso) * 14
+            readonly property real deslizar: (1 - ventana.hasta1) * 14
 
             x: enMedio ? Math.round((parent.width - width) / 2)
                 // Centrado bajo la isla, sin salirse de la pantalla
@@ -176,9 +183,9 @@ PanelWindow {
                 : parent.width - width - (pegado ? -border.width : Tema.margenLados)
             // (en el recorte, que con la minimalista empieza bajo la barra)
             y: enMedio ? Math.round((ventana.height - height) / 2) - recorte.y
-                : fundido ? parent.height - ventana.progreso * height
-                : colgado ? -(1 - ventana.progreso) * height
-                : pegado ? -(1 - ventana.progreso) * height
+                : fundido ? parent.height - ventana.hasta1 * height
+                : colgado ? -(1 - ventana.hasta1) * height
+                : pegado ? -(1 - ventana.hasta1) * height
                 : ventana.abajo ? parent.height - height - Tema.hueco + deslizar
                 : !ventana.vertical ? Tema.hueco - deslizar
                 : sitio === "izquierda" ? Tema.margenLados + 6
@@ -187,7 +194,7 @@ PanelWindow {
 
             // Pegado a la barra baja como una persiana (ver «recorte»), sin
             // fundido ni encoger (se despegaría de ella)
-            opacity: pegado || colgado ? 1 : ventana.progreso
+            opacity: pegado || colgado ? 1 : ventana.hasta1
             scale: pegado || colgado ? 1 : (enMedio ? 0.94 : 0.96) + (enMedio ? 0.06 : 0.04) * ventana.progreso
             transformOrigin: enMedio ? Item.Center : ventana.vertical ? Item.Left : ventana.abajo ? Item.Bottom : Item.Top
 
@@ -222,7 +229,7 @@ PanelWindow {
             // abrirse toma su tamaño directamente, sin arrastrar el de la última vez
             Behavior on height {
                 enabled: ventana.abierto && ventana.progreso === 1
-                NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: Tema.rebote * 0.75; easing.type: Easing.OutBack; easing.overshoot: 0.8 }
             }
 
             // Los clics dentro del recuadro no lo cierran
