@@ -27,7 +27,7 @@ Item {
     // Multimedia es la pestaña del panel central: pide más sitio. Las que
     // copian los paneles del dock, algo menos
     // (la de red, con el aspecto del panel del dock: algo más estrecha)
-    readonly property int anchoPedido: pagina === "multimedia" ? 620 : ["red", "bt", "sonido", "calendario", "clima"].includes(pagina) || (pagina === "control" && Ajustes.pildoras) ? 400 : 460
+    readonly property int anchoPedido: pagina === "multimedia" ? 620 : ["red", "bt", "sonido", "calendario", "clima"].includes(pagina) || (pagina === "control" && Ajustes.conPildoras) ? 400 : 460
     // Ir a una página (la que ya se ve: volver a control)
     function ir(p) {
         Paneles.alternar("pildora", pantalla, abierta && pagina === p ? "control" : p);
@@ -40,7 +40,7 @@ Item {
         : pagina === "temas" ? temas.implicitHeight
         : pagina === "fondos" ? fondos.implicitHeight
         : sola ? solo.implicitHeight
-        : Ajustes.pildoras ? controlDock.implicitHeight
+        : Ajustes.conPildoras ? controlDock.implicitHeight
         : control.implicitHeight
     height: implicitHeight
     Behavior on height {
@@ -48,13 +48,13 @@ Item {
         NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic }
     }
 
-    // Con las islas, el centro de control con el aspecto del dock
+    // Con las islas y la minimalista, el centro de control con el aspecto del dock
     PaginaControlDock {
         id: controlDock
         width: parent.width
         pantalla: raiz.pantalla
-        activa: raiz.abierta && raiz.pagina === "control" && Ajustes.pildoras
-        visible: raiz.pagina === "control" && Ajustes.pildoras
+        activa: raiz.abierta && raiz.pagina === "control" && Ajustes.conPildoras
+        visible: raiz.pagina === "control" && Ajustes.conPildoras
         opacity: visible ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Tema.normal } }
     }
@@ -62,10 +62,10 @@ Item {
         id: control
         width: parent.width
         pantalla: raiz.pantalla
-        activa: raiz.abierta && raiz.pagina === "control" && !Ajustes.pildoras
+        activa: raiz.abierta && raiz.pagina === "control" && !Ajustes.conPildoras
         // Solo la elegida: la que se va se oculta al momento (con un fundido
         // se veía un instante encima de la nueva); la que llega, con fundido
-        visible: raiz.pagina === "control" && !Ajustes.pildoras
+        visible: raiz.pagina === "control" && !Ajustes.conPildoras
         opacity: visible ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Tema.normal } }
     }

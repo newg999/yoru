@@ -98,10 +98,10 @@ PanelWindow {
     property real progreso: abierto ? 1 : 0
     Behavior on progreso {
         NumberAnimation {
-            duration: Tema.normal === 0 ? 0 : !ventana.abierto ? (caja.comoDock ? 260 : 170) : caja.pegado ? 300 : caja.comoDock ? 520 : 380
+            duration: Tema.normal === 0 ? 0 : !ventana.abierto ? (caja.comoDock ? 260 : 170) : caja.comoDock ? 520 : caja.pegado ? 300 : 380
             // (con las islas, como el dock: al abrir, rebote suave; al
             // cerrar, se recoge acelerando y frenando)
-            easing.type: !ventana.abierto ? (caja.comoDock ? Easing.InOutCubic : Easing.InCubic) : caja.pegado ? Easing.OutQuint : Easing.OutBack
+            easing.type: !ventana.abierto ? (caja.comoDock ? Easing.InOutCubic : Easing.InCubic) : caja.comoDock ? Easing.OutBack : caja.pegado ? Easing.OutQuint : Easing.OutBack
             easing.overshoot: caja.comoDock ? 0.35 : 1.4
         }
     }
@@ -183,7 +183,8 @@ PanelWindow {
             // isla (o la barra) y se estira con rebote (progreso pasa de 1)
             readonly property real altoFinal: interior.implicitHeight + 32
             height: comoDock ? Math.max(0, altoFinal * ventana.progreso) : altoFinal
-            readonly property bool comoDock: colgado || (Ajustes.conPildoras && !pegado && !enMedio && !ventana.vertical && !ventana.abajo)
+            // (la minimalista también: pegado a su franja, se despliega igual)
+            readonly property bool comoDock: colgado || (Ajustes.conPildoras && (!pegado || Ajustes.minimalista) && !enMedio && !ventana.vertical && !ventana.abajo)
             readonly property bool enMedio: ventana.lado === "medio"
             // Con la barra minimalista, pegado a ella: sin hueco, esquinas
             // rectas, su mismo fondo y un borde fino
@@ -208,7 +209,7 @@ PanelWindow {
             y: enMedio ? Math.round((ventana.height - height) / 2) - recorte.y
                 : fundido ? parent.height - ventana.hasta1 * height
                 : colgado ? 0
-                : comoDock ? Tema.hueco
+                : comoDock ? (pegado ? 0 : Tema.hueco)
                 : pegado ? -(1 - ventana.hasta1) * height
                 : ventana.abajo ? parent.height - height - Tema.hueco + deslizar
                 : !ventana.vertical ? Tema.hueco - deslizar
@@ -244,7 +245,7 @@ PanelWindow {
             // Como el dock: un brillo suave del acento arriba (colgando de
             // una isla, no: se notaba la costura con ella y con las curvas)
             Rectangle {
-                visible: caja.comoDock && !caja.colgado
+                visible: caja.comoDock && !caja.colgado && !caja.pegado
                 anchors.fill: parent
                 topLeftRadius: caja.topLeftRadius
                 topRightRadius: caja.topRightRadius
