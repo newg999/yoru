@@ -399,6 +399,14 @@ Item {
                 activo: Ajustes.islaBandeja
                 onCambiar: v => Ajustes.islaBandeja = v
             }
+            Interruptor {
+                width: parent.width
+                visible: Ajustes.conPildoras
+                titulo: "Iconos como los del dock"
+                detalle: "Sueltos, sin ficha de fondo, y crecen con un muelle al pasar el ratón"
+                activo: Ajustes.iconosDock
+                onCambiar: v => Ajustes.iconosDock = v
+            }
 
             Item { width: 1; height: 6 }
             Titular { texto: "Dock"; width: parent.width }

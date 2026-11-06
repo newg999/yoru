@@ -58,7 +58,7 @@ PanelWindow {
 
     // De qué isla sale cada panel (para fundirlo con ella: Panel.qml)
     Component.onCompleted: Paneles.islas[modelData.name] = {
-        botones, musica, centro, estado, notificaciones, novedades, discos
+        botones, musica, centro, estado, notificaciones, novedades, discos, clima
     }
 
     MouseArea {
@@ -383,14 +383,10 @@ PanelWindow {
                     texto: estado.cable ? "Cable" : estado.redWifi ? estado.redWifi.name : "Sin red"
                     visible: estado.cable !== null || Networking.wifiEnabled
                     anchoTexto: barra.pequena ? 90 : 140
+                    cable: estado.cable !== null
                     activa: estado.cable !== null || estado.redWifi !== null
-                    onClic: Paneles.abrirPagina(barra.modelData, "red", "derecha")
-                }
-                // VPN conectada: un escudo
-                Ficha {
-                    visible: Vpn.conectadas.length > 0
-                    icono: "󰦝"
-                    activa: true
+                    // VPN conectada: un escudito en la esquina del icono
+                    insignia: Vpn.conectadas.length > 0 ? "󰦝" : ""
                     onClic: Paneles.abrirPagina(barra.modelData, "red", "derecha")
                 }
 
@@ -454,6 +450,8 @@ PanelWindow {
                 Ficha {
                     icono: estado.mudo ? "󰖁" : estado.volumen < 0.34 ? "󰕿" : estado.volumen < 0.67 ? "󰖀" : "󰕾"
                     texto: Math.round(estado.volumen * 100) + "%"
+                    volumen: estado.volumen
+                    mudo: estado.mudo
                     visible: !estado.mudo
                     onClic: boton => {
                         if (boton === Qt.MiddleButton)
@@ -482,6 +480,7 @@ PanelWindow {
                     icono: estado.cargando ? "󰂄" : "󰁹"
                     texto: estado.carga + "%"
                     carga: estado.carga / 100
+                    cargando: estado.cargando
                     // Cargando: el relleno ondea, como agua entrando
                     ola: estado.cargando && estado.carga < 100
                     colorIcono: !estado.cargando && estado.carga <= 15 ? Tema.rojo : tinta

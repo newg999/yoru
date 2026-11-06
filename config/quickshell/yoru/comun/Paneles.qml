@@ -32,7 +32,9 @@ Singleton {
             return null;
         const it = nombre === "pildora"
             ? (enSeccion === "musica" ? i.musica
-                : ["calendario", "clima"].includes(enSeccion) || origen !== "derecha" ? i.centro : i.estado)
+                // el tiempo, de su isla (a la izquierda); si no se ve, del centro
+                : enSeccion === "clima" ? (i.clima?.visible && i.clima.width > 0 ? i.clima : i.centro)
+                : enSeccion === "calendario" || origen !== "derecha" ? i.centro : i.estado)
             : {lanzador: i.botones, bateria: i.estado, actualizaciones: i.novedades, discos: i.discos,
                notificaciones: i.notificaciones, portapapeles: i.notificaciones, apagado: i.notificaciones}[nombre];
         return it && it.visible && it.width > 0 ? it : null;

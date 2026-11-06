@@ -32,6 +32,7 @@ Panel {
             width: parent.width
             pantalla: panel.modelData
             abierta: panel.abierto
+            altoMax: panel.altoMax - 32
         }
     }
 }

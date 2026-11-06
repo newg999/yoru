@@ -18,13 +18,16 @@ Item {
 
     required property var pantalla
     property bool abierta: false
+    property int altoMax: 700
 
     readonly property var todas: ["control", "calendario", "multimedia", "clima", "sistema", "temas", "fondos", "red", "bt", "sonido", "musica"]
     readonly property bool sola: ["red", "bt", "sonido", "musica"].includes(pagina)
     // (wifi, bluetooth, audio y micro son el control con esa lista abierta)
     readonly property string pagina: todas.includes(Paneles.seccion) ? Paneles.seccion : "control"
-    // Multimedia y Clima son las pestañas del panel central: piden más sitio
-    readonly property int anchoPedido: ["multimedia", "clima"].includes(pagina) ? 620 : 460
+    // Multimedia es la pestaña del panel central: pide más sitio. Las que
+    // copian los paneles del dock, algo menos
+    // (la de red, con el aspecto del panel del dock: algo más estrecha)
+    readonly property int anchoPedido: pagina === "multimedia" ? 620 : ["red", "bt", "sonido", "calendario", "clima"].includes(pagina) || (pagina === "control" && Ajustes.pildoras) ? 400 : 460
     // Ir a una página (la que ya se ve: volver a control)
     function ir(p) {
         Paneles.alternar("pildora", pantalla, abierta && pagina === p ? "control" : p);
@@ -37,6 +40,7 @@ Item {
         : pagina === "temas" ? temas.implicitHeight
         : pagina === "fondos" ? fondos.implicitHeight
         : sola ? solo.implicitHeight
+        : Ajustes.pildoras ? controlDock.implicitHeight
         : control.implicitHeight
     height: implicitHeight
     Behavior on height {
@@ -44,14 +48,24 @@ Item {
         NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic }
     }
 
+    // Con las islas, el centro de control con el aspecto del dock
+    PaginaControlDock {
+        id: controlDock
+        width: parent.width
+        pantalla: raiz.pantalla
+        activa: raiz.abierta && raiz.pagina === "control" && Ajustes.pildoras
+        visible: raiz.pagina === "control" && Ajustes.pildoras
+        opacity: visible ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Tema.normal } }
+    }
     PaginaControl {
         id: control
         width: parent.width
         pantalla: raiz.pantalla
-        activa: raiz.abierta && raiz.pagina === "control"
+        activa: raiz.abierta && raiz.pagina === "control" && !Ajustes.pildoras
         // Solo la elegida: la que se va se oculta al momento (con un fundido
         // se veía un instante encima de la nueva); la que llega, con fundido
-        visible: raiz.pagina === "control"
+        visible: raiz.pagina === "control" && !Ajustes.pildoras
         opacity: visible ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Tema.normal } }
     }
@@ -76,9 +90,11 @@ Item {
         opacity: visible ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Tema.normal } }
     }
-    PestanaClima {
+    PaginaClima {
         id: clima
         width: parent.width
+        altoMax: raiz.altoMax
+        activa: raiz.abierta && raiz.pagina === "clima"
         // Solo la elegida: la que se va se oculta al momento (con un fundido
         // se veía un instante encima de la nueva); la que llega, con fundido
         visible: raiz.pagina === "clima"
@@ -110,6 +126,8 @@ Item {
         id: solo
         width: parent.width
         cual: raiz.sola ? raiz.pagina : "red"
+        pantalla: raiz.pantalla
+        altoMax: raiz.altoMax
         activa: raiz.abierta && raiz.sola
         // Solo la elegida: la que se va se oculta al momento (con un fundido
         // se veía un instante encima de la nueva); la que llega, con fundido

@@ -54,8 +54,15 @@ PanelWindow {
             isla.aportar(clave, 0);
         isla = nueva;
     }
-    onAbiertoChanged: tomarIsla()
-    onProgresoChanged: isla?.aportar(clave, progreso)
+    onAbiertoChanged: {
+        tomarIsla();
+        if (abierto && Tema.normal > 0)
+            animSubida.restart();
+    }
+    // La isla pierde sus esquinas de abajo enseguida al abrirse y no las
+    // recupera hasta que el panel casi se ha ido (al ritmo del panel
+    // asomaba el fondo entre los dos en la esquina)
+    onProgresoChanged: isla?.aportar(clave, Math.min(1, progreso * 4))
     Connections {
         target: Paneles
         function onSeccionChanged() {
@@ -91,14 +98,26 @@ PanelWindow {
     property real progreso: abierto ? 1 : 0
     Behavior on progreso {
         NumberAnimation {
-            duration: Tema.normal === 0 ? 0 : !ventana.abierto ? 170 : caja.pegado ? 300 : caja.colgado ? 440 : 380
-            easing.type: !ventana.abierto ? Easing.InCubic : caja.pegado ? Easing.OutQuint : Easing.OutBack
-            easing.overshoot: caja.colgado ? 0.9 : 1.4
+            duration: Tema.normal === 0 ? 0 : !ventana.abierto ? (caja.comoDock ? 260 : 170) : caja.pegado ? 300 : caja.comoDock ? 520 : 380
+            // (con las islas, como el dock: al abrir, rebote suave; al
+            // cerrar, se recoge acelerando y frenando)
+            easing.type: !ventana.abierto ? (caja.comoDock ? Easing.InOutCubic : Easing.InCubic) : caja.pegado ? Easing.OutQuint : Easing.OutBack
+            easing.overshoot: caja.comoDock ? 0.35 : 1.4
         }
     }
     // El progreso sin pasarse de 1: para lo que no debe rebotar (el sitio
     // bajo la barra o la isla y la transparencia)
     readonly property real hasta1: Math.min(1, progreso)
+
+    // Al abrirse, el contenido baja desde un poco más arriba (1 → 0) tras
+    // un momento, mientras la caja se despliega de arriba abajo
+    property real subida: 0
+    SequentialAnimation {
+        id: animSubida
+        PropertyAction { target: ventana; property: "subida"; value: 1 }
+        PauseAnimation { duration: 80 }
+        NumberAnimation { target: ventana; property: "subida"; to: 0; duration: 560; easing.type: Easing.OutQuart }
+    }
 
     screen: modelData
     visible: abierto || progreso > 0
@@ -160,7 +179,11 @@ PanelWindow {
             // Lo que sobresale a cada lado de la isla (ahí van las curvas)
             readonly property real sobraIzquierda: colgado ? ventana.islaX - x : 0
             readonly property real sobraDerecha: colgado ? x + width - ventana.islaX - ventana.islaAncho : 0
-            height: interior.implicitHeight + 32
+            // Con las islas, como los paneles del dock: nace sin alto bajo la
+            // isla (o la barra) y se estira con rebote (progreso pasa de 1)
+            readonly property real altoFinal: interior.implicitHeight + 32
+            height: comoDock ? Math.max(0, altoFinal * ventana.progreso) : altoFinal
+            readonly property bool comoDock: colgado || (Ajustes.conPildoras && !pegado && !enMedio && !ventana.vertical && !ventana.abajo)
             readonly property bool enMedio: ventana.lado === "medio"
             // Con la barra minimalista, pegado a ella: sin hueco, esquinas
             // rectas, su mismo fondo y un borde fino
@@ -184,7 +207,8 @@ PanelWindow {
             // (en el recorte, que con la minimalista empieza bajo la barra)
             y: enMedio ? Math.round((ventana.height - height) / 2) - recorte.y
                 : fundido ? parent.height - ventana.hasta1 * height
-                : colgado ? -(1 - ventana.hasta1) * height
+                : colgado ? 0
+                : comoDock ? Tema.hueco
                 : pegado ? -(1 - ventana.hasta1) * height
                 : ventana.abajo ? parent.height - height - Tema.hueco + deslizar
                 : !ventana.vertical ? Tema.hueco - deslizar
@@ -194,8 +218,11 @@ PanelWindow {
 
             // Pegado a la barra baja como una persiana (ver «recorte»), sin
             // fundido ni encoger (se despegaría de ella)
-            opacity: pegado || colgado ? 1 : ventana.hasta1
-            scale: pegado || colgado ? 1 : (enMedio ? 0.94 : 0.96) + (enMedio ? 0.06 : 0.04) * ventana.progreso
+            // (con las islas, al cerrarse se funde en el último tramo: si no,
+            // quedaba una franja oscura bajo la isla en los últimos fotogramas)
+            opacity: comoDock ? (ventana.abierto ? 1 : Math.min(1, ventana.progreso * 2.5))
+                : pegado ? 1 : ventana.hasta1
+            scale: pegado || comoDock ? 1 : (enMedio ? 0.94 : 0.96) + (enMedio ? 0.06 : 0.04) * ventana.progreso
             transformOrigin: enMedio ? Item.Center : ventana.vertical ? Item.Left : ventana.abajo ? Item.Bottom : Item.Top
 
             radius: Tema.radioPanel
@@ -214,6 +241,21 @@ PanelWindow {
             border.color: pegado ? Tema.claro(0.08) : Tema.panelBorde
             clip: true
 
+            // Como el dock: un brillo suave del acento arriba (colgando de
+            // una isla, no: se notaba la costura con ella y con las curvas)
+            Rectangle {
+                visible: caja.comoDock && !caja.colgado
+                anchors.fill: parent
+                topLeftRadius: caja.topLeftRadius
+                topRightRadius: caja.topRightRadius
+                bottomLeftRadius: caja.bottomLeftRadius
+                bottomRightRadius: caja.bottomRightRadius
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: Tema.claro(0.10) }
+                    GradientStop { position: Math.min(1, 140 / Math.max(1, caja.altoFinal)); color: "transparent" }
+                }
+            }
+
             // Pegado: sin borde del lado de la barra (se funde con ella)
             Rectangle {
                 visible: caja.pegado && caja.border.width > 0
@@ -228,7 +270,7 @@ PanelWindow {
             // Solo con el panel ya abierto (al cambiar de sección o página): al
             // abrirse toma su tamaño directamente, sin arrastrar el de la última vez
             Behavior on height {
-                enabled: ventana.abierto && ventana.progreso === 1
+                enabled: ventana.abierto && ventana.progreso === 1 && !animSubida.running
                 NumberAnimation { duration: Tema.rebote * 0.75; easing.type: Easing.OutBack; easing.overshoot: 0.8 }
             }
 
@@ -250,8 +292,21 @@ PanelWindow {
                     x: 16 + (caja.colgado ? caja.xFinal - caja.x : 0)
                     y: 16
                     width: caja.anchoFinal - 32
-                    opacity: caja.colgado ? Math.max(0, Math.min(1, (ventana.progreso - 0.3) / 0.7)) : 1
                     implicitHeight: childrenRect.height
+                    // El contenido llega mientras la caja se despliega hacia
+                    // abajo: se funde y baja un poco desde arriba (ventana.subida)
+                    // (la opacidad no depende de «subida»: al cambiar en cada
+                    // fotograma reiniciaba el fundido y el contenido no llegaba
+                    // hasta que la caja se paraba)
+                    readonly property bool mostrar: ventana.abierto && ventana.progreso > 0.2
+                    opacity: !caja.comoDock || mostrar ? 1 : 0
+                    Behavior on opacity {
+                        enabled: caja.comoDock
+                        NumberAnimation { duration: interior.mostrar ? 360 : 90; easing.type: Easing.OutCubic }
+                    }
+                    transform: Translate {
+                        y: caja.comoDock ? -ventana.subida * 14 : 0
+                    }
                 }
             }
         }
@@ -263,6 +318,8 @@ PanelWindow {
         property bool derecha: false
         property real r: 0
         visible: caja.colgado && r > 0.5
+        // Se funden con la caja al cerrarse (si no, quedaban las esquinas)
+        opacity: caja.opacity
         y: ventana.bajoIslas - r
         width: r
         height: r

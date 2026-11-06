@@ -23,6 +23,7 @@ Singleton {
     property alias islaClima: datos.islaClima
     property alias islaRecursos: datos.islaRecursos
     property alias islaBandeja: datos.islaBandeja
+    property alias iconosDock: datos.iconosDock       // islas: los iconos y el muelle del dock (Ficha.qml)
 
     // ------------------------------------------------------------ Aspecto
     property alias radio: datos.radio                 // esquinas de islas y paneles (px)
@@ -204,6 +205,7 @@ window-rule {
             property bool islaClima: true
             property bool islaRecursos: true
             property bool islaBandeja: true
+            property bool iconosDock: true
 
             property int radio: 10
             property int radioVentanas: 10

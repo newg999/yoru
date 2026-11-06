@@ -2,9 +2,9 @@
 //  Páginas «red», «bt» y «sonido»: solo lo de la ficha que se pulsó en las
 //  islas en píldoras (barra/BarraIslas.qml), como en el dock
 //
-//    red      [󰖩 Wi-Fi  ●]  y debajo las VPN y las redes (SeccionWifi)
-//    bt       [󰂯 Bluetooth ●]  y los dispositivos (SeccionBluetooth)
-//    sonido   salidas y micrófonos, con su volumen (SeccionAudio)
+//    red      como el panel de red del dock (PaginaRed.qml)
+//    bt       la misma, con la lista de Bluetooth
+//    sonido   como el panel de sonido del dock (PaginaSonido.qml)
 //    musica   lo que suena, en pequeño: carátula, canción, progreso y
 //             botones (bajo la isla de la música y de su ancho)
 //
@@ -22,6 +22,8 @@ Column {
 
     property string cual: "red"
     property bool activa: false
+    property var pantalla: null
+    property int altoMax: 700
     spacing: 10
 
     readonly property var wifi: Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
@@ -30,43 +32,13 @@ Column {
     readonly property var btConectados: Bluetooth.devices.values.filter(d => d.connected)
 
     // ------------------------------------------------------------- Red
-    Baldosa {
-        visible: pagina.cual === "red"
+    PaginaRed {
+        visible: pagina.cual === "red" || pagina.cual === "bt"
         width: parent.width
-        conFlecha: false
-        icono: Networking.wifiEnabled ? "󰖩" : "󰖪"
-        titulo: "Wi-Fi"
-        detalle: pagina.redWifi ? pagina.redWifi.name : Networking.wifiEnabled ? "Sin conectar" : "Apagado"
-        encendida: Networking.wifiEnabled
-        onAlternar: Networking.wifiEnabled = !Networking.wifiEnabled
-        onElegir: alternar()
-    }
-    SeccionWifi {
-        visible: pagina.cual === "red"
-        width: parent.width
-        activa: pagina.activa && pagina.cual === "red"
-    }
-
-    // ------------------------------------------------------- Bluetooth
-    Baldosa {
-        visible: pagina.cual === "bt"
-        width: parent.width
-        conFlecha: false
-        icono: pagina.adaptador?.enabled ? "󰂯" : "󰂲"
-        titulo: "Bluetooth"
-        detalle: !pagina.adaptador ? "No disponible"
-            : !pagina.adaptador.enabled ? "Apagado"
-            : pagina.btConectados.length === 1 ? pagina.btConectados[0].name
-            : pagina.btConectados.length > 1 ? pagina.btConectados.length + " conectados"
-            : "Encendido"
-        encendida: pagina.adaptador?.enabled ?? false
-        onAlternar: Radios.alternarBluetooth()
-        onElegir: alternar()
-    }
-    SeccionBluetooth {
-        visible: pagina.cual === "bt"
-        width: parent.width
-        activa: pagina.activa && pagina.cual === "bt"
+        pantalla: pagina.pantalla
+        altoMax: pagina.altoMax
+        inicial: pagina.cual === "bt" ? "bt" : "wifi"
+        activa: pagina.activa && (pagina.cual === "red" || pagina.cual === "bt")
     }
 
     // ---------------------------------------------------------- Música
@@ -203,15 +175,10 @@ Column {
     }
 
     // ---------------------------------------------------------- Sonido
-    SeccionAudio {
+    PaginaSonido {
         visible: pagina.cual === "sonido"
         width: parent.width
-        volumen: true
-    }
-    SeccionAudio {
-        visible: pagina.cual === "sonido"
-        width: parent.width
-        entrada: true
-        volumen: true
+        altoMax: pagina.altoMax
+        activa: pagina.activa && pagina.cual === "sonido"
     }
 }

@@ -11,7 +11,7 @@
 //    [Ahorro] [Equilibrado] [Rendimiento]
 //    [󰅌] [󰒓] [󰐥]                       portapapeles, ajustes y apagar
 //    Notificaciones           Borrar
-//    las tres últimas, o «Todo al día»
+//    las tres últimas, o «Todo al día» (sin lista desplegada)
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -138,7 +138,12 @@ Column {
     }
 
     // ------------------------------------------- Volumen, micro y brillo
+    // Con una lista desplegada, como en Windows, el panel se queda con ella:
+    // lo de debajo se esconde hasta recogerla (en pantallas bajas no cabía
+    // y se cortaba). Las de wifi y Bluetooth esconden también esto
+    readonly property bool conRedes: lista === "wifi" || lista === "bluetooth"
     Column {
+        visible: !pagina.conRedes
         width: parent.width
         FilaVolumen {
             width: parent.width
@@ -175,11 +180,13 @@ Column {
     }
 
     SelectorEnergia {
+        visible: pagina.lista === ""
         width: parent.width
     }
 
     // ------------------------------------------------- Accesos rápidos
     Row {
+        visible: pagina.lista === ""
         width: parent.width
         spacing: 6
         Repeater {
@@ -226,6 +233,7 @@ Column {
 
     // ------------------------------------------------------ Notificaciones
     Rectangle {
+        visible: pagina.lista === ""
         width: parent.width
         height: avisos.implicitHeight + 16
         radius: Tema.esquina(12)
