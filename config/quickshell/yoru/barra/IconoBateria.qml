@@ -1,6 +1,6 @@
 // ============================================================================
 //  IconoBateria — la pila del dock (yoru-dock): contorno, relleno del color
-//  del tema hasta la carga (en rojo si queda poca) y un rayo al cargar.
+//  por colores hasta la carga (verde, amarillo, naranja, rojo) y un rayo al cargar.
 //  Lo usa Ficha.qml.
 // ============================================================================
 import QtQuick
@@ -12,6 +12,8 @@ Item {
     property bool cargando: false
     property color color: Tema.texto    // el contorno
     readonly property bool baja: !cargando && carga <= 0.15
+    // El relleno: verde lleno o cargando, y amarillo, naranja y rojo al bajar
+    property color relleno: Tema.bateria(carga, cargando)
     width: 27
     height: 14
 
@@ -29,7 +31,8 @@ Item {
             height: parent.height - 5.2
             radius: 1.4
             width: Math.max(1.5, (parent.width - 5.2) * Math.max(0, Math.min(1, pila.carga)))
-            color: pila.baja ? Tema.rojo : Tema.blanco
+            color: pila.relleno
+            Behavior on color { ColorAnimation { duration: 600 } }
             Behavior on width { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
         }
     }

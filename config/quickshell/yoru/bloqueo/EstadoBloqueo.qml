@@ -95,6 +95,8 @@ Row {
         visible: estado.hayBateria
         readonly property var iconos: ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
         text: (estado.cargando ? "󰂄" : iconos[Math.min(9, Math.floor(estado.carga / 10))]) + " " + estado.carga + "%"
-        color: !estado.cargando && estado.carga <= 10 ? Tema.rojo : Tema.texto
+        // Por colores, como en la barra: verde llena o cargando y, según
+        // baja, amarillo, naranja y rojo (Tema.bateria)
+        color: Tema.bateria(estado.carga / 100, estado.cargando)
     }
 }

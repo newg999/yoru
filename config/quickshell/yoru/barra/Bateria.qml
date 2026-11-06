@@ -27,8 +27,8 @@ Isla {
         texto: isla.carga + "%"
         pulsable: false
         resaltado: isla.iluminada
-        colorAviso: isla.cargando ? "transparent"
-            : isla.carga <= 10 ? Tema.rojo
-            : isla.carga <= 25 ? Tema.amarillo : "transparent"
+        // Por colores, como en el iPhone: verde llena o cargando y, según
+        // baja, amarillo, naranja y rojo
+        colorAviso: Tema.bateria(isla.carga / 100, isla.cargando)
     }
 }

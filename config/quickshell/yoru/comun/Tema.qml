@@ -33,6 +33,27 @@ Singleton {
 
     readonly property color tenue: claro(0.35)         // apagado / silenciado
 
+    // La batería por colores, como en el iPhone: verde llena (o cargando) y,
+    // según baja, amarillo, naranja y rojo, pasando suave de uno a otro.
+    // carga de 0 a 1
+    readonly property var _pila: [
+        [0.00, "#ff3b30"], [0.10, "#ff3b30"], [0.20, "#ff9500"],
+        [0.35, "#ffcc00"], [0.55, "#a8d943"], [0.75, "#34c759"]
+    ]
+    function bateria(carga, cargando) {
+        if (cargando)
+            return Qt.color("#34c759");
+        const t = Math.max(0, Math.min(1, carga));
+        for (let i = 1; i < _pila.length; i++) {
+            if (t <= _pila[i][0]) {
+                const a = Qt.color(_pila[i - 1][1]), b = Qt.color(_pila[i][1]);
+                const f = (t - _pila[i - 1][0]) / (_pila[i][0] - _pila[i - 1][0]);
+                return Qt.rgba(a.r + (b.r - a.r) * f, a.g + (b.g - a.g) * f, a.b + (b.b - a.b) * f, 1);
+            }
+        }
+        return Qt.color(_pila[_pila.length - 1][1]);
+    }
+
     // Para textos con formato (las ayudas de la barra): texto en gris, y
     // texto ajeno (nombres de redes, canciones...) sin que < y & rompan nada
     function suave(t) { return "<font color='" + gris + "'>" + t + "</font>"; }

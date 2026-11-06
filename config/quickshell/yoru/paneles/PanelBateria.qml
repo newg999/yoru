@@ -63,7 +63,9 @@ Panel {
     readonly property color acento: Tema.blanco
     function tinte(a) { return Tema.conAlfa(acento, a); }
     readonly property bool baja: !enchufada && carga < 20
-    readonly property color liquido: baja ? Tema.rojo : acento
+    // El color del líquido, como en el iPhone: verde llena o cargando y,
+    // según baja, amarillo, naranja y rojo (Tema.bateria)
+    readonly property color liquido: Tema.bateria(carga / 100, cargando || llena)
     onLiquidoChanged: nivelCanvas.requestPaint()
 
     component Titulo: Texto {

@@ -206,6 +206,7 @@ Scope {
         property string valor: ""
         property string detalle: ""
         property real uso: 0
+        property color colorUso: Tema.blanco   // el del agua (la batería, por colores)
         // El texto de abajo sobre el color: oscuro
         readonly property bool tapado: uso > 0.32
 
@@ -223,7 +224,7 @@ Scope {
             Agua {
                 anchors.fill: parent
                 nivel: tarjeta.uso
-                color: Tema.blanco
+                color: tarjeta.colorUso
                 inclinacion: 2.5 * tarjeta.e
                 moviendo: escritorio.aLaVista
             }
@@ -399,6 +400,7 @@ Scope {
             detalle: cargando ? "Cargando" : !UPower.onBattery ? "Enchufada" : ""
             valor: Math.round((b?.percentage ?? 0) * 100) + "%"
             uso: b?.percentage ?? 0
+            colorUso: Tema.bateria(uso, cargando || b?.state === UPowerDeviceState.FullyCharged)
         }
     }
     Component {

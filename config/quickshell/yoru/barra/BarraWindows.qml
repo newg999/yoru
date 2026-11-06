@@ -365,7 +365,7 @@ PanelWindow {
                         text: estado.cargando ? "󰂄" : ["󰁺", "󰁼", "󰁾", "󰂀", "󰁹"][Math.min(4, Math.floor(estado.carga / 20))]
                         font.family: Tema.mono
                         font.pixelSize: Tema.letra + 3
-                        color: !estado.cargando && estado.carga <= 15 ? Tema.rojo : Tema.texto
+                        color: Tema.bateria(estado.carga / 100, estado.cargando)
                     }
                 }
             }

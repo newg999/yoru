@@ -483,7 +483,9 @@ PanelWindow {
                     cargando: estado.cargando
                     // Cargando: el relleno ondea, como agua entrando
                     ola: estado.cargando && estado.carga < 100
-                    colorIcono: !estado.cargando && estado.carga <= 15 ? Tema.rojo : tinta
+                    // Por colores, como en el iPhone (Tema.bateria)
+                    colorCarga: Tema.bateria(estado.carga / 100, estado.cargando)
+                    colorIcono: !estado.cargando && estado.carga <= 15 ? Tema.bateria(estado.carga / 100, false) : tinta
                     onClic: Paneles.alternar("bateria", barra.modelData, "")
                 }
 

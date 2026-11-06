@@ -30,6 +30,7 @@ ClippingRectangle {
     property bool activa: false
     property real carga: -1             // 0..1: llena hasta ahí (-1 = no)
     property bool ola: false            // el relleno ondea
+    property color colorCarga: Tema.blanco  // el del relleno (la batería, por colores)
     property bool pulsable: true
     property bool apagada: false        // gris (sin reproductor...)
     property color colorIcono: tinta
@@ -92,13 +93,13 @@ ClippingRectangle {
         NumberAnimation { target: ficha; property: "opacity"; from: 0; to: 1; duration: Tema.normal; easing.type: Easing.OutCubic }
     }
 
-    // Lo cargado: del color del tema, de la izquierda hasta «carga»
+    // Lo cargado: de «colorCarga», de la izquierda hasta «carga»
     Agua {
         visible: ficha.carga >= 0 && !ficha.activa && !ficha.comoDock
         anchors.fill: parent
         horizontal: true
         nivel: ficha.carga
-        color: Tema.blanco
+        color: ficha.colorCarga
         inclinacion: 1.5
         vaiven: 1600
         moviendo: ficha.ola
