@@ -623,6 +623,12 @@ Item {
             }
         }
 
+        // ---------------------------------------------------- Escritorio
+        PestanaEscritorio {
+            visible: panel.pestana === "escritorio"
+            width: parent.width
+        }
+
         // ----------------------------------------------------- Pantallas
         PestanaPantallas {
             visible: panel.pestana === "pantallas"

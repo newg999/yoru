@@ -40,7 +40,8 @@ Scope {
                     {id: "tema", icono: "󰏘", texto: "Tema", detalle: "Colores de todo el escritorio"},
                     {id: "fondo", icono: "󰸉", texto: "Fondo", detalle: "El fondo de pantalla"},
                     {id: "aspecto", icono: "󰙵", texto: "Aspecto", detalle: "Esquinas, transparencias, letra, animaciones y luz nocturna"},
-                    {id: "barra", icono: "󰕮", texto: "Barra y dock", detalle: "Estilo de la barra (islas, minimalista o dock), qué se ve y el dock"}
+                    {id: "barra", icono: "󰕮", texto: "Barra y dock", detalle: "Estilo de la barra (islas, minimalista o dock), qué se ve y el dock"},
+                    {id: "escritorio", icono: "󰨇", texto: "Escritorio", detalle: "Los widgets sobre el fondo: cuáles salen, dónde, su tamaño y su aspecto"}
                 ]},
                 {titulo: "Dispositivos", secciones: [
                     {id: "pantallas", icono: "󰍹", texto: "Pantallas", detalle: "Colocar los monitores, resolución y escala"},
@@ -65,6 +66,7 @@ Scope {
                 fondo: "wallpaper imagen descubrir wallhaven",
                 aspecto: "transparencia opacidad letra fuente desenfoque blur luz nocturna animaciones bordes",
                 barra: "dock islas reloj bandeja",
+                escritorio: "widgets reloj hora tarjetas cpu ram disco temperatura calendario tiempo música musica mover colocar",
                 pantallas: "monitor resolución resolucion hz escala",
                 sonido: "audio volumen altavoces auriculares micrófono microfono",
                 raton: "touchpad cursor puntero zurdo",

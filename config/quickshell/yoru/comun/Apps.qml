@@ -28,6 +28,7 @@ Singleton {
         ["󰏘", "Tema y colores", "Ajustes › Tema", "tema theme colores colors paleta oscuro claro dark light", "ajustes", "tema"],
         ["󰸉", "Fondo de pantalla", "Ajustes › Fondo", "fondo wallpaper background imagen", "ajustes", "fondo"],
         ["󰕮", "Barra y dock", "Ajustes › Barra y dock", "barra bar dock panel islas", "ajustes", "barra"],
+        ["󰨇", "Widgets del escritorio", "Ajustes › Escritorio: cuáles salen, dónde y su tamaño", "widgets escritorio desktop reloj tarjetas mover colocar", "ajustes", "escritorio"],
         ["󰙵", "Aspecto", "Ajustes › Aspecto: esquinas, transparencias, letra, animaciones", "aspecto appearance letra fuente font tipografía tipografia esquinas transparencia opacidad desenfoque blur bordes animaciones", "ajustes", "aspecto"],
         ["󰍹", "Pantallas", "Ajustes › Pantallas: colocarlas, resolución y escala", "pantallas pantalla monitores monitor displays display resolución resolucion escala hz frecuencia", "ajustes", "pantallas"],
         ["󰖔", "Luz nocturna", "Ajustes › Aspecto: pantalla más cálida por la noche", "luz nocturna night light filtro azul blue cálida calida noche", "ajustes", "aspecto"],
