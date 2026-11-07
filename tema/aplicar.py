@@ -308,6 +308,7 @@ ff_colores=(
     --logo-color-1 '{ansi(a)}'
     --logo-color-2 '{ansi(p['gris'])}'
     --color-keys '{ansi(a)}'
+    --bar-color-elapsed '{ansi(a)}'
 )
 """)
 

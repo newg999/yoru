@@ -53,8 +53,13 @@ if command -v fastfetch >/dev/null; then
     if (( COLUMNS < 60 )); then
         ff_colores+=(--logo none)
     elif [[ $TERM == xterm-kitty && -f ~/.local/state/yoru/tema/fastfetch.png ]]; then
-        ff_colores+=(--logo-type kitty-direct --logo ~/.local/state/yoru/tema/fastfetch.png
-                     --logo-width 16 --logo-height 8)
+        ff_colores+=(--logo-type kitty-direct --logo ~/.local/state/yoru/tema/fastfetch.png)
+        # Con sitio (100 columnas o más), más grande: acompaña a las tres secciones
+        if (( COLUMNS >= 100 )); then
+            ff_colores+=(--logo-width 28 --logo-height 13)
+        else
+            ff_colores+=(--logo-width 16 --logo-height 8)
+        fi
     fi
     fastfetch "${ff_colores[@]}"
     unset ff_colores

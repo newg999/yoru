@@ -1,4 +1,8 @@
 // fastfetch — info del sistema al abrir la terminal (lo lanza config/zsh/zshrc)
+// En tres secciones (sistema, hardware, sesión) unidas por una línea, con
+// iconos y barras de uso. El color de las claves, los
+// títulos y las barras es el acento del tema (zshrc: --color-keys y
+// --bar-color-elapsed); las líneas, gris ({#90}).
 // El logo es yoru.txt: 夜 (yoru, «noche») en grande, sacado de Noto Serif CJK
 // con bloques de cuartos de celda, una luna y «よる · yoru». $1 es el kanji,
 // la luna y よる (color de acento) y $2 las estrellas y «yoru» (gris).
@@ -19,33 +23,49 @@
         }
     },
     "display": {
-        "separator": " → ",
-        "color": {
-            "keys": "blue"
+        "separator": "",
+        "key": { "width": 18 },
+        "color": { "keys": "blue" },
+        // Barras de un solo color (el del tema), sin bordes
+        "percent": { "type": 10 },
+        "bar": {
+            "char": { "elapsed": "■", "total": "■" },
+            "width": 12,
+            "border": { "left": "", "right": "" },
+            "color": { "elapsed": "blue", "total": "90" }
         },
         // Una línea que no cabe se corta, no salta a la siguiente (se
         // montaba encima del logo)
         "disableLinewrap": true
     },
-    // Textos cortos: así caben al lado del logo en una terminal estrecha
     "modules": [
         "title",
-        "separator",
-        { "type": "os", "format": "{name} {version-id}" },
-        "host",
-        { "type": "kernel", "format": "{release}" },
-        "uptime",
-        { "type": "packages", "format": "{all} ({flatpak-all} flatpak)" },
-        "shell",
-        { "type": "display", "key": "Display", "format": "{width}x{height} @ {refresh-rate} Hz" },
-        { "type": "wm", "key": "WM", "format": "{pretty-name} {version}" },
-        "theme",
-        "icons",
-        "terminal",
-        { "type": "cpu", "format": "{name} ({cores-logical})" },
-        { "type": "gpu", "format": "{name}" },
-        "memory",
-        { "type": "disk", "key": "Disk", "format": "{size-used} / {size-total} ({size-percentage})" },
-        { "type": "battery", "key": "Battery", "format": "{capacity} · {status}" }
+        "break",
+
+        { "type": "custom", "format": "{#90}┌─ {#keys}  SISTEMA" },
+        { "type": "custom", "format": "{#90}│" },
+        { "type": "os", "key": "{#90}│  {#keys} sistema", "format": "{name} {version-id}" },
+        { "type": "kernel", "key": "{#90}│  {#keys} kernel", "format": "{release}" },
+        { "type": "wm", "key": "{#90}│  {#keys} wm", "format": "{pretty-name} {version}" },
+        { "type": "shell", "key": "{#90}│  {#keys} shell", "format": "{pretty-name} {version}" },
+        { "type": "terminal", "key": "{#90}│  {#keys} terminal", "format": "{pretty-name} {version}" },
+        { "type": "packages", "key": "{#90}│  {#keys}󰏖 paquetes", "format": "{rpm} (rpm), {flatpak-all} (flatpak)" },
+        { "type": "custom", "format": "{#90}│" },
+
+        { "type": "custom", "format": "{#90}├─ {#keys}󰍛  HARDWARE" },
+        { "type": "custom", "format": "{#90}│" },
+        { "type": "cpu", "key": "{#90}│  {#keys} cpu", "temp": true, "format": "{temperature}  {name}" },
+        { "type": "gpu", "key": "{#90}│  {#keys}󰢮 gpu", "temp": true, "hideType": "integrated", "format": "{temperature}  {name}" },
+        { "type": "memory", "key": "{#90}│  {#keys}󰍛 memoria", "format": "{percentage-bar}  {used} / {total}" },
+        { "type": "disk", "key": "{#90}│  {#keys}󰋊 {mountpoint}", "folders": "/:/mnt/datos", "format": "{size-percentage-bar}  {size-used} / {size-total}" },
+        { "type": "battery", "key": "{#90}│  {#keys}󰁹 batería", "format": "{capacity-bar}  {capacity} · {status}" },
+        { "type": "custom", "format": "{#90}│" },
+
+        { "type": "custom", "format": "{#90}├─ {#keys}  SESIÓN" },
+        { "type": "custom", "format": "{#90}│" },
+        { "type": "uptime", "key": "{#90}│  {#keys} encendido" },
+        // Días desde que se instaló (cuando se creó /)
+        { "type": "command", "key": "{#90}│  {#keys}󰃭 instalado", "text": "echo \"hace $(( ($(date +%s) - $(stat -c %W /)) / 86400 )) días\"" },
+        { "type": "custom", "format": "{#90}└─" }
     ]
 }
