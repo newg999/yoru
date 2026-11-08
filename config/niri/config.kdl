@@ -119,6 +119,10 @@ spawn-sh-at-startup "command -v cliphist && wl-paste --watch cliphist store"
 // Agente de bluetooth: muestra el PIN al emparejar dispositivos
 spawn-sh-at-startup "command -v blueman-applet && blueman-applet"
 
+// MEGAsync en la bandeja, sin abrir su ventana: espera a que la barra esté
+// lista (si arranca antes, cree que no hay bandeja y se abre)
+spawn-sh-at-startup "~/.config/niri/scripts/megasync.sh"
+
 // ---------------------------------------------------------------------------
 //  Varios
 // ---------------------------------------------------------------------------

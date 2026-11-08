@@ -27,3 +27,6 @@ wallpapers/.bajando-*
 # uosc (la interfaz de mpv): lo baja install.sh de su última versión
 config/mpv/scripts/
 config/mpv/fonts/
+
+# Lo escribe MEGAsync (va desactivado: lo lanza niri/scripts/megasync.sh)
+config/autostart/megasync.desktop
