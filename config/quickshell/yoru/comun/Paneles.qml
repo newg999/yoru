@@ -36,7 +36,8 @@ Singleton {
                 : enSeccion === "clima" ? (i.clima?.visible && i.clima.width > 0 ? i.clima : i.centro)
                 : enSeccion === "calendario" || origen !== "derecha" ? i.centro : i.estado)
             : {lanzador: i.botones, bateria: i.estado, actualizaciones: i.novedades, discos: i.discos,
-               notificaciones: i.notificaciones, portapapeles: i.notificaciones, apagado: i.notificaciones}[nombre];
+               notificaciones: i.notificaciones, portapapeles: i.notificaciones, apagado: i.notificaciones,
+               mega: i.estado, bandeja: i.estado}[nombre];
         // (una isla que acaba de aparecer para él, como la campana sin avisos,
         // aún no se ve ni tiene ancho: vale si ya no está vacía)
         return it && ((it.visible && it.width > 0) || it.vacia === false) ? it : null;

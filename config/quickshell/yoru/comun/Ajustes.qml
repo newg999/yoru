@@ -119,7 +119,17 @@ window-rule {
 ` + (datos.barra === "minimalista" ? `layout {
     gaps 0
 }
-` : "")
+` : "") + `
+// MEGAsync: su panel como uno de Yoru (sus esquinas y junto a la bandeja,
+// bajo la barra; con la de Windows, sobre ella). niri cuenta desde el
+// borde del hueco que reserva la barra: 12 lo deja donde salen los paneles
+window-rule {
+    match app-id=r#"(?i)mega"#
+    geometry-corner-radius ${datos.barra === "minimalista" ? 0 : datos.radio + 4}
+    clip-to-geometry true
+    default-floating-position x=12 y=12 relative-to="${datos.barra === "windows" ? "bottom-right" : "top-right"}"
+}
+`
     FileView {
         id: archivoVentanas
         path: Quickshell.env("HOME") + "/.local/state/yoru/niri-ventanas.kdl"

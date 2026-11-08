@@ -159,6 +159,14 @@ ShellRoot {
             }
             Variants {
                 model: Quickshell.screens
+                PanelMega {}
+            }
+            Variants {
+                model: Quickshell.screens
+                PanelBandeja {}
+            }
+            Variants {
+                model: Quickshell.screens
                 PanelActualizaciones {}
             }
             Variants {

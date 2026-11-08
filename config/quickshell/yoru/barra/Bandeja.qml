@@ -1,6 +1,8 @@
 // ============================================================================
 //  Bandeja del sistema: iconos de apps en segundo plano (Discord, Telegram...)
-//  Clic = abrir su ventana · Clic derecho = su menú · Clic central = acción 2
+//  Clic = abrir su ventana (o su panel de Yoru, como MEGA) · Clic derecho =
+//  su menú (con el aspecto de Yoru: paneles/PanelBandeja.qml) · Clic
+//  central = acción 2
 //  Al pasar el ratón crecen un poco y se iluminan.
 //  Los que están en reposo (Passive, p. ej. mate-polkit) no se muestran.
 // ============================================================================
@@ -12,17 +14,28 @@ import qs.comun
 
 Isla {
     id: isla
-    required property var ventana     // la barra, para colocar los menús
+    required property var ventana     // la barra (su pantalla, para abrir los paneles)
     relleno: 5
 
-    // Clic: su ventana al frente si ya la tiene; si no, se abre la app por
-    // su lanzador (Steam y otras con AppIndicator no responden a
+    // Clic: su ventana al frente si ya la tiene (y si ya estaba delante, se
+    // cierra: vuelve a la bandeja, como el panel de MEGA); si no, se abre la
+    // app por su lanzador (Steam y otras con AppIndicator no responden a
     // «activate»: solo enseñan su menú); si no hay lanzador, «activate»
+    // Las apps con un panel propio de Yoru: su icono abre (y cierra) ese
+    // panel, colgando de la isla como los demás, en vez de su ventana
+    readonly property var paneles: ({MEGAsync: "mega"})
+
     function abrir(item) {
+        if (paneles[item.id]) {
+            Paneles.alternar(paneles[item.id], isla.ventana.screen);
+            return;
+        }
         const entrada = DesktopEntries.heuristicLookup(item.id);
         const ids = [item.id, entrada?.id ?? ""].map(x => x.toLowerCase()).filter(x => x !== "");
         const ventana = Object.values(Niri.ventanas).find(v => ids.includes((v.app_id ?? "").toLowerCase()));
-        if (ventana)
+        if (ventana && Niri.enfocada?.id === ventana.id)
+            Niri.accion("close-window", "--id", String(ventana.id));
+        else if (ventana)
             Niri.accion("focus-window", "--id", String(ventana.id));
         else if (entrada)
             Niri.lanzar(entrada.command);
@@ -65,18 +78,6 @@ Isla {
                 anchors { right: parent.right; top: parent.top; margins: 6 }
             }
 
-            QsMenuAnchor {
-                id: menu
-                menu: elemento.modelData.menu
-                anchor.window: isla.ventana
-                anchor.item: elemento
-                // Debajo del icono (o a su derecha, con la barra a la izquierda)
-                anchor.edges: isla.vertical ? Edges.Right : Edges.Bottom
-                anchor.gravity: isla.vertical ? Edges.Right : Edges.Bottom
-                anchor.margins.top: isla.vertical ? 0 : 6
-                anchor.margins.left: isla.vertical ? 6 : 0
-            }
-
             MouseArea {
                 id: raton
                 anchors.fill: parent
@@ -87,7 +88,7 @@ Isla {
                     const item = elemento.modelData;
                     if (e.button === Qt.RightButton || (e.button === Qt.LeftButton && item.onlyMenu)) {
                         if (item.hasMenu)
-                            menu.open();
+                            Paneles.alternar("bandeja", isla.ventana.screen, item.id);
                     } else if (e.button === Qt.MiddleButton) {
                         item.secondaryActivate();
                     } else {
