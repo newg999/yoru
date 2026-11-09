@@ -197,6 +197,39 @@ animations {
             }
         "
     }
+    // Como gotas de agua al moverse: llegan con un vaivén de muelle (se pasan
+    // un poco y vuelven). niri no deja deformarlas mientras se mueven, solo
+    // al cambiar de tamaño (abajo)
+    window-movement {
+        spring damping-ratio=0.62 stiffness=520 epsilon=0.0001
+    }
+    horizontal-view-movement {
+        spring damping-ratio=0.78 stiffness=600 epsilon=0.0001
+    }
+    // Al cambiar de tamaño, la ventana ondula como agua y se asienta: el
+    // contenido se mece en olas que se calman y el borde tiembla un poco
+    window-resize {
+        spring damping-ratio=0.6 stiffness=520 epsilon=0.0001
+        custom-shader r"
+            vec4 resize_color(vec3 coords_curr_geo, vec3 size_curr_geo) {
+                // El muelle puede pasar de 1 (el vaivén); la ola se calma al llegar
+                float p = niri_clamped_progress;
+                float calma = 1.0 - p;
+                vec2 uv = coords_curr_geo.xy;
+                // Olas en px convertidas a la fracción de la ventana
+                float ola = 9.0 * calma;
+                vec2 dpx = vec2(
+                    sin(uv.y * 9.0 + p * 10.0) * ola,
+                    sin(uv.x * 7.0 - p * 8.0) * ola * 0.6
+                );
+                vec2 geo = uv + dpx / size_curr_geo.xy;
+                vec3 tex = niri_geo_to_tex_next * vec3(geo, 1.0);
+                if (tex.x < 0.0 || tex.x > 1.0 || tex.y < 0.0 || tex.y > 1.0)
+                    return vec4(0.0);
+                return texture2D(niri_tex_next, tex.st);
+            }
+        "
+    }
     window-close {
         duration-ms 650
         curve "cubic-bezier" 0.55 0.0 0.7 0.4

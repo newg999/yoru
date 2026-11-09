@@ -40,7 +40,9 @@ binds {
     Mod+BackSpace hotkey-overlay-title="Bloquear pantalla" { spawn-sh "~/.config/niri/scripts/bloquear.sh"; }
     Super+Alt+L   hotkey-overlay-title=null                { spawn-sh "~/.config/niri/scripts/bloquear.sh"; }
     Mod+Shift+E   { quit; }
-    Ctrl+Alt+Delete { quit; }
+    // Como en Windows: el menú de apagado de Yoru (no el aviso rojo de niri
+    // para salir, que sigue en Mod+Shift+E)
+    Ctrl+Alt+Delete hotkey-overlay-title=null { spawn "qs" "-c" "yoru" "ipc" "call" "panel" "alternar" "apagado" ""; }
     Mod+Shift+P   { power-off-monitors; }
 
     // Pantalla del portátil (eDP-1): encender / apagar
