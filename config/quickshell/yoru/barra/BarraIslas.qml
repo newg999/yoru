@@ -353,7 +353,7 @@ PanelWindow {
                 id: notificaciones
                 cual: "notificaciones"
                 pantalla: barra.modelData
-                oculta: !Notificaciones.hayNuevas && !Notificaciones.noMolestar
+                oculta: !Notificaciones.hayNuevas && !Notificaciones.noMolestar && !colgando
             }
 
             Isla {

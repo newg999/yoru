@@ -63,6 +63,9 @@ PanelWindow {
     }
     onAbiertoChanged: {
         tomarIsla();
+        // Y otra vez enseguida: la isla puede estar apareciendo justo ahora
+        // (la campana sin avisos nuevos) y aún no contar como visible
+        Qt.callLater(tomarIsla);
         if (abierto && Tema.normal > 0)
             animSubida.restart();
     }

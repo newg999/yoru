@@ -37,7 +37,9 @@ Singleton {
                 : enSeccion === "calendario" || origen !== "derecha" ? i.centro : i.estado)
             : {lanzador: i.botones, bateria: i.estado, actualizaciones: i.novedades, discos: i.discos,
                notificaciones: i.notificaciones, portapapeles: i.notificaciones, apagado: i.notificaciones}[nombre];
-        return it && it.visible && it.width > 0 ? it : null;
+        // (una isla que acaba de aparecer para él, como la campana sin avisos,
+        // aún no se ve ni tiene ancho: vale si ya no está vacía)
+        return it && ((it.visible && it.width > 0) || it.vacia === false) ? it : null;
     }
 
     // Abre una página del panel «pildora» (paneles/Paginas.qml: control,

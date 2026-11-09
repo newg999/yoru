@@ -16,6 +16,11 @@ Isla {
     required property var pantalla
     property string cual: "notificaciones"
     relleno: 3
+    // ¿Cuelga de ella un panel (o se está abriendo o cerrando)? Entonces se
+    // queda a la vista aunque no toque (la campana sin avisos nuevos): el
+    // panel sale de debajo de ella y no de la esquina
+    readonly property bool colgando: fusion > 0
+        || ["notificaciones", "portapapeles", "apagado"].some(n => Paneles.esta(n, isla.pantalla))
 
     ayuda: cual === "portapapeles" ? "Portapapeles  ·  " + Tema.suave("Mod+Alt+V")
         : cual === "apagado" ? "Apagar, reiniciar, cerrar sesión…  ·  " + Tema.suave("Mod+Shift+BackSpace")
