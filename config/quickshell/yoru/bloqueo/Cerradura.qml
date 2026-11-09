@@ -1,19 +1,28 @@
 // ============================================================================
 //  Cerradura — lo que se ve al bloquear la pantalla y al iniciar sesión
+//  Al estilo del iPhone: todo centrado, la hora arriba y la contraseña abajo
 //
-//                                              (arriba: red, volumen... )
-//    18
-//    55                                          (D)
-//    Viernes, 23 de octubre · 󰖐 14°              don
-//                                         [ 󰌾 ••••••  󰈈 󰌌 ↵ ]
-//    (abajo: la música)                    Contraseña incorrecta
+//                                 󰌾                        (arriba: red, volumen...)
+//                       sábado, 8 de noviembre
+//                              14:32
+//                           [ batería ]                     ← widgets
 //
-//   ⏻                                                  (esquina)
+//                [ la música ]   [ las notificaciones ]           ← abajo
 //
-//  La hora, enorme, a la izquierda; quién entra y la contraseña, a la
-//  derecha. La caja de la contraseña aparece al tocar una tecla o mover el
-//  ratón, y se vuelve a esconder si pasa un rato sin escribir nada
-//  (esconderContrasena: false la deja siempre a la vista).
+//                               (D)
+//                               don
+//                       ( ● ● ● ●        󰈈 󰌌 ↵ )
+//   ⏻                   Contraseña incorrecta                   (esquina)
+//
+//  Mientras no tocas nada, abajo solo pone «Escribe para desbloquear»; al
+//  escribir o mover el ratón sube tu foto, tu nombre y la contraseña (y se
+//  vuelve a esconder si pasa un rato sin escribir nada; esconderContrasena:
+//  false la deja siempre a la vista).
+//
+//  Animaciones (animar: false las quita): al bloquear el fondo se acerca y
+//  cada parte entra por turno; cada punto de la contraseña aparece con un
+//  saltito; al fallar tiembla; al acertar, salir() abre el candado, todo sube
+//  y se funde, y avisa con la señal fuera() (entonces se desbloquea).
 //
 //  Solo usa QtQuick: no depende del resto de Yoru, para que la pantalla de
 //  inicio (system/greetd/yoru/, que corre como otro usuario) use este mismo
@@ -40,6 +49,7 @@ Item {
     property color colorOscuro: "#1a1b1e"
     property color colorRojo: "#bf616a"
     property string fuente: "Noto Sans"
+    property bool animar: true
 
     // Contenido
     property string nombre: ""                // quien entra (su inicial, sin foto)
@@ -55,10 +65,12 @@ Item {
     property alias texto: campo.text
     property alias campo: campo
     default property alias esquina: esquina.data   // abajo a la derecha
-    property alias encima: encima.data             // encima de la contraseña (p. ej. elegir usuario)
+    property alias encima: encima.data             // en lugar del nombre (p. ej. elegir usuario)
     property alias arriba: arriba.data             // arriba a la derecha (estado del equipo)
-    property alias abajo: abajo.data               // bajo la fecha (la música)
-    property string detalle: ""                    // junto a la fecha (el tiempo)
+    property alias widgets: widgets.data           // bajo la hora (el tiempo, la batería...)
+    property alias abajo: abajo.data               // entre la hora y la contraseña (música, avisos)
+    readonly property alias altoAbajo: abajo.height // lo que cabe ahí
+    property string detalle: ""                    // junto a la fecha
     property bool esconderContrasena: true
 
     // ¿Se ve la caja de la contraseña? Al escribir, al mover el ratón, al
@@ -71,7 +83,7 @@ Item {
     Timer {
         id: dormir
         interval: 15000
-        onTriggered: if (cerradura.esconderContrasena && campo.text === "" && !cerradura.ocupada && !menu.visible)
+        onTriggered: if (cerradura.esconderContrasena && campo.text === "" && !cerradura.ocupada && !menu.abierto)
             cerradura.despierta = false
     }
     onErrorChanged: if (error) despertar()
@@ -80,9 +92,22 @@ Item {
     signal enviar(string contrasena)
     signal energia(string accion)             // "suspend" · "reboot" · "poweroff"
     signal cambiarTeclado()
+    signal fuera()                            // salir() ha terminado: ya se puede desbloquear
+    signal toque()                            // un clic fuera de todo (cierra lo que esté abierto)
 
     function sacudir() {
         sacudida.restart();
+    }
+
+    // Contraseña buena: el candado se abre, todo sube y se funde
+    property bool abierto: false
+    function salir() {
+        abierto = true;
+        menu.abierto = false;
+        if (animar)
+            salida.start();
+        else
+            fuera();
     }
 
     function conAlfa(c, a) {
@@ -95,6 +120,8 @@ Item {
         ojo: "M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z",
         ojoTachado: "M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.08L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.74,7.13 11.35,7 12,7Z",
         teclado: "M19,10H17V8H19M19,13H17V11H19M16,10H14V8H16M16,13H14V11H16M16,17H8V15H16M7,10H5V8H7M7,13H5V11H7M8,11H10V13H8M8,8H10V10H8M11,11H13V13H11M11,8H13V10H11M20,5H4C2.89,5 2,5.89 2,7V17A2,2 0 0,0 4,19H20A2,2 0 0,0 22,17V7C22,5.89 21.1,5 20,5Z",
+        candadoAbierto: "M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V10A2,2 0 0,1 6,8H15V6A3,3 0 0,0 12,3A3,3 0 0,0 9,6H7A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,17A2,2 0 0,0 14,15A2,2 0 0,0 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17Z",
+        flecha: "M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z",
         intro: "M19,7V11H5.83L9.41,7.41L8,6L2,12L8,18L9.41,16.58L5.83,13H21V7H19Z",
         energia: "M16.56,5.44L15.11,6.89C16.84,7.94 18,9.83 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12C6,9.83 7.16,7.94 8.88,6.88L7.44,5.44C5.36,6.88 4,9.28 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12C20,9.28 18.64,6.88 16.56,5.44M13,3H11V13H13",
         luna: "M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95Z",
@@ -111,6 +138,7 @@ Item {
             `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="${Qt.rgba(tinta.r, tinta.g, tinta.b, 1)}" d="${trazo}"/></svg>`)
     }
 
+
     // Botón redondo con un icono (los de la contraseña y el de apagar)
     component BotonIcono: Item {
         id: boton
@@ -123,7 +151,7 @@ Item {
         Rectangle {
             anchors.fill: parent
             radius: width / 2
-            color: cerradura.conAlfa(cerradura.colorAcento, zona.containsMouse ? 0.12 : 0)
+            color: cerradura.conAlfa(cerradura.colorAcento, zona.containsMouse ? 0.14 : 0)
             Behavior on color { ColorAnimation { duration: 120 } }
         }
         Icono {
@@ -142,43 +170,93 @@ Item {
         }
     }
 
+    // ------------------------------------------------------- Animaciones
+    // Cuánto ha entrado cada parte (0 → 1, una detrás de otra) y cuánto se
+    // ha ido todo al desbloquear (0 → 1)
+    property real pFondo: animar ? 0 : 1
+    property real pCabeza: animar ? 0 : 1
+    property real pWidgets: animar ? 0 : 1
+    property real pAbajo: animar ? 0 : 1
+    property real pAcceso: animar ? 0 : 1
+    property real pSalida: 0
+    Component.onCompleted: if (animar) entrada.start()
+
+    component Paso: SequentialAnimation {
+        id: paso
+        property string que
+        property int espera: 0
+        property int dura: 650
+        PauseAnimation { duration: paso.espera }
+        NumberAnimation { target: cerradura; property: paso.que; from: 0; to: 1; duration: paso.dura; easing.type: Easing.OutCubic }
+    }
+    ParallelAnimation {
+        id: entrada
+        Paso { que: "pFondo"; dura: 900 }
+        Paso { que: "pCabeza"; espera: 80; dura: 700 }
+        Paso { que: "pWidgets"; espera: 220 }
+        Paso { que: "pAbajo"; espera: 340 }
+        Paso { que: "pAcceso"; espera: 440 }
+    }
+    SequentialAnimation {
+        id: salida
+        PauseAnimation { duration: 260 }        // el candado se abre
+        NumberAnimation { target: cerradura; property: "pSalida"; to: 1; duration: 380; easing.type: Easing.InCubic }
+        ScriptAction { script: cerradura.fuera() }
+    }
+
+    // Cada parte: se funde y se mueve un poco al entrar; al salir, sube
+    component Entra: Translate {
+        property real paso: 1
+        property real desde: 24
+        y: (1 - paso) * desde - cerradura.pSalida * 70
+    }
+
     // ------------------------------------------------------------ Fondo
     Rectangle {
         anchors.fill: parent
         color: cerradura.colorOscuro
+        opacity: 1 - cerradura.pSalida
     }
-    Image {
-        id: imagen
+    Item {
+        id: capaFondo
         anchors.fill: parent
-        source: cerradura.fondo
-        fillMode: Image.PreserveAspectCrop
-        sourceSize: Qt.size(Math.max(1, width / 2), Math.max(1, height / 2))   // va desenfocado: basta a media resolución
-        // Pequeño y ya desenfocado: se carga antes de enseñar la pantalla
-        asynchronous: cerradura.desenfocar
-        visible: !cerradura.desenfocar
-    }
-    MultiEffect {
-        anchors.fill: parent
-        source: imagen
-        visible: cerradura.desenfocar && imagen.status === Image.Ready
-        blurEnabled: true
-        blur: 1.0
-        blurMax: 48
-        saturation: -0.1
-        autoPaddingEnabled: false
-    }
-    // Un velo oscuro, más fuerte a la izquierda: la hora se lee siempre
-    Rectangle {
-        anchors.fill: parent
-        color: cerradura.conAlfa(cerradura.colorOscuro, 0.35)
-    }
-    Rectangle {
-        anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
-        width: parent.width * 0.65
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop { position: 0; color: cerradura.conAlfa(cerradura.colorOscuro, 0.55) }
-            GradientStop { position: 1; color: cerradura.conAlfa(cerradura.colorOscuro, 0) }
+        // Se acerca al bloquear y se aleja un poco al desbloquear
+        opacity: cerradura.pFondo * (1 - cerradura.pSalida)
+        scale: 1.08 - 0.08 * cerradura.pFondo + 0.04 * cerradura.pSalida
+
+        Image {
+            id: imagen
+            anchors.fill: parent
+            source: cerradura.fondo
+            fillMode: Image.PreserveAspectCrop
+            sourceSize: Qt.size(Math.max(1, width / 2), Math.max(1, height / 2))   // va desenfocado: basta a media resolución
+            // Pequeño y ya desenfocado: se carga antes de enseñar la pantalla
+            asynchronous: cerradura.desenfocar
+            visible: !cerradura.desenfocar
+        }
+        MultiEffect {
+            anchors.fill: parent
+            source: imagen
+            visible: cerradura.desenfocar && imagen.status === Image.Ready
+            blurEnabled: true
+            blur: 1.0
+            blurMax: 48
+            saturation: -0.1
+            autoPaddingEnabled: false
+        }
+        // Un velo oscuro, más fuerte arriba (la hora) y abajo (la contraseña)
+        Rectangle {
+            anchors.fill: parent
+            color: cerradura.conAlfa(cerradura.colorOscuro, 0.28)
+        }
+        Rectangle {
+            anchors.fill: parent
+            gradient: Gradient {
+                GradientStop { position: 0; color: cerradura.conAlfa(cerradura.colorOscuro, 0.5) }
+                GradientStop { position: 0.4; color: cerradura.conAlfa(cerradura.colorOscuro, 0) }
+                GradientStop { position: 0.7; color: cerradura.conAlfa(cerradura.colorOscuro, 0) }
+                GradientStop { position: 1; color: cerradura.conAlfa(cerradura.colorOscuro, 0.55) }
+            }
         }
     }
 
@@ -189,15 +267,16 @@ Item {
         hoverEnabled: true
         onPositionChanged: cerradura.despertar()
         onClicked: {
-            menu.visible = false;
+            menu.abierto = false;
+            cerradura.toque();
             cerradura.despertar();
             campo.forceActiveFocus();
         }
     }
 
-    readonly property int margen: Math.round(width * 0.07)
+    readonly property int tamFecha: Math.round(Math.max(16, height * 0.026))
 
-    // ------------------------------------------------------------ Reloj
+    // ----------------------------------------------- Candado, fecha y hora
     property date ahora: new Date()
     Timer {
         running: cerradura.visible
@@ -208,85 +287,159 @@ Item {
     }
 
     Column {
-        id: reloj
-        x: cerradura.margen
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: -Math.round(parent.height * 0.06)
+        id: cabeza
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: Math.round(cerradura.height * 0.045)
         spacing: 0
+        opacity: cerradura.pCabeza * (1 - cerradura.pSalida)
+        transform: Entra { paso: cerradura.pCabeza; desde: -30 }
 
-        // Entra deslizándose desde la izquierda al bloquear
-        opacity: 0
-        transform: Translate { id: entrada; x: -40 }
-        Component.onCompleted: llegada.start()
-        ParallelAnimation {
-            id: llegada
-            NumberAnimation { target: reloj; property: "opacity"; to: 1; duration: 600; easing.type: Easing.OutCubic }
-            NumberAnimation { target: entrada; property: "x"; to: 0; duration: 700; easing.type: Easing.OutCubic }
+        readonly property int tam: Math.round(Math.min(cerradura.height * 0.19, cerradura.width * 0.13))
+
+        // El candado: late mientras comprueba, tiembla al fallar y se abre
+        // al acertar
+        Item {
+            id: candado
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 24
+            height: 24
+            Icono {
+                id: iconoCandado
+                anchors.centerIn: parent
+                width: 22
+                height: 22
+                trazo: cerradura.abierto ? cerradura.trazos.candadoAbierto : cerradura.trazos.candado
+                tinta: cerradura.enRojo ? cerradura.colorRojo : cerradura.colorTexto
+                transform: Translate { id: temblorCandado }
+                SequentialAnimation on opacity {
+                    running: cerradura.ocupada && cerradura.animar
+                    loops: Animation.Infinite
+                    alwaysRunToEnd: true
+                    NumberAnimation { to: 0.35; duration: 450; easing.type: Easing.InOutSine }
+                    NumberAnimation { to: 1; duration: 450; easing.type: Easing.InOutSine }
+                }
+            }
+            // Al abrirse, un saltito
+            scale: 1
+            Connections {
+                target: cerradura
+                function onAbiertoChanged() {
+                    if (cerradura.abierto && cerradura.animar)
+                        salto.restart();
+                }
+            }
+            SequentialAnimation {
+                id: salto
+                NumberAnimation { target: candado; property: "scale"; to: 1.3; duration: 140; easing.type: Easing.OutCubic }
+                NumberAnimation { target: candado; property: "scale"; to: 1; duration: 260; easing.type: Easing.OutBack; easing.overshoot: 3 }
+            }
         }
-
-        readonly property int tam: Math.round(Math.min(cerradura.height * 0.25, cerradura.width * 0.16))
+        Item { width: 1; height: Math.round(cerradura.height * 0.014) }
 
         Text {
-            text: Qt.formatTime(cerradura.ahora, "HH")
-            color: cerradura.colorTexto
-            font.family: cerradura.fuente
-            font.pixelSize: reloj.tam
-            font.weight: Font.Bold
-            font.features: { "tnum": 1 }
-            // Pegadas: sin el aire de encima y debajo de las cifras
-            height: Math.round(reloj.tam * 0.8)
-            verticalAlignment: Text.AlignVCenter
-        }
-        Text {
-            text: Qt.formatTime(cerradura.ahora, "mm")
-            color: cerradura.colorAcento
-            font.family: cerradura.fuente
-            font.pixelSize: reloj.tam
-            font.weight: Font.Bold
-            font.features: { "tnum": 1 }
-            // Pegadas: sin el aire de encima y debajo de las cifras
-            height: Math.round(reloj.tam * 0.8)
-            verticalAlignment: Text.AlignVCenter
-        }
-        Item { width: 1; height: Math.round(reloj.tam * 0.08) }
-        Text {
-            x: Math.round(reloj.tam * 0.05)
+            anchors.horizontalCenter: parent.horizontalCenter
             text: {
                 const t = Qt.locale("es_ES").toString(cerradura.ahora, "dddd, d 'de' MMMM");
                 return t.charAt(0).toUpperCase() + t.slice(1) + (cerradura.detalle ? "  ·  " + cerradura.detalle : "");
             }
             color: cerradura.colorTexto
             font.family: cerradura.fuente
-            font.pixelSize: Math.round(Math.max(18, cerradura.height * 0.022))
+            font.pixelSize: cerradura.tamFecha
+            font.weight: Font.DemiBold
+        }
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: Qt.formatTime(cerradura.ahora, "HH:mm")
+            color: cerradura.colorTexto
+            font.family: cerradura.fuente
+            font.pixelSize: cabeza.tam
+            font.weight: Font.Bold
+            font.features: { "tnum": 1 }
+            // Pegada: sin el aire de encima y debajo de las cifras
+            height: Math.round(cabeza.tam * 0.92)
+            verticalAlignment: Text.AlignVCenter
+        }
+        Item { width: 1; height: Math.round(cerradura.height * 0.02) }
+
+        // Bajo la hora: los widgets
+        Row {
+            id: widgets
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: 12
+            opacity: cerradura.pWidgets
+            transform: Entra { paso: cerradura.pWidgets; desde: 18 }
         }
     }
 
-    // Bajo la fecha: la música
+    // ----------------------------------------- Entre la hora y la contraseña
     Item {
         id: abajo
-        x: cerradura.margen + Math.round(reloj.tam * 0.05)
-        anchors.top: reloj.bottom
-        anchors.topMargin: Math.round(cerradura.height * 0.045)
-        width: childrenRect.width
-        height: childrenRect.height
-        opacity: reloj.opacity
+        anchors {
+            left: parent.left; right: parent.right
+            top: cabeza.bottom; topMargin: Math.round(cerradura.height * 0.035)
+            bottom: acceso.top; bottomMargin: Math.round(cerradura.height * 0.03)
+        }
+        opacity: cerradura.pAbajo * (1 - cerradura.pSalida)
+        transform: Entra { paso: cerradura.pAbajo; desde: 30 }
     }
 
     // ------------------------------------------ Quién entra y contraseña
+    // Mientras duerme, solo la pista; al despertar sube todo
+    // Lo que queda por debajo de la contraseña: ni pegada al borde ni en medio
+    readonly property int margenAcceso: Math.round(height * 0.11)
+    readonly property real pDespierta: despierta ? 1 : 0
+    property real verAcceso: pDespierta
+    Behavior on verAcceso { NumberAnimation { duration: cerradura.animar ? 380 : 0; easing.type: Easing.OutCubic } }
+
     Column {
-        id: centro
-        anchors.right: parent.right
-        anchors.rightMargin: cerradura.margen
-        anchors.verticalCenter: reloj.verticalCenter
+        id: pistaDormida
+        anchors.horizontalCenter: parent.horizontalCenter
+        // A la altura de la caja de la contraseña
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: cerradura.margenAcceso + 34
+        spacing: 6
+        opacity: (1 - cerradura.verAcceso) * cerradura.pAcceso * (1 - cerradura.pSalida)
+        visible: opacity > 0
+        // Una flechita que sube y baja, como «desliza hacia arriba»
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "⌃"
+            color: cerradura.colorTexto
+            font.family: cerradura.fuente
+            font.pixelSize: 20
+            transform: Translate { id: flecha }
+            SequentialAnimation {
+                running: pistaDormida.visible && cerradura.animar
+                loops: Animation.Infinite
+                NumberAnimation { target: flecha; property: "y"; to: -6; duration: 700; easing.type: Easing.InOutSine }
+                NumberAnimation { target: flecha; property: "y"; to: 0; duration: 700; easing.type: Easing.InOutSine }
+            }
+        }
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "Escribe para desbloquear"
+            color: cerradura.colorTexto
+            font.family: cerradura.fuente
+            font.pixelSize: 15
+            font.weight: Font.DemiBold
+        }
+    }
+
+    Column {
+        id: acceso
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: cerradura.margenAcceso
         width: caja.width
-        spacing: 14
-        opacity: reloj.opacity
+        spacing: 10
+        opacity: cerradura.verAcceso * cerradura.pAcceso * (1 - cerradura.pSalida)
+        transform: Entra { paso: Math.min(cerradura.verAcceso, cerradura.pAcceso); desde: 40 }
 
         // Foto (~/.face o la de AccountsService) o la inicial en un círculo
         Item {
             id: avatar
-            width: 104
-            height: 104
+            width: 60
+            height: 60
             anchors.horizontalCenter: parent.horizontalCenter
             property int cual: 0
             readonly property bool conFoto: foto.status === Image.Ready
@@ -295,15 +448,15 @@ Item {
                 anchors.fill: parent
                 radius: width / 2
                 visible: !avatar.conFoto
-                color: cerradura.conAlfa(cerradura.colorAcento, 0.12)
-                border.width: 2
+                color: cerradura.conAlfa(cerradura.colorAcento, 0.14)
+                border.width: 1.5
                 border.color: cerradura.conAlfa(cerradura.colorAcento, 0.35)
                 Text {
                     anchors.centerIn: parent
                     text: cerradura.nombre.charAt(0).toUpperCase()
                     color: cerradura.colorAcento
                     font.family: cerradura.fuente
-                    font.pixelSize: 44
+                    font.pixelSize: 26
                     font.bold: true
                 }
             }
@@ -312,7 +465,7 @@ Item {
                 anchors.fill: parent
                 visible: false
                 source: cerradura.fotos[avatar.cual] ?? ""
-                sourceSize: Qt.size(208, 208)
+                sourceSize: Qt.size(120, 120)
                 fillMode: Image.PreserveAspectCrop
                 // Si no existe, la siguiente de la lista
                 onStatusChanged: if (status === Image.Error && avatar.cual < cerradura.fotos.length - 1)
@@ -343,7 +496,7 @@ Item {
             text: cerradura.nombre
             color: cerradura.colorTexto
             font.family: cerradura.fuente
-            font.pixelSize: 20
+            font.pixelSize: 17
             font.bold: true
         }
         Item {
@@ -354,133 +507,174 @@ Item {
             visible: children.length > 0
         }
 
-        Item { width: 1; height: 4 }
+        // La caja: una píldora de cristal
+        Rectangle {
+            id: caja
+            width: 330
+            height: 48
+            radius: height / 2
+            color: cerradura.conAlfa(cerradura.colorAcento, campo.activeFocus ? 0.14 : 0.1)
+            border.width: 1.5
+            border.color: cerradura.enRojo ? cerradura.colorRojo
+                : campo.activeFocus ? cerradura.conAlfa(cerradura.colorAcento, 0.45)
+                : cerradura.conAlfa(cerradura.colorAcento, 0.15)
+            Behavior on border.color { ColorAnimation { duration: 150 } }
+            Behavior on color { ColorAnimation { duration: 150 } }
 
-        // La caja, o mientras duerme, una pista de que basta con escribir
-        Item {
-            width: caja.width
-            height: caja.height
-
-            Text {
-                anchors.centerIn: parent
-                opacity: cerradura.despierta ? 0 : 1
-                Behavior on opacity { NumberAnimation { duration: 250 } }
-                text: "Escribe para desbloquear"
-                color: cerradura.colorGris
-                font.family: cerradura.fuente
-                font.pixelSize: 14
+            transform: Translate { id: desplazamiento }
+            SequentialAnimation {
+                id: sacudida
+                ParallelAnimation {
+                    NumberAnimation { target: desplazamiento; property: "x"; to: -14; duration: 50 }
+                    NumberAnimation { target: temblorCandado; property: "x"; to: -5; duration: 50 }
+                }
+                ParallelAnimation {
+                    NumberAnimation { target: desplazamiento; property: "x"; to: 14; duration: 70 }
+                    NumberAnimation { target: temblorCandado; property: "x"; to: 5; duration: 70 }
+                }
+                ParallelAnimation {
+                    NumberAnimation { target: desplazamiento; property: "x"; to: -9; duration: 70 }
+                    NumberAnimation { target: temblorCandado; property: "x"; to: -3; duration: 70 }
+                }
+                ParallelAnimation {
+                    NumberAnimation { target: desplazamiento; property: "x"; to: 5; duration: 60 }
+                    NumberAnimation { target: temblorCandado; property: "x"; to: 2; duration: 60 }
+                }
+                ParallelAnimation {
+                    NumberAnimation { target: desplazamiento; property: "x"; to: 0; duration: 60 }
+                    NumberAnimation { target: temblorCandado; property: "x"; to: 0; duration: 60 }
+                }
             }
 
-            Rectangle {
-                id: caja
-                width: 340
-                height: 52
-                radius: 12
-                color: cerradura.conAlfa(cerradura.colorOscuro, 0.6)
-                border.width: 2
-                border.color: cerradura.enRojo ? cerradura.colorRojo
-                    : campo.activeFocus ? cerradura.conAlfa(cerradura.colorAcento, 0.85)
-                    : cerradura.conAlfa(cerradura.colorAcento, 0.2)
-                Behavior on border.color { ColorAnimation { duration: 150 } }
-
-                opacity: cerradura.despierta ? 1 : 0
-                scale: cerradura.despierta ? 1 : 0.94
-                Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
-                Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutBack } }
-
-                transform: Translate { id: desplazamiento }
-                SequentialAnimation {
-                    id: sacudida
-                    NumberAnimation { target: desplazamiento; property: "x"; to: -12; duration: 50 }
-                    NumberAnimation { target: desplazamiento; property: "x"; to: 12; duration: 70 }
-                    NumberAnimation { target: desplazamiento; property: "x"; to: -8; duration: 70 }
-                    NumberAnimation { target: desplazamiento; property: "x"; to: 0; duration: 60 }
+            TextInput {
+                id: campo
+                property bool ver: false
+                anchors {
+                    left: parent.left; leftMargin: 22
+                    right: botones.left; rightMargin: 6
+                    top: parent.top; bottom: parent.bottom
+                }
+                verticalAlignment: TextInput.AlignVCenter
+                echoMode: ver ? TextInput.Normal : TextInput.Password
+                // Lo escrito no se ve: en su lugar, los puntos de abajo
+                color: ver ? cerradura.colorTexto : "transparent"
+                selectionColor: cerradura.conAlfa(cerradura.colorAcento, 0.35)
+                selectedTextColor: color
+                font.family: cerradura.fuente
+                font.pixelSize: 15
+                enabled: !cerradura.ocupada
+                focus: true
+                clip: true
+                cursorDelegate: Rectangle {
+                    width: 2
+                    color: cerradura.colorAcento
+                    visible: campo.cursorVisible && (campo.ver || campo.text === "")
+                }
+                // Cualquier tecla la enseña (también las que no escriben)
+                Keys.onPressed: cerradura.despertar()
+                onTextChanged: cerradura.despertar()
+                onAccepted: if (text !== "") cerradura.enviar(text)
+                // Esc: cierra lo abierto (menú de apagar, avisos) y borra lo escrito
+                Keys.onEscapePressed: {
+                    cerradura.toque();
+                    menu.abierto ? menu.abierto = false : campo.clear();
                 }
 
-                Icono {
-                    id: candado
-                    anchors { left: parent.left; leftMargin: 16; verticalCenter: parent.verticalCenter }
-                    trazo: cerradura.trazos.candado
-                    tinta: cerradura.enRojo ? cerradura.colorRojo : cerradura.colorGris
-                }
-
-                TextInput {
-                    id: campo
-                    property bool ver: false
-                    anchors {
-                        left: candado.right; leftMargin: 12
-                        right: botones.left; rightMargin: 6
-                        top: parent.top; bottom: parent.bottom
-                    }
-                    verticalAlignment: TextInput.AlignVCenter
-                    echoMode: ver ? TextInput.Normal : TextInput.Password
-                    passwordCharacter: "●"
-                    color: cerradura.colorTexto
-                    selectionColor: cerradura.conAlfa(cerradura.colorAcento, 0.35)
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: 4
+                    visible: campo.text === ""
+                    text: cerradura.ocupada ? "Comprobando…" : cerradura.pista
+                    color: cerradura.colorGris
                     font.family: cerradura.fuente
-                    font.pixelSize: 15
-                    font.letterSpacing: ver ? 0 : 2
-                    enabled: !cerradura.ocupada
-                    focus: true
-                    clip: true
-                    cursorDelegate: Rectangle {
-                        width: 2
-                        color: cerradura.colorAcento
-                        visible: campo.cursorVisible
-                    }
-                    // Cualquier tecla la enseña (también las que no escriben)
-                    Keys.onPressed: cerradura.despertar()
-                    onTextChanged: cerradura.despertar()
-                    onAccepted: if (text !== "") cerradura.enviar(text)
-                    // Esc: cierra el menú de apagar, o borra lo escrito
-                    Keys.onEscapePressed: menu.visible ? menu.visible = false : campo.clear()
+                    font.pixelSize: 14
+                }
 
+                // Un punto por letra, cada uno con un saltito al llegar
+                Row {
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: 2
+                    spacing: 7
+                    visible: !campo.ver
+                    opacity: cerradura.ocupada ? 0.5 : 1
+                    Repeater {
+                        model: Math.max(0, Math.min(campo.text.length, Math.floor((campo.width - 4) / 17)))
+                        Rectangle {
+                            width: 10
+                            height: 10
+                            radius: 5
+                            color: cerradura.enRojo ? cerradura.colorRojo : cerradura.colorTexto
+                            scale: cerradura.animar ? 0 : 1
+                            Component.onCompleted: if (cerradura.animar) brota.start()
+                            NumberAnimation on scale {
+                                id: brota
+                                running: false
+                                to: 1
+                                duration: 260
+                                easing.type: Easing.OutBack
+                                easing.overshoot: 3
+                            }
+                        }
+                    }
+                }
+            }
+
+            Row {
+                id: botones
+                anchors { right: parent.right; rightMargin: 8; verticalCenter: parent.verticalCenter }
+                spacing: 0
+
+                BotonIcono {
+                    trazo: campo.ver ? cerradura.trazos.ojoTachado : cerradura.trazos.ojo
+                    onPulsado: {
+                        campo.ver = !campo.ver;
+                        campo.forceActiveFocus();
+                    }
+                }
+                BotonIcono {
+                    // Solo con más de una distribución: con una no hay a qué cambiar
+                    visible: cerradura.teclado !== ""
+                    trazo: cerradura.trazos.teclado
+                    onPulsado: {
+                        cerradura.cambiarTeclado();
+                        campo.forceActiveFocus();
+                    }
                     Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        x: 4
-                        visible: campo.text === ""
-                        text: cerradura.ocupada ? "Comprobando…" : cerradura.pista
+                        // La distribución, pequeñita en la esquina del icono
+                        anchors { right: parent.right; bottom: parent.bottom; rightMargin: 1; bottomMargin: 1 }
+                        text: cerradura.teclado
                         color: cerradura.colorGris
                         font.family: cerradura.fuente
-                        font.pixelSize: 14
+                        font.pixelSize: 8
+                        font.bold: true
                     }
                 }
-
-                Row {
-                    id: botones
-                    anchors { right: parent.right; rightMargin: 8; verticalCenter: parent.verticalCenter }
-                    spacing: 0
-
-                    BotonIcono {
-                        trazo: campo.ver ? cerradura.trazos.ojoTachado : cerradura.trazos.ojo
-                        onPulsado: {
-                            campo.ver = !campo.ver;
-                            campo.forceActiveFocus();
-                        }
+                // Enviar: un círculo que se ilumina en cuanto hay algo escrito
+                Item {
+                    width: 34
+                    height: 34
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: width / 2
+                        color: campo.text !== "" ? cerradura.colorAcento
+                            : cerradura.conAlfa(cerradura.colorAcento, enviarZona.containsMouse ? 0.14 : 0)
+                        scale: campo.text !== "" ? 1 : 0.85
+                        Behavior on color { ColorAnimation { duration: 160 } }
+                        Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
                     }
-                    BotonIcono {
-                        // Solo con más de una distribución: con una no hay a qué cambiar
-                        visible: cerradura.teclado !== ""
-                        trazo: cerradura.trazos.teclado
-                        onPulsado: {
-                            cerradura.cambiarTeclado();
-                            campo.forceActiveFocus();
-                        }
-                        Text {
-                            // La distribución, pequeñita en la esquina del icono
-                            anchors { right: parent.right; bottom: parent.bottom; rightMargin: 1; bottomMargin: 1 }
-                            visible: cerradura.teclado !== ""
-                            text: cerradura.teclado
-                            color: cerradura.colorGris
-                            font.family: cerradura.fuente
-                            font.pixelSize: 8
-                            font.bold: true
-                        }
+                    Icono {
+                        anchors.centerIn: parent
+                        width: 18
+                        height: 18
+                        trazo: cerradura.trazos.flecha
+                        tinta: campo.text !== "" ? cerradura.colorOscuro : cerradura.colorGris
                     }
-                    BotonIcono {
-                        trazo: cerradura.trazos.intro
-                        tinta: campo.text !== "" ? cerradura.colorTexto : cerradura.colorGris
-                        onPulsado: campo.accepted()
+                    MouseArea {
+                        id: enviarZona
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: campo.accepted()
                     }
                 }
             }
@@ -488,7 +682,7 @@ Item {
 
         Text {
             width: caja.width
-            height: 18
+            height: 16
             horizontalAlignment: Text.AlignHCenter
             text: cerradura.mensaje
             color: cerradura.enRojo ? cerradura.colorRojo : cerradura.colorGris
@@ -503,12 +697,14 @@ Item {
         id: arriba
         anchors { right: parent.right; top: parent.top; margins: 22 }
         spacing: 18
+        opacity: cerradura.pCabeza * (1 - cerradura.pSalida)
     }
 
     Row {
         id: esquina
         anchors { right: parent.right; bottom: parent.bottom; margins: 28 }
         spacing: 12
+        opacity: cerradura.pAcceso * (1 - cerradura.pSalida)
     }
 
     // --------------------------------------------- Apagar (abajo a la izquierda)
@@ -517,16 +713,23 @@ Item {
         anchors { left: parent.left; bottom: parent.bottom; margins: 22 }
         trazo: cerradura.trazos.energia
         tam: 20
-        onPulsado: menu.visible = !menu.visible
+        opacity: cerradura.pAcceso * (1 - cerradura.pSalida)
+        onPulsado: menu.abierto = !menu.abierto
     }
 
     Rectangle {
         id: menu
-        visible: false
+        property bool abierto: false
+        visible: opacity > 0
+        opacity: abierto ? 1 : 0
+        scale: abierto ? 1 : 0.92
+        transformOrigin: Item.BottomLeft
+        Behavior on opacity { NumberAnimation { duration: cerradura.animar ? 160 : 0 } }
+        Behavior on scale { NumberAnimation { duration: cerradura.animar ? 220 : 0; easing.type: Easing.OutBack } }
         anchors { left: botonEnergia.left; bottom: botonEnergia.top; bottomMargin: 8 }
         width: 170
         height: opciones.height + 12
-        radius: 12
+        radius: 14
         color: cerradura.conAlfa(cerradura.colorOscuro, 0.92)
         border.width: 1
         border.color: cerradura.conAlfa(cerradura.colorAcento, 0.15)
@@ -545,7 +748,7 @@ Item {
                     required property var modelData
                     width: parent.width
                     height: 36
-                    radius: 8
+                    radius: 9
                     color: cerradura.conAlfa(cerradura.colorAcento, opcion.containsMouse ? 0.1 : 0)
                     Row {
                         anchors { left: parent.left; leftMargin: 10; verticalCenter: parent.verticalCenter }
@@ -569,7 +772,7 @@ Item {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            menu.visible = false;
+                            menu.abierto = false;
                             cerradura.energia(modelData.accion);
                         }
                     }

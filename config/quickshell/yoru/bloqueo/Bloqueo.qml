@@ -11,6 +11,9 @@
 //  poco (swayidle lo pide unos segundos antes); si tocas algo, vuelve:
 //      qs -c yoru ipc call bloqueo atenuar     (y despertar)
 //
+//  Vista previa (sin bloquear de verdad; «Salir» o la contraseña la cierran):
+//      qs -c yoru ipc call bloqueo probar
+//
 //  Si la barra se cae con la pantalla bloqueada, niri la deja bloqueada (en
 //  negro). Al volver a arrancar, la barra ve $XDG_RUNTIME_DIR/yoru-bloqueado
 //  y bloquea otra vez, para poder entrar. Si aun así no vuelve: Ctrl+Alt+F3,
@@ -34,6 +37,10 @@ Scope {
     readonly property string marca: Quickshell.env("XDG_RUNTIME_DIR") + "/yoru-bloqueado"
 
     signal fallo()
+    signal exito()          // contraseña buena: las pantallas hacen su salida
+
+    // Vista previa: lo mismo, en una ventana encima de todo
+    property bool probando: false
 
     function bloquear() {
         if (activo)
@@ -42,6 +49,7 @@ Scope {
         mensaje = "";
         error = false;
         fallos = 0;
+        probando = false;
         activo = true;
         Quickshell.execDetached(["touch", marca]);
     }
@@ -55,6 +63,16 @@ Scope {
     }
     property string pendiente: ""
 
+    Timer {
+        id: abrir
+        interval: Ajustes.animaciones ? 660 : 0
+        onTriggered: {
+            bloqueo.activo = false;
+            bloqueo.probando = false;
+            Quickshell.execDetached(["rm", "-f", bloqueo.marca]);
+        }
+    }
+
     PamContext {
         id: pam
         config: "swaylock"
@@ -67,8 +85,10 @@ Scope {
         onCompleted: resultado => {
             bloqueo.escrito = "";
             if (resultado === PamResult.Success) {
-                bloqueo.activo = false;
-                Quickshell.execDetached(["rm", "-f", bloqueo.marca]);
+                // Primero la salida (el candado se abre y todo sube), luego
+                // se desbloquea de verdad
+                bloqueo.exito();
+                abrir.restart();
                 return;
             }
             bloqueo.fallos++;
@@ -187,6 +207,89 @@ Scope {
         }
     }
 
+    // Lo que se ve, igual en el bloqueo de verdad y en la vista previa
+    component Pantalla: Cerradura {
+        id: cerradura
+        anchors.fill: parent
+        animar: Ajustes.animaciones
+        fondo: "file://" + Quickshell.env("HOME") + "/.cache/fondo-bloqueo-borroso.jpg"
+        colorTexto: Tema.texto
+        colorGris: Tema.gris
+        colorAcento: Tema.blanco
+        colorOscuro: Tema.oscuro
+        colorRojo: Tema.rojo
+        fuente: Tema.fuente
+        nombre: Quickshell.env("USER") ?? ""
+        fotos: ["file://" + Quickshell.env("HOME") + "/.face",
+                "file:///var/lib/AccountsService/icons/" + Quickshell.env("USER")]
+        teclado: bloqueo.teclados.length > 1 ? bloqueo.teclado : ""
+        mensaje: bloqueo.mensaje
+        error: bloqueo.error
+        ocupada: pam.active
+        texto: bloqueo.escrito
+        onTextoChanged: bloqueo.escrito = texto
+        onEnviar: t => bloqueo.comprobar(t)
+        onEnergia: accion => Quickshell.execDetached(["systemctl", accion])
+        onCambiarTeclado: {
+            Quickshell.execDetached(["niri", "msg", "action", "switch-layout", "next"]);
+            if (bloqueo.teclados.length)
+                bloqueo.tecladoActual = (bloqueo.tecladoActual + 1) % bloqueo.teclados.length;
+        }
+        Component.onCompleted: campo.forceActiveFocus()
+
+        Connections {
+            target: bloqueo
+            function onFallo() {
+                cerradura.sacudir();
+                cerradura.campo.forceActiveFocus();
+            }
+            function onExito() {
+                cerradura.salir();
+            }
+        }
+
+        // Bajo la hora, la batería; en medio, lo que suena y
+        // las notificaciones (abiertas hasta un clic fuera o Esc); arriba
+        // a la derecha, la red, el bluetooth y el volumen
+        widgets: WidgetsBloqueo {}
+        abajo: CentroBloqueo { id: centro }
+        onToque: centro.cerrar()
+        arriba: EstadoBloqueo {}
+    }
+
+
+    // Vista previa: la misma pantalla en una capa encima de todo, sin
+    // bloquear de verdad («Salir», abajo a la derecha, o la contraseña la cierran)
+    LazyLoader {
+        active: bloqueo.probando
+        PanelWindow {
+            anchors { top: true; bottom: true; left: true; right: true }
+            exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.namespace: "yoru-bloqueo-prueba"
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+            // Transparente: al acertar se ve el escritorio aparecer debajo
+            color: "transparent"
+            Pantalla {
+                Text {
+                    text: "Vista previa · Salir"
+                    color: salirZona.containsMouse ? Tema.blanco : Tema.gris
+                    font.family: Tema.fuente
+                    font.pixelSize: 12
+                    font.bold: true
+                    MouseArea {
+                        id: salirZona
+                        anchors.fill: parent
+                        anchors.margins: -6
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: bloqueo.probando = false
+                    }
+                }
+            }
+        }
+    }
+
     WlSessionLock {
         id: cerrojo
         locked: bloqueo.activo
@@ -195,48 +298,7 @@ Scope {
             id: superficie
             color: Tema.oscuro
 
-            Cerradura {
-                id: cerradura
-                anchors.fill: parent
-                fondo: "file://" + Quickshell.env("HOME") + "/.cache/fondo-bloqueo-borroso.jpg"
-                colorTexto: Tema.texto
-                colorGris: Tema.gris
-                colorAcento: Tema.blanco
-                colorOscuro: Tema.oscuro
-                colorRojo: Tema.rojo
-                fuente: Tema.fuente
-                nombre: Quickshell.env("USER") ?? ""
-                fotos: ["file://" + Quickshell.env("HOME") + "/.face",
-                        "file:///var/lib/AccountsService/icons/" + Quickshell.env("USER")]
-                teclado: bloqueo.teclados.length > 1 ? bloqueo.teclado : ""
-                mensaje: bloqueo.mensaje
-                error: bloqueo.error
-                ocupada: pam.active
-                texto: bloqueo.escrito
-                onTextoChanged: bloqueo.escrito = texto
-                onEnviar: t => bloqueo.comprobar(t)
-                onEnergia: accion => Quickshell.execDetached(["systemctl", accion])
-                onCambiarTeclado: {
-                    Quickshell.execDetached(["niri", "msg", "action", "switch-layout", "next"]);
-                    if (bloqueo.teclados.length)
-                        bloqueo.tecladoActual = (bloqueo.tecladoActual + 1) % bloqueo.teclados.length;
-                }
-                Component.onCompleted: campo.forceActiveFocus()
-
-                Connections {
-                    target: bloqueo
-                    function onFallo() {
-                        cerradura.sacudir();
-                        cerradura.campo.forceActiveFocus();
-                    }
-                }
-
-                // Junto a la fecha, el tiempo; debajo, lo que suena; arriba a
-                // la derecha, la red, el bluetooth, el volumen y la batería
-                detalle: Tiempo.listo ? Tiempo.icono + " " + Tiempo.temperatura + "°" : ""
-                abajo: MusicaBloqueo {}
-                arriba: EstadoBloqueo {}
-            }
+            Pantalla {}
         }
     }
 
@@ -245,6 +307,15 @@ Scope {
 
         function bloquear(): void {
             bloqueo.bloquear();
+        }
+        // La vista previa (ver arriba)
+        function probar(): void {
+            if (!bloqueo.activo) {
+                bloqueo.escrito = "";
+                bloqueo.mensaje = "";
+                bloqueo.error = false;
+                bloqueo.probando = !bloqueo.probando;
+            }
         }
         // Para bloquear.sh: no termina hasta que niri confirma el bloqueo
         // (si no, al suspender se vería el escritorio un instante al volver)
