@@ -63,8 +63,46 @@ Rectangle {
         return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, a.a + (b.a - a.a) * t);
     }
 
-    implicitWidth: vertical ? Tema.anchoBarra : vacia ? 0 : ocupado + 2 * relleno
-    implicitHeight: !vertical ? Tema.altoBarra : vacia ? 0 : ocupado + 2 * rellenoVertical
+    // Al irse, primero sube entera y, ya fuera, deja su hueco (si encogía
+    // mientras subía, parecía irse de lado); al volver, el hueco se abre a
+    // la vez que baja
+    // (valores sueltos, no enlazados a «vacia»: «visible» depende de ellos
+    // y «vacia» de lo visible de dentro; enlazados, era un bucle)
+    property bool plegada: false
+    property bool recogida: true            // y su hueco ya cerrado
+    Component.onCompleted: {
+        plegada = vacia;
+        recogida = vacia;
+    }
+    // (un instante después: cambiarlo dentro del propio aviso de «vacia»
+    // volvía a tocar lo visible y, con ello, la misma «vacia»)
+    onVaciaChanged: Qt.callLater(cambiarVacia)
+    function cambiarVacia() {
+        if (vacia) {
+            if (!plegada && !plegar.running)
+                plegar.restart();
+        } else {
+            plegar.stop();
+            recoger.stop();
+            plegada = false;
+            recogida = false;
+        }
+    }
+    Timer {
+        id: plegar
+        interval: Tema.rebote * 0.8
+        onTriggered: {
+            isla.plegada = isla.vacia;
+            recoger.restart();
+        }
+    }
+    Timer {
+        id: recoger
+        interval: Tema.rebote * 1.15
+        onTriggered: isla.recogida = isla.vacia
+    }
+    implicitWidth: vertical ? Tema.anchoBarra : plegada ? 0 : ocupado + 2 * relleno
+    implicitHeight: !vertical ? Tema.altoBarra : plegada ? 0 : ocupado + 2 * rellenoVertical
     radius: Tema.radioIsla
     bottomLeftRadius: radius * (1 - fusion)
     bottomRightRadius: radius * (1 - fusion)
@@ -74,12 +112,20 @@ Rectangle {
     border.color: Qt.rgba(Tema.islaBorde.r, Tema.islaBorde.g, Tema.islaBorde.b, Tema.islaBorde.a * (1 - fusion))
     clip: true
 
-    // Al aparecer o irse, se funde y crece (o encoge) un poco desde su centro
+    // Al irse, sube y se esconde por arriba de la pantalla (con la barra
+    // abajo, por abajo; con la vertical, por el lado) mientras se funde; al
+    // aparecer, baja desde ahí
     opacity: vacia ? 0 : 1
-    visible: opacity > 0
-    scale: vacia ? 0.9 : 1
+    // (sigue en la fila, ya invisible, hasta que su hueco se ha cerrado)
+    visible: opacity > 0 || !recogida
+    transform: Translate {
+        readonly property real fuera: (isla.vertical ? Tema.anchoBarra : Tema.altoBarra) + Tema.margenBarra + 4
+        x: isla.vertical && isla.vacia ? -fuera : 0
+        y: !isla.vertical && isla.vacia ? (Ajustes.abajo ? fuera : -fuera) : 0
+        Behavior on x { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutCubic } }
+        Behavior on y { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutCubic } }
+    }
     Behavior on opacity { NumberAnimation { duration: Tema.normal * 1.4; easing.type: Easing.OutCubic } }
-    Behavior on scale { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutCubic } }
     // Al crecer o encoger (sale la música, una ficha...), se estira y frena
     // despacio, sin pasarse
     Behavior on implicitWidth { NumberAnimation { duration: Tema.rebote * 1.15; easing.type: Easing.OutQuint } }

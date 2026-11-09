@@ -46,9 +46,40 @@ Singleton {
     // calendario, multimedia, clima...) bajo el botón pulsado, aunque ya
     // estuviera abierto con otra (se mueve). Si ya está en esa página, se cierra
     function abrirPagina(enPantalla, pagina, lado, bajoIsla) {
+        // (la isla de la que cuelga ahora, antes de cambiar «origen»)
+        const antes = abierto !== "" ? islaDe(pantalla, abierto, seccion) : null;
+        if (cambio.running) {
+            // Ya se está cambiando: vale la última pulsada
+            cambio.pendiente = [enPantalla, pagina, lado, bajoIsla];
+            return;
+        }
+        const ya = abierto === "pildora" && pantalla === enPantalla && seccion === pagina;
         origen = lado ?? "centro";
         ancla = bajoIsla ?? null;
+        // Islas con animaciones: si la página nueva cuelga de otra isla, el
+        // panel no se desliza de una a otra: se cierra (vuelve a su isla) y
+        // se abre desde la nueva
+        const despues = islaDe(enPantalla, "pildora", pagina);
+        if (!ya && antes && despues && antes !== despues && Tema.normal > 0) {
+            cambio.pendiente = [enPantalla, pagina, lado, bajoIsla];
+            cerrar();
+            cambio.restart();
+            return;
+        }
         alternar("pildora", enPantalla, pagina);
+    }
+    // Lo que tarda en cerrarse (Panel.qml) antes de abrirse en la otra isla
+    Timer {
+        id: cambio
+        property var pendiente: null
+        interval: 190
+        onTriggered: {
+            const p = pendiente;
+            pendiente = null;
+            paneles.origen = p[2] ?? "centro";
+            paneles.ancla = p[3] ?? null;
+            paneles.alternar("pildora", p[0], p[1]);
+        }
     }
 
     // Ajustes es una ventana aparte (paneles/VentanaAjustes.qml), con una

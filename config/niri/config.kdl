@@ -156,44 +156,28 @@ animations {
     slowdown 0.8
     // off
 
-    // Una gota de tinta negra: al abrir una app, una gota oscura brota del
-    // centro con el borde ondulado, se extiende hasta llenar la ventana y
-    // se aclara dejándola ver. Al cerrarla, al revés: se oscurece y se
-    // encoge en una gota que desaparece.
-    //   r      cuánto ha crecido la gota (1 = hasta las esquinas)
-    //   tinta  lo negra que está (1 = toda negra)
+    // Al abrir una app, la ventana «surge»: crece desde el 90 %, sube unos
+    // píxeles y aparece con un fundido, con un rebote suave al final (el
+    // muelle). Al cerrarla, al revés, sin rebote.
     window-open {
-        duration-ms 850
-        curve "ease-out-cubic"
+        // Más blando (stiffness) = más lento
+        spring damping-ratio=0.75 stiffness=300 epsilon=0.0001
         custom-shader r"
             vec4 open_color(vec3 coords_geo, vec3 size_geo) {
-                float p = niri_clamped_progress;
-                // Un pelín más pequeña al principio: sensación de profundidad
-                float escala = 0.96 + 0.04 * p;
-                vec2 geo = vec2(0.5) + (coords_geo.xy - vec2(0.5)) / escala;
+                // p puede pasar de 1 con el muelle (el rebote); a, no
+                float p = niri_progress;
+                float a = niri_clamped_progress;
+                float escala = 0.9 + 0.1 * p;
+                float subida = (1.0 - p) * 28.0 / size_geo.y;
+                vec2 geo = vec2(0.5) + (coords_geo.xy - vec2(0.5) - vec2(0.0, subida)) / escala;
+                // Se recorta por la imagen (que lleva también el borde de foco,
+                // por fuera de la ventana), no por la ventana: así el borde
+                // crece con ella en vez de aparecer de golpe al final
                 vec2 tex = (niri_geo_to_tex * vec3(geo, 1.0)).st;
                 if (tex.x < 0.0 || tex.x > 1.0 || tex.y < 0.0 || tex.y > 1.0)
                     return vec4(0.0);
                 vec4 color = texture2D(niri_tex, tex);
-
-                // Distancia al centro en píxeles, de 0 (centro) a 1 (esquina)
-                vec2 d = (coords_geo.xy - vec2(0.5)) * size_geo.xy;
-                float dist = length(d) / length(size_geo.xy * 0.5);
-                // Borde de gota: ondula y se alisa al llenarse
-                float ang = atan(d.y, d.x);
-                float onda = 0.07 * sin(3.0 * ang + p * 5.0)
-                           + 0.045 * sin(5.0 * ang - p * 7.0)
-                           + 0.03 * sin(8.0 * ang + 1.3);
-                float r = p * 1.18 * (1.0 + onda * (1.0 - p));
-                float borde = r - dist;
-                float dentro = smoothstep(0.0, 0.035, borde);
-
-                // Negra al nacer, se aclara del centro hacia fuera; el borde
-                // queda oscuro un poco más (como tinta que se seca)
-                float aro = 1.0 - smoothstep(0.0, 0.22, borde);
-                float tinta = clamp(pow(1.0 - p, 1.4) + aro * 0.85 * (1.0 - p), 0.0, 1.0);
-                color.rgb *= 1.0 - tinta;
-                return color * dentro;
+                return color * a;
             }
         "
     }
@@ -231,33 +215,22 @@ animations {
         "
     }
     window-close {
-        duration-ms 650
-        curve "cubic-bezier" 0.55 0.0 0.7 0.4
+        duration-ms 310
+        curve "ease-out-quad"
         custom-shader r"
             vec4 close_color(vec3 coords_geo, vec3 size_geo) {
                 float p = 1.0 - niri_clamped_progress;
-                float escala = 0.96 + 0.04 * p;
-                vec2 geo = vec2(0.5) + (coords_geo.xy - vec2(0.5)) / escala;
+                float escala = 0.92 + 0.08 * p;
+                float bajada = (1.0 - p) * 20.0 / size_geo.y;
+                vec2 geo = vec2(0.5) + (coords_geo.xy - vec2(0.5) - vec2(0.0, bajada)) / escala;
+                // Se recorta por la imagen (que lleva también el borde de foco,
+                // por fuera de la ventana), no por la ventana: así el borde
+                // crece con ella en vez de aparecer de golpe al final
                 vec2 tex = (niri_geo_to_tex * vec3(geo, 1.0)).st;
                 if (tex.x < 0.0 || tex.x > 1.0 || tex.y < 0.0 || tex.y > 1.0)
                     return vec4(0.0);
                 vec4 color = texture2D(niri_tex, tex);
-
-                vec2 d = (coords_geo.xy - vec2(0.5)) * size_geo.xy;
-                float dist = length(d) / length(size_geo.xy * 0.5);
-                float ang = atan(d.y, d.x);
-                float onda = 0.07 * sin(3.0 * ang - p * 5.0)
-                           + 0.045 * sin(5.0 * ang + p * 7.0)
-                           + 0.03 * sin(8.0 * ang + 1.3);
-                float r = p * 1.18 * (1.0 + onda * (1.0 - p));
-                float borde = r - dist;
-                float dentro = smoothstep(0.0, 0.035, borde);
-
-                // Se oscurece entera y el borde antes; al final, una gota negra
-                float aro = 1.0 - smoothstep(0.0, 0.22, borde);
-                float tinta = clamp(pow(1.0 - p, 0.6) + aro * 0.85 * (1.0 - p), 0.0, 1.0);
-                color.rgb *= 1.0 - tinta;
-                return color * dentro;
+                return color * p;
             }
         "
     }

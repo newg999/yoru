@@ -57,9 +57,10 @@ PanelWindow {
     }
 
     // De qué isla sale cada panel (para fundirlo con ella: Panel.qml)
-    Component.onCompleted: Paneles.islas[modelData.name] = {
+    // (se reasigna entera para que avise: Avisos.qml la sigue con un binding)
+    Component.onCompleted: Paneles.islas = Object.assign({}, Paneles.islas, {[modelData.name]: {
         botones, musica, centro, estado, notificaciones, novedades, discos, clima
-    }
+    }})
 
     MouseArea {
         anchors.fill: parent

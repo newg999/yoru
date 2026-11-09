@@ -21,14 +21,12 @@
 //  Con la barra de Windows (fundido), todos se pegan a ella, sin hueco ni
 //  borde entre los dos, y suben desde ella como una persiana.
 //
-//  Con las islas y la minimalista nace como una gota de tinta: una mancha
-//  oscura de borde ondulado sale de la isla (o de la barra), se extiende
-//  hasta llenar el recuadro y se aclara dejando ver el panel; al cerrarse
-//  vuelve a encogerse hacia la isla (ver «gotaMascara»). Si cambia de isla
-//  (de una página a otra), se desliza hasta la nueva en vez de saltar.
+//  Con las islas, sale de la isla: nace de su ancho bajo ella y se
+//  despliega hacia abajo y hacia los lados, fundido con ella. Si la página
+//  nueva cuelga de otra isla, el panel se cierra y se abre desde ella
+//  (Paneles.abrirPagina).
 // ============================================================================
 import QtQuick
-import QtQuick.Effects
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Wayland
@@ -60,6 +58,9 @@ PanelWindow {
         if (isla && isla !== nueva)
             isla.aportar(clave, 0);
         isla = nueva;
+        // La nueva se funde ya (si el panel ya estaba abierto, el progreso
+        // no cambia y no se enteraba: se quedaba con sus esquinas y suelta)
+        isla?.aportar(clave, fusion());
     }
     onAbiertoChanged: {
         tomarIsla();
@@ -72,7 +73,18 @@ PanelWindow {
     // La isla pierde sus esquinas de abajo enseguida al abrirse y no las
     // recupera hasta que el panel casi se ha ido (al ritmo del panel
     // asomaba el fondo entre los dos en la esquina)
-    onProgresoChanged: isla?.aportar(clave, Math.min(1, progreso * 4))
+    function fusion() {
+        return Math.min(1, progreso * 4) * cerca;
+    }
+    // Al pasar de una isla a otra, el panel se desliza hasta ella: la isla
+    // nueva se funde (y salen las curvas) según llega, no antes (si no,
+    // la isla se quedaba sin esquinas y las curvas sueltas a medio camino)
+    readonly property real cerca: {
+        const lejos = Math.abs(islaX - islaXReal) + Math.abs(islaAncho - islaAnchoReal) / 2;
+        return lejos < 1.5 ? 1 : 1 - Math.min(1, lejos / 40);
+    }
+    onCercaChanged: isla?.aportar(clave, fusion())
+    onProgresoChanged: isla?.aportar(clave, fusion())
     Connections {
         target: Paneles
         function onSeccionChanged() {
@@ -86,8 +98,15 @@ PanelWindow {
         const it = isla;
         if (!it)
             return 0;
-        void (it.x + it.width + (it.parent?.x ?? 0));
-        return it.mapToItem(null, 0, 0).x;
+        // Se suma el x de todos sus padres: así se entera aunque se mueva un
+        // padre (la isla de la hora va centrada y se corre cuando otra cambia
+        // de ancho). Y a mano, no con mapToItem: ese cuenta la escala y, con
+        // la isla encogida por el clic, el panel se quedaba un poco corrido
+        // y nunca terminaba de fundirse con ella
+        let x = 0;
+        for (let p = it; p; p = p.parent)
+            x += p.x;
+        return x;
     }
     readonly property real islaAnchoReal: isla?.width ?? 0
     // Lo mismo, pero si el panel ya abierto pasa a otra isla (de la hora al
@@ -121,15 +140,11 @@ PanelWindow {
     property real progreso: abierto ? 1 : 0
     Behavior on progreso {
         NumberAnimation {
-            duration: Tema.normal === 0 ? 0 : !ventana.abierto ? (ventana.gota ? 340 : 170) : ventana.gota ? 640 : caja.pegado ? 300 : 380
-            // (la gota: al abrir se extiende y frena despacio; al cerrar se
-            // recoge acelerando y frenando)
-            easing.type: !ventana.abierto ? (ventana.gota ? Easing.InOutCubic : Easing.InCubic) : ventana.gota ? Easing.OutCubic : caja.pegado ? Easing.OutQuint : Easing.OutBack
+            duration: Tema.normal === 0 ? 0 : !ventana.abierto ? 170 : caja.pegado ? 300 : 380
+            easing.type: !ventana.abierto ? Easing.InCubic : caja.pegado ? Easing.OutQuint : Easing.OutBack
             easing.overshoot: 1.4
         }
     }
-    // La gota de tinta (islas y minimalista; sin animaciones, no)
-    readonly property bool gota: caja.comoDock && Tema.normal > 0
     // El progreso sin pasarse de 1: para lo que no debe rebotar (el sitio
     // bajo la barra o la isla y la transparencia)
     readonly property real hasta1: Math.min(1, progreso)
@@ -207,8 +222,7 @@ PanelWindow {
             // Con las islas, como los paneles del dock: nace sin alto bajo la
             // isla (o la barra) y se estira con rebote (progreso pasa de 1)
             readonly property real altoFinal: interior.implicitHeight + 32
-            // (con la gota, entero desde el principio: lo descubre la gota)
-            height: comoDock && !ventana.gota ? Math.max(0, altoFinal * ventana.progreso) : altoFinal
+            height: comoDock ? Math.max(0, altoFinal * ventana.progreso) : altoFinal
             // (la minimalista también: pegado a su franja, se despliega igual)
             readonly property bool comoDock: colgado || (Ajustes.conPildoras && (!pegado || Ajustes.minimalista) && !enMedio && !ventana.vertical && !ventana.abajo)
             readonly property bool enMedio: ventana.lado === "medio"
@@ -247,7 +261,7 @@ PanelWindow {
             // fundido ni encoger (se despegaría de ella)
             // (con las islas, al cerrarse se funde en el último tramo: si no,
             // quedaba una franja oscura bajo la isla en los últimos fotogramas)
-            opacity: comoDock ? (ventana.abierto ? 1 : Math.min(1, ventana.progreso * (ventana.gota ? 5 : 2.5)))
+            opacity: comoDock ? (ventana.abierto ? 1 : Math.min(1, ventana.progreso * 2.5))
                 : pegado ? 1 : ventana.hasta1
             scale: pegado || comoDock ? 1 : (enMedio ? 0.94 : 0.96) + (enMedio ? 0.06 : 0.04) * ventana.progreso
             transformOrigin: enMedio ? Item.Center : ventana.vertical ? Item.Left : ventana.abajo ? Item.Bottom : Item.Top
@@ -267,28 +281,6 @@ PanelWindow {
             border.width: colgado ? 0 : pegado ? Tema.borde(1) : Tema.borde(2)
             border.color: pegado ? Tema.claro(0.08) : Tema.panelBorde
             clip: true
-
-            // La gota: solo se ve lo que cubre (solo mientras se mueve)
-            layer.enabled: ventana.gota && ventana.progreso < 1
-            layer.effect: MultiEffect {
-                maskEnabled: true
-                maskSource: gotaMascara
-                maskThresholdMin: 0.5
-                maskSpreadAtMin: 0.35
-            }
-
-            // La tinta: negra al nacer y se aclara mientras se extiende
-            Rectangle {
-                anchors.fill: parent
-                z: 10
-                visible: opacity > 0
-                opacity: ventana.gota ? 0.9 * Math.pow(1 - ventana.hasta1, 1.3) : 0
-                color: "black"
-                topLeftRadius: caja.topLeftRadius
-                topRightRadius: caja.topRightRadius
-                bottomLeftRadius: caja.bottomLeftRadius
-                bottomRightRadius: caja.bottomRightRadius
-            }
 
             // Como el dock: un brillo suave del acento arriba (colgando de
             // una isla, no: se notaba la costura con ella y con las curvas)
@@ -361,40 +353,6 @@ PanelWindow {
         }
     }
 
-    // La forma de la gota (la máscara de la caja): un círculo de borde
-    // ondulado que nace bajo la isla (o arriba en medio) y crece hasta pasar
-    // la esquina más lejana; el borde ondula menos cuanto más crece
-    Item {
-        id: gotaMascara
-        width: caja.width
-        height: caja.height
-        visible: false
-        layer.enabled: ventana.gota
-        readonly property real cx: caja.colgado ? ventana.islaX + ventana.islaAncho / 2 - caja.x : width / 2
-        readonly property real lejos: Math.max(Math.hypot(cx, height), Math.hypot(width - cx, height))
-        readonly property var puntos: {
-            const p = Math.max(0, ventana.progreso);
-            const pts = [];
-            const n = 56;
-            for (let i = 0; i <= n; i++) {
-                const a = i / n * Math.PI * 2;
-                const onda = 0.08 * Math.sin(3 * a + p * 5) + 0.05 * Math.sin(5 * a - p * 7) + 0.03 * Math.sin(8 * a + 1.3);
-                const r = Math.max(0.5, lejos * 1.08 * p * (1 + onda * (1 - Math.min(1, p))));
-                pts.push(Qt.point(cx + Math.cos(a) * r, Math.sin(a) * r));
-            }
-            return pts;
-        }
-        Shape {
-            anchors.fill: parent
-            preferredRendererType: Shape.CurveRenderer
-            ShapePath {
-                fillColor: "white"
-                strokeWidth: -1
-                PathPolyline { path: gotaMascara.puntos }
-            }
-        }
-    }
-
     // Las curvas que unen la isla con el panel, a cada lado de la isla donde
     // el panel sobresale (crecen con él al abrirse)
     component Curva: Shape {
@@ -421,13 +379,15 @@ PanelWindow {
             }
         }
     }
+    // (al llegar de otra isla, solo cuando el panel ya está bajo ella)
+    readonly property real crece: cerca
     Curva {
-        r: Math.min(12, Math.max(0, caja.sobraIzquierda / 2))
+        r: Math.min(12, Math.max(0, caja.sobraIzquierda / 2)) * ventana.crece
         x: ventana.islaX - r
     }
     Curva {
         derecha: true
-        r: Math.min(12, Math.max(0, caja.sobraDerecha / 2))
+        r: Math.min(12, Math.max(0, caja.sobraDerecha / 2)) * ventana.crece
         x: ventana.islaX + ventana.islaAncho
     }
 }

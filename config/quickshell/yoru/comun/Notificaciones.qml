@@ -42,8 +42,12 @@ Singleton {
     function vistas() {
         const ahora = Paneles.abierto === "notificaciones"
             || (Paneles.abierto === "pildora" && ["control", "", "wifi", "bluetooth", "audio", "micro"].includes(Paneles.seccion));
-        if (ahora)
+        if (ahora) {
             viendo = true;
+            // Ya vistas: fuera los avisos emergentes (si no, al cerrar el
+            // panel volvían a salir, y con ellos la campana a la vista)
+            emergentes = [];
+        }
         else if (viendo) {
             viendo = false;
             sinLeer = 0;
