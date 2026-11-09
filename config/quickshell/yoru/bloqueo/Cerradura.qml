@@ -58,7 +58,8 @@ Item {
     property bool error: false
     // En rojo hasta que vuelves a escribir (sin tocar «error», que viene de
     // fuera: asignarlo aquí rompería el enlace y el siguiente fallo no se vería)
-    readonly property bool enRojo: error && campo.text === ""
+    // (y nunca mientras comprueba o se abre)
+    readonly property bool enRojo: error && campo.text === "" && !ocupada && !abierto
     property bool ocupada: false              // comprobando la contraseña
     property string teclado: ""               // distribución («ES»); vacío = sin botón 󰌌
     property alias texto: campo.text

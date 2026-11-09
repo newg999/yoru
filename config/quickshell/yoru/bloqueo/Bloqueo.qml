@@ -59,6 +59,9 @@ Scope {
             return;
         pendiente = contrasena;
         mensaje = "";
+        // Fuera el rojo del intento anterior: si esta es la buena, no debe
+        // verse rojo mientras se abre (si vuelve a fallar, se pone otra vez)
+        error = false;
         pam.start();
     }
     property string pendiente: ""

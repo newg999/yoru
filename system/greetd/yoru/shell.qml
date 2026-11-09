@@ -86,6 +86,7 @@ ShellRoot {
             return;
         pendiente = contrasena;
         mensaje = "";
+        error = false;      // fuera el rojo del intento anterior
         entrando = true;
         Greetd.createSession(usuario.nombre);
     }
