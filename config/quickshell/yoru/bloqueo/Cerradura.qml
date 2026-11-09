@@ -5,7 +5,6 @@
 //                                 󰌾                        (arriba: red, volumen...)
 //                       sábado, 8 de noviembre
 //                              14:32
-//                           [ batería ]                     ← widgets
 //
 //                [ la música ]   [ las notificaciones ]           ← abajo
 //
@@ -185,44 +184,51 @@ Item {
         id: paso
         property string que
         property int espera: 0
-        property int dura: 650
+        property int dura: 900
         PauseAnimation { duration: paso.espera }
-        NumberAnimation { target: cerradura; property: paso.que; from: 0; to: 1; duration: paso.dura; easing.type: Easing.OutCubic }
+        NumberAnimation { target: cerradura; property: paso.que; from: 0; to: 1; duration: paso.dura; easing.type: Easing.OutQuint }
     }
     ParallelAnimation {
         id: entrada
-        Paso { que: "pFondo"; dura: 900 }
-        Paso { que: "pCabeza"; espera: 80; dura: 700 }
-        Paso { que: "pWidgets"; espera: 220 }
-        Paso { que: "pAbajo"; espera: 340 }
-        Paso { que: "pAcceso"; espera: 440 }
+        Paso { que: "pFondo"; dura: 1100 }
+        Paso { que: "pCabeza"; espera: 120; dura: 1000 }
+        Paso { que: "pWidgets"; espera: 200 }
+        Paso { que: "pAbajo"; espera: 260 }
+        Paso { que: "pAcceso"; espera: 320 }
     }
     SequentialAnimation {
         id: salida
-        PauseAnimation { duration: 260 }        // el candado se abre
-        NumberAnimation { target: cerradura; property: "pSalida"; to: 1; duration: 380; easing.type: Easing.InCubic }
+        PauseAnimation { duration: 220 }        // el candado se abre
+        NumberAnimation { target: cerradura; property: "pSalida"; to: 1; duration: 600; easing.type: Easing.InOutSine }
         ScriptAction { script: cerradura.fuera() }
     }
 
-    // Cada parte: se funde y se mueve un poco al entrar; al salir, sube
+    // Al salir, primero se funde lo de encima y después el fondo (los dos a
+    // la vez se veía brusco)
+    readonly property real fuera1: Math.min(1, pSalida / 0.65)
+    readonly property real fuera2: Math.max(0, (pSalida - 0.3) / 0.7)
+    readonly property real queda: 1 - fuera1
+
+    // Cada parte: se funde y se mueve un poquito al entrar; al salir, sube
+    // apenas
     component Entra: Translate {
         property real paso: 1
-        property real desde: 24
-        y: (1 - paso) * desde - cerradura.pSalida * 70
+        property real desde: 10
+        y: (1 - paso) * desde - cerradura.fuera1 * 18
     }
 
     // ------------------------------------------------------------ Fondo
     Rectangle {
         anchors.fill: parent
         color: cerradura.colorOscuro
-        opacity: 1 - cerradura.pSalida
+        opacity: 1 - cerradura.fuera2
     }
     Item {
         id: capaFondo
         anchors.fill: parent
         // Se acerca al bloquear y se aleja un poco al desbloquear
-        opacity: cerradura.pFondo * (1 - cerradura.pSalida)
-        scale: 1.08 - 0.08 * cerradura.pFondo + 0.04 * cerradura.pSalida
+        opacity: cerradura.pFondo * (1 - cerradura.fuera2)
+        scale: 1.03 - 0.03 * cerradura.pFondo + 0.015 * cerradura.fuera2
 
         Image {
             id: imagen
@@ -291,8 +297,8 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         y: Math.round(cerradura.height * 0.045)
         spacing: 0
-        opacity: cerradura.pCabeza * (1 - cerradura.pSalida)
-        transform: Entra { paso: cerradura.pCabeza; desde: -30 }
+        opacity: cerradura.pCabeza * cerradura.queda
+        transform: Entra { paso: cerradura.pCabeza; desde: -12 }
 
         readonly property int tam: Math.round(Math.min(cerradura.height * 0.19, cerradura.width * 0.13))
 
@@ -330,8 +336,8 @@ Item {
             }
             SequentialAnimation {
                 id: salto
-                NumberAnimation { target: candado; property: "scale"; to: 1.3; duration: 140; easing.type: Easing.OutCubic }
-                NumberAnimation { target: candado; property: "scale"; to: 1; duration: 260; easing.type: Easing.OutBack; easing.overshoot: 3 }
+                NumberAnimation { target: candado; property: "scale"; to: 1.12; duration: 180; easing.type: Easing.OutCubic }
+                NumberAnimation { target: candado; property: "scale"; to: 1; duration: 320; easing.type: Easing.OutCubic }
             }
         }
         Item { width: 1; height: Math.round(cerradura.height * 0.014) }
@@ -367,7 +373,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 12
             opacity: cerradura.pWidgets
-            transform: Entra { paso: cerradura.pWidgets; desde: 18 }
+            transform: Entra { paso: cerradura.pWidgets; desde: 8 }
         }
     }
 
@@ -379,8 +385,8 @@ Item {
             top: cabeza.bottom; topMargin: Math.round(cerradura.height * 0.035)
             bottom: acceso.top; bottomMargin: Math.round(cerradura.height * 0.03)
         }
-        opacity: cerradura.pAbajo * (1 - cerradura.pSalida)
-        transform: Entra { paso: cerradura.pAbajo; desde: 30 }
+        opacity: cerradura.pAbajo * cerradura.queda
+        transform: Entra { paso: cerradura.pAbajo; desde: 12 }
     }
 
     // ------------------------------------------ Quién entra y contraseña
@@ -389,7 +395,7 @@ Item {
     readonly property int margenAcceso: Math.round(height * 0.11)
     readonly property real pDespierta: despierta ? 1 : 0
     property real verAcceso: pDespierta
-    Behavior on verAcceso { NumberAnimation { duration: cerradura.animar ? 380 : 0; easing.type: Easing.OutCubic } }
+    Behavior on verAcceso { NumberAnimation { duration: cerradura.animar ? 520 : 0; easing.type: Easing.OutQuint } }
 
     Column {
         id: pistaDormida
@@ -398,7 +404,7 @@ Item {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: cerradura.margenAcceso + 34
         spacing: 6
-        opacity: (1 - cerradura.verAcceso) * cerradura.pAcceso * (1 - cerradura.pSalida)
+        opacity: (1 - cerradura.verAcceso) * cerradura.pAcceso * cerradura.queda
         visible: opacity > 0
         // Una flechita que sube y baja, como «desliza hacia arriba»
         Text {
@@ -411,8 +417,8 @@ Item {
             SequentialAnimation {
                 running: pistaDormida.visible && cerradura.animar
                 loops: Animation.Infinite
-                NumberAnimation { target: flecha; property: "y"; to: -6; duration: 700; easing.type: Easing.InOutSine }
-                NumberAnimation { target: flecha; property: "y"; to: 0; duration: 700; easing.type: Easing.InOutSine }
+                NumberAnimation { target: flecha; property: "y"; to: -4; duration: 1100; easing.type: Easing.InOutSine }
+                NumberAnimation { target: flecha; property: "y"; to: 0; duration: 1100; easing.type: Easing.InOutSine }
             }
         }
         Text {
@@ -432,8 +438,8 @@ Item {
         anchors.bottomMargin: cerradura.margenAcceso
         width: caja.width
         spacing: 10
-        opacity: cerradura.verAcceso * cerradura.pAcceso * (1 - cerradura.pSalida)
-        transform: Entra { paso: Math.min(cerradura.verAcceso, cerradura.pAcceso); desde: 40 }
+        opacity: cerradura.verAcceso * cerradura.pAcceso * cerradura.queda
+        transform: Entra { paso: Math.min(cerradura.verAcceso, cerradura.pAcceso); desde: 14 }
 
         // Foto (~/.face o la de AccountsService) o la inicial en un círculo
         Item {
@@ -518,27 +524,27 @@ Item {
             border.color: cerradura.enRojo ? cerradura.colorRojo
                 : campo.activeFocus ? cerradura.conAlfa(cerradura.colorAcento, 0.45)
                 : cerradura.conAlfa(cerradura.colorAcento, 0.15)
-            Behavior on border.color { ColorAnimation { duration: 150 } }
-            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on border.color { ColorAnimation { duration: 220 } }
+            Behavior on color { ColorAnimation { duration: 220 } }
 
             transform: Translate { id: desplazamiento }
             SequentialAnimation {
                 id: sacudida
                 ParallelAnimation {
-                    NumberAnimation { target: desplazamiento; property: "x"; to: -14; duration: 50 }
-                    NumberAnimation { target: temblorCandado; property: "x"; to: -5; duration: 50 }
+                    NumberAnimation { target: desplazamiento; property: "x"; to: -9; duration: 60 }
+                    NumberAnimation { target: temblorCandado; property: "x"; to: -3; duration: 60 }
                 }
                 ParallelAnimation {
-                    NumberAnimation { target: desplazamiento; property: "x"; to: 14; duration: 70 }
-                    NumberAnimation { target: temblorCandado; property: "x"; to: 5; duration: 70 }
+                    NumberAnimation { target: desplazamiento; property: "x"; to: 8; duration: 80 }
+                    NumberAnimation { target: temblorCandado; property: "x"; to: 3; duration: 80 }
                 }
                 ParallelAnimation {
-                    NumberAnimation { target: desplazamiento; property: "x"; to: -9; duration: 70 }
-                    NumberAnimation { target: temblorCandado; property: "x"; to: -3; duration: 70 }
+                    NumberAnimation { target: desplazamiento; property: "x"; to: -5; duration: 80 }
+                    NumberAnimation { target: temblorCandado; property: "x"; to: -2; duration: 70 }
                 }
                 ParallelAnimation {
-                    NumberAnimation { target: desplazamiento; property: "x"; to: 5; duration: 60 }
-                    NumberAnimation { target: temblorCandado; property: "x"; to: 2; duration: 60 }
+                    NumberAnimation { target: desplazamiento; property: "x"; to: 3; duration: 70 }
+                    NumberAnimation { target: temblorCandado; property: "x"; to: 1; duration: 70 }
                 }
                 ParallelAnimation {
                     NumberAnimation { target: desplazamiento; property: "x"; to: 0; duration: 60 }
@@ -610,9 +616,9 @@ Item {
                                 id: brota
                                 running: false
                                 to: 1
-                                duration: 260
+                                duration: 220
                                 easing.type: Easing.OutBack
-                                easing.overshoot: 3
+                                easing.overshoot: 1.2
                             }
                         }
                     }
@@ -659,8 +665,8 @@ Item {
                         color: campo.text !== "" ? cerradura.colorAcento
                             : cerradura.conAlfa(cerradura.colorAcento, enviarZona.containsMouse ? 0.14 : 0)
                         scale: campo.text !== "" ? 1 : 0.85
-                        Behavior on color { ColorAnimation { duration: 160 } }
-                        Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+                        Behavior on color { ColorAnimation { duration: 220 } }
+                        Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
                     }
                     Icono {
                         anchors.centerIn: parent
@@ -697,14 +703,14 @@ Item {
         id: arriba
         anchors { right: parent.right; top: parent.top; margins: 22 }
         spacing: 18
-        opacity: cerradura.pCabeza * (1 - cerradura.pSalida)
+        opacity: cerradura.pCabeza * cerradura.queda
     }
 
     Row {
         id: esquina
         anchors { right: parent.right; bottom: parent.bottom; margins: 28 }
         spacing: 12
-        opacity: cerradura.pAcceso * (1 - cerradura.pSalida)
+        opacity: cerradura.pAcceso * cerradura.queda
     }
 
     // --------------------------------------------- Apagar (abajo a la izquierda)
@@ -713,7 +719,7 @@ Item {
         anchors { left: parent.left; bottom: parent.bottom; margins: 22 }
         trazo: cerradura.trazos.energia
         tam: 20
-        opacity: cerradura.pAcceso * (1 - cerradura.pSalida)
+        opacity: cerradura.pAcceso * cerradura.queda
         onPulsado: menu.abierto = !menu.abierto
     }
 
@@ -722,10 +728,10 @@ Item {
         property bool abierto: false
         visible: opacity > 0
         opacity: abierto ? 1 : 0
-        scale: abierto ? 1 : 0.92
+        scale: abierto ? 1 : 0.97
         transformOrigin: Item.BottomLeft
-        Behavior on opacity { NumberAnimation { duration: cerradura.animar ? 160 : 0 } }
-        Behavior on scale { NumberAnimation { duration: cerradura.animar ? 220 : 0; easing.type: Easing.OutBack } }
+        Behavior on opacity { NumberAnimation { duration: cerradura.animar ? 200 : 0; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: cerradura.animar ? 260 : 0; easing.type: Easing.OutQuint } }
         anchors { left: botonEnergia.left; bottom: botonEnergia.top; bottomMargin: 8 }
         width: 170
         height: opciones.height + 12

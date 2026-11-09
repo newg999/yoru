@@ -86,8 +86,8 @@ ClippingRectangle {
             anchors.fill: parent
             radius: width / 2
             color: boton.grande ? Tema.blanco : Tema.claro(zona.containsMouse ? 0.14 : 0)
-            scale: zona.pressed ? 0.88 : zona.containsMouse && boton.grande ? 1.06 : 1
-            Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
+            scale: zona.pressed ? 0.94 : zona.containsMouse && boton.grande ? 1.03 : 1
+            Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             Behavior on color { ColorAnimation { duration: 120 } }
         }
         Text {
@@ -131,8 +131,8 @@ ClippingRectangle {
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             // Late un poco con la música
-            scale: tarjeta.reproductor?.isPlaying ? 1 : 0.92
-            Behavior on scale { NumberAnimation { duration: 400; easing.type: Easing.OutBack } }
+            scale: tarjeta.reproductor?.isPlaying ? 1 : 0.96
+            Behavior on scale { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
         }
     }
 

@@ -54,9 +54,9 @@ Column {
             color: Tema.claro(botonZona.containsMouse || avisos.abiertas ? 0.18 : 0.1)
             border.width: 1
             border.color: Tema.claro(0.12)
-            scale: botonZona.pressed ? 0.95 : 1
+            scale: botonZona.pressed ? 0.97 : 1
             Behavior on color { ColorAnimation { duration: 140 } }
-            Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutBack } }
+            Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
             Row {
                 id: botonFila
                 anchors.centerIn: parent
@@ -135,14 +135,14 @@ Column {
 
             // Entran una detrás de otra, cayendo un poco
             opacity: 0
-            transform: Translate { id: caida; y: -10 }
+            transform: Translate { id: caida; y: -6 }
             Component.onCompleted: llega.start()
             SequentialAnimation {
                 id: llega
-                PauseAnimation { duration: tarjeta.index * 60 }
+                PauseAnimation { duration: tarjeta.index * 70 }
                 ParallelAnimation {
-                    NumberAnimation { target: tarjeta; property: "opacity"; to: 1; duration: 260; easing.type: Easing.OutCubic }
-                    NumberAnimation { target: caida; property: "y"; to: 0; duration: 320; easing.type: Easing.OutBack }
+                    NumberAnimation { target: tarjeta; property: "opacity"; to: 1; duration: 360; easing.type: Easing.OutCubic }
+                    NumberAnimation { target: caida; property: "y"; to: 0; duration: 420; easing.type: Easing.OutQuint }
                 }
             }
 

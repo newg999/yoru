@@ -65,7 +65,7 @@ Scope {
 
     Timer {
         id: abrir
-        interval: Ajustes.animaciones ? 660 : 0
+        interval: Ajustes.animaciones ? 860 : 0
         onTriggered: {
             bloqueo.activo = false;
             bloqueo.probando = false;
@@ -248,10 +248,9 @@ Scope {
             }
         }
 
-        // Bajo la hora, la batería; en medio, lo que suena y
-        // las notificaciones (abiertas hasta un clic fuera o Esc); arriba
-        // a la derecha, la red, el bluetooth y el volumen
-        widgets: WidgetsBloqueo {}
+        // En medio, lo que suena y las notificaciones (abiertas hasta un
+        // clic fuera o Esc); arriba a la derecha, la red, el bluetooth, el
+        // volumen y la batería
         abajo: CentroBloqueo { id: centro }
         onToque: centro.cerrar()
         arriba: EstadoBloqueo {}
