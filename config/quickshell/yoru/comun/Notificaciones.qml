@@ -35,10 +35,19 @@ Singleton {
 
     // Abrir el panel de notificaciones o el centro de control (que también
     // las enseña) = verlas todas
+    // Cuentan como vistas al cerrar el panel, no al abrirlo: así la campana
+    // de la barra (que sale solo con avisos sin leer) no se esconde debajo
+    // del ratón nada más pulsarla; se va al hacer clic en otro sitio
+    property bool viendo: false
     function vistas() {
-        if (Paneles.abierto === "notificaciones"
-            || (Paneles.abierto === "pildora" && ["control", "", "wifi", "bluetooth", "audio", "micro"].includes(Paneles.seccion)))
+        const ahora = Paneles.abierto === "notificaciones"
+            || (Paneles.abierto === "pildora" && ["control", "", "wifi", "bluetooth", "audio", "micro"].includes(Paneles.seccion));
+        if (ahora)
+            viendo = true;
+        else if (viendo) {
+            viendo = false;
             sinLeer = 0;
+        }
     }
     Connections {
         target: Paneles
