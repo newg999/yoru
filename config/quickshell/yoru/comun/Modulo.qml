@@ -59,11 +59,11 @@ Item {
             visible: text !== ""
             font.pixelSize: modulo.tamIcono
             color: modulo.colorActual
-            Behavior on color { ColorAnimation { duration: Tema.rapida } }
+            Behavior on color { ColorAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
             // En las islas, con los iconos del dock: crece con un muelle al
             // pasar el ratón, como allí
-            scale: Ajustes.conPildoras && Ajustes.iconosDock && modulo.pulsable && raton.containsMouse ? 1.14 : 1
-            Behavior on scale { NumberAnimation { duration: Tema.rebote * 0.62; easing.type: Easing.OutBack; easing.overshoot: 2 } }
+            scale: Ajustes.conPildoras && Ajustes.iconosDock && modulo.pulsable && raton.containsMouse ? 1.1 : 1
+            Behavior on scale { NumberAnimation { duration: Tema.rebote * 0.75; easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
         }
         Texto {
             text: modulo.texto

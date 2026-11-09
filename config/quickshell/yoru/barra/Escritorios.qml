@@ -34,12 +34,13 @@ Isla {
                     : escritorio.activo || raton.containsMouse ? Tema.blanco
                     : escritorio.conVentanas ? Tema.claro(0.5)
                     : Tema.claro(0.25)
-                // La píldora del activo se estira con rebote; al pulsar, se encoge
-                Behavior on width { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
-                Behavior on height { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
-                scale: raton.pressed ? 0.8 : 1
-                Behavior on scale { NumberAnimation { duration: Tema.rebote * 0.7; easing.type: Easing.OutBack; easing.overshoot: 2.6 } }
-                Behavior on color { ColorAnimation { duration: Tema.rapida } }
+                // La píldora del activo se estira y frena suave; al pulsar, se
+                // encoge un poco
+                Behavior on width { NumberAnimation { duration: Tema.rebote * 1.1; easing.type: Easing.OutQuint } }
+                Behavior on height { NumberAnimation { duration: Tema.rebote * 1.1; easing.type: Easing.OutQuint } }
+                scale: raton.pressed ? 0.88 : 1
+                Behavior on scale { NumberAnimation { duration: raton.pressed ? Tema.rapida : Tema.rebote * 0.75; easing.type: raton.pressed ? Easing.OutCubic : Easing.OutBack; easing.overshoot: 1.3 } }
+                Behavior on color { ColorAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
             }
 
             MouseArea {

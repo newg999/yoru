@@ -67,7 +67,7 @@ ClippingRectangle {
     color: comoDock ? "transparent"
         : activa ? (hover && pulsable ? Qt.lighter(Tema.blanco, 1.1) : Tema.blanco)
         : hover && pulsable ? Tema.claro(0.14) : Tema.claro(0.07)
-    Behavior on color { ColorAnimation { duration: Tema.rapida } }
+    Behavior on color { ColorAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
 
     // Como en el dock: al pulsar se encoge y vuelve con rebote; con el ratón
     // encima, crece un poco. Y al aparecer (wifi que se conecta, bluetooth
@@ -76,20 +76,22 @@ ClippingRectangle {
     // con un muelle, y al pulsar no se encoge
     property real aparecer: 1
     scale: aparecer * (!pulsable ? 1
-        : comoDock ? (hover ? 1.14 : 1)
-        : raton.pressed ? 0.88 : hover ? 1.06 : 1)
+        : comoDock ? (raton.pressed ? 1.02 : hover ? 1.1 : 1)
+        : raton.pressed ? 0.94 : hover ? 1.04 : 1)
     Behavior on scale {
         enabled: !entrada.running
         NumberAnimation {
-            duration: ficha.comoDock ? Tema.rebote * 0.62 : Tema.rebote * 0.8
-            easing.type: Easing.OutBack
-            easing.overshoot: ficha.comoDock ? 2 : 2.6
+            // Al pulsar, rápido; al soltar o con el ratón encima, un muelle
+            // suave (sin botes marcados)
+            duration: raton.pressed ? Tema.rapida : Tema.rebote * 0.75
+            easing.type: raton.pressed ? Easing.OutCubic : Easing.OutBack
+            easing.overshoot: 1.3
         }
     }
     onVisibleChanged: if (visible && Tema.rebote > 0) entrada.restart()
     ParallelAnimation {
         id: entrada
-        NumberAnimation { target: ficha; property: "aparecer"; from: 0.4; to: 1; duration: Tema.rebote; easing.type: Easing.OutBack; easing.overshoot: 2 }
+        NumberAnimation { target: ficha; property: "aparecer"; from: 0.7; to: 1; duration: Tema.rebote; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
         NumberAnimation { target: ficha; property: "opacity"; from: 0; to: 1; duration: Tema.normal; easing.type: Easing.OutCubic }
     }
 

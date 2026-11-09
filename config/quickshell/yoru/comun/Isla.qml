@@ -74,12 +74,16 @@ Rectangle {
     border.color: Qt.rgba(Tema.islaBorde.r, Tema.islaBorde.g, Tema.islaBorde.b, Tema.islaBorde.a * (1 - fusion))
     clip: true
 
+    // Al aparecer o irse, se funde y crece (o encoge) un poco desde su centro
     opacity: vacia ? 0 : 1
     visible: opacity > 0
-    Behavior on opacity { NumberAnimation { duration: Tema.normal } }
-    // Al crecer o encoger (sale la música, una ficha...), con un muelle suave
-    Behavior on implicitWidth { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
-    Behavior on implicitHeight { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
+    scale: vacia ? 0.9 : 1
+    Behavior on opacity { NumberAnimation { duration: Tema.normal * 1.4; easing.type: Easing.OutCubic } }
+    Behavior on scale { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutCubic } }
+    // Al crecer o encoger (sale la música, una ficha...), se estira y frena
+    // despacio, sin pasarse
+    Behavior on implicitWidth { NumberAnimation { duration: Tema.rebote * 1.15; easing.type: Easing.OutQuint } }
+    Behavior on implicitHeight { NumberAnimation { duration: Tema.rebote * 1.15; easing.type: Easing.OutQuint } }
 
     MouseArea {
         id: raton
