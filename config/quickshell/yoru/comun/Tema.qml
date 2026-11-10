@@ -69,6 +69,11 @@ Singleton {
     readonly property color caja: claro(0.06)          // fondos de filas y botones
     readonly property color cajaHover: claro(0.12)
     readonly property color activo: claro(0.12)        // conectado / en uso
+    // Lo elegido (Seleccion.qml, y los botones de Opciones...): un fondo
+    // tenue con borde o rayita de luz, y el texto del color del tema; nunca
+    // un bloque macizo con el texto oscuro
+    readonly property color seleccion: claro(0.14)
+    readonly property color seleccionBorde: claro(0.5)
 
     FileView {
         path: Quickshell.env("HOME") + "/.local/state/yoru/tema/colores.json"

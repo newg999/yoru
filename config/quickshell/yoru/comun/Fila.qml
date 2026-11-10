@@ -1,7 +1,7 @@
 // ============================================================================
 //  Fila — un elemento de las listas de los paneles (red wifi, dispositivo...)
-//  La elegida (seleccionada) va en blanco
-//  con el texto oscuro. Los botones extra van a la derecha (contenido).
+//  La elegida (seleccionada) se marca con Seleccion: fondo tenue, rayita de
+//  luz y el texto del color del tema. Los botones extra van a la derecha.
 // ============================================================================
 import QtQuick
 
@@ -16,14 +16,16 @@ Rectangle {
     property int formato: Text.AutoText  // Text.PlainText si el título es texto ajeno
     default property alias extras: botones.data
     readonly property alias hover: raton.containsMouse
-    readonly property color colorTexto: seleccionada ? Tema.oscuro : Tema.texto
+    readonly property color colorTexto: seleccionada ? Tema.blanco : Tema.texto
 
     signal clic()
 
     implicitHeight: detalle !== "" ? 48 : 40
     radius: Tema.esquina(10)
-    color: seleccionada ? Tema.claro(0.90) : raton.containsMouse ? Tema.cajaHover : "transparent"
+    color: !seleccionada && raton.containsMouse ? Tema.cajaHover : "transparent"
     Behavior on color { ColorAnimation { duration: Tema.rapida } }
+
+    Seleccion { activa: fila.seleccionada; radio: fila.radius }
 
     MouseArea {
         id: raton
@@ -70,7 +72,7 @@ Rectangle {
             width: parent.width
             visible: text !== ""
             text: fila.detalle
-            color: fila.seleccionada ? Tema.sombra(0.6) : Tema.gris
+            color: Tema.gris
             font.bold: false
             font.pixelSize: 11
             elide: Text.ElideRight

@@ -381,7 +381,8 @@ Panel {
                 width: lista.cellWidth - (panel.columnas > 1 ? 4 : 0)
                 height: 56
                 radius: Tema.esquina(10)
-                color: elegida ? Tema.claro(0.90) : "transparent"
+                color: "transparent"
+                Seleccion { activa: fila.elegida; radio: fila.radius }
 
                 MouseArea {
                     anchors.fill: parent
@@ -405,12 +406,12 @@ Panel {
                     visible: fila.modelData.ajuste ?? false
                     anchors.centerIn: iconoApp
                     width: 34; height: 34; radius: Tema.esquina(10)
-                    color: fila.elegida ? Tema.sombra(0.15) : Tema.caja
+                    color: Tema.caja
                     Texto {
                         anchors.centerIn: parent
                         text: fila.modelData.glifo ?? ""
                         font.pixelSize: 18
-                        color: fila.elegida ? Tema.oscuro : Tema.texto
+                        color: fila.elegida ? Tema.blanco : Tema.texto
                     }
                 }
                 Column {
@@ -424,7 +425,7 @@ Panel {
                         text: fila.modelData.name
                         elide: Text.ElideRight
                         font.pixelSize: 14
-                        color: fila.elegida ? Tema.oscuro : Tema.texto
+                        color: fila.elegida ? Tema.blanco : Tema.texto
                     }
                     Texto {
                         width: parent.width
@@ -433,7 +434,7 @@ Panel {
                         elide: Text.ElideRight
                         font.bold: false
                         font.pixelSize: 11
-                        color: fila.elegida ? Tema.sombra(0.6) : Tema.gris
+                        color: Tema.gris
                     }
                 }
             }

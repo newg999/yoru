@@ -29,7 +29,9 @@ Row {
             width: (selector.width - selector.spacing * (selector.opciones.length - 1)) / selector.opciones.length
             height: 36
             radius: Tema.esquina(10)
-            color: elegido ? Tema.claro(0.90) : raton.containsMouse ? Tema.cajaHover : Tema.caja
+            color: elegido ? Tema.seleccion : raton.containsMouse ? Tema.cajaHover : Tema.caja
+            border.width: 1
+            border.color: elegido ? Tema.seleccionBorde : "transparent"
             Behavior on color { ColorAnimation { duration: Tema.rapida } }
 
             Row {
@@ -39,13 +41,13 @@ Row {
                     visible: text !== ""
                     text: boton.modelData.icono ?? ""
                     font.pixelSize: 15
-                    color: boton.elegido ? Tema.oscuro : Tema.texto
+                    color: boton.elegido ? Tema.blanco : Tema.texto
                 }
                 Texto {
                     text: boton.modelData.texto
                     font.family: boton.modelData.fuente ?? Tema.fuente
                     font.pixelSize: 12
-                    color: boton.elegido ? Tema.oscuro : Tema.texto
+                    color: boton.elegido ? Tema.blanco : Tema.texto
                 }
             }
 

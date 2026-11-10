@@ -251,8 +251,9 @@ Scope {
                                     width: parent.width
                                     height: 38
                                     radius: Tema.esquina(10)
-                                    color: elegida ? Tema.claro(0.90) : filaRaton.containsMouse ? Tema.cajaHover : "transparent"
+                                    color: !elegida && filaRaton.containsMouse ? Tema.cajaHover : "transparent"
                                     Behavior on color { ColorAnimation { duration: Tema.rapida } }
+                                    Seleccion { activa: fila.elegida; radio: fila.radius }
 
                                     Row {
                                         anchors { left: parent.left; leftMargin: 14; verticalCenter: parent.verticalCenter }
@@ -262,12 +263,12 @@ Scope {
                                             horizontalAlignment: Text.AlignHCenter
                                             text: fila.modelData.icono
                                             font.pixelSize: 17
-                                            color: fila.elegida ? Tema.oscuro : Tema.texto
+                                            color: fila.elegida ? Tema.blanco : Tema.texto
                                         }
                                         Texto {
                                             text: fila.modelData.texto
                                             font.pixelSize: 14
-                                            color: fila.elegida ? Tema.oscuro : Tema.texto
+                                            color: fila.elegida ? Tema.blanco : Tema.texto
                                         }
                                     }
                                     MouseArea {

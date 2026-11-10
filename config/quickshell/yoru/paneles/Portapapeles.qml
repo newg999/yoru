@@ -148,7 +148,7 @@ Panel {
 
                 BotonIcono {
                     icono: "󰅖"
-                    colorIcono: entrada.seleccionada ? Tema.oscuro : Tema.gris
+                    colorIcono: Tema.gris
                     onClic: panel.borrar(entrada.modelData)
                 }
             }

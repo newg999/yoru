@@ -169,7 +169,7 @@ Column {
 
             BotonIcono {
                 icono: "󰆴"
-                colorIcono: fila.seleccionada ? Tema.oscuro : Tema.gris
+                colorIcono: Tema.gris
                 alerta: seccion.borrando === fila.modelData.uuid
                 onClic: {
                     if (seccion.borrando !== fila.modelData.uuid) {
@@ -189,14 +189,14 @@ Column {
                 Rectangle {
                     anchors.centerIn: parent
                     width: 38; height: 22; radius: 11
-                    color: fila.seleccionada ? Tema.oscuro : Tema.claro(0.15)
+                    color: fila.seleccionada ? Tema.blanco : Tema.claro(0.15)
                     Behavior on color { ColorAnimation { duration: Tema.rapida } }
 
                     Rectangle {
                         width: 16; height: 16; radius: 8
                         anchors.verticalCenter: parent.verticalCenter
                         x: fila.encendida ? parent.width - width - 3 : 3
-                        color: fila.seleccionada ? Tema.blanco : Tema.texto
+                        color: fila.seleccionada ? Tema.oscuro : Tema.texto
                         Behavior on x { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutCubic } }
                     }
                 }

@@ -307,7 +307,9 @@ Panel {
                         width: contenido.implicitWidth + 28
                         height: 34
                         radius: Tema.esquina(10)
-                        color: elegida ? Tema.claro(0.90) : pestanaRaton.containsMouse ? Tema.cajaHover : "transparent"
+                        color: elegida ? Tema.seleccion : pestanaRaton.containsMouse ? Tema.cajaHover : "transparent"
+                        border.width: 1
+                        border.color: elegida ? Tema.seleccionBorde : "transparent"
 
                         Row {
                             id: contenido
@@ -316,13 +318,13 @@ Panel {
                             Texto {
                                 text: pestana.modelData.icono
                                 font.pixelSize: 15
-                                color: pestana.elegida ? Tema.oscuro : Tema.texto
+                                color: pestana.elegida ? Tema.blanco : Tema.texto
                             }
                             Texto {
                                 text: pestana.modelData.texto
                                     + (pestana.modelData.id === "instaladas" ? "  " + panel.instaladas.length : "")
                                 font.pixelSize: 13
-                                color: pestana.elegida ? Tema.oscuro : Tema.texto
+                                color: pestana.elegida ? Tema.blanco : Tema.texto
                             }
                         }
                         MouseArea {
@@ -436,7 +438,9 @@ Panel {
                     width: chipTexto.implicitWidth + 22
                     height: 28
                     radius: 14
-                    color: elegida ? Tema.claro(0.90) : chipRaton.containsMouse ? Tema.cajaHover : Tema.caja
+                    color: elegida ? Tema.seleccion : chipRaton.containsMouse ? Tema.cajaHover : Tema.caja
+                    border.width: 1
+                    border.color: elegida ? Tema.seleccionBorde : "transparent"
 
                     Row {
                         id: chipTexto
@@ -445,12 +449,12 @@ Panel {
                         Texto {
                             text: chip.modelData.icono
                             font.pixelSize: 13
-                            color: chip.elegida ? Tema.oscuro : Tema.texto
+                            color: chip.elegida ? Tema.blanco : Tema.texto
                         }
                         Texto {
                             text: chip.modelData.texto
                             font.pixelSize: 12
-                            color: chip.elegida ? Tema.oscuro : Tema.texto
+                            color: chip.elegida ? Tema.blanco : Tema.texto
                         }
                     }
                     MouseArea {

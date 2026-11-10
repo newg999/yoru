@@ -156,7 +156,9 @@ Panel {
                         required property var modelData
                         readonly property bool elegida: panel.pestana === modelData.id
                         width: 150; height: 36; radius: Tema.esquina(10)
-                        color: elegida ? Tema.claro(0.90) : pestanaRaton.containsMouse ? Tema.cajaHover : "transparent"
+                        color: elegida ? Tema.seleccion : pestanaRaton.containsMouse ? Tema.cajaHover : "transparent"
+                        border.width: 1
+                        border.color: elegida ? Tema.seleccionBorde : "transparent"
                         Behavior on color { ColorAnimation { duration: Tema.rapida } }
                         Row {
                             anchors.centerIn: parent
@@ -164,12 +166,12 @@ Panel {
                             Texto {
                                 text: pestana.modelData.icono
                                 font.pixelSize: 16
-                                color: pestana.elegida ? Tema.oscuro : Tema.texto
+                                color: pestana.elegida ? Tema.blanco : Tema.texto
                             }
                             Texto {
                                 text: pestana.modelData.texto
                                 font.pixelSize: 13
-                                color: pestana.elegida ? Tema.oscuro : Tema.texto
+                                color: pestana.elegida ? Tema.blanco : Tema.texto
                             }
                         }
                         MouseArea {
@@ -195,13 +197,15 @@ Panel {
                         required property var modelData
                         readonly property bool elegido: panel.filtro === modelData[0]
                         width: chipTexto.implicitWidth + 22; height: 28; radius: 14
-                        color: elegido ? Tema.claro(0.90) : chipRaton.containsMouse ? Tema.cajaHover : Tema.caja
+                        color: elegido ? Tema.seleccion : chipRaton.containsMouse ? Tema.cajaHover : Tema.caja
+                        border.width: 1
+                        border.color: elegido ? Tema.seleccionBorde : "transparent"
                         Texto {
                             id: chipTexto
                             anchors.centerIn: parent
                             text: chip.modelData[1]
                             font.pixelSize: 11
-                            color: chip.elegido ? Tema.oscuro : Tema.texto
+                            color: chip.elegido ? Tema.blanco : Tema.texto
                         }
                         MouseArea {
                             id: chipRaton
@@ -267,7 +271,9 @@ Panel {
                     width: agruparFila.implicitWidth + 24
                     height: 40
                     radius: Tema.esquina(10)
-                    color: panel.agrupar ? Tema.claro(0.90) : agruparRaton.containsMouse ? Tema.cajaHover : Tema.caja
+                    color: panel.agrupar ? Tema.seleccion : agruparRaton.containsMouse ? Tema.cajaHover : Tema.caja
+                    border.width: 1
+                    border.color: panel.agrupar ? Tema.seleccionBorde : "transparent"
                     Row {
                         id: agruparFila
                         anchors.centerIn: parent
@@ -275,12 +281,12 @@ Panel {
                         Texto {
                             text: "󰕰"
                             font.pixelSize: 15
-                            color: panel.agrupar ? Tema.oscuro : Tema.texto
+                            color: panel.agrupar ? Tema.blanco : Tema.texto
                         }
                         Texto {
                             text: "Agrupar apps"
                             font.pixelSize: 12
-                            color: panel.agrupar ? Tema.oscuro : Tema.texto
+                            color: panel.agrupar ? Tema.blanco : Tema.texto
                         }
                     }
                     MouseArea {
