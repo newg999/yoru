@@ -1,5 +1,5 @@
 // ============================================================================
-//  IconoCable — el ethernet del dock (yoru-dock): pantalla, pie y la clavija
+//  IconoCable — el ethernet del dock (el antiguo estilo Dock): pantalla, pie y la clavija
 //  RJ45 con su cable, dibujado. Lo usa Ficha.qml.
 // ============================================================================
 import QtQuick

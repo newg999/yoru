@@ -1,5 +1,5 @@
 // ============================================================================
-//  BarraVolumen — barra gruesa y redonda, como la del dock (yoru-dock):
+//  BarraVolumen — barra gruesa y redonda, como la del dock (el antiguo estilo Dock):
 //  arrastrar, clic o rueda. «valor» de 0 a 1; al moverlo avisa con movido(v)
 // ============================================================================
 import QtQuick

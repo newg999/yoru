@@ -32,9 +32,8 @@ PanelWindow {
     screen: modelData
 
     readonly property bool enfocada: (Niri.escritorios.find(e => e.is_focused)?.output ?? modelData.name) === modelData.name
-    // (con el estilo Dock no: los saca el propio dock, yoru-dock)
     readonly property bool mostrar: enfocada && !Paneles.esta("notificaciones", modelData)
-        && Notificaciones.emergentes.length > 0 && !Ajustes.estiloDock
+        && Notificaciones.emergentes.length > 0
 
     readonly property bool pegada: Ajustes.minimalista || abajo
     readonly property bool abajo: Ajustes.abajo
@@ -58,13 +57,15 @@ PanelWindow {
     readonly property real campanaAncho: campana?.width ?? 0
     readonly property bool colgada: campana !== null && campana.visible && campanaAncho > 0
     // Lo que sube la ventana por encima del recuadro: ahí van las curvas
-    readonly property int curvas: colgada ? 12 : 0
+    // (ya no hay curvas: es el hueco entre la campana y el recuadro)
+    readonly property int curvas: colgada ? 6 : 0
     // Dónde queda la campana dentro de la ventana
     readonly property real campanaDentro: campanaX - (modelData.width - margins.right - implicitWidth)
 
     // La campana se funde con el recuadro mientras está
     readonly property string clave: "avisos@" + modelData.name
-    onAparecerChanged: campana?.aportar(clave, colgada ? Math.min(1, aparecer * 3) : 0)
+    // (ya no: van sueltos bajo ella, con su hueco y sus esquinas)
+    onAparecerChanged: campana?.aportar(clave, 0)
     onColgadaChanged: if (!colgada && campana) campana.aportar(clave, 0)
     Component.onDestruction: campana?.aportar(clave, 0)
 
@@ -144,11 +145,11 @@ PanelWindow {
         // Colgando: redondo (la campana es estrecha: sus esquinas de arriba
         // quedan lejos de ella), menos si la campana llega a una esquina
         radius: ventana.colgada ? Tema.radioPanel : 0
-        topLeftRadius: ventana.colgada ? Math.min(Tema.radioPanel, Math.max(0, ventana.campanaDentro / 2))
+        topLeftRadius: ventana.colgada ? Tema.radioPanel
             : ventana.abajo && ventana.aLaDerecha ? Tema.radioPanel : 0
-        topRightRadius: ventana.colgada ? Math.min(Tema.radioPanel, Math.max(0, (width - ventana.campanaDentro - ventana.campanaAncho) / 2)) : 0
-        border.width: ventana.pegada ? Tema.borde(1) : 0
-        border.color: Tema.claro(0.08)
+        topRightRadius: ventana.colgada ? Tema.radioPanel : 0
+        border.width: ventana.pegada ? Tema.borde(1) : ventana.colgada ? Tema.borde(2) : 0
+        border.color: ventana.colgada ? Tema.panelBorde : Tema.claro(0.08)
         Behavior on height {
             enabled: !ventana.colgada
             NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic }
@@ -156,7 +157,7 @@ PanelWindow {
 
         // Sin borde del lado de la barra: se funde con ella
         Rectangle {
-            visible: parent.border.width > 0
+            visible: ventana.pegada && parent.border.width > 0
             x: parent.border.width
             y: ventana.abajo ? parent.height - height : 0
             width: parent.width - 2 * parent.border.width
@@ -230,7 +231,7 @@ PanelWindow {
     component Curva: Shape {
         property bool derecha: false
         property real r: 0
-        visible: ventana.colgada && r > 0.5
+        visible: false      // (ya no se funden con la campana)
         y: ventana.curvas - r
         width: r
         height: r

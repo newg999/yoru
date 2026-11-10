@@ -46,7 +46,7 @@ PanelWindow {
     implicitHeight: alto
     // (con el estilo dock no: ese ya lleva las apps, barra/BarraDock.qml)
     // (con la barra de Windows tampoco: las apps van en ella)
-    visible: Ajustes.dock !== "nunca" && !Ajustes.estiloDock && !Ajustes.windows
+    visible: Ajustes.dock !== "nunca" && !Ajustes.windows
     exclusionMode: siempre ? ExclusionMode.Normal : ExclusionMode.Ignore
     // Como la barra (Tema.zonaBarra): niri ya pone «gaps» tras la zona
     // reservada, así que se reserva eso de menos y entre la isla y las

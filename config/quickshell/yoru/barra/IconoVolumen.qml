@@ -1,5 +1,5 @@
 // ============================================================================
-//  IconoVolumen — el altavoz del dock (yoru-dock), dibujado: las ondas salen
+//  IconoVolumen — el altavoz del dock (el antiguo estilo Dock), dibujado: las ondas salen
 //  una a una según sube el volumen; silenciado, una X. Lo usa Ficha.qml.
 // ============================================================================
 import QtQuick

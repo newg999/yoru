@@ -11,6 +11,7 @@
 //  El centro de control entero sigue en la página «control» (ver Paginas.qml)
 // ============================================================================
 import QtQuick
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Widgets
 import Quickshell.Networking
@@ -57,120 +58,192 @@ Column {
         return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${seg}` : `${m}:${seg}`;
     }
 
-    Row {
+    // Una tarjeta sobre la propia carátula, muy desenfocada y oscurecida
+    // (como el reproductor del bloqueo): la carátula, la canción, por dónde
+    // va (lo que lleva y lo que falta) y los botones
+    ClippingRectangle {
+        id: tarjetaMusica
         visible: pagina.cual === "musica"
         width: parent.width
-        spacing: 12
-        ClippingRectangle {
-            id: caratula
-            width: 52; height: 52
-            radius: Tema.esquina(10)
-            color: Tema.caja
-            readonly property string imagen: Reproductor.caratula(pagina.reproductor)
-            Texto {
-                anchors.centerIn: parent
-                visible: caratula.imagen === ""
-                text: "󰝚"
-                font.pixelSize: 20
-            }
-            Image {
-                anchors.fill: parent
-                visible: caratula.imagen !== ""
-                source: caratula.imagen
-                fillMode: Image.PreserveAspectCrop
-                sourceSize: Qt.size(104, 104)
-                asynchronous: true
-            }
-        }
-        Column {
-            width: parent.width - caratula.width - parent.spacing
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 2
-            Texto {
-                width: parent.width
-                elide: Text.ElideRight
-                text: Reproductor.titulo(pagina.reproductor) || "Sin título"
-                color: Tema.blanco
-                font.pixelSize: 13
-            }
-            Texto {
-                width: parent.width
-                visible: text !== ""
-                elide: Text.ElideRight
-                text: pagina.reproductor?.trackArtist ?? ""
-                font.bold: false
-                font.pixelSize: 11
-            }
-            Texto {
-                width: parent.width
-                elide: Text.ElideRight
-                text: "en " + Reproductor.nombre(pagina.reproductor)
-                font.bold: false
-                font.pixelSize: 10
-                color: Tema.gris
-            }
-        }
-    }
+        height: musica.height + 28
+        radius: Tema.esquina(Tema.radioPanel - 4)
+        color: Tema.caja
+        readonly property string imagen: Reproductor.caratula(pagina.reproductor)
+        readonly property bool sonando: pagina.reproductor?.isPlaying ?? false
 
-    Column {
-        visible: pagina.cual === "musica" && (pagina.reproductor?.length ?? 0) > 0
-        width: parent.width
-        spacing: 2
-        Deslizador {
-            width: parent.width
-            conOndas: true
-            ondas: pagina.activa && (pagina.reproductor?.isPlaying ?? false)
-            valor: pagina.reproductor ? pagina.reproductor.position / pagina.reproductor.length : 0
-            onMovido: nuevo => {
-                if (pagina.reproductor?.canSeek)
-                    pagina.reproductor.position = nuevo * pagina.reproductor.length;
-            }
+        Image {
+            id: fondoArte
+            anchors.fill: parent
+            visible: false
+            source: tarjetaMusica.imagen
+            sourceSize: Qt.size(96, 96)
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
         }
-        Item {
-            width: parent.width
-            height: 14
-            Texto {
-                text: pagina.tiempo(pagina.reproductor?.position ?? 0)
-                font.bold: false; font.pixelSize: 10; color: Tema.gris
-            }
-            Texto {
-                anchors.right: parent.right
-                text: pagina.tiempo(pagina.reproductor?.length ?? 0)
-                font.bold: false; font.pixelSize: 10; color: Tema.gris
-            }
+        MultiEffect {
+            anchors.fill: parent
+            source: fondoArte
+            visible: fondoArte.status === Image.Ready
+            blurEnabled: true
+            blur: 1
+            blurMax: 64
+            brightness: -0.3
+            saturation: 0.3
+            autoPaddingEnabled: false
+            opacity: 0.8
+            Behavior on opacity { NumberAnimation { duration: Tema.normal } }
         }
-    }
-
-    Row {
-        visible: pagina.cual === "musica"
-        anchors.horizontalCenter: parent.horizontalCenter
-        spacing: 14
-        BotonIcono {
-            anchors.verticalCenter: parent.verticalCenter
-            icono: "󰒮"
-            onClic: pagina.reproductor?.previous()
+        // Un velo de abajo arriba: los botones se leen sobre cualquier carátula
+        Rectangle {
+            anchors.fill: parent
+            gradient: Gradient {
+                GradientStop { position: 0; color: "transparent" }
+                GradientStop { position: 1; color: Tema.sombra(0.35) }
+            }
         }
         Rectangle {
-            width: 40; height: 40; radius: 20
-            color: playRaton.containsMouse ? Tema.blanco : Tema.texto
-            Texto {
-                anchors.centerIn: parent
-                text: pagina.reproductor?.isPlaying ? "󰏤" : "󰐊"
-                font.pixelSize: 18
-                color: Tema.oscuro
-            }
-            MouseArea {
-                id: playRaton
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: pagina.reproductor?.togglePlaying()
-            }
+            anchors.fill: parent
+            radius: tarjetaMusica.radius
+            color: "transparent"
+            border.width: 1
+            border.color: Tema.claro(0.08)
         }
-        BotonIcono {
-            anchors.verticalCenter: parent.verticalCenter
-            icono: "󰒭"
-            onClic: pagina.reproductor?.next()
+
+        Column {
+            id: musica
+            x: 14
+            y: 14
+            width: parent.width - 28
+            spacing: 10
+
+            Row {
+                width: parent.width
+                spacing: 12
+                ClippingRectangle {
+                    id: caratula
+                    width: 58; height: 58
+                    radius: Tema.esquina(Tema.radioPanel - 6)
+                    color: Tema.claro(0.08)
+                    Texto {
+                        anchors.centerIn: parent
+                        visible: tarjetaMusica.imagen === ""
+                        text: "󰝚"
+                        font.pixelSize: 22
+                        color: Tema.gris
+                    }
+                    Image {
+                        anchors.fill: parent
+                        visible: tarjetaMusica.imagen !== ""
+                        source: tarjetaMusica.imagen
+                        fillMode: Image.PreserveAspectCrop
+                        sourceSize: Qt.size(116, 116)
+                        asynchronous: true
+                        // Late un poco con la música
+                        scale: tarjetaMusica.sonando ? 1 : 0.94
+                        Behavior on scale { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
+                    }
+                }
+                Column {
+                    width: parent.width - caratula.width - parent.spacing
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 1
+                    // De dónde sale, en pequeño y en mayúsculas
+                    Texto {
+                        width: parent.width
+                        elide: Text.ElideRight
+                        text: Reproductor.nombre(pagina.reproductor).toUpperCase()
+                        font.pixelSize: 9
+                        font.letterSpacing: 1.2
+                        color: Tema.gris
+                    }
+                    Texto {
+                        width: parent.width
+                        elide: Text.ElideRight
+                        text: Reproductor.titulo(pagina.reproductor) || "Sin título"
+                        color: Tema.blanco
+                        font.pixelSize: 14
+                    }
+                    Texto {
+                        width: parent.width
+                        visible: text !== ""
+                        elide: Text.ElideRight
+                        text: pagina.reproductor?.trackArtist ?? ""
+                        font.bold: false
+                        font.pixelSize: 12
+                        opacity: 0.75
+                    }
+                }
+            }
+
+            Column {
+                visible: (pagina.reproductor?.length ?? 0) > 0
+                width: parent.width
+                spacing: 0
+                Deslizador {
+                    width: parent.width
+                    conOndas: true
+                    ondas: pagina.activa && tarjetaMusica.sonando
+                    valor: pagina.reproductor ? pagina.reproductor.position / pagina.reproductor.length : 0
+                    onMovido: nuevo => {
+                        if (pagina.reproductor?.canSeek)
+                            pagina.reproductor.position = nuevo * pagina.reproductor.length;
+                    }
+                }
+                Item {
+                    width: parent.width
+                    height: 12
+                    Texto {
+                        text: pagina.tiempo(pagina.reproductor?.position ?? 0)
+                        font.bold: false; font.pixelSize: 10; color: Tema.gris
+                        font.features: { "tnum": 1 }
+                    }
+                    // Lo que falta
+                    Texto {
+                        anchors.right: parent.right
+                        text: "-" + pagina.tiempo((pagina.reproductor?.length ?? 0) - (pagina.reproductor?.position ?? 0))
+                        font.bold: false; font.pixelSize: 10; color: Tema.gris
+                        font.features: { "tnum": 1 }
+                    }
+                }
+            }
+
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 22
+                BotonIcono {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: pagina.reproductor?.canGoPrevious ?? true
+                    icono: "󰒮"
+                    onClic: pagina.reproductor?.previous()
+                }
+                Rectangle {
+                    width: 42; height: 42; radius: 21
+                    color: Tema.blanco
+                    scale: playRaton.pressed ? 0.92 : playRaton.containsMouse ? 1.06 : 1
+                    Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                    Texto {
+                        anchors.centerIn: parent
+                        // (el de pausa, centrado; el de play, un poco a la derecha: se ve centrado)
+                        anchors.horizontalCenterOffset: tarjetaMusica.sonando ? 0 : 1
+                        text: tarjetaMusica.sonando ? "󰏤" : "󰐊"
+                        font.pixelSize: 20
+                        color: Tema.oscuro
+                    }
+                    MouseArea {
+                        id: playRaton
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: pagina.reproductor?.togglePlaying()
+                    }
+                }
+                BotonIcono {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: pagina.reproductor?.canGoNext ?? true
+                    icono: "󰒭"
+                    onClic: pagina.reproductor?.next()
+                }
+            }
         }
     }
 

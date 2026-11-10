@@ -21,8 +21,8 @@
 //  Con la barra de Windows (fundido), todos se pegan a ella, sin hueco ni
 //  borde entre los dos, y suben desde ella como una persiana.
 //
-//  Con las islas, sale de la isla: nace de su ancho bajo ella y se
-//  despliega hacia abajo y hacia los lados, fundido con ella. Si la página
+//  Con las islas, sale bajo su isla, suelto (con un pequeño hueco y todas
+//  sus esquinas redondas: la isla no cambia), y se despliega hacia abajo. Si la página
 //  nueva cuelga de otra isla, el panel se cierra y se abre desde ella
 //  (Paneles.abrirPagina).
 // ============================================================================
@@ -73,8 +73,10 @@ PanelWindow {
     // La isla pierde sus esquinas de abajo enseguida al abrirse y no las
     // recupera hasta que el panel casi se ha ido (al ritmo del panel
     // asomaba el fondo entre los dos en la esquina)
+    // (ya no se funden: el panel va suelto bajo la isla, con su hueco y sus
+    // esquinas, y la isla se queda como está)
     function fusion() {
-        return Math.min(1, progreso * 4) * cerca;
+        return 0;
     }
     // Al pasar de una isla a otra, el panel se desliza hasta ella: la isla
     // nueva se funde (y salen las curvas) según llega, no antes (si no,
@@ -123,6 +125,8 @@ PanelWindow {
         NumberAnimation { duration: Tema.normal > 0 ? 460 : 0; easing.type: Easing.OutQuint }
     }
     readonly property int bajoIslas: Tema.margenBarra + Tema.altoBarra
+    // El hueco entre la isla y el panel que cuelga de ella
+    readonly property int separacion: 6
     readonly property bool vertical: Ajustes.vertical
     readonly property bool abajo: Ajustes.abajo
 
@@ -215,7 +219,7 @@ PanelWindow {
                 : anclado ? ventana.ancla.ancho : ventana.ancho
             readonly property real xFinal: Math.round(Math.max(Tema.margenLados, Math.min(parent.width - anchoFinal - Tema.margenLados,
                 ventana.islaX + (ventana.islaAncho - anchoFinal) / 2)))
-            width: colgado ? ventana.islaAncho + (anchoFinal - ventana.islaAncho) * ventana.progreso : anchoFinal
+            width: anchoFinal
             // Lo que sobresale a cada lado de la isla (ahí van las curvas)
             readonly property real sobraIzquierda: colgado ? ventana.islaX - x : 0
             readonly property real sobraDerecha: colgado ? x + width - ventana.islaX - ventana.islaAncho : 0
@@ -237,7 +241,7 @@ PanelWindow {
 
             x: enMedio ? Math.round((parent.width - width) / 2)
                 // Centrado bajo la isla, sin salirse de la pantalla
-                : colgado ? ventana.islaX + (xFinal - ventana.islaX) * ventana.progreso
+                : colgado ? xFinal
                 : anclado ? ventana.ancla.x
                 : ventana.vertical ? Tema.hueco - deslizar
                 // Pegado al borde de la pantalla, su borde de ese lado queda
@@ -248,7 +252,7 @@ PanelWindow {
             // (en el recorte, que con la minimalista empieza bajo la barra)
             y: enMedio ? Math.round((ventana.height - height) / 2) - recorte.y
                 : fundido ? parent.height - ventana.hasta1 * height
-                : colgado ? 0
+                : colgado ? ventana.separacion
                 : comoDock ? (pegado ? 0 : Tema.hueco)
                 : pegado ? -(1 - ventana.hasta1) * height
                 : ventana.abajo ? parent.height - height - Tema.hueco + deslizar
@@ -271,21 +275,19 @@ PanelWindow {
             // (fundido con la de abajo: redondo arriba, recto contra ella y
             // contra el borde de la pantalla)
             // (colgado de una isla: recto donde sigue su borde)
-            topLeftRadius: colgado ? Math.min(radius, Math.max(0, sobraIzquierda / 2))
-                : pegado && (!fundido || sitio === "izquierda") ? 0 : radius
-            topRightRadius: colgado ? Math.min(radius, Math.max(0, sobraDerecha / 2))
-                : pegado && (!fundido || sitio === "derecha") ? 0 : radius
+            topLeftRadius: pegado && (!fundido || sitio === "izquierda") ? 0 : radius
+            topRightRadius: pegado && (!fundido || sitio === "derecha") ? 0 : radius
             bottomLeftRadius: pegado ? 0 : radius
             bottomRightRadius: pegado ? 0 : radius
             color: Tema.panel
-            border.width: colgado ? 0 : pegado ? Tema.borde(1) : Tema.borde(2)
+            border.width: pegado ? Tema.borde(1) : Tema.borde(2)
             border.color: pegado ? Tema.claro(0.08) : Tema.panelBorde
             clip: true
 
             // Como el dock: un brillo suave del acento arriba (colgando de
             // una isla, no: se notaba la costura con ella y con las curvas)
             Rectangle {
-                visible: caja.comoDock && !caja.colgado && !caja.pegado
+                visible: caja.comoDock && !caja.pegado
                 anchors.fill: parent
                 topLeftRadius: caja.topLeftRadius
                 topRightRadius: caja.topRightRadius
@@ -358,7 +360,7 @@ PanelWindow {
     component Curva: Shape {
         property bool derecha: false
         property real r: 0
-        visible: caja.colgado && r > 0.5
+        visible: false      // (ya no se funde con la isla)
         // Se funden con la caja al cerrarse (si no, quedaban las esquinas)
         opacity: caja.opacity
         y: ventana.bajoIslas - r

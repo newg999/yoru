@@ -569,7 +569,7 @@ enlazar_todo() {
         enlazar "$carpeta" "$CONFIG_DIR/$(basename "$carpeta")"
     done
     # Quickshell: ~/.config/quickshell es una carpeta de verdad con un enlace
-    # por shell (yoru, yoru-dock). Si fuera un enlace al repo, otros shells
+    # por shell (yoru). Si fuera un enlace al repo, otros shells
     # (el de NextKDE en la sesión de KDE) se instalarían dentro del repo
     if [[ -L "$CONFIG_DIR/quickshell" && "$(readlink -f "$CONFIG_DIR/quickshell")" == "$REPO/config/quickshell" ]]; then
         rm "$CONFIG_DIR/quickshell"

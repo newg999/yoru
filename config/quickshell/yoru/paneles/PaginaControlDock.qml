@@ -1,6 +1,6 @@
 // ============================================================================
 //  Página «control» de las islas (☰ a la derecha), con el aspecto de los
-//  paneles del dock (yoru-dock), también en la minimalista. La de Windows sigue
+//  paneles del dock (el antiguo estilo Dock), también en la minimalista. La de Windows sigue
 //  siendo PaginaControl.qml.
 //
 //    (夜) don                              󰅌 󰒓      portapapeles y ajustes

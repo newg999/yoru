@@ -81,31 +81,11 @@ ShellRoot {
         model: Quickshell.screens
         Barra {}
     }
-    // O el estilo Dock: un Quickshell aparte (config/quickshell/yoru-dock, un
-    // port de LeyzS QsDock) que se arranca y se para con el estilo. Al
-    // pararlo, se quita el espacio que reservaba en niri
-    // (solo con ajustes.json ya leído: antes, el estilo aún es el de serie y
-    // se cerraba el dock en cada recarga)
-    function estiloDock() {
-        if (!Ajustes.leido)
-            return;
-        if (Ajustes.estiloDock)
-            Quickshell.execDetached(["qs", "-c", "yoru-dock", "-n", "-d"]);
-        else
-            Quickshell.execDetached(["sh", "-c",
-                'qs kill -c yoru-dock >/dev/null 2>&1; f="$HOME/.local/state/yoru/niri-dock.kdl"; [ -s "$f" ] && : > "$f"; true']);
-    }
-    Connections {
-        target: Ajustes
-        function onEstiloDockChanged() {
-            raiz.estiloDock();
-        }
-        function onLeidoChanged() {
-            raiz.estiloDock();
-        }
-    }
     Component.onCompleted: {
-        estiloDock();
+        // El estilo Dock (yoru-dock) ya no existe: si quedó uno abierto de
+        // antes, se cierra, y fuera el espacio que reservaba en niri
+        Quickshell.execDetached(["sh", "-c",
+            'qs kill -c yoru-dock >/dev/null 2>&1; rm -f "$HOME/.local/state/yoru/niri-dock.kdl"; true']);
         // Bluetooth: como lo dejaste la última vez (comun/Radios.qml)
         Radios.recuerdo;
     }
@@ -221,15 +201,6 @@ ShellRoot {
             const pantalla = Quickshell.screens.find(s => s.name === salida) ?? Quickshell.screens[0];
             // Las páginas: el control y sus listas a la derecha (bajo la
             // conexión), el resto en el centro
-            // Con el estilo Dock, lo que el dock tiene lo abre él (se
-            // transforma en ese panel)
-            const delDock = {conexion: "net", notificaciones: "notif", bateria: "bat", lanzador: "apps", fondos: "walls"};
-            const pagDock = {wifi: "net", bluetooth: "net", audio: "audio", micro: "audio", control: "dash", sistema: "dash", "": "dash"};
-            const modo = nombre === "pildora" ? pagDock[seccion] : nombre === "conexion" && ["audio", "micro"].includes(seccion) ? "audio" : delDock[nombre];
-            if (Ajustes.estiloDock && modo) {
-                Quickshell.execDetached(["qs", "-c", "yoru-dock", "ipc", "call", "dock", modo]);
-                return;
-            }
             if (nombre === "pildora")
                 Paneles.abrirPagina(pantalla, seccion,
                     ["control", "wifi", "bluetooth", "audio", "micro", ""].includes(seccion) ? "derecha" : "centro");

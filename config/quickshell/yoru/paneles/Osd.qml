@@ -80,10 +80,7 @@ PanelWindow {
     Behavior on progreso { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
 
     visible: progreso > 0
-    // Con el estilo Dock, arriba: abajo está el dock y su panel de sonido
-    // (sin barra, arriba no hay nada)
-    anchors.bottom: !Ajustes.estiloDock
-    anchors.top: Ajustes.estiloDock
+    anchors.bottom: true
     margins.bottom: 60
     margins.top: 40
     implicitWidth: 320
@@ -110,7 +107,7 @@ PanelWindow {
         border.color: Tema.panelBorde
         opacity: osd.progreso
         scale: 0.94 + 0.06 * osd.progreso
-        transform: Translate { y: (1 - osd.progreso) * (Ajustes.estiloDock ? -12 : 12) }
+        transform: Translate { y: (1 - osd.progreso) * 12 }
 
         Texto {
             id: icono

@@ -1,6 +1,6 @@
 // ============================================================================
 //  Batería — se abre con la isla de la batería, con el aspecto del panel
-//  de la batería del dock (yoru-dock):
+//  de la batería del dock (el antiguo estilo Dock):
 //
 //    ‹ Batería                        [󰚥 Enchufada]
 //    ▐████████~~   │  99 %                         la pila, llena de líquido

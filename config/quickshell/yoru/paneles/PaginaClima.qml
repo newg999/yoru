@@ -1,6 +1,6 @@
 // ============================================================================
 //  Página «clima» de las islas (el tiempo), con el aspecto del panel del
-//  tiempo del dock (yoru-dock). Los datos: comun/Tiempo.qml
+//  tiempo del dock (el antiguo estilo Dock). Los datos: comun/Tiempo.qml
 //
 //    ‹ Clima                                  ⟳
 //    ┌──────────────────────────────────────┐

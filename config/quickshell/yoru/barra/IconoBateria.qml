@@ -1,5 +1,5 @@
 // ============================================================================
-//  IconoBateria — la pila del dock (yoru-dock): contorno, relleno del color
+//  IconoBateria — la pila del dock (el antiguo estilo Dock): contorno, relleno del color
 //  por colores hasta la carga (verde, amarillo, naranja, rojo) y un rayo al cargar.
 //  Lo usa Ficha.qml.
 // ============================================================================

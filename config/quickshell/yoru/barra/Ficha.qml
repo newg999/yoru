@@ -12,7 +12,7 @@
 //    }
 //
 //  Con los iconos del dock (Ajustes.iconosDock), como los botones de
-//  yoru-dock: sin ficha de fondo, el icono suelto y más grande, del color
+//  el antiguo estilo Dock: sin ficha de fondo, el icono suelto y más grande, del color
 //  del tema si está encendida o con el ratón encima, y al pasar el ratón
 //  crece con un muelle. La batería, el volumen (volumen: 0..1) y el cable
 //  (cable: true) se dibujan como allí (IconoBateria, IconoVolumen, IconoCable).

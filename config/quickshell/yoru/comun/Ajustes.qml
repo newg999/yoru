@@ -15,7 +15,7 @@ Singleton {
     id: ajustes
 
     // ------------------------------------------------------- Barra y dock
-    property alias barra: datos.barra                 // "arriba" · "izquierda" (islas) · "minimalista" · "dock" · "windows"
+    property alias barra: datos.barra                 // "arriba" · "izquierda" (islas) · "minimalista" · "windows"
     property alias dock: datos.dock                   // "overview" · "siempre" · "nunca"
     property alias islaTitulo: datos.islaTitulo
     property alias ventanas: datos.ventanas           // "activa" (icono y título) · "abiertas" (todas)
@@ -27,7 +27,7 @@ Singleton {
 
     // ------------------------------------------------------------ Aspecto
     property alias radio: datos.radio                 // esquinas de islas y paneles (px)
-    property alias radioVentanas: datos.radioVentanas // esquinas de las ventanas (px, ver abajo)
+    property alias radioVentanas: datos.radioVentanas // (ya no se usa: las ventanas siguen a «radio», ver abajo)
     property alias ventanasAPares: datos.ventanasAPares // dos ventanas que llenan la pantalla: al agrandar una, la otra se encoge (Niri.qml)
     property alias opacidadIslas: datos.opacidadIslas
     property alias opacidadPaneles: datos.opacidadPaneles
@@ -70,45 +70,13 @@ Singleton {
     readonly property bool minimalista: barra === "minimalista"
     // Todo recto: con la minimalista
     readonly property bool recto: minimalista
-    // Estilo dock: el dock de config/quickshell/yoru-dock (un port de LeyzS
-    // QsDock), que la barra arranca aparte (shell.qml)
-    readonly property bool estiloDock: barra === "dock"
     // Barra de tareas como la de Windows 11, abajo (barra/BarraWindows.qml):
     // la única que va abajo, así que los paneles salen hacia arriba
     readonly property bool windows: barra === "windows"
     readonly property bool abajo: windows
-    // Minimalista, dock y Windows: sin islas
-    readonly property bool centrada: minimalista || estiloDock || windows
+    // Minimalista y Windows: sin islas
+    readonly property bool centrada: minimalista || windows
 
-    // Su lado y si se esconde los guarda el propio dock; aquí se leen y se
-    // cambian (Ajustes › Barra y dock)
-    readonly property string carpetaDock: Quickshell.env("HOME") + "/.local/share/quickshell"
-    property string dockLado: "izquierda"     // dock-yon: «dikey» (izquierda) o «yatay» (abajo)
-    property bool dockEsconder: true          // dock-mod: «gizli» (se esconde) o «sabit»
-    FileView {
-        path: ajustes.carpetaDock + "/dock-yon"
-        watchChanges: true
-        printErrors: false
-        onFileChanged: reload()
-        onLoaded: ajustes.dockLado = text().trim() === "yatay" ? "abajo" : "izquierda"
-    }
-    FileView {
-        id: archivoModoDock
-        path: ajustes.carpetaDock + "/dock-mod"
-        watchChanges: true
-        printErrors: false
-        onFileChanged: reload()
-        onLoaded: ajustes.dockEsconder = text().trim() !== "sabit"
-    }
-    // Cambiar de lado: el dock lo hace con su animación (la «serpiente»)
-    function ponerDockLado(lado) {
-        if (lado !== dockLado)
-            Quickshell.execDetached(["qs", "-c", "yoru-dock", "ipc", "call", "dock", "yon"]);
-    }
-    function ponerDockEsconder(si) {
-        Quickshell.execDetached(["sh", "-c", 'mkdir -p "$1" && printf "%s\n" "$2" > "$1/dock-mod"',
-            "sh", carpetaDock, si ? "gizli" : "sabit"]);
-    }
 
     // Vuelve a dejar el aspecto (no la barra ni el dock) como al principio
     function restablecerAspecto() {
@@ -140,10 +108,12 @@ Singleton {
     // Los dibuja niri: se le escribe este archivo, que config/niri/config.kdl
     // incluye después de rules.kdl (gana lo último). Con la barra
     // minimalista, sin huecos entre ventanas ni con los bordes y sin
-    // esquinas redondas (no se pueden cambiar: todo recto, como ella)
+    // esquinas redondas (no se pueden cambiar: todo recto, como ella).
+    // Las esquinas son las mismas que las de los paneles (Tema.radioPanel):
+    // así ventanas, islas y paneles van a juego
     readonly property string niriVentanas: `// Generado por la barra (Ajustes → Aspecto y Barra). No lo edites: se sobrescribe.
 window-rule {
-    geometry-corner-radius ${datos.barra === "minimalista" ? 0 : datos.radioVentanas}
+    geometry-corner-radius ${datos.barra === "minimalista" ? 0 : datos.radio + 4}
     clip-to-geometry true
 }
 ` + (datos.barra === "minimalista" ? `layout {
@@ -169,7 +139,7 @@ window-rule {
         recargarNiri.restart();
     }
     // Un momento después: al avisar del cambio, niriVentanas aún no está al día
-    onRadioVentanasChanged: if (_ventanasLeido) Qt.callLater(escribirVentanas, true)
+    onRadioChanged: if (_ventanasLeido) Qt.callLater(escribirVentanas, true)
     onBarraChanged: if (_ventanasLeido) Qt.callLater(escribirVentanas, true)
     Timer {
         id: recargarNiri
@@ -185,7 +155,12 @@ window-rule {
         watchChanges: true
         atomicWrites: true
         onFileChanged: reload()
-        onLoaded: ajustes.leido = true
+        onLoaded: {
+            // El estilo Dock (yoru-dock) ya no existe: quien lo tenía pasa a las islas
+            if (datos.barra === "dock")
+                datos.barra = "arriba";
+            ajustes.leido = true;
+        }
         // Cualquier cambio desde el panel se guarda al momento
         onAdapterUpdated: writeAdapter()
         // Primera vez: se crea con los valores de aquí

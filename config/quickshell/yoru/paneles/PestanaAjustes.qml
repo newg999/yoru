@@ -308,39 +308,17 @@ Item {
                 opciones: [
                     {id: "arriba", icono: "󰕮", texto: "Islas"},
                     {id: "minimalista", icono: "󰖯", texto: "Minimalista"},
-                    {id: "dock", icono: "󰍉", texto: "Dock"},
                     {id: "windows", icono: "󰖳", texto: "Windows"}
                 ]
                 valor: Ajustes.barra
                 onElegir: id => Ajustes.barra = id
-            }
-            // Estilo dock: de qué lado y si se esconde
-            Opciones {
-                visible: Ajustes.estiloDock
-                width: parent.width
-                opciones: [
-                    {id: "izquierda", icono: "󰁍", texto: "A la izquierda"},
-                    {id: "abajo", icono: "󰁅", texto: "Abajo"}
-                ]
-                valor: Ajustes.dockLado
-                onElegir: id => Ajustes.ponerDockLado(id)
-            }
-            Interruptor {
-                visible: Ajustes.estiloDock
-                width: parent.width
-                titulo: "Esconder solo"
-                detalle: "Se mete en el borde y sale al acercar el ratón (o si ninguna ventana lo tapa)"
-                activo: Ajustes.dockEsconder
-                onCambiar: v => Ajustes.ponerDockEsconder(v)
             }
             Texto {
                 visible: Ajustes.centrada
                 width: parent.width
                 leftPadding: 12
                 wrapMode: Text.WordWrap
-                text: Ajustes.estiloDock
-                    ? "El dock de LeyzS QsDock, adaptado a Yoru: pegado al borde, con tus apps, lo que suena y la hora; se transforma en cada panel. Doble clic en 夜 lo cambia de lado."
-                    : Ajustes.windows
+                text: Ajustes.windows
                     ? "Una barra de tareas abajo, como la de Windows 11: 夜 (Inicio), buscar y tus apps en el centro; el tiempo a la izquierda; la bandeja, la conexión y la hora a la derecha. Los paneles suben encima de ella."
                     : "Una barra fina de lado a lado: escritorios y ventana a la izquierda, la hora en el centro y la bandeja a la derecha. Al pulsarla, el centro de control se abre debajo."
                 font.bold: false
@@ -478,18 +456,11 @@ Item {
             }
             Regulador {
                 visible: !Ajustes.recto
-                titulo: "Esquinas de la barra"
+                titulo: "Esquinas"
+                // Las de la barra, los paneles y las ventanas, todas a juego
                 valor: Ajustes.radio / 20
                 mostrado: Ajustes.radio + " px"
                 onMovido: nuevo => Ajustes.radio = Math.round(nuevo * 20)
-            }
-            // Las de niri: 0 (en ángulo recto) a 24 px
-            Regulador {
-                visible: !Ajustes.recto
-                titulo: "Esquinas de las ventanas"
-                valor: Ajustes.radioVentanas / 24
-                mostrado: Ajustes.radioVentanas + " px"
-                onMovido: nuevo => Ajustes.radioVentanas = Math.round(nuevo * 24)
             }
             Interruptor {
                 width: parent.width

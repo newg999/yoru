@@ -1,6 +1,6 @@
 // ============================================================================
 //  Página «red» de las islas (la ficha del wifi), con el aspecto del panel
-//  de red del dock (yoru-dock):
+//  de red del dock (el antiguo estilo Dock):
 //
 //    ‹ Red                                   ⟳     ‹ cerrar · ⟳ buscar redes
 //    ┌──────────────────────────────────────┐

@@ -14,7 +14,6 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 |---|---|---|
 | Compositor | `niri` | `config/niri/` |
 | Barra y paneles | `quickshell` | `config/quickshell/yoru/` |
-| Estilo Dock de la barra | port de [LeyzS QsDock](https://github.com/L3yzs/LeyzS-QsDock) (MIT) adaptado a niri y a Yoru | `config/quickshell/yoru-dock/` |
 | Capturas con editor | `slurp` + `swappy` | `config/swappy/` |
 | Tienda de apps | `quickshell` + `flatpak` + `dnf` | `config/quickshell/yoru/paneles/Tienda.qml` |
 | Test de velocidad | `quickshell` + Cloudflare | `config/quickshell/yoru/paneles/Velocidad.qml` |
@@ -164,7 +163,7 @@ Solo se copia el sistema (`/`), no `/home`: tus archivos y tu configuración no 
 | Qué arranca al iniciar | `config/niri/config.kdl` → `spawn-at-startup` |
 | Esquinas, ventanas flotantes | `config/niri/rules.kdl` |
 | Notas adhesivas en el escritorio | `Mod+Alt+K` o el lanzador → «Nota nueva». En markdown: al escribir, el texto tal cual; al salir (Esc o clic fuera), con formato (`#` títulos, listas, `- [ ]` tareas que se marcan con un clic, **negrita**, `código`, enlaces…). Se arrastran por arriba, se agrandan por la esquina de abajo a la derecha, 󰐕 crea otra y 󰅖 la borra (con texto, pide un segundo clic). Se guardan solas en `~/.local/state/yoru/notas.json` |
-| VPN (WireGuard u OpenVPN) | Centro de control → baldosa de red (Wi-Fi o Ethernet) 󰅀 → VPN: un interruptor por cada una y 󰐕 para añadir un `.conf` o `.ovpn` (busca en tu carpeta personal o escribes la ruta). Se guardan en NetworkManager; con una conectada sale un escudo en la barra. Con el estilo Dock: panel de red → baldosa VPN (clic = conectar/desconectar; 󰅀 = la lista, con «Añadir VPN»), o `qs -c yoru-dock ipc call dock vpn` |
+| VPN (WireGuard u OpenVPN) | Centro de control → baldosa de red (Wi-Fi o Ethernet) 󰅀 → VPN: un interruptor por cada una y 󰐕 para añadir un `.conf` o `.ovpn` (busca en tu carpeta personal o escribes la ruta). Se guardan en NetworkManager; con una conectada sale un escudo en la barra. |
 | Ratón, touchpad y cursor | Ajustes › Ratón (`Mod+Alt+T`): velocidad, rueda, aceleración, zurdos, tocar para hacer clic, tamaño del cursor... Se guarda en `config/niri/raton.kdl` (no se sube a git), que manda sobre lo que pongas a mano en `local.kdl` |
 | Distribución de teclado, repetición, Bloq Mayús | Ajustes › Teclado (`Mod+Alt+T`): añade otras distribuciones (y cambia con Alt+Mayús), cuánto espera y lo rápido que repite una tecla, Bloq Mayús como Escape o Ctrl... Se guarda en el mismo `config/niri/raton.kdl`, que el instalador copia también a la pantalla de inicio de sesión |
 | Sonido | Ajustes › Sonido: salida y micrófono (con su volumen y el nivel del micro) y el volumen de cada app que suena |

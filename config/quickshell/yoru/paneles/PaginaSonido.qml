@@ -1,6 +1,6 @@
 // ============================================================================
 //  Página «sonido» de las islas (la ficha del volumen), con el aspecto del
-//  panel de sonido del dock (yoru-dock):
+//  panel de sonido del dock (el antiguo estilo Dock):
 //
 //    ‹ Sonido                                     ⚙   ⚙ = pavucontrol
 //    ┌──────────────────────────────────────┐

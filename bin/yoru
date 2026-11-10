@@ -297,12 +297,8 @@ cmd_iconos() {
     for ini in "$HOME/.config/gtk-3.0/settings.ini" "$HOME/.config/gtk-4.0/settings.ini"; do
         [[ -f "$ini" ]] && sed -i "s/^gtk-icon-theme-name=.*/gtk-icon-theme-name=$tema/" "$ini"
     done
-    # La barra (y el dock, si está) lo leen al arrancar
+    # La barra lo lee al arrancar
     systemctl --user restart yoru-shell
-    if pgrep -f "qs -c yoru-dock" >/dev/null; then
-        qs kill -c yoru-dock >/dev/null 2>&1
-        setsid -f qs -c yoru-dock -n -d >/dev/null 2>&1
-    fi
     ok "Hecho. Las apps que ya estaban abiertas lo cogen al volver a abrirlas"
 }
 

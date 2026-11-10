@@ -1,6 +1,6 @@
 // ============================================================================
 //  Página «calendario» de las islas (la hora), con el aspecto del panel del
-//  calendario del dock (yoru-dock):
+//  calendario del dock (el antiguo estilo Dock):
 //
 //    ‹ Calendario
 //    ┌──────────────────────────────────────┐

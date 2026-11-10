@@ -115,8 +115,7 @@ Singleton {
             if (!pantalla)
                 continue;
             const hueco = Ajustes.minimalista ? 0 : Tema.gaps;
-            const dock = Ajustes.estiloDock && !Ajustes.dockEsconder && Ajustes.dockLado === "izquierda" ? 56 : 0;
-            const util = pantalla.width - dock - 3 * hueco;
+            const util = pantalla.width - 3 * hueco;
             // Aunque antes no llenaran la pantalla (una casi entera y la otra
             // asomando): desde ahora sí. Menos si esta se ha puesto casi
             // entera (maximizar): no se aplasta la otra
