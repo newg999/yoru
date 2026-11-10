@@ -1,32 +1,38 @@
 // ============================================================================
 //  Cerradura — lo que se ve al bloquear la pantalla y al iniciar sesión
-//  Al estilo del iPhone: todo centrado, la hora arriba y la contraseña abajo
+//  Estilo «Noche» (Yoru, 夜): el fondo casi nítido moviéndose despacio, un
+//  cielo de estrellas que titilan (y alguna fugaz) y todo fino y centrado
 //
-//                                 󰌾                        (arriba: red, volumen...)
-//                       sábado, 8 de noviembre
-//                              14:32
+//      ·        ✦          ·            ·              (arriba: red, volumen...)
+//           ·            ·        ✦
+//                       夜                  ← marca de agua, detrás de la hora
+//                     16:29                 ← fina; los dos puntos laten
+//                  ───────────
+//          MARTES · 10 DE NOVIEMBRE · 14°
 //
-//                [ la música ]   [ las notificaciones ]           ← abajo
+//          [ la música ]   [ las notificaciones ]
 //
-//                               (D)
-//                               don
-//                       ( ● ● ● ●        󰈈 󰌌 ↵ )
-//   ⏻                   Contraseña incorrecta                   (esquina)
+//                    (D)  don
+//            󰌾  ● ● ● ●              󰈈 󰌌 →
+//            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   ← raya que se enciende al escribir
+//   ⏻                Contraseña incorrecta              (esquina)
 //
 //  Mientras no tocas nada, abajo solo pone «Escribe para desbloquear»; al
 //  escribir o mover el ratón sube tu foto, tu nombre y la contraseña (y se
 //  vuelve a esconder si pasa un rato sin escribir nada; esconderContrasena:
 //  false la deja siempre a la vista).
 //
-//  Animaciones (animar: false las quita): al bloquear el fondo se acerca y
-//  cada parte entra por turno; cada punto de la contraseña aparece con un
-//  saltito; al fallar tiembla; al acertar, salir() abre el candado, todo sube
-//  y se funde, y avisa con la señal fuera() (entonces se desbloquea).
+//  Animaciones (animar: false las quita, y el cielo se queda quieto): al
+//  bloquear el fondo se acerca y cada parte entra por turno; cada punto de
+//  la contraseña aparece con un saltito; al fallar la raya se pone roja y
+//  tiembla; al acertar, salir() abre el candado, todo sube y se funde, y
+//  avisa con la señal fuera() (entonces se desbloquea).
 //
 //  Solo usa QtQuick: no depende del resto de Yoru, para que la pantalla de
 //  inicio (system/greetd/yoru/, que corre como otro usuario) use este mismo
 //  archivo. Los colores y la letra se le pasan. Los iconos van dibujados
 //  (SVG) y no con la Nerd Font: el usuario de la pantalla de inicio no la ve.
+//  El 夜 solo sale si hay letra japonesa (google-noto-serif-cjk-vf-fonts).
 //
 //  ⏻ abre Suspender / Reiniciar / Apagar (señal «energia»). 󰈈 enseña lo
 //  escrito, 󰌌 cambia la distribución del teclado (señal «cambiarTeclado»;
@@ -218,7 +224,20 @@ Item {
         y: (1 - paso) * desde - cerradura.fuera1 * 18
     }
 
+    // Las cifras de la hora: finas y pegadas (sin el aire de encima y debajo)
+    component Cifra: Text {
+        color: cerradura.colorTexto
+        font.family: cerradura.fuente
+        font.pixelSize: cabeza.tam
+        font.weight: Font.ExtraLight
+        font.features: { "tnum": 1 }
+        height: Math.round(cabeza.tam * 0.9)
+        verticalAlignment: Text.AlignVCenter
+    }
+
     // ------------------------------------------------------------ Fondo
+    // El fondo, apenas desenfocado, se mueve muy despacio (como si
+    // respirara); encima, un velo de noche más fuerte arriba y abajo
     Rectangle {
         anchors.fill: parent
         color: cerradura.colorOscuro
@@ -227,42 +246,160 @@ Item {
     Item {
         id: capaFondo
         anchors.fill: parent
+        clip: true
         // Se acerca al bloquear y se aleja un poco al desbloquear
         opacity: cerradura.pFondo * (1 - cerradura.fuera2)
         scale: 1.03 - 0.03 * cerradura.pFondo + 0.015 * cerradura.fuera2
 
-        Image {
-            id: imagen
-            anchors.fill: parent
-            source: cerradura.fondo
-            fillMode: Image.PreserveAspectCrop
-            sourceSize: Qt.size(Math.max(1, width / 2), Math.max(1, height / 2))   // va desenfocado: basta a media resolución
-            // Pequeño y ya desenfocado: se carga antes de enseñar la pantalla
-            asynchronous: cerradura.desenfocar
-            visible: !cerradura.desenfocar
+        Item {
+            id: deriva
+            // Algo más grande que la pantalla, para moverse sin enseñar el borde.
+            // Recorre un ocho tumbado: una vuelta cada dos minutos
+            property real fase: 0
+            width: parent.width * 1.06
+            height: parent.height * 1.06
+            x: -parent.width * 0.03 + Math.sin(fase) * parent.width * 0.024
+            y: -parent.height * 0.03 + Math.sin(2 * fase) * parent.height * 0.022
+            NumberAnimation on fase {
+                running: cerradura.animar && cerradura.visible
+                from: 0
+                to: 2 * Math.PI
+                duration: 120000
+                loops: Animation.Infinite
+            }
+
+            Image {
+                id: imagen
+                anchors.fill: parent
+                source: cerradura.fondo
+                fillMode: Image.PreserveAspectCrop
+                sourceSize: Qt.size(Math.max(1, width), Math.max(1, height))
+                // Ya desenfocado: se carga antes de enseñar la pantalla
+                asynchronous: cerradura.desenfocar
+                visible: !cerradura.desenfocar
+            }
+            MultiEffect {
+                anchors.fill: parent
+                source: imagen
+                visible: cerradura.desenfocar && imagen.status === Image.Ready
+                blurEnabled: true
+                blur: 0.5
+                blurMax: 32
+                autoPaddingEnabled: false
+            }
         }
-        MultiEffect {
-            anchors.fill: parent
-            source: imagen
-            visible: cerradura.desenfocar && imagen.status === Image.Ready
-            blurEnabled: true
-            blur: 1.0
-            blurMax: 48
-            saturation: -0.1
-            autoPaddingEnabled: false
-        }
-        // Un velo oscuro, más fuerte arriba (la hora) y abajo (la contraseña)
         Rectangle {
             anchors.fill: parent
-            color: cerradura.conAlfa(cerradura.colorOscuro, 0.28)
+            color: cerradura.conAlfa(cerradura.colorOscuro, 0.22)
         }
         Rectangle {
             anchors.fill: parent
             gradient: Gradient {
-                GradientStop { position: 0; color: cerradura.conAlfa(cerradura.colorOscuro, 0.5) }
-                GradientStop { position: 0.4; color: cerradura.conAlfa(cerradura.colorOscuro, 0) }
-                GradientStop { position: 0.7; color: cerradura.conAlfa(cerradura.colorOscuro, 0) }
-                GradientStop { position: 1; color: cerradura.conAlfa(cerradura.colorOscuro, 0.55) }
+                GradientStop { position: 0; color: cerradura.conAlfa(cerradura.colorOscuro, 0.78) }
+                GradientStop { position: 0.42; color: cerradura.conAlfa(cerradura.colorOscuro, 0.12) }
+                GradientStop { position: 0.62; color: cerradura.conAlfa(cerradura.colorOscuro, 0.12) }
+                GradientStop { position: 1; color: cerradura.conAlfa(cerradura.colorOscuro, 0.8) }
+            }
+        }
+    }
+
+    // ------------------------------------------------------- El cielo
+    // Estrellas que titilan (más arriba que abajo) y, de vez en cuando, una
+    // estrella fugaz. Sin animaciones, quietas
+    Item {
+        id: cielo
+        anchors.fill: parent
+        opacity: cerradura.pFondo * cerradura.queda
+
+        Repeater {
+            model: 90
+            Item {
+                id: estrella
+                required property int index
+                // Unas pocas, más grandes y con halo
+                readonly property bool grande: index < 6
+                readonly property real fx: Math.random()
+                readonly property real fy: Math.pow(Math.random(), 1.7) * 0.62
+                readonly property real brillo: grande ? 0.9 : 0.2 + Math.random() * 0.55
+                readonly property real tam: grande ? 2.6 : (Math.random() < 0.8 ? 1.4 : 2)
+                x: Math.round(fx * cielo.width)
+                y: Math.round(fy * cielo.height)
+                width: 0
+                height: 0
+                // Se apagan al bajar, para no ensuciar la contraseña
+                opacity: brillo * Math.min(1, (0.66 - fy) / 0.25)
+
+                Rectangle {
+                    visible: estrella.grande
+                    anchors.centerIn: parent
+                    width: 11
+                    height: 11
+                    radius: width / 2
+                    color: cerradura.conAlfa(cerradura.colorAcento, 0.16)
+                }
+                Rectangle {
+                    id: punto
+                    anchors.centerIn: parent
+                    width: estrella.tam
+                    height: estrella.tam
+                    radius: width / 2
+                    color: estrella.grande ? cerradura.colorAcento : cerradura.colorTexto
+                    SequentialAnimation on opacity {
+                        running: cerradura.animar && cerradura.visible
+                        loops: Animation.Infinite
+                        PauseAnimation { duration: Math.random() * 4000 }
+                        NumberAnimation { to: 0.2; duration: 1400 + Math.random() * 2600; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 1; duration: 1400 + Math.random() * 2600; easing.type: Easing.InOutSine }
+                    }
+                }
+            }
+        }
+
+        // La estrella fugaz: cruza en diagonal hacia abajo a la izquierda
+        Item {
+            id: fugaz
+            property real p: 0
+            property real sx: 0
+            property real sy: 0
+            readonly property real angulo: 152
+            readonly property real recorrido: Math.min(420, cielo.width * 0.3)
+            x: sx + Math.cos(angulo * Math.PI / 180) * recorrido * p
+            y: sy + Math.sin(angulo * Math.PI / 180) * recorrido * p
+            width: 0
+            height: 0
+            rotation: angulo
+            visible: p > 0 && p < 1
+            opacity: Math.sin(p * Math.PI)
+            Rectangle {
+                x: -width
+                y: -height / 2
+                width: 130
+                height: 1.6
+                radius: height / 2
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0; color: "transparent" }
+                    GradientStop { position: 1; color: cerradura.colorTexto }
+                }
+            }
+            NumberAnimation on p {
+                id: cruzar
+                running: false
+                from: 0
+                to: 1
+                duration: 1100
+                easing.type: Easing.OutCubic
+            }
+        }
+        Timer {
+            running: cerradura.animar && cerradura.visible && cerradura.queda > 0
+            repeat: true
+            interval: 9000
+            onTriggered: {
+                interval = 9000 + Math.random() * 16000;   // la próxima, cuando sea
+                fugaz.sx = cielo.width * (0.35 + Math.random() * 0.6);
+                fugaz.sy = cielo.height * (0.02 + Math.random() * 0.22);
+                cruzar.restart();
             }
         }
     }
@@ -281,9 +418,7 @@ Item {
         }
     }
 
-    readonly property int tamFecha: Math.round(Math.max(16, height * 0.026))
-
-    // ----------------------------------------------- Candado, fecha y hora
+    // ------------------------------------------------ 夜, la hora y la fecha
     property date ahora: new Date()
     Timer {
         running: cerradura.visible
@@ -293,82 +428,88 @@ Item {
         onTriggered: cerradura.ahora = new Date()
     }
 
+    // El kanji de Yoru («noche»), si hay letra japonesa en el sistema
+    readonly property string fuenteKanji: {
+        const hay = Qt.fontFamilies();
+        for (const f of ["Noto Serif CJK JP", "Noto Sans CJK JP", "Source Han Serif JP"])
+            if (hay.indexOf(f) >= 0)
+                return f;
+        return "";
+    }
+
     Column {
         id: cabeza
         anchors.horizontalCenter: parent.horizontalCenter
-        y: Math.round(cerradura.height * 0.045)
+        y: Math.round(cerradura.height * 0.1)
         spacing: 0
         opacity: cerradura.pCabeza * cerradura.queda
         transform: Entra { paso: cerradura.pCabeza; desde: -12 }
 
-        readonly property int tam: Math.round(Math.min(cerradura.height * 0.19, cerradura.width * 0.13))
+        readonly property int tam: Math.round(Math.min(cerradura.height * 0.2, cerradura.width * 0.14))
 
-        // El candado: late mientras comprueba, tiembla al fallar y se abre
-        // al acertar
         Item {
-            id: candado
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 24
-            height: 24
-            Icono {
-                id: iconoCandado
+            width: hora.width
+            height: hora.height
+
+            // Detrás de la hora, enorme y casi transparente
+            Text {
                 anchors.centerIn: parent
-                width: 22
-                height: 22
-                trazo: cerradura.abierto ? cerradura.trazos.candadoAbierto : cerradura.trazos.candado
-                tinta: cerradura.enRojo ? cerradura.colorRojo : cerradura.colorTexto
-                transform: Translate { id: temblorCandado }
-                SequentialAnimation on opacity {
-                    running: cerradura.ocupada && cerradura.animar
-                    loops: Animation.Infinite
-                    alwaysRunToEnd: true
-                    NumberAnimation { to: 0.35; duration: 450; easing.type: Easing.InOutSine }
-                    NumberAnimation { to: 1; duration: 450; easing.type: Easing.InOutSine }
-                }
+                anchors.verticalCenterOffset: Math.round(cabeza.tam * 0.02)
+                visible: cerradura.fuenteKanji !== ""
+                text: "夜"
+                color: cerradura.colorAcento
+                opacity: 0.075
+                font.family: cerradura.fuenteKanji
+                font.pixelSize: Math.round(cabeza.tam * 1.75)
+                font.weight: Font.Bold
             }
-            // Al abrirse, un saltito
-            scale: 1
-            Connections {
-                target: cerradura
-                function onAbiertoChanged() {
-                    if (cerradura.abierto && cerradura.animar)
-                        salto.restart();
+
+            // Fina, y los dos puntos laten con los segundos
+            Row {
+                id: hora
+                Cifra { text: Qt.formatTime(cerradura.ahora, "HH") }
+                Cifra {
+                    text: ":"
+                    opacity: !cerradura.animar || cerradura.ahora.getSeconds() % 2 === 0 ? 1 : 0.3
+                    Behavior on opacity { NumberAnimation { duration: 450; easing.type: Easing.InOutSine } }
+                    transform: Translate { y: -Math.round(cabeza.tam * 0.04) }
                 }
-            }
-            SequentialAnimation {
-                id: salto
-                NumberAnimation { target: candado; property: "scale"; to: 1.12; duration: 180; easing.type: Easing.OutCubic }
-                NumberAnimation { target: candado; property: "scale"; to: 1; duration: 320; easing.type: Easing.OutCubic }
+                Cifra { text: Qt.formatTime(cerradura.ahora, "mm") }
             }
         }
-        Item { width: 1; height: Math.round(cerradura.height * 0.014) }
+        Item { width: 1; height: Math.round(cerradura.height * 0.018) }
+
+        // Una raya de luz que se apaga por los lados
+        Rectangle {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: Math.round(hora.width * 0.62)
+            height: 1
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: "transparent" }
+                GradientStop { position: 0.5; color: cerradura.conAlfa(cerradura.colorAcento, 0.7) }
+                GradientStop { position: 1; color: "transparent" }
+            }
+        }
+        Item { width: 1; height: Math.round(cerradura.height * 0.018) }
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: {
-                const t = Qt.locale("es_ES").toString(cerradura.ahora, "dddd, d 'de' MMMM");
-                return t.charAt(0).toUpperCase() + t.slice(1) + (cerradura.detalle ? "  ·  " + cerradura.detalle : "");
+                const t = Qt.locale("es_ES").toString(cerradura.ahora, "dddd  ·  d 'de' MMMM");
+                return (t + (cerradura.detalle ? "  ·  " + cerradura.detalle : "")).toUpperCase();
             }
             color: cerradura.colorTexto
+            opacity: 0.85
             font.family: cerradura.fuente
             font.pixelSize: cerradura.tamFecha
-            font.weight: Font.DemiBold
-        }
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: Qt.formatTime(cerradura.ahora, "HH:mm")
-            color: cerradura.colorTexto
-            font.family: cerradura.fuente
-            font.pixelSize: cabeza.tam
-            font.weight: Font.Bold
-            font.features: { "tnum": 1 }
-            // Pegada: sin el aire de encima y debajo de las cifras
-            height: Math.round(cabeza.tam * 0.92)
-            verticalAlignment: Text.AlignVCenter
+            font.weight: Font.Medium
+            font.letterSpacing: Math.round(cerradura.tamFecha * 0.22)
         }
         Item { width: 1; height: Math.round(cerradura.height * 0.02) }
 
-        // Bajo la hora: los widgets
+        // Bajo la fecha: los widgets
         Row {
             id: widgets
             anchors.horizontalCenter: parent.horizontalCenter
@@ -378,12 +519,14 @@ Item {
         }
     }
 
+    readonly property int tamFecha: Math.round(Math.max(12, height * 0.017))
+
     // ----------------------------------------- Entre la hora y la contraseña
     Item {
         id: abajo
         anchors {
             left: parent.left; right: parent.right
-            top: cabeza.bottom; topMargin: Math.round(cerradura.height * 0.035)
+            top: cabeza.bottom; topMargin: Math.round(cerradura.height * 0.04)
             bottom: acceso.top; bottomMargin: Math.round(cerradura.height * 0.03)
         }
         opacity: cerradura.pAbajo * cerradura.queda
@@ -398,37 +541,67 @@ Item {
     property real verAcceso: pDespierta
     Behavior on verAcceso { NumberAnimation { duration: cerradura.animar ? 520 : 0; easing.type: Easing.OutQuint } }
 
+    readonly property int anchoCampo: 340
+
+    // Dormida: la pista, que respira, sobre la raya donde irá la contraseña
     Column {
         id: pistaDormida
         anchors.horizontalCenter: parent.horizontalCenter
-        // A la altura de la caja de la contraseña
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: cerradura.margenAcceso + 34
-        spacing: 6
+        anchors.bottomMargin: cerradura.margenAcceso + 22
+        spacing: 12
         opacity: (1 - cerradura.verAcceso) * cerradura.pAcceso * cerradura.queda
         visible: opacity > 0
-        // Una flechita que sube y baja, como «desliza hacia arriba»
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "⌃"
+            text: "ESCRIBE PARA DESBLOQUEAR"
             color: cerradura.colorTexto
             font.family: cerradura.fuente
-            font.pixelSize: 20
-            transform: Translate { id: flecha }
-            SequentialAnimation {
+            font.pixelSize: 12
+            font.weight: Font.Medium
+            font.letterSpacing: 3
+            SequentialAnimation on opacity {
                 running: pistaDormida.visible && cerradura.animar
                 loops: Animation.Infinite
-                NumberAnimation { target: flecha; property: "y"; to: -4; duration: 1100; easing.type: Easing.InOutSine }
-                NumberAnimation { target: flecha; property: "y"; to: 0; duration: 1100; easing.type: Easing.InOutSine }
+                NumberAnimation { to: 0.4; duration: 1800; easing.type: Easing.InOutSine }
+                NumberAnimation { to: 0.95; duration: 1800; easing.type: Easing.InOutSine }
             }
         }
-        Text {
+        Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "Escribe para desbloquear"
-            color: cerradura.colorTexto
-            font.family: cerradura.fuente
-            font.pixelSize: 15
-            font.weight: Font.DemiBold
+            width: 140
+            height: 1
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: "transparent" }
+                GradientStop { position: 0.5; color: cerradura.conAlfa(cerradura.colorAcento, 0.45) }
+                GradientStop { position: 1; color: "transparent" }
+            }
+        }
+    }
+
+    // Detrás de la foto y la contraseña, una sombra muy difuminada: así se
+    // leen bien sobre cualquier fondo, también uno claro
+    Item {
+        anchors.centerIn: acceso
+        width: acceso.width + 200
+        height: acceso.height + 120
+        opacity: acceso.opacity
+        Rectangle {
+            id: charco
+            anchors.fill: parent
+            anchors.margins: 50
+            radius: height / 2
+            color: cerradura.colorOscuro
+            visible: false
+        }
+        MultiEffect {
+            anchors.fill: charco
+            source: charco
+            blurEnabled: true
+            blur: 1.0
+            blurMax: 64
+            opacity: 0.6
         }
     }
 
@@ -437,119 +610,162 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: cerradura.margenAcceso
-        width: caja.width
+        width: cerradura.anchoCampo
         spacing: 10
         opacity: cerradura.verAcceso * cerradura.pAcceso * cerradura.queda
         transform: Entra { paso: Math.min(cerradura.verAcceso, cerradura.pAcceso); desde: 14 }
 
-        // Foto (~/.face o la de AccountsService) o la inicial en un círculo
-        Item {
-            id: avatar
-            width: 60
-            height: 60
+        // La foto, con un aro de luz, y el nombre debajo
+        Column {
             anchors.horizontalCenter: parent.horizontalCenter
-            property int cual: 0
-            readonly property bool conFoto: foto.status === Image.Ready
+            spacing: 10
 
-            Rectangle {
-                anchors.fill: parent
-                radius: width / 2
-                visible: !avatar.conFoto
-                color: cerradura.conAlfa(cerradura.colorAcento, 0.14)
-                border.width: 1.5
-                border.color: cerradura.conAlfa(cerradura.colorAcento, 0.35)
-                Text {
+            // Foto (~/.face o la de AccountsService) o la inicial en un círculo
+            Item {
+                id: avatar
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 68
+                height: 68
+                property int cual: 0
+                readonly property bool conFoto: foto.status === Image.Ready
+
+                // Un aro de luz alrededor, que brilla más al escribir
+                Rectangle {
+                    id: aro
                     anchors.centerIn: parent
-                    text: cerradura.nombre.charAt(0).toUpperCase()
-                    color: cerradura.colorAcento
-                    font.family: cerradura.fuente
-                    font.pixelSize: 26
-                    font.bold: true
+                    width: parent.width + 8
+                    height: parent.height + 8
+                    radius: width / 2
+                    color: "transparent"
+                    border.width: 1.5
+                    border.color: cerradura.enRojo ? cerradura.colorRojo : cerradura.colorAcento
+                    opacity: campo.text !== "" || cerradura.enRojo ? 0.9 : 0.4
+                    Behavior on opacity { NumberAnimation { duration: 300 } }
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowColor: aro.border.color
+                        shadowBlur: 0.8
+                        shadowHorizontalOffset: 0
+                        shadowVerticalOffset: 0
+                        blurMax: 20
+                    }
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    radius: width / 2
+                    visible: !avatar.conFoto
+                    color: cerradura.conAlfa(cerradura.colorAcento, 0.16)
+                    Text {
+                        anchors.centerIn: parent
+                        text: cerradura.nombre.charAt(0).toUpperCase()
+                        color: cerradura.colorTexto
+                        font.family: cerradura.fuente
+                        font.pixelSize: 28
+                        font.weight: Font.Light
+                    }
+                }
+                Image {
+                    id: foto
+                    anchors.fill: parent
+                    visible: false
+                    source: cerradura.fotos[avatar.cual] ?? ""
+                    sourceSize: Qt.size(136, 136)
+                    fillMode: Image.PreserveAspectCrop
+                    // Si no existe, la siguiente de la lista
+                    onStatusChanged: if (status === Image.Error && avatar.cual < cerradura.fotos.length - 1)
+                        avatar.cual++
+                }
+                Rectangle {
+                    id: mascara
+                    anchors.fill: parent
+                    radius: width / 2
+                    visible: false
+                    layer.enabled: true
+                }
+                MultiEffect {
+                    anchors.fill: parent
+                    visible: avatar.conFoto
+                    source: foto
+                    maskEnabled: true
+                    maskSource: mascara
+                    maskThresholdMin: 0.5
+                    maskSpreadAtMin: 1.0
                 }
             }
-            Image {
-                id: foto
-                anchors.fill: parent
-                visible: false
-                source: cerradura.fotos[avatar.cual] ?? ""
-                sourceSize: Qt.size(120, 120)
-                fillMode: Image.PreserveAspectCrop
-                // Si no existe, la siguiente de la lista
-                onStatusChanged: if (status === Image.Error && avatar.cual < cerradura.fotos.length - 1)
-                    avatar.cual++
+
+            // El nombre (o lo que ponga la pantalla de inicio: elegir usuario)
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: encima.children.length === 0
+                text: cerradura.nombre
+                color: cerradura.colorTexto
+                font.family: cerradura.fuente
+                font.pixelSize: 18
+                font.weight: Font.DemiBold
             }
-            Rectangle {
-                id: mascara
-                anchors.fill: parent
-                radius: width / 2
-                visible: false
-                layer.enabled: true
-            }
-            MultiEffect {
-                anchors.fill: parent
-                visible: avatar.conFoto
-                source: foto
-                maskEnabled: true
-                maskSource: mascara
-                maskThresholdMin: 0.5
-                maskSpreadAtMin: 1.0
+            Item {
+                id: encima
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: childrenRect.width
+                height: childrenRect.height
+                visible: children.length > 0
             }
         }
 
-        // El nombre (o lo que ponga la pantalla de inicio: elegir usuario)
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            visible: encima.children.length === 0
-            text: cerradura.nombre
-            color: cerradura.colorTexto
-            font.family: cerradura.fuente
-            font.pixelSize: 17
-            font.bold: true
-        }
+        Item { width: 1; height: 4 }
+
+        // La contraseña: sin caja, solo una raya que se enciende al escribir
         Item {
-            id: encima
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: childrenRect.width
-            height: childrenRect.height
-            visible: children.length > 0
-        }
-
-        // La caja: una píldora de cristal
-        Rectangle {
             id: caja
-            width: 330
-            height: 48
-            radius: height / 2
-            color: cerradura.conAlfa(cerradura.colorAcento, campo.activeFocus ? 0.14 : 0.1)
-            border.width: 1.5
-            border.color: cerradura.enRojo ? cerradura.colorRojo
-                : campo.activeFocus ? cerradura.conAlfa(cerradura.colorAcento, 0.45)
-                : cerradura.conAlfa(cerradura.colorAcento, 0.15)
-            Behavior on border.color { ColorAnimation { duration: 220 } }
-            Behavior on color { ColorAnimation { duration: 220 } }
+            width: cerradura.anchoCampo
+            height: 46
 
             transform: Translate { id: desplazamiento }
             SequentialAnimation {
                 id: sacudida
-                ParallelAnimation {
-                    NumberAnimation { target: desplazamiento; property: "x"; to: -9; duration: 60 }
-                    NumberAnimation { target: temblorCandado; property: "x"; to: -3; duration: 60 }
+                NumberAnimation { target: desplazamiento; property: "x"; to: -9; duration: 60 }
+                NumberAnimation { target: desplazamiento; property: "x"; to: 8; duration: 80 }
+                NumberAnimation { target: desplazamiento; property: "x"; to: -5; duration: 80 }
+                NumberAnimation { target: desplazamiento; property: "x"; to: 3; duration: 70 }
+                NumberAnimation { target: desplazamiento; property: "x"; to: 0; duration: 60 }
+            }
+
+            // El candado: late mientras comprueba, se pone rojo al fallar y
+            // se abre al acertar
+            Item {
+                id: candado
+                anchors { left: parent.left; leftMargin: 2; verticalCenter: parent.verticalCenter }
+                width: 20
+                height: 20
+                Icono {
+                    id: iconoCandado
+                    anchors.centerIn: parent
+                    width: 18
+                    height: 18
+                    trazo: cerradura.abierto ? cerradura.trazos.candadoAbierto : cerradura.trazos.candado
+                    tinta: cerradura.enRojo ? cerradura.colorRojo
+                        : campo.text !== "" || cerradura.abierto ? cerradura.colorAcento : cerradura.colorGris
+                    SequentialAnimation on opacity {
+                        running: cerradura.ocupada && cerradura.animar
+                        loops: Animation.Infinite
+                        alwaysRunToEnd: true
+                        NumberAnimation { to: 0.35; duration: 450; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 1; duration: 450; easing.type: Easing.InOutSine }
+                    }
                 }
-                ParallelAnimation {
-                    NumberAnimation { target: desplazamiento; property: "x"; to: 8; duration: 80 }
-                    NumberAnimation { target: temblorCandado; property: "x"; to: 3; duration: 80 }
+                // Al abrirse, un saltito
+                Connections {
+                    target: cerradura
+                    function onAbiertoChanged() {
+                        if (cerradura.abierto && cerradura.animar)
+                            salto.restart();
+                    }
                 }
-                ParallelAnimation {
-                    NumberAnimation { target: desplazamiento; property: "x"; to: -5; duration: 80 }
-                    NumberAnimation { target: temblorCandado; property: "x"; to: -2; duration: 70 }
-                }
-                ParallelAnimation {
-                    NumberAnimation { target: desplazamiento; property: "x"; to: 3; duration: 70 }
-                    NumberAnimation { target: temblorCandado; property: "x"; to: 1; duration: 70 }
-                }
-                ParallelAnimation {
-                    NumberAnimation { target: desplazamiento; property: "x"; to: 0; duration: 60 }
-                    NumberAnimation { target: temblorCandado; property: "x"; to: 0; duration: 60 }
+                SequentialAnimation {
+                    id: salto
+                    NumberAnimation { target: candado; property: "scale"; to: 1.25; duration: 180; easing.type: Easing.OutCubic }
+                    NumberAnimation { target: candado; property: "scale"; to: 1; duration: 320; easing.type: Easing.OutCubic }
                 }
             }
 
@@ -557,23 +773,25 @@ Item {
                 id: campo
                 property bool ver: false
                 anchors {
-                    left: parent.left; leftMargin: 22
+                    left: candado.right; leftMargin: 12
                     right: botones.left; rightMargin: 6
                     top: parent.top; bottom: parent.bottom
                 }
                 verticalAlignment: TextInput.AlignVCenter
+                horizontalAlignment: ver ? TextInput.AlignHCenter : TextInput.AlignLeft
                 echoMode: ver ? TextInput.Normal : TextInput.Password
                 // Lo escrito no se ve: en su lugar, los puntos de abajo
                 color: ver ? cerradura.colorTexto : "transparent"
                 selectionColor: cerradura.conAlfa(cerradura.colorAcento, 0.35)
                 selectedTextColor: color
                 font.family: cerradura.fuente
-                font.pixelSize: 15
+                font.pixelSize: 16
+                font.letterSpacing: 1
                 enabled: !cerradura.ocupada
                 focus: true
                 clip: true
                 cursorDelegate: Rectangle {
-                    width: 2
+                    width: 1.5
                     color: cerradura.colorAcento
                     visible: campo.cursorVisible && (campo.ver || campo.text === "")
                 }
@@ -587,29 +805,44 @@ Item {
                     menu.abierto ? menu.abierto = false : campo.clear();
                 }
 
+                // Centrados en la raya (no en el campo, que tiene el candado
+                // a un lado y los botones al otro)
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    x: 4
+                    x: Math.round(caja.width / 2 - campo.x - width / 2)
                     visible: campo.text === ""
                     text: cerradura.ocupada ? "Comprobando…" : cerradura.pista
                     color: cerradura.colorGris
                     font.family: cerradura.fuente
-                    font.pixelSize: 14
+                    font.pixelSize: 15
+                    font.letterSpacing: 0.5
                 }
 
                 // Un punto por letra, cada uno con un saltito al llegar
                 Row {
+                    id: puntos
                     anchors.verticalCenter: parent.verticalCenter
-                    x: 2
-                    spacing: 7
+                    x: Math.round(Math.max(0, Math.min(campo.width - width, caja.width / 2 - campo.x - width / 2)))
+                    spacing: 9
                     visible: !campo.ver
                     opacity: cerradura.ocupada ? 0.5 : 1
+                    // Los puntos brillan un poco, del color del tema
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowColor: cerradura.enRojo ? cerradura.colorRojo : cerradura.colorAcento
+                        shadowBlur: 0.5
+                        shadowOpacity: 0.8
+                        shadowHorizontalOffset: 0
+                        shadowVerticalOffset: 0
+                        blurMax: 12
+                    }
                     Repeater {
-                        model: Math.max(0, Math.min(campo.text.length, Math.floor((campo.width - 4) / 17)))
+                        model: Math.max(0, Math.min(campo.text.length, Math.floor((campo.width - 4) / 18)))
                         Rectangle {
-                            width: 10
-                            height: 10
-                            radius: 5
+                            width: 9
+                            height: 9
+                            radius: 4.5
                             color: cerradura.enRojo ? cerradura.colorRojo : cerradura.colorTexto
                             scale: cerradura.animar ? 0 : 1
                             Component.onCompleted: if (cerradura.animar) brota.start()
@@ -619,7 +852,7 @@ Item {
                                 to: 1
                                 duration: 220
                                 easing.type: Easing.OutBack
-                                easing.overshoot: 1.2
+                                easing.overshoot: 1.6
                             }
                         }
                     }
@@ -628,11 +861,12 @@ Item {
 
             Row {
                 id: botones
-                anchors { right: parent.right; rightMargin: 8; verticalCenter: parent.verticalCenter }
+                anchors { right: parent.right; verticalCenter: parent.verticalCenter }
                 spacing: 0
 
                 BotonIcono {
                     trazo: campo.ver ? cerradura.trazos.ojoTachado : cerradura.trazos.ojo
+                    tam: 16
                     onPulsado: {
                         campo.ver = !campo.ver;
                         campo.forceActiveFocus();
@@ -642,6 +876,7 @@ Item {
                     // Solo con más de una distribución: con una no hay a qué cambiar
                     visible: cerradura.teclado !== ""
                     trazo: cerradura.trazos.teclado
+                    tam: 16
                     onPulsado: {
                         cerradura.cambiarTeclado();
                         campo.forceActiveFocus();
@@ -656,33 +891,46 @@ Item {
                         font.bold: true
                     }
                 }
-                // Enviar: un círculo que se ilumina en cuanto hay algo escrito
-                Item {
-                    width: 34
-                    height: 34
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: width / 2
-                        color: campo.text !== "" ? cerradura.colorAcento
-                            : cerradura.conAlfa(cerradura.colorAcento, enviarZona.containsMouse ? 0.14 : 0)
-                        scale: campo.text !== "" ? 1 : 0.85
-                        Behavior on color { ColorAnimation { duration: 220 } }
-                        Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
-                    }
-                    Icono {
-                        anchors.centerIn: parent
-                        width: 18
-                        height: 18
-                        trazo: cerradura.trazos.flecha
-                        tinta: campo.text !== "" ? cerradura.colorOscuro : cerradura.colorGris
-                    }
-                    MouseArea {
-                        id: enviarZona
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: campo.accepted()
-                    }
+                // Enviar: la flecha se enciende en cuanto hay algo escrito
+                BotonIcono {
+                    trazo: cerradura.trazos.flecha
+                    tam: 18
+                    tinta: campo.text !== "" ? cerradura.colorAcento : cerradura.colorGris
+                    onPulsado: campo.accepted()
+                }
+            }
+
+            // La raya: de fondo, tenue; encima, la luz, que crece desde el
+            // centro al escribir y brilla
+            Rectangle {
+                anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                height: 1
+                color: cerradura.conAlfa(cerradura.colorAcento, 0.32)
+            }
+            Rectangle {
+                id: luz
+                anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.bottom }
+                height: 2.5
+                radius: 1.25
+                width: parent.width * (cerradura.enRojo || campo.text !== "" ? 1 : campo.activeFocus ? 0.4 : 0)
+                Behavior on width { NumberAnimation { duration: cerradura.animar ? 520 : 0; easing.type: Easing.OutQuint } }
+                readonly property color tono: cerradura.enRojo ? cerradura.colorRojo : cerradura.colorAcento
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0; color: cerradura.conAlfa(luz.tono, 0) }
+                    GradientStop { position: 0.2; color: luz.tono }
+                    GradientStop { position: 0.8; color: luz.tono }
+                    GradientStop { position: 1; color: cerradura.conAlfa(luz.tono, 0) }
+                }
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    shadowEnabled: true
+                    shadowColor: luz.tono
+                    shadowBlur: 1.0
+                    shadowOpacity: 0.9
+                    shadowHorizontalOffset: 0
+                    shadowVerticalOffset: 0
+                    blurMax: 24
                 }
             }
         }

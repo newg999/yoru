@@ -25,6 +25,8 @@ BORROSO_ORIGEN="$HOME/.cache/fondo-bloqueo-origen"
 INICIO="/usr/share/backgrounds/yoru/inicio"
 INICIO_ORIGEN="$HOME/.cache/fondo-inicio-origen"   # de qué fondo salió
 FALLBACK_COLOR="#2e3440"
+# Cambia si cambia cómo se desenfoca: así se rehacen los ya hechos
+DESENFOQUE="0x7 80,90"
 
 mapfile -t FONDOS < <(find -L "$DIR" -maxdepth 1 -type f \
     \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) 2>/dev/null | sort)
@@ -62,19 +64,19 @@ if [[ -n "$img" && -f "$img" ]]; then
     echo "$img" > "$STATE"
     $con_yoru || setsid -f swaybg -m fill -i "$img" >/dev/null 2>&1
     ln -sfn "$(realpath "$img")" "$BLOQUEO"
-    # Pantalla de bloqueo: el fondo ya desenfocado y pequeño. Desenfocarlo al
+    # Pantalla de bloqueo: el fondo ya desenfocado (poco: se tiene que ver). Desenfocarlo al
     # bloquear (con la imagen entera) tardaba y se veía aparecer de golpe
-    if [[ "$(cat "$BORROSO_ORIGEN" 2>/dev/null)" != "$img" ]] && command -v magick >/dev/null; then
-        setsid -f sh -c 'magick "$1" -resize 1920x1080^ -blur 0x24 -modulate 70,80 -quality 90 "jpg:$2.tmp" \
-            && mv "$2.tmp" "$2" && echo "$1" > "$3"' _ "$img" "$BORROSO" "$BORROSO_ORIGEN" >/dev/null 2>&1
+    if [[ "$(cat "$BORROSO_ORIGEN" 2>/dev/null)" != "$img $DESENFOQUE" ]] && command -v magick >/dev/null; then
+        setsid -f sh -c 'magick "$1" -resize 1920x1080^ -blur 0x7 -modulate 80,90 -quality 90 "jpg:$2.tmp" \
+            && mv "$2.tmp" "$2" && echo "$1 $4" > "$3"' _ "$img" "$BORROSO" "$BORROSO_ORIGEN" "$DESENFOQUE" >/dev/null 2>&1
     fi
-    # Pantalla de inicio: el fondo desenfocado y algo más oscuro. Solo si ha
+    # Pantalla de inicio: el mismo fondo, desenfocado igual. Solo si ha
     # cambiado (desenfocar tarda un poco) y en segundo plano
-    if [[ -w "$INICIO" && "$(cat "$INICIO_ORIGEN" 2>/dev/null)" != "$img" ]]; then
+    if [[ -w "$INICIO" && "$(cat "$INICIO_ORIGEN" 2>/dev/null)" != "$img $DESENFOQUE" ]]; then
         # (la carpeta es de root: se prepara en ~/.cache y se copia encima)
-        setsid -f sh -c 'magick "$1" -resize 1920x1080^ -blur 0x24 -modulate 70,80 "jpg:$3.jpg" \
-            && cat "$3.jpg" > "$2" && echo "$1" > "$3"; rm -f "$3.jpg"' \
-            _ "$img" "$INICIO" "$INICIO_ORIGEN" >/dev/null 2>&1
+        setsid -f sh -c 'magick "$1" -resize 1920x1080^ -blur 0x7 -modulate 80,90 "jpg:$3.jpg" \
+            && cat "$3.jpg" > "$2" && echo "$1 $4" > "$3"; rm -f "$3.jpg"' \
+            _ "$img" "$INICIO" "$INICIO_ORIGEN" "$DESENFOQUE" >/dev/null 2>&1
     fi
 else
     # Sin imágenes todavía: color sólido

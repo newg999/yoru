@@ -187,8 +187,8 @@ ShellRoot {
                         text: raiz.usuario.visible
                         color: raiz.estilo.texto
                         font.family: raiz.estilo.fuente
-                        font.pixelSize: 20
-                        font.bold: true
+                        font.pixelSize: 17
+                        font.weight: Font.DemiBold
                     }
                     Text {
                         visible: raiz.usuarios.length > 1

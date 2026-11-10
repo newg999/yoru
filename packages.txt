@@ -32,6 +32,7 @@ gvfs-mtp                  # móviles Android por USB
 gvfs-smb                  # carpetas compartidas de Windows/Samba
 google-noto-sans-fonts    # fuente general de las apps
 google-noto-color-emoji-fonts  # emojis 🎉
+google-noto-serif-cjk-vf-fonts  # el 夜 de la pantalla de bloqueo e inicio
 
 # --- Inicio de sesión --------------------------------------------------------
 # Solo se activa si no tienes ya uno (por ejemplo, GDM de GNOME)
