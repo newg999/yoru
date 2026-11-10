@@ -3,7 +3,7 @@
 //  (BarraWindows.qml), encima de su icono
 //
 //    pulsar(app, item)      clic: sin ventanas la abre, con una va a ella y
-//                           con varias saca la lista para elegir
+//                           con varias pasa a la siguiente (Tareas.siguiente)
 //    abrir(app, item)       clic derecho: sus ventanas y las opciones
 //                           (fijar / quitar, ventana nueva, cerrar)
 //  Se cierra al sacar el ratón de él un momento o al elegir algo.
@@ -35,14 +35,13 @@ Item {
         clave = "";
     }
     function pulsar(a, item) {
+        cerrar();
         if (a.ventanas.length === 0)
             Tareas.lanzar(a);
         else if (a.ventanas.length === 1)
             Tareas.irA(a.ventanas[0]);
-        else if (app?.clave === a.clave && soloVentanas)
-            cerrar();
         else
-            abrir(a, item, true);
+            Tareas.siguiente(a);        // como en Windows 11: una a una
     }
 
     LazyLoader {

@@ -123,20 +123,36 @@ Singleton {
             `niri msg action focus-window --id ${v.id} && niri msg action close-overview`]);
     }
 
-    // Como en Windows: sin ventanas la abre; si una suya tiene el foco, la
-    // minimiza; si no, va a la última que usaste (o trae una minimizada)
+    // La que usaste por última vez (mejor una que no esté minimizada)
+    function ultimaUsada(vs) {
+        const visibles = vs.filter(v => !minimizada(v));
+        return (visibles.length > 0 ? visibles : vs).slice().sort((a, b) =>
+            (b.focus_timestamp?.secs ?? 0) - (a.focus_timestamp?.secs ?? 0)
+            || (b.focus_timestamp?.nanos ?? 0) - (a.focus_timestamp?.nanos ?? 0))[0];
+    }
+
+    // Como en Windows 11 con una app de varias ventanas (kitty): si ninguna
+    // suya tiene el foco, va a la última que usaste; si una lo tiene, cada
+    // clic pasa a la siguiente y tras la última vuelve a la primera. El orden
+    // es el de apertura (app.ventanas va por id), así que siempre es el mismo
+    // y se recorren todas, también las minimizadas (irA las trae).
+    function siguiente(app) {
+        const vs = app.ventanas;
+        const i = vs.findIndex(v => v.id === Niri.enfocada?.id);
+        irA(i < 0 ? ultimaUsada(vs) : vs[(i + 1) % vs.length]);
+    }
+
+    // Como en Windows: sin ventanas la abre; con varias, va pasando de una a
+    // otra (siguiente); con una, si tiene el foco la minimiza y si no va a ella
     function alternar(app) {
         const vs = app.ventanas;
         if (vs.length === 0)
             return lanzar(app);
-        const enfocada = vs.find(v => v.id === Niri.enfocada?.id);
-        if (enfocada)
-            return minimizar(enfocada);
-        const visibles = vs.filter(v => !minimizada(v));
-        const ultima = (lista) => lista.slice().sort((a, b) =>
-            (b.focus_timestamp?.secs ?? 0) - (a.focus_timestamp?.secs ?? 0)
-            || (b.focus_timestamp?.nanos ?? 0) - (a.focus_timestamp?.nanos ?? 0))[0];
-        irA(ultima(visibles.length > 0 ? visibles : vs));
+        if (vs.length > 1)
+            return siguiente(app);
+        if (vs[0].id === Niri.enfocada?.id)
+            return minimizar(vs[0]);
+        irA(vs[0]);
     }
 
     function cerrar(v) {

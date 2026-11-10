@@ -3,8 +3,8 @@
 //
 //    [favoritas] │ [abiertas que no están fijadas]
 //
-//    Clic           = ir a su ventana · si tiene varias, una lista para elegir
-//                     a cuál · si no está abierta, la abre
+//    Clic           = ir a su ventana · si tiene varias, cada clic pasa a la
+//                     siguiente (como Windows 11) · si no está abierta, la abre
 //    Clic central   = ventana nueva
 //    Clic derecho   = menú: sus ventanas, fijar / quitar, ventana nueva,
 //                     cerrar todas
@@ -48,7 +48,10 @@ PanelWindow {
     // (con la barra de Windows tampoco: las apps van en ella)
     visible: Ajustes.dock !== "nunca" && !Ajustes.estiloDock && !Ajustes.windows
     exclusionMode: siempre ? ExclusionMode.Normal : ExclusionMode.Ignore
-    exclusiveZone: siempre ? alto + margen : 0
+    // Como la barra (Tema.zonaBarra): niri ya pone «gaps» tras la zona
+    // reservada, así que se reserva eso de menos y entre la isla y las
+    // ventanas quedan Tema.aVentanas, lo mismo que arriba
+    exclusiveZone: siempre ? alto + margen + Tema.aVentanas - Tema.gaps : 0
     color: "transparent"
     WlrLayershell.namespace: "yoru-dock"
     WlrLayershell.layer: WlrLayer.Top
