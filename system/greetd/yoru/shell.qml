@@ -205,24 +205,72 @@ ShellRoot {
                     }
                 }
 
-                // Abajo a la derecha: qué sesión arranca (si hay más de una)
-                Rectangle {
+                // Abajo a la derecha: qué sesión arranca (si hay más de una),
+                // al estilo de la contraseña: «SESIÓN  Niri ›» sobre una raya
+                // que se enciende al pasar el ratón; clic = la siguiente
+                Item {
+                    id: sesion
                     visible: raiz.sesiones.length > 1
-                    width: etiqueta.implicitWidth + 28
-                    height: 36
-                    radius: 18
-                    color: zona.containsMouse ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(1, 1, 1, 0.07)
-                    Text {
-                        id: etiqueta
-                        anchors.centerIn: parent
-                        text: "Sesión: " + raiz.nombreSesion(raiz.sesiones[raiz.sesion])
-                        color: raiz.estilo.texto
-                        font.family: raiz.estilo.fuente
-                        font.pixelSize: 13
+                    width: filaSesion.width
+                    height: 20          // centrado con ⏻, en la otra esquina
+                    readonly property color acento: raiz.estilo.blanco
+
+                    Row {
+                        id: filaSesion
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 10
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "SESIÓN"
+                            color: raiz.estilo.gris
+                            font.family: raiz.estilo.fuente
+                            font.pixelSize: 10
+                            font.weight: Font.Medium
+                            font.letterSpacing: 2.5
+                        }
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: raiz.nombreSesion(raiz.sesiones[raiz.sesion])
+                            color: zona.containsMouse ? sesion.acento : raiz.estilo.texto
+                            Behavior on color { ColorAnimation { duration: 160 } }
+                            font.family: raiz.estilo.fuente
+                            font.pixelSize: 13
+                            font.weight: Font.DemiBold
+                        }
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "›"
+                            color: zona.containsMouse ? sesion.acento : raiz.estilo.gris
+                            font.family: raiz.estilo.fuente
+                            font.pixelSize: 16
+                            transform: Translate { x: zona.containsMouse ? 2 : 0; Behavior on x { NumberAnimation { duration: 180 } } }
+                        }
+                    }
+                    // La raya: tenue siempre; la luz crece desde el centro al
+                    // pasar el ratón
+                    Rectangle {
+                        anchors { left: parent.left; right: parent.right; top: parent.bottom; topMargin: 5 }
+                        height: 1
+                        color: Qt.rgba(sesion.acento.r, sesion.acento.g, sesion.acento.b, 0.2)
+                    }
+                    Rectangle {
+                        anchors { horizontalCenter: parent.horizontalCenter; top: parent.bottom; topMargin: 4.5 }
+                        width: zona.containsMouse ? parent.width : 0
+                        Behavior on width { NumberAnimation { duration: 380; easing.type: Easing.OutQuint } }
+                        height: 2
+                        radius: 1
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0; color: Qt.rgba(sesion.acento.r, sesion.acento.g, sesion.acento.b, 0) }
+                            GradientStop { position: 0.25; color: sesion.acento }
+                            GradientStop { position: 0.75; color: sesion.acento }
+                            GradientStop { position: 1; color: Qt.rgba(sesion.acento.r, sesion.acento.g, sesion.acento.b, 0) }
+                        }
                     }
                     MouseArea {
                         id: zona
                         anchors.fill: parent
+                        anchors.margins: -8
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: raiz.sesion = (raiz.sesion + 1) % raiz.sesiones.length
