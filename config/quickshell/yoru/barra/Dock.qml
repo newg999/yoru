@@ -48,10 +48,10 @@ PanelWindow {
     // (con la barra de Windows tampoco: las apps van en ella)
     visible: Ajustes.dock !== "nunca" && !Ajustes.windows
     exclusionMode: siempre ? ExclusionMode.Normal : ExclusionMode.Ignore
-    // Como la barra (Tema.zonaBarra): niri ya pone «gaps» tras la zona
-    // reservada, así que se reserva eso de menos y entre la isla y las
-    // ventanas quedan Tema.aVentanas, lo mismo que arriba
-    exclusiveZone: siempre ? alto + margen + Tema.aVentanas - Tema.gaps : 0
+    // Entre la isla y las ventanas, Tema.aVentanas, lo mismo que bajo la
+    // barra. El margen de abajo no se suma: la capa ya lo añade ella sola a
+    // la zona reservada. Y niri pone «gaps» detrás, así que se resta.
+    exclusiveZone: siempre ? alto + Tema.aVentanas - Tema.gaps : 0
     color: "transparent"
     WlrLayershell.namespace: "yoru-dock"
     WlrLayershell.layer: WlrLayer.Top
