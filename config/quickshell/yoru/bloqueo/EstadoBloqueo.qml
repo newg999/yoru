@@ -12,6 +12,7 @@ import Quickshell.Services.UPower
 import Quickshell.Networking
 import Quickshell.Bluetooth
 import qs.comun
+import qs.barra
 
 Row {
     id: estado
@@ -91,12 +92,31 @@ Row {
         && (bateria.state === UPowerDeviceState.Charging || bateria.state === UPowerDeviceState.FullyCharged)
 
     Separador { visible: estado.hayBateria }
-    Etiqueta {
+    // Como en la barra: con los iconos del dock, la pila dibujada
+    // (IconoBateria: se llena por colores, con rayo al cargar); si no, el
+    // icono de la letra. Y el porcentaje al lado, del color del texto
+    Row {
         visible: estado.hayBateria
-        readonly property var iconos: ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
-        text: (estado.cargando ? "󰂄" : iconos[Math.min(9, Math.floor(estado.carga / 10))]) + " " + estado.carga + "%"
-        // Por colores, como en la barra: verde llena o cargando y, según
-        // baja, amarillo, naranja y rojo (Tema.bateria)
-        color: Tema.bateria(estado.carga / 100, estado.cargando)
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 7
+        IconoBateria {
+            visible: Ajustes.iconosDock
+            anchors.verticalCenter: parent.verticalCenter
+            carga: estado.carga / 100
+            cargando: estado.cargando
+        }
+        Etiqueta {
+            visible: !Ajustes.iconosDock
+            readonly property var iconos: ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
+            text: estado.cargando ? "󰂄" : iconos[Math.min(9, Math.floor(estado.carga / 10))]
+            // Por colores: verde llena o cargando y, según baja, amarillo,
+            // naranja y rojo (Tema.bateria)
+            color: Tema.bateria(estado.carga / 100, estado.cargando)
+        }
+        Etiqueta {
+            text: estado.carga + "%"
+            // Baja, en su color de aviso; si no, como el resto
+            color: !estado.cargando && estado.carga <= 15 ? Tema.bateria(estado.carga / 100, false) : Tema.texto
+        }
     }
 }

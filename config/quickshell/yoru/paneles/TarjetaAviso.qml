@@ -9,8 +9,7 @@
 //    └────────────────────────────────────┘
 //
 //  Clic = su acción por defecto (suele abrir la app) · ✕ = descartarla
-//  Las urgentes llevan el borde rojo. Con «bloqueada» (en la pantalla de
-//  bloqueo) el clic no abre nada y no salen los botones de acción.
+//  Las urgentes llevan el borde rojo.
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -26,7 +25,6 @@ Rectangle {
     // tarjeta: de ahí los «n?.»
     readonly property var n: entrada?.n ?? null
     property int lineas: 4                  // del texto, como mucho
-    property bool bloqueada: false          // en el bloqueo: solo se lee y se descarta
     readonly property bool hover: encima.hovered
     readonly property bool urgente: n?.urgency === NotificationUrgency.Critical
     readonly property string foto: Notificaciones.imagen(n)
@@ -43,8 +41,8 @@ Rectangle {
 
     MouseArea {
         anchors.fill: parent
-        cursorShape: tarjeta.bloqueada ? Qt.ArrowCursor : Qt.PointingHandCursor
-        onClicked: if (!tarjeta.bloqueada) Notificaciones.abrir(tarjeta.entrada)
+        cursorShape: Qt.PointingHandCursor
+        onClicked: Notificaciones.abrir(tarjeta.entrada)
     }
 
     // Imagen o icono de la app; si no hay, una campana
@@ -151,7 +149,7 @@ Rectangle {
         Item {
             width: parent.width
             height: 34
-            visible: botones.count > 0 && !tarjeta.bloqueada
+            visible: botones.count > 0
 
             Row {
                 anchors.bottom: parent.bottom

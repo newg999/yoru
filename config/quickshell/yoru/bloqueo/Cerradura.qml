@@ -12,9 +12,11 @@
 //
 //          [ la música ]   [ las notificaciones ]
 //
-//                    (D)  don
-//            󰌾  ● ● ● ●              󰈈 󰌌 →
-//            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   ← raya que se enciende al escribir
+//                      (D)
+//                      don
+//            󰌾                       󰈈 󰌌 →   ← lo escrito no se ve
+//            ──────═══▓▓█▓▓═══──────────   ← la luz crece con cada letra,
+//                                              y cada tecla lanza destellos
 //   ⏻                Contraseña incorrecta              (esquina)
 //
 //  Mientras no tocas nada, abajo solo pone «Escribe para desbloquear»; al
@@ -23,8 +25,9 @@
 //  false la deja siempre a la vista).
 //
 //  Animaciones (animar: false las quita, y el cielo se queda quieto): al
-//  bloquear el fondo se acerca y cada parte entra por turno; cada punto de
-//  la contraseña aparece con un saltito; al fallar la raya se pone roja y
+//  bloquear el fondo se acerca y cada parte entra por turno; cada tecla
+//  lanza dos destellos por la raya (y laten mientras comprueba la
+//  contraseña); al fallar la raya se pone roja y
 //  tiembla; al acertar, salir() abre el candado, todo sube y se funde, y
 //  avisa con la señal fuera() (entonces se desbloquea).
 //
@@ -126,8 +129,6 @@ Item {
         ojo: "M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z",
         ojoTachado: "M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.08L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.74,7.13 11.35,7 12,7Z",
         teclado: "M19,10H17V8H19M19,13H17V11H19M16,10H14V8H16M16,13H14V11H16M16,17H8V15H16M7,10H5V8H7M7,13H5V11H7M8,11H10V13H8M8,8H10V10H8M11,11H13V13H11M11,8H13V10H11M20,5H4C2.89,5 2,5.89 2,7V17A2,2 0 0,0 4,19H20A2,2 0 0,0 22,17V7C22,5.89 21.1,5 20,5Z",
-        // Estrella de cuatro puntas (dibujada para Yoru)
-        estrella: "M12,1 C12.7,7.6 16.4,11.3 23,12 C16.4,12.7 12.7,16.4 12,23 C11.3,16.4 7.6,12.7 1,12 C7.6,11.3 11.3,7.6 12,1 Z",
         candadoAbierto: "M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V10A2,2 0 0,1 6,8H15V6A3,3 0 0,0 12,3A3,3 0 0,0 9,6H7A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,17A2,2 0 0,0 14,15A2,2 0 0,0 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17Z",
         flecha: "M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z",
         intro: "M19,7V11H5.83L9.41,7.41L8,6L2,12L8,18L9.41,16.58L5.83,13H21V7H19Z",
@@ -823,140 +824,6 @@ Item {
 
             }
 
-            // Lo escrito no se ve como puntos sino como una constelación: cada
-            // letra enciende una estrella, a una altura algo distinta, unida a
-            // la anterior con una línea fina. Al fallar se pone roja y cae
-            // deshaciéndose; al acertar, se va con lo demás
-            Item {
-                id: constelacion
-                anchors.fill: parent
-                visible: !campo.ver
-                opacity: (cerradura.ocupada ? 0.6 : 1) * (1 - caida)
-
-                readonly property int paso: 20
-                readonly property int amp: 11
-                readonly property int caben: Math.max(1, Math.floor((botones.x - candado.x - candado.width - 24) / paso) + 1)
-                // Las que se ven: las letras escritas o, mientras se deshace,
-                // las que había al comprobar
-                property int recuerdo: 0
-                readonly property int cuantas: Math.min(caben, Math.max(campo.text.length, recuerdo))
-                // Centrada en la raya: al crecer se va abriendo hacia los lados
-                property real x0: width / 2
-                readonly property real x0Meta: width / 2 - (cuantas - 1) * paso / 2
-                onX0MetaChanged: x0 = x0Meta
-                Behavior on x0 { NumberAnimation { duration: cerradura.animar ? 260 : 0; easing.type: Easing.OutCubic } }
-                property color tono: cerradura.enRojo ? cerradura.colorRojo : cerradura.colorAcento
-                Behavior on tono { ColorAnimation { duration: 200 } }
-
-                // La altura de cada estrella: siempre la misma para la misma
-                // posición (borrar y volver a escribir dibuja lo mismo)
-                function alto(i) {
-                    return Math.round(height / 2 - 3 + amp * (0.55 * Math.sin(i * 2.9 + 0.7) + 0.45 * Math.sin(i * 1.7 + 2)));
-                }
-
-                // Al fallar: cae un poco y se apaga
-                property real caida: 0
-                transform: Translate { y: constelacion.caida * 10 }
-                Connections {
-                    target: cerradura
-                    function onOcupadaChanged() {
-                        if (cerradura.ocupada)
-                            constelacion.recuerdo = campo.text.length;
-                        else if (cerradura.error && cerradura.animar)
-                            deshacer.restart();
-                        else if (!cerradura.abierto)
-                            constelacion.recuerdo = 0;
-                    }
-                }
-                Connections {
-                    target: campo
-                    function onTextChanged() {
-                        if (campo.text !== "") {
-                            deshacer.stop();
-                            constelacion.caida = 0;
-                            constelacion.recuerdo = 0;
-                        }
-                    }
-                }
-                SequentialAnimation {
-                    id: deshacer
-                    PauseAnimation { duration: 350 }
-                    NumberAnimation { target: constelacion; property: "caida"; from: 0; to: 1; duration: 650; easing.type: Easing.InCubic }
-                    ScriptAction { script: { constelacion.recuerdo = 0; constelacion.caida = 0; } }
-                }
-
-                // Brillan un poco, del color del tema
-                layer.enabled: true
-                layer.effect: MultiEffect {
-                    shadowEnabled: true
-                    shadowColor: constelacion.tono
-                    shadowBlur: 0.6
-                    shadowOpacity: 0.9
-                    shadowHorizontalOffset: 0
-                    shadowVerticalOffset: 0
-                    blurMax: 14
-                }
-
-                // Las líneas, cada una de la estrella anterior a la suya; crecen
-                // al aparecer
-                Repeater {
-                    model: Math.max(0, constelacion.cuantas - 1)
-                    Rectangle {
-                        id: linea
-                        required property int index
-                        readonly property real ya: constelacion.alto(index)
-                        readonly property real yb: constelacion.alto(index + 1)
-                        readonly property real largo: Math.sqrt(constelacion.paso * constelacion.paso + (yb - ya) * (yb - ya))
-                        property real crece: cerradura.animar ? 0 : 1
-                        x: constelacion.x0 + index * constelacion.paso
-                        y: ya - height / 2
-                        width: largo * crece
-                        height: 1
-                        transformOrigin: Item.Left
-                        rotation: Math.atan2(yb - ya, constelacion.paso) * 180 / Math.PI
-                        color: cerradura.conAlfa(constelacion.tono, 0.55)
-                        NumberAnimation on crece {
-                            running: cerradura.animar
-                            to: 1
-                            duration: 240
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-                }
-
-                // Las estrellas: aparecen girando y con un saltito
-                Repeater {
-                    model: constelacion.cuantas
-                    Item {
-                        id: estrella
-                        required property int index
-                        x: constelacion.x0 + index * constelacion.paso
-                        y: constelacion.alto(index)
-                        width: 0
-                        height: 0
-                        // La última late un poco, como si acabara de encenderse
-                        readonly property bool ultima: index === constelacion.cuantas - 1
-                        Icono {
-                            id: forma
-                            anchors.centerIn: parent
-                            width: estrella.ultima ? 13 : 10
-                            height: width
-                            Behavior on width { NumberAnimation { duration: 200 } }
-                            trazo: cerradura.trazos.estrella
-                            tinta: cerradura.enRojo ? cerradura.colorRojo : Qt.lighter(cerradura.colorAcento, 1.3)
-                            scale: cerradura.animar ? 0 : 1
-                            rotation: cerradura.animar ? -90 : 0
-                            Component.onCompleted: if (cerradura.animar) brota.start()
-                            ParallelAnimation {
-                                id: brota
-                                NumberAnimation { target: forma; property: "scale"; to: 1; duration: 320; easing.type: Easing.OutBack; easing.overshoot: 2 }
-                                NumberAnimation { target: forma; property: "rotation"; to: 0; duration: 420; easing.type: Easing.OutCubic }
-                            }
-                        }
-                    }
-                }
-            }
-
             Row {
                 id: botones
                 anchors { right: parent.right; verticalCenter: parent.verticalCenter }
@@ -1010,7 +877,11 @@ Item {
                 anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.bottom }
                 height: 2.5
                 radius: 1.25
-                width: parent.width * (cerradura.enRojo || campo.text !== "" ? 1 : campo.activeFocus ? 0.4 : 0)
+                // Con foco, 40 %; cada letra la alarga hasta llenar la raya
+                // (con 10 letras); al fallar, entera y roja
+                width: parent.width * (cerradura.enRojo ? 1
+                    : campo.text !== "" ? Math.min(1, 0.4 + campo.text.length * 0.06)
+                    : campo.activeFocus ? 0.4 : 0)
                 Behavior on width { NumberAnimation { duration: cerradura.animar ? 520 : 0; easing.type: Easing.OutQuint } }
                 readonly property color tono: cerradura.enRojo ? cerradura.colorRojo : cerradura.colorAcento
                 gradient: Gradient {
@@ -1029,6 +900,89 @@ Item {
                     shadowHorizontalOffset: 0
                     shadowVerticalOffset: 0
                     blurMax: 24
+                }
+            }
+
+            // Los destellos: cada tecla lanza dos, desde el centro hacia los
+            // lados, que recorren la raya y se apagan. Mientras comprueba la
+            // contraseña, salen solos, como un latido
+            Item {
+                id: destellos
+                anchors { left: parent.left; right: parent.right; verticalCenter: parent.bottom }
+                height: 10
+                visible: cerradura.animar
+                property int siguiente: 0
+                function lanzar() {
+                    const d = chispas.itemAt(siguiente);
+                    siguiente = (siguiente + 1) % chispas.count;
+                    d?.lanzar();
+                }
+                Connections {
+                    target: campo
+                    property int antes: 0
+                    function onTextChanged() {
+                        if (campo.text.length > antes)
+                            destellos.lanzar();
+                        antes = campo.text.length;
+                    }
+                }
+                Timer {
+                    running: cerradura.ocupada && destellos.visible
+                    interval: 520
+                    repeat: true
+                    triggeredOnStart: true
+                    onTriggered: destellos.lanzar()
+                }
+
+                // Unos pocos que se reutilizan (escribiendo deprisa, se solapan)
+                Repeater {
+                    id: chispas
+                    model: 6
+                    Item {
+                        id: chispa
+                        anchors.fill: parent
+                        property real p: 1
+                        function lanzar() { recorre.restart(); }
+                        NumberAnimation on p {
+                            id: recorre
+                            running: false
+                            from: 0
+                            to: 1
+                            duration: 700
+                            easing.type: Easing.OutCubic
+                        }
+                        visible: p < 1
+                        opacity: 1 - p * p
+
+                        // Una a cada lado, la mitad de la raya de recorrido
+                        Repeater {
+                            model: [-1, 1]
+                            Rectangle {
+                                required property int modelData
+                                width: 46
+                                height: 3
+                                radius: 1.5
+                                y: (parent.height - height) / 2
+                                x: (destellos.width - width) / 2 + modelData * chispa.p * (destellos.width - width) / 2
+                                gradient: Gradient {
+                                    orientation: Gradient.Horizontal
+                                    GradientStop { position: 0; color: "transparent" }
+                                    GradientStop { position: 0.5; color: Qt.lighter(luz.tono, 1.5) }
+                                    GradientStop { position: 1; color: "transparent" }
+                                }
+                            }
+                        }
+                    }
+                }
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    shadowEnabled: true
+                    shadowColor: luz.tono
+                    shadowBlur: 0.8
+                    shadowOpacity: 1
+                    shadowHorizontalOffset: 0
+                    shadowVerticalOffset: 0
+                    blurMax: 20
                 }
             }
         }
