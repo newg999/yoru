@@ -135,9 +135,8 @@ cursor {
     // hide-when-typing
 }
 
-// Mostrar la chuleta de atajos al entrar (Mod+Shift+/ la abre cuando quieras).
-// Cuando te sepas los atajos, descomenta esto:
-// hotkey-overlay { skip-at-startup; }
+// La chuleta de atajos no sale sola al entrar (Mod+Shift+/ la abre cuando quieras)
+hotkey-overlay { skip-at-startup; }
 
 screenshot-path "~/Pictures/Screenshots/Captura %Y-%m-%d %H-%M-%S.png"
 

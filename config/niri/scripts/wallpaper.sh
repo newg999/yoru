@@ -54,8 +54,12 @@ esac
 
 # El fondo lo pinta Yoru (quickshell/yoru/barra/Fondo.qml, con transición):
 # lee $STATE al cambiar. Si la barra no responde, swaybg, de reserva
+# (al entrar en la sesión la barra aún está arrancando: entonces ni se le
+# pregunta, swaybg pone el fondo al momento y la barra lo quita al pintar el
+# suyo. Esperar su respuesta dejaba un segundo de pantalla negra)
 con_yoru=false
-[[ "$(timeout 1 qs -c yoru ipc call fondo listo 2>/dev/null)" == true ]] && con_yoru=true
+pgrep -f "^(/usr/bin/)?qs -c yoru( |$)" >/dev/null \
+    && [[ "$(timeout 1 qs -c yoru ipc call fondo listo 2>/dev/null)" == true ]] && con_yoru=true
 
 $con_yoru || pkill -x swaybg
 
