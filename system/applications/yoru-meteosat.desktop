@@ -1,0 +1,14 @@
+# Meteosat: mapa del tiempo de Canarias en kitty (bin/meteosat): viento animado,
+# rachas, lluvia, nubes y temperatura. Es una ventana de kitty normal (margen,
+# transparencia y desenfoque de Yoru); su app-id propio solo sirve para que niri
+# la abra a todo el ancho (config/niri/rules.kdl). install.sh lo enlaza para que
+# salga en el lanzador.
+[Desktop Entry]
+Type=Application
+Name=Meteosat
+Comment=Mapa del tiempo: viento animado, rachas, lluvia, nubes (satélite) y temperatura
+Keywords=meteosat;tiempo;clima;meteo;viento;rachas;lluvia;nubes;satélite;radar;temperatura;weather;
+Icon=weather-few-clouds
+Exec=kitty --class yoru-meteosat --title Meteosat meteosat
+Terminal=false
+Categories=Utility;

@@ -1,0 +1,808 @@
+#!/usr/bin/env python3
+"""Meteosat: mapa del tiempo interactivo en la terminal kitty (Canarias y alrededores).
+
+Modos (tecla):
+  V  Viento       viento medio: colores según la velocidad + líneas de flujo
+  R  Rachas       rachas máximas (lo que las webs llaman "máx.")
+  L  Lluvia       precipitación en mm/h
+  N  Nubes        "ahora" = satélite Meteosat real (con rayos); previsión = modelo
+  T  Temperatura
+
+Teclas:
+  Izq / Der       hora anterior / siguiente      Arr / Abj   un día antes / después
+  0               volver a "ahora"                P           reproducir las horas (animación)
+  + / -           acercar / alejar               W A S D     mover el mapa
+  C               volver a centrar en Canarias   Q           salir
+
+Opciones:
+  meteosat -m l   empezar en un modo (v, r, l, n, t); por defecto rachas
+  meteosat -z 6   zoom inicial: grados de latitud visibles (por defecto 10)
+  meteosat -1     dibujar una vez y salir
+
+Datos: EUMETSAT (satélite, rayos, mapa) y Open-Meteo (modelo: viento, lluvia,
+nubes, temperatura; previsión por horas, se renueva cada hora).
+"""
+import argparse
+import base64
+import fcntl
+import hashlib
+import io
+import json
+import math
+import os
+import pickle
+import select
+import shutil
+import signal
+import struct
+import sys
+import termios
+import zlib
+import time
+import tty
+import urllib.parse
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+
+# ---------------------------------------------------------------- ajustes
+INICIO = (28.3, -15.8)       # centro inicial (lat, lon)
+ALTO_INICIAL = 10.0          # grados de latitud visibles
+# Open-Meteo gratis: ~600 puntos/minuto, 5.000/hora, 10.000/día. Cada punto cuenta.
+MAX_VISTA = 100              # puntos del modelo dentro de lo que se ve
+MAX_REGION = 280             # puntos por descarga como máximo
+AMPLIAR = 0.3                # se descarga un 30% más por cada lado (mover/alejar sin pedir más)
+REFRESCO = 5 * 60            # redibujar solo cada 5 min (satélite nuevo)
+FPS = 12                     # fotogramas por segundo de las partículas de viento
+PASO_REPRODUCIR = 0.8        # segundos entre horas al pulsar P
+CADUCA_MODELO = 3 * 3600     # los modelos se actualizan cada pocas horas
+ZONA = "Atlantic/Canary"
+CACHE = os.path.expanduser("~/.cache/meteosat/datos.pkl")  # datos del modelo entre sesiones
+
+FUENTE_B = "/usr/share/fonts/google-noto/NotoSans-Bold.ttf"
+FUENTE_R = "/usr/share/fonts/google-noto/NotoSans-Regular.ttf"
+WMS = "https://view.eumetsat.int/geoserver/ows"
+OPEN_METEO = "https://api.open-meteo.com/v1/forecast"
+VARS = ["wind_speed_10m", "wind_gusts_10m", "wind_direction_10m", "precipitation", "cloud_cover", "temperature_2m"]
+
+MODOS = {"v": "Viento", "r": "Rachas", "l": "Lluvia", "n": "Nubes", "t": "Temperatura"}
+UNIDAD = {"v": "km/h", "r": "km/h", "l": "mm/h", "n": "%", "t": "°C"}
+
+PALETAS = {
+    "v": [(0, (46, 139, 87)), (12, (60, 170, 75)), (22, (130, 200, 60)), (30, (240, 215, 40)),
+          (40, (255, 170, 30)), (50, (255, 120, 20)), (62, (235, 55, 30)), (78, (190, 10, 40)),
+          (95, (200, 30, 160)), (120, (110, 20, 150))],
+    "t": [(-5, (120, 60, 170)), (0, (60, 90, 200)), (8, (60, 160, 220)), (14, (70, 190, 120)),
+          (19, (170, 210, 60)), (23, (250, 210, 50)), (27, (250, 150, 40)), (31, (230, 70, 40)),
+          (38, (160, 20, 40))],
+    "l": [(0.1, (150, 200, 255)), (0.8, (70, 140, 250)), (2, (30, 70, 220)), (4, (40, 180, 80)),
+          (7, (250, 220, 0)), (12, (250, 130, 0)), (20, (220, 20, 20)), (35, (200, 0, 180))],
+    "n": [(0, (70, 110, 150)), (100, (245, 245, 245))],
+}
+PALETAS["r"] = PALETAS["v"]
+MARCAS = {
+    "r": [0, 20, 30, 40, 50, 60, 80, 100],
+    "v": [0, 20, 30, 40, 50, 60, 80, 100],
+    "t": [0, 10, 15, 20, 25, 30, 35],
+    "l": [0.1, 1, 2, 5, 10, 20],
+    "n": [0, 25, 50, 75, 100],
+}
+
+CIUDADES = [  # las primeras tienen prioridad si los nombres se solapan
+    ("Santa Cruz", 28.463, -16.251), ("Las Palmas", 28.124, -15.430),
+    ("Arrecife", 28.963, -13.548), ("Pto. del Rosario", 28.500, -13.862),
+    ("San Sebastián", 28.091, -17.111), ("S/C de La Palma", 28.684, -17.765),
+    ("Valverde", 27.809, -17.915), ("Madeira", 32.650, -16.910),
+    ("Ponta Delgada", 37.740, -25.670), ("Lisboa", 38.720, -9.140),
+    ("Madrid", 40.420, -3.700), ("Sevilla", 37.390, -5.980), ("Oporto", 41.150, -8.610),
+    ("Málaga", 36.720, -4.420), ("Valencia", 39.470, -0.380), ("Barcelona", 41.390, 2.170),
+    ("Casablanca", 33.570, -7.590), ("Rabat", 34.020, -6.840), ("Marrakech", 31.630, -8.010),
+    ("Agadir", 30.430, -9.600), ("Tan-Tan", 28.440, -11.100), ("El Aaiún", 27.150, -13.200),
+    ("Dajla", 23.680, -15.960), ("Nuadibú", 20.930, -17.030), ("Argel", 36.750, 3.060),
+    ("Orán", 35.700, -0.630), ("Uarzazat", 30.920, -6.890),
+]
+DIAS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"]
+
+
+# ---------------------------------------------------------------- descargas
+def descargar(url, timeout=40):
+    req = urllib.request.Request(url, headers={"User-Agent": "meteosat-terminal/2.0"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read()
+
+
+def wms(capas, bbox, w, h, transparente=False):
+    lat0, lon0, lat1, lon1 = bbox
+    q = {"service": "WMS", "version": "1.3.0", "request": "GetMap", "layers": capas,
+         "styles": "", "crs": "EPSG:4326", "bbox": f"{lat0},{lon0},{lat1},{lon1}",
+         "width": w, "height": h,
+         # JPEG es ~10 veces más rápido de generar; PNG solo para capas transparentes
+         "format": "image/png" if transparente else "image/jpeg"}
+    if transparente:
+        q["transparent"] = "true"
+    return Image.open(io.BytesIO(descargar(WMS + "?" + urllib.parse.urlencode(q)))).convert("RGBA")
+
+
+def open_meteo(lats, lons):
+    """Previsión por horas para muchos puntos. Devuelve (horas, {var: array[T, n]})."""
+    trozos = [(lats[i:i + 100], lons[i:i + 100]) for i in range(0, len(lats), 100)]
+
+    def pedir(t):
+        q = {"latitude": ",".join(f"{x:.3f}" for x in t[0]),
+             "longitude": ",".join(f"{x:.3f}" for x in t[1]),
+             "hourly": ",".join(VARS), "wind_speed_unit": "kmh",
+             "timezone": ZONA, "forecast_days": 3}
+        d = json.loads(descargar(OPEN_METEO + "?" + urllib.parse.urlencode(q)))
+        return d if isinstance(d, list) else [d]
+
+    with ThreadPoolExecutor() as ex:
+        puntos = [p for r in ex.map(pedir, trozos) for p in r]
+    horas = puntos[0]["hourly"]["time"]
+    datos = {}
+    for v in VARS:
+        a = np.array([[x if x is not None else np.nan for x in p["hourly"][v]] for p in puntos],
+                     dtype=np.float32).T
+        datos[v] = np.nan_to_num(a)
+    return horas, datos
+
+
+# ---------------------------------------------------------------- utilidades de dibujo
+def colorear(valores, modo):
+    paleta = PALETAS[modo]
+    xs = [p[0] for p in paleta]
+    rgb = np.stack([np.interp(valores, xs, [p[1][c] for p in paleta]) for c in range(3)], -1)
+    return rgb.astype(np.uint8)
+
+
+def campo(rejilla, w, h, caja=None):
+    """Rejilla (ny, nx) -> array (h, w) suavizado; caja = trozo de la rejilla a mostrar."""
+    im = Image.fromarray(rejilla.astype(np.float32))
+    return np.asarray(im.resize((w, h), Image.BICUBIC, box=caja))
+
+
+def motivo(e):
+    if getattr(e, "code", None) == 429:
+        try:
+            razon = json.loads(e.read()).get("reason", "")
+        except Exception:
+            razon = ""
+        if "Hourly" in razon:
+            return f"Open-Meteo: límite por hora agotado, vuelve en {60 - datetime.now().minute} min"
+        if "Daily" in razon:
+            return "Open-Meteo: límite diario agotado, vuelve mañana"
+        return "Open-Meteo: demasiadas consultas seguidas, espera un minuto"
+    return f"{e.__class__.__name__}: {e}"[:90]
+
+
+def capa_color(modo, valores):
+    h, w = valores.shape
+    rgb = colorear(valores, modo)
+    if modo == "l":
+        alfa = np.clip((valores - 0.05) / 0.25, 0, 1) * 215
+    elif modo == "n":
+        alfa = np.clip((valores - 10) / 90, 0, 1) * 235
+        rgb[:] = 245
+    else:
+        alfa = np.full((h, w), 205.0)
+    return Image.fromarray(np.dstack([rgb, alfa.astype(np.uint8)]), "RGBA")
+
+
+def lineas_viento(U, V, escala):
+    """Líneas de flujo blancas que siguen el viento, más intensas en la cabeza."""
+    h, w = U.shape
+    rng = np.random.default_rng(7)  # semilla fija: las líneas no "saltan" entre redibujados
+    paso = int(36 * escala)
+    xs, ys = np.meshgrid(np.arange(paso / 2, w, paso), np.arange(paso / 2, h, paso))
+    pts = np.stack([xs.ravel(), ys.ravel()], 1).astype(float)
+    pts += rng.uniform(-paso / 2, paso / 2, pts.shape)
+    n = 16
+    k = 0.085 * escala
+    tray = [pts.copy()]
+    for _ in range(n):
+        xi = np.clip(pts[:, 0].astype(int), 0, w - 1)
+        yi = np.clip(pts[:, 1].astype(int), 0, h - 1)
+        pts = pts + np.stack([U[yi, xi], -V[yi, xi]], 1) * k
+        tray.append(pts.copy())
+    tray = np.stack(tray, 1)
+    capa = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(capa)
+    ancho = max(1, int(1.5 * escala))
+    for t in tray:
+        for i in range(n):
+            d.line([tuple(t[i]), tuple(t[i + 1])], fill=(255, 255, 255, int(20 + 190 * i / n)),
+                   width=ancho)
+    return capa
+
+
+def texto(d, xy, s, fuente, color="white", anchor="la", borde=2):
+    d.text(xy, s, font=fuente, fill=color, anchor=anchor, stroke_width=borde, stroke_fill=(0, 0, 0))
+
+
+# ---------------------------------------------------------------- la app
+MAPAS_EN_DISCO = ("base", "lineas")
+DIR_MAPAS = os.path.join(os.path.dirname(CACHE), "mapas")
+
+
+def en_disco(tipo, clave, fn):
+    """Envuelve fn: lee la imagen de disco si ya se descargó, si no la descarga y la guarda."""
+    def leer():
+        ruta = os.path.join(DIR_MAPAS, f"{tipo}-{hashlib.md5(repr(clave).encode()).hexdigest()}.png")
+        try:
+            with Image.open(ruta) as im:
+                os.utime(ruta)
+                return im.convert("RGBA")
+        except Exception:
+            pass
+        img = fn()
+        try:
+            os.makedirs(DIR_MAPAS, exist_ok=True)
+            img.save(ruta + ".tmp.png", compress_level=1)
+            os.replace(ruta + ".tmp.png", ruta)
+            viejos = sorted(os.scandir(DIR_MAPAS), key=lambda e: e.stat().st_mtime)
+            for e in viejos[:-60]:      # como mucho 60 mapas (unos 100 MB)
+                os.remove(e.path)
+        except Exception:
+            pass
+        return img
+    return leer
+
+
+class App:
+    def __init__(self, modo, alto):
+        self.modo = modo
+        self.centro = list(INICIO)
+        self.alto = alto
+        self.desfase = 0          # horas desde "ahora"
+        self.cache = {}           # (tipo, clave) -> (tiempo, dato)
+        self.regiones = []        # zonas del modelo ya descargadas
+        self.cargar()
+        self.aviso = ""
+        self.fallo = False
+        self.reproduciendo = False
+        self.max_desfase = 0
+        self.U = self.V = None    # campo de viento en píxeles (para las partículas)
+
+    # --- caché en disco (para no gastar consultas al volver a abrir)
+    def cargar(self):
+        try:
+            with open(CACHE, "rb") as f:
+                d = pickle.load(f)
+            self.regiones = d.get("regiones", [])
+            if "ciudades" in d:
+                self.cache[("ciudades", 0)] = d["ciudades"]
+        except Exception:
+            pass
+
+    def guardar(self):
+        try:
+            os.makedirs(os.path.dirname(CACHE), exist_ok=True)
+            d = {"regiones": self.regiones}
+            if ("ciudades", 0) in self.cache:
+                d["ciudades"] = self.cache[("ciudades", 0)]
+            with open(CACHE + ".tmp", "wb") as f:
+                pickle.dump(d, f)
+            os.replace(CACHE + ".tmp", CACHE)
+        except Exception:
+            pass
+
+    # --- vista
+    def bbox(self, w, h):
+        lat, lon = self.centro
+        ancho = self.alto * w / h
+        return (lat - self.alto / 2, lon - ancho / 2, lat + self.alto / 2, lon + ancho / 2)
+
+    def cacheado(self, tipo, clave, caduca, fn):
+        k = (tipo, clave)
+        if k in self.cache and time.time() - self.cache[k][0] < caduca:
+            return self.cache[k][1]
+        if tipo in MAPAS_EN_DISCO:   # el mapa de fondo no cambia: se guarda en disco
+            fn = en_disco(tipo, clave, fn)
+        try:
+            v = fn()
+        except Exception:
+            if k in self.cache:      # mejor datos viejos que nada
+                return self.cache[k][1]
+            raise
+        self.cache[k] = (time.time(), v)
+        if len(self.cache) > 40:  # no acumular vistas viejas
+            for viejo in sorted(self.cache, key=lambda x: self.cache[x][0])[:10]:
+                del self.cache[viejo]
+        return v
+
+    def region(self, bbox):
+        """Zona del modelo que cubre la vista: reutiliza una descargada si vale.
+        Devuelve (region, aviso)."""
+        lat0, lon0, lat1, lon1 = bbox
+        paso_ideal = max(0.2, math.sqrt((lat1 - lat0) * (lon1 - lon0) / MAX_VISTA))
+        vieja = None
+        for r in reversed(self.regiones):
+            rb = r["bbox"]
+            if rb[0] <= lat0 and rb[1] <= lon0 and rb[2] >= lat1 and rb[3] >= lon1 \
+                    and r["paso"] <= paso_ideal * 1.6:
+                if time.time() - r["t"] < CADUCA_MODELO:
+                    return r, ""
+                vieja = vieja or r
+        dlat, dlon = (lat1 - lat0) * AMPLIAR, (lon1 - lon0) * AMPLIAR
+        rb = (max(-89.0, lat0 - dlat), lon0 - dlon, min(89.0, lat1 + dlat), lon1 + dlon)
+        paso = max(paso_ideal, math.sqrt((rb[2] - rb[0]) * (rb[3] - rb[1]) / MAX_REGION))
+        nx = max(2, round((rb[3] - rb[1]) / paso))
+        ny = max(2, round((rb[2] - rb[0]) / paso))
+        lats = [rb[2] - (j + 0.5) * (rb[2] - rb[0]) / ny for j in range(ny) for _ in range(nx)]
+        lons = [rb[1] + (i + 0.5) * (rb[3] - rb[1]) / nx for _ in range(ny) for i in range(nx)]
+        try:
+            horas, datos = open_meteo(lats, lons)
+        except Exception as e:
+            if vieja:
+                return vieja, f"Datos de hace {int((time.time() - vieja['t']) / 60)} min ({motivo(e)})"
+            raise
+        r = {"t": time.time(), "bbox": rb, "paso": paso, "nx": nx, "ny": ny, "horas": horas,
+             "datos": {v: a.reshape(len(horas), ny, nx) for v, a in datos.items()}}
+        self.regiones = (self.regiones + [r])[-8:]
+        self.guardar()
+        return r, ""
+
+    def ciudades(self):
+        r = open_meteo([c[1] for c in CIUDADES], [c[2] for c in CIUDADES])
+        self.cache[("ciudades", 0)] = (time.time(), r)
+        self.guardar()
+        return r
+
+    # --- dibujo
+    def dibujar(self, w, h):
+        """Imagen completa en una sola capa (para -1 y pruebas)."""
+        fondo, encima = self.capas(w, h, animado=False)
+        return Image.alpha_composite(fondo, encima).convert("RGB")
+
+    def capas(self, w, h, animado=True):
+        """Devuelve (fondo, encima): el mapa coloreado y los textos/barra en transparente.
+        Si animado, no dibuja líneas fijas y deja el viento en self.U / self.V."""
+        self.U = self.V = None
+        bbox = self.bbox(w, h)
+        clave = tuple(round(x, 3) for x in bbox)
+        clave_px = clave + (w, h)
+        lat0, lon0, lat1, lon1 = bbox
+        escala = max(1.0, h / 950)
+        self.aviso = ""
+
+        with ThreadPoolExecutor() as ex:
+            f_base = ex.submit(self.cacheado, "base", clave_px, 1e9,
+                               lambda: wms("backgrounds:ne_background", bbox, w, h))
+            f_lineas = ex.submit(self.cacheado, "lineas", clave_px, 1e9, lambda: wms(
+                "backgrounds:ne_10m_coastline,osmgray:ne_10m_admin_0_boundary_lines_land",
+                bbox, w, h, True))
+            f_mod = ex.submit(self.region, bbox)
+            f_ciu = ex.submit(self.cacheado, "ciudades", 0, CADUCA_MODELO, self.ciudades)
+            sat = self.modo == "n" and self.desfase == 0
+            if sat:
+                f_sat = ex.submit(self.cacheado, "sat", clave_px, REFRESCO - 10, lambda: (
+                    wms("mtg_fd:rgb_geocolour", bbox, w, h),
+                    wms("mtg_fd:li_afa", bbox, w, h, True)))
+
+        self.fallo = False
+        img = f_base.result().copy()
+        if self.modo in ("l", "n"):
+            gris = img.convert("L").point(lambda v: int(25 + v * 0.38))
+            img = Image.merge("RGBA", (gris, gris, gris.point(lambda v: min(255, v + 12)),
+                                       img.getchannel("A")))
+        try:
+            reg, self.aviso = f_mod.result()
+            nx, ny, horas, datos = reg["nx"], reg["ny"], reg["horas"], reg["datos"]
+            rb = reg["bbox"]
+            caja = ((lon0 - rb[1]) / (rb[3] - rb[1]) * nx, (rb[2] - lat1) / (rb[2] - rb[0]) * ny,
+                    (lon1 - rb[1]) / (rb[3] - rb[1]) * nx, (rb[2] - lat0) / (rb[2] - rb[0]) * ny)
+        except Exception as e:
+            nx = None
+            horas = []
+            self.fallo = True
+            self.aviso = f"Sin datos del modelo ({motivo(e)}). Reintento en 1 min."
+
+        # índice de la hora mostrada
+        ahora = datetime.now().strftime("%Y-%m-%dT%H:00")
+        i0 = horas.index(ahora) if ahora in horas else 0
+        if horas:
+            self.max_desfase = len(horas) - 1 - i0
+            self.desfase = max(-i0, min(self.max_desfase, self.desfase))
+        idx = i0 + self.desfase
+
+        if sat:
+            try:
+                fondo, rayos = f_sat.result()
+                img = Image.alpha_composite(fondo, rayos)
+            except Exception as e:
+                self.aviso = f"Sin imagen de satélite ({e.__class__.__name__})"
+        elif nx:
+            var = {"v": "wind_speed_10m", "r": "wind_gusts_10m", "l": "precipitation", "n": "cloud_cover",
+                   "t": "temperature_2m"}[self.modo]
+            valores = campo(datos[var][idx], w, h, caja)
+            if self.modo == "l":
+                valores = np.clip(valores, 0, None)
+            img = Image.alpha_composite(img, capa_color(self.modo, valores))
+            if self.modo in ("v", "r"):
+                vel = datos["wind_speed_10m"][idx]
+                ang = np.radians(datos["wind_direction_10m"][idx])
+                U = campo(-vel * np.sin(ang), w, h, caja)
+                V = campo(-vel * np.cos(ang), w, h, caja)
+                if animado:
+                    self.U, self.V = U, V
+                else:
+                    img = Image.alpha_composite(img, lineas_viento(U, V, escala))
+
+        try:
+            img = Image.alpha_composite(img, f_lineas.result())
+        except Exception:
+            pass
+
+        encima = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        d = ImageDraw.Draw(encima)
+        try:
+            _, dc = f_ciu.result()
+        except Exception:
+            dc = None
+        self.etiquetas(d, bbox, w, h, escala, dc, idx)
+        self.barra(d, encima, w, h, escala, horas, idx, sat)
+        return img, encima
+
+    def etiquetas(self, d, bbox, w, h, escala, dc, idx):
+        lat0, lon0, lat1, lon1 = bbox
+        f_val = ImageFont.truetype(FUENTE_B, int(17 * escala))
+        f_uni = ImageFont.truetype(FUENTE_B, int(11 * escala))
+        f_nom = ImageFont.truetype(FUENTE_B, int(15 * escala))
+        ocupado = []
+        margen_inf = h - int(110 * escala)
+        for k, (nombre, lat, lon) in enumerate(CIUDADES):
+            x = (lon - lon0) / (lon1 - lon0) * w
+            y = (lat1 - lat) / (lat1 - lat0) * h
+            if not (30 < x < w - 30 and 30 < y < margen_inf):
+                continue
+            valor = unidad = ""
+            if dc is not None:
+                if self.modo in ("v", "r"):
+                    var = "wind_speed_10m" if self.modo == "v" else "wind_gusts_10m"
+                    valor, unidad = f"{dc[var][idx, k]:.0f}", "km/h"
+                elif self.modo == "l":
+                    p = dc["precipitation"][idx, k]
+                    valor, unidad = (f"{p:.1f}", "mm") if p >= 0.1 else ("", "")
+                elif self.modo == "n":
+                    valor, unidad = f"{dc['cloud_cover'][idx, k]:.0f}", "%"
+                else:
+                    valor = f"{dc['temperature_2m'][idx, k]:.0f}°"
+            bn = d.textbbox((x, y + 5 * escala), nombre, font=f_nom, anchor="mt")
+            media = (d.textlength(valor, font=f_val) + d.textlength(unidad, font=f_uni)) / 2 + 2
+            caja = (min(bn[0], x - media), y - 24 * escala, max(bn[2], x + media), bn[3])
+            if any(not (caja[2] < o[0] or caja[0] > o[2] or caja[3] < o[1] or caja[1] > o[3])
+                   for o in ocupado):
+                continue
+            ocupado.append(caja)
+            r = 3 * escala
+            d.rectangle([x - r, y - r, x + r, y + r], fill="white", outline="black")
+            texto(d, (x, y + 5 * escala), nombre, f_nom, anchor="mt")
+            if valor:
+                ancho_v = d.textlength(valor, font=f_val)
+                ancho_u = d.textlength(unidad, font=f_uni) if unidad else 0
+                xv = x - (ancho_v + ancho_u + 2) / 2
+                texto(d, (xv, y - 5 * escala), valor, f_val, anchor="ls")
+                if unidad:
+                    texto(d, (xv + ancho_v + 2, y - 5 * escala), unidad, f_uni, anchor="ls")
+
+    def barra(self, d, img, w, h, escala, horas, idx, sat):
+        f = ImageFont.truetype(FUENTE_B, int(15 * escala))
+        f_peq = ImageFont.truetype(FUENTE_R, int(13 * escala))
+        alto = int(44 * escala)
+        y0 = h - alto
+        fondo = Image.new("RGBA", (w, alto + int(24 * escala)), (10, 30, 45, 0))
+        dd = ImageDraw.Draw(fondo)
+        dd.rectangle([0, int(24 * escala), w, fondo.height], fill=(10, 30, 45, 215))
+        img.alpha_composite(fondo, (0, y0 - int(24 * escala)))
+        cy = y0 + alto / 2
+
+        # pestañas de modo
+        x = 12 * escala
+        for k, nombre in MODOS.items():
+            etiqueta = f"{k.upper()}  {nombre}"
+            tw = d.textlength(etiqueta, font=f)
+            caja = [x, cy - 15 * escala, x + tw + 20 * escala, cy + 15 * escala]
+            activo = k == self.modo
+            d.rounded_rectangle(caja, radius=int(6 * escala),
+                                fill=(30, 110, 140) if activo else (25, 55, 70),
+                                outline=(120, 200, 230) if activo else None, width=2)
+            d.text((x + 10 * escala, cy), etiqueta, font=f, anchor="lm",
+                   fill="white" if activo else (170, 190, 200))
+            x = caja[2] + 8 * escala
+
+        # hora
+        x += 20 * escala
+        if horas:
+            t = datetime.strptime(horas[idx], "%Y-%m-%dT%H:%M")
+            hoy = datetime.now().date()
+            dia = {0: "hoy", 1: "mañana"}.get((t.date() - hoy).days, f"{DIAS[t.weekday()]} {t.day}")
+            s = f"{dia}  {t:%H}:00"
+            s += "  (ahora)" if self.desfase == 0 else f"  ({self.desfase:+d} h)"
+        else:
+            s = "sin datos"
+        if sat:
+            s += "  · satélite"
+        if self.reproduciendo:
+            s += "   · reproduciendo (P para parar)"
+        tri = 7 * escala
+        d.polygon([(x, cy), (x + tri, cy - tri), (x + tri, cy + tri)], fill="white")
+        x += tri + 10 * escala
+        d.text((x, cy), s, font=f, fill="white", anchor="lm")
+        x += d.textlength(s, font=f) + 10 * escala
+        d.polygon([(x + tri, cy), (x, cy - tri), (x, cy + tri)], fill="white")
+
+        # leyenda de colores
+        if not sat:
+            marcas = MARCAS[self.modo]
+            lw, lh = int(300 * escala), int(12 * escala)
+            lx, ly = w - lw - 20 * escala - d.textlength(UNIDAD[self.modo], font=f), cy - lh / 2 - 6 * escala
+            pos = np.linspace(0, 1, len(marcas))
+            valores = np.interp(np.linspace(0, 1, lw), pos, marcas)
+            grad = Image.fromarray(np.repeat(colorear(valores, self.modo)[None], lh, 0), "RGB")
+            img.paste(grad, (int(lx), int(ly)))
+            for p, m in zip(pos, marcas):
+                d.text((lx + p * lw, ly + lh + 2), f"{m:g}", font=f_peq, fill="white", anchor="mt")
+            d.text((lx + lw + 10 * escala, ly + lh / 2), UNIDAD[self.modo], font=f, fill="white", anchor="lm")
+
+        # ayuda / avisos encima de la barra
+        ayuda = ("V R L N T: modo   ·   Izq/Der: hora   ·   Arr/Abj: día   ·   0: ahora   ·   P: reproducir   ·   "
+                 "+/-: zoom   ·   WASD: mover   ·   C: centrar   ·   Q: salir")
+        texto(d, (12 * escala, y0 - 6 * escala), self.aviso or ayuda, f_peq,
+              color=(255, 140, 120) if self.aviso else (220, 230, 235), anchor="ls", borde=1)
+
+    # --- teclas
+    def tecla(self, k):
+        """Aplica una tecla. Devuelve False para salir."""
+        if k in ("q", "Q", "\x1b"):
+            return False
+        lat, lon = self.centro
+        mov = self.alto * 0.25
+        acciones = {
+            "\x1b[C": lambda: self._hora(1), "\x1b[D": lambda: self._hora(-1),
+            "\x1b[A": lambda: self._hora(-24), "\x1b[B": lambda: self._hora(24),
+            "0": lambda: setattr(self, "desfase", 0),
+            "+": lambda: self._zoom(1 / 1.4), "=": lambda: self._zoom(1 / 1.4),
+            "-": lambda: self._zoom(1.4),
+            "w": lambda: self._mover(mov, 0), "s": lambda: self._mover(-mov, 0),
+            "a": lambda: self._mover(0, -mov * 1.5), "d": lambda: self._mover(0, mov * 1.5),
+            "c": self._centrar,
+            "p": lambda: setattr(self, "reproduciendo", not self.reproduciendo),
+        }
+        k2 = k.lower() if len(k) == 1 else k
+        if k2 in MODOS:
+            self.modo = k2
+        elif k2 in acciones:
+            acciones[k2]()
+        return True
+
+    def _hora(self, n):
+        self.desfase += n
+
+    def _zoom(self, f):
+        self.alto = max(1.5, min(45, self.alto * f))
+
+    def _mover(self, dlat, dlon):
+        self.centro[0] = max(-80, min(80, self.centro[0] + dlat))
+        self.centro[1] = (self.centro[1] + dlon + 180) % 360 - 180
+
+    def _centrar(self):
+        self.centro = list(INICIO)
+        self.alto = ALTO_INICIAL
+
+
+# ---------------------------------------------------------------- terminal
+def tamano_terminal():
+    """(ancho_px, alto_px, columnas, filas) del área de texto de la terminal."""
+    try:
+        filas, cols, pw, ph = struct.unpack("HHHH", fcntl.ioctl(sys.stdout.fileno(),
+                                                               termios.TIOCGWINSZ, b"\0" * 8))
+        if pw and ph:
+            return pw, ph, cols, filas
+    except Exception:
+        pass
+    cols, filas = shutil.get_terminal_size()
+    return cols * 10, filas * 20, cols, filas
+
+
+class Particulas:
+    """Partículas que siguen el viento dejando estela (como windy / tiempo&radar)."""
+
+    def __init__(self, w, h, escala):
+        self.w, self.h, self.escala = w, h, escala
+        self.rng = np.random.default_rng()
+        n = int(w * h / (1300 * escala * escala))
+        self.pos = self.rng.uniform((0, 0), (w, h), (n, 2))
+        self.edad = self.rng.integers(0, 80, n)
+        self.vida = self.rng.integers(40, 110, n)
+        self.alfa = Image.new("L", (w, h), 0)
+        self.blanco = Image.new("L", (w, h), 255)
+        self.desvanecer = [int(i * 0.88) for i in range(256)]
+        self.ancho = max(1, round(1.4 * escala))
+        self.id_actual = 0        # imagen de kitty con el último fotograma
+
+    def paso(self, U, V):
+        w, h = self.w, self.h
+        xi = np.clip(self.pos[:, 0].astype(int), 0, w - 1)
+        yi = np.clip(self.pos[:, 1].astype(int), 0, h - 1)
+        k = 0.055 * self.escala
+        nueva = self.pos + np.stack([U[yi, xi], -V[yi, xi]], 1) * k
+        self.alfa = self.alfa.point(self.desvanecer)       # la estela se va apagando
+        d = ImageDraw.Draw(self.alfa)
+        for (x0, y0), (x1, y1) in zip(self.pos.tolist(), nueva.tolist()):
+            d.line((x0, y0, x1, y1), fill=235, width=self.ancho)
+        self.pos = nueva
+        self.edad += 1
+        # renacer: viejas, fuera de la pantalla o casi paradas
+        fuera = ((self.edad > self.vida) | (nueva[:, 0] < 0) | (nueva[:, 0] >= w)
+                 | (nueva[:, 1] < 0) | (nueva[:, 1] >= h))
+        n = int(fuera.sum())
+        if n:
+            self.pos[fuera] = self.rng.uniform((0, 0), (w, h), (n, 2))
+            self.edad[fuera] = 0
+
+    def rgba(self):
+        b = self.blanco
+        return Image.merge("RGBA", (b, b, b, self.alfa)).tobytes()
+
+
+def _enviar(cab_primera, datos):
+    """Manda datos al protocolo gráfico de kitty en trozos de 4096."""
+    b = base64.standard_b64encode(datos)
+    out = sys.stdout.buffer
+    for i in range(0, max(len(b), 1), 4096):
+        m = 1 if i + 4096 < len(b) else 0
+        cab = f"{cab_primera},m={m}" if i == 0 else f"m={m}"
+        out.write(b"\033_G" + cab.encode() + b";" + b[i:i + 4096] + b"\033\\")
+    out.flush()
+
+
+def enviar_imagen(img, id_, z, cols, filas):
+    """Coloca (o reemplaza) una imagen PNG que ocupa toda la terminal, en la capa z."""
+    buf = io.BytesIO()
+    img.save(buf, "PNG", compress_level=1)
+    sys.stdout.buffer.write(b"\033[H")
+    _enviar(f"a=T,f=100,q=2,i={id_},p=1,c={cols},r={filas},C=1,z={z}", buf.getvalue())
+
+
+def enviar_particulas(part, cols, filas, nueva):
+    """Cada fotograma va a una imagen nueva (ids 2 y 4 alternos) y se borra la anterior,
+    liberando su memoria: así kitty no acumula fotogramas ni echa el mapa de fondo."""
+    datos = zlib.compress(part.rgba(), 1)
+    id_nuevo = 4 if part.id_actual == 2 else 2
+    sys.stdout.buffer.write(b"\033[H")
+    _enviar(f"a=T,f=32,o=z,s={part.w},v={part.h},q=2,i={id_nuevo},p=1,c={cols},r={filas},C=1,z=2",
+            datos)
+    if part.id_actual:
+        borrar_imagen(part.id_actual)
+    part.id_actual = id_nuevo
+
+
+def borrar_imagen(id_):
+    sys.stdout.buffer.write(f"\033_Ga=d,d=I,i={id_},q=2\033\\".encode())
+    sys.stdout.buffer.flush()
+
+
+def enviar_kitty(img, cols, filas):
+    enviar_imagen(img, 1, 1, cols, filas)
+
+
+def leer_teclas(fd, espera):
+    """Devuelve la lista de teclas pulsadas (agrupando secuencias de flechas)."""
+    r, _, _ = select.select([fd], [], [], espera)
+    if not r:
+        return []
+    datos = os.read(fd, 64).decode(errors="ignore")
+    teclas, i = [], 0
+    while i < len(datos):
+        if datos[i] == "\x1b" and datos[i + 1:i + 2] == "[" and i + 2 < len(datos):
+            teclas.append(datos[i:i + 3])
+            i += 3
+        else:
+            teclas.append(datos[i])
+            i += 1
+    return teclas
+
+
+def main():
+    ap = argparse.ArgumentParser(add_help=False)
+    ap.add_argument("-m", default="r", choices=list(MODOS))
+    ap.add_argument("-z", type=float, default=ALTO_INICIAL)
+    ap.add_argument("-1", dest="una", action="store_true")
+    ap.add_argument("-h", "--help", action="store_true")
+    a = ap.parse_args()
+    if a.help:
+        print(__doc__)
+        return
+
+    app = App(a.m, a.z)
+    if a.una:
+        w, h, cols, filas = tamano_terminal()
+        enviar_kitty(app.dibujar(w, h), cols, filas - 1)
+        sys.stdout.write(f"\033[{filas};1H\n")
+        return
+
+    fd = sys.stdin.fileno()
+    viejo = termios.tcgetattr(fd)
+    out = sys.stdout
+
+    def restaurar(*_):
+        termios.tcsetattr(fd, termios.TCSADRAIN, viejo)
+        out.write("\033_Ga=d,d=A,q=2\033\\\033[?25h\033[?1049l")
+        out.flush()
+
+    signal.signal(signal.SIGTERM, lambda *_: (restaurar(), sys.exit(0)))
+    tty.setcbreak(fd)
+    out.write("\033[?1049h\033[?25l\033[2J")  # pantalla alternativa, sin cursor
+    _, _, cols0, filas0 = tamano_terminal()
+    msg = "Meteosat · cargando el mapa..."
+    out.write(f"\033[{filas0 // 2};{max(1, (cols0 - len(msg)) // 2)}H\033[1m{msg}\033[0m")
+    out.flush()
+    try:
+        tam = None
+        ultimo = 0
+        redibujar = True
+        part = None
+        part_nueva = False
+        sig_hora = 0
+        while True:
+            actual = tamano_terminal()
+            if actual != tam or time.time() - ultimo > REFRESCO:
+                redibujar = True
+            if redibujar:
+                if actual != tam and part is not None:
+                    borrar_imagen(2)
+                    borrar_imagen(4)
+                    part = None
+                tam = actual
+                w, h, cols, filas = tam
+                try:
+                    fondo, encima = app.capas(w, h)
+                    enviar_imagen(fondo, 1, 1, cols, filas)
+                    enviar_imagen(encima, 3, 3, cols, filas)
+                except Exception as e:
+                    out.write(f"\033_Ga=d,d=A,q=2\033\\\033[2J\033[HError: {e}\r\n"
+                              "Reintento en 1 minuto (Q para salir)")
+                    out.flush()
+                    ultimo = time.time() - REFRESCO + 60
+                    part = None
+                else:
+                    ultimo = time.time() - (REFRESCO - 60 if app.fallo else 0)
+                    if app.U is None:
+                        if part is not None:
+                            borrar_imagen(2)
+                            borrar_imagen(4)
+                        part = None
+                    elif part is None:
+                        part = Particulas(w, h, max(1.0, h / 950))
+                        part_nueva = True
+                redibujar = False
+
+            t_frame = time.time()
+            if part is not None:
+                part.paso(app.U, app.V)
+                enviar_particulas(part, cols, filas, part_nueva)
+                part_nueva = False
+            if app.reproduciendo and time.time() >= sig_hora:
+                app.desfase = app.desfase + 1 if app.desfase < app.max_desfase else 0
+                sig_hora = time.time() + PASO_REPRODUCIR
+                redibujar = True
+
+            espera = max(0.0, 1 / FPS - (time.time() - t_frame)) if (part or app.reproduciendo) else 1.0
+            teclas = leer_teclas(fd, espera)
+            if teclas:
+                time.sleep(0.05)  # agrupar pulsaciones rápidas
+                teclas += leer_teclas(fd, 0)
+                for k in teclas:
+                    if not app.tecla(k):
+                        return
+                redibujar = True
+    except KeyboardInterrupt:
+        pass
+    finally:
+        restaurar()
+
+
+if __name__ == "__main__":
+    main()

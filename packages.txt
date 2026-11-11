@@ -58,6 +58,8 @@ plasma-integration        # apps Qt en oscuro fuera de Plasma (system/environmen
 libva-intel-media-driver  # aceleración de vídeo en gráficas Intel (menos CPU y batería)
 mate-polkit               # ventana que pide la contraseña de administrador
 python3                   # scripts de los menús y del monitor del sistema
+python3-numpy             # Meteosat (bin/meteosat): cálculo del mapa y del viento
+python3-pillow            # Meteosat (bin/meteosat): dibujar el mapa
 
 # --- Escritorio --------------------------------------------------------------
 quickshell                # barra y paneles (del COPR avengemedia/danklinux)
