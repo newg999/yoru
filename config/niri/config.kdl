@@ -105,7 +105,7 @@ include optional=true "~/.local/state/yoru/tema/niri.kdl"
 // aquí: va como servicio de systemd (install.sh lo activa) para que se
 // levante sola si se cae.
 // Reiniciarla:  systemctl --user restart yoru-shell
-spawn-sh-at-startup "~/.config/niri/scripts/wallpaper.sh"
+spawn-sh-at-startup "~/.config/niri/scripts/wallpaper.sh inicio"
 spawn-sh-at-startup "~/.config/niri/scripts/polkit.sh"
 
 // Bloqueo automático, apagar la pantalla y suspender cuando no tocas nada:

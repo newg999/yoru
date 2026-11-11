@@ -921,7 +921,7 @@ Scope {
                 y: herramientas.height + 8
                 width: herramientas.width
                 height: columnaLista.implicitHeight + 12
-                radius: 16
+                radius: Tema.radioPanel
                 color: Tema.panel
                 border.width: 1
                 border.color: Tema.claro(0.2)

@@ -173,8 +173,9 @@ Singleton {
             return ruta(n.image);
         if (n.appIcon)
             return n.appIcon.includes("/") ? ruta(n.appIcon) : Quickshell.iconPath(n.appIcon, true);
-        const app = n.desktopEntry ? DesktopEntries.heuristicLookup(n.desktopEntry) : null;
-        return app ? Quickshell.iconPath(app.icon, true) : "";
+        // Si no trae icono, el de la app (por su .desktop o, si no, por su nombre)
+        const app = DesktopEntries.heuristicLookup(n.desktopEntry || n.appName || "");
+        return app?.icon ? Quickshell.iconPath(app.icon, true) : "";
     }
 
     function hace(hora) {

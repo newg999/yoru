@@ -51,7 +51,7 @@ Isla {
             // Brillo al pasar el ratón
             Rectangle {
                 anchors.centerIn: parent
-                width: 26; height: 26; radius: 8
+                width: 26; height: 26; radius: Tema.esquina(8)
                 color: Tema.blanco
                 opacity: raton.containsMouse ? 0.08 : 0
                 Behavior on opacity { NumberAnimation { duration: Tema.rapida } }

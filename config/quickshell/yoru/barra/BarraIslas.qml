@@ -240,7 +240,7 @@ PanelWindow {
                 Ficha {
                     icono: "󰒮"; tamIcono: 11
                     apagada: !musica.reproductor
-                    onClic: musica.reproductor?.previous()
+                    onClic: Reproductor.anterior(musica.reproductor)
                 }
                 Ficha {
                     icono: musica.reproductor?.isPlaying ? "󰏤" : "󰐊"; tamIcono: 12
@@ -250,7 +250,7 @@ PanelWindow {
                 Ficha {
                     icono: "󰒭"; tamIcono: 11
                     apagada: !musica.reproductor
-                    onClic: musica.reproductor?.next()
+                    onClic: Reproductor.siguiente(musica.reproductor)
                 }
             }
         }

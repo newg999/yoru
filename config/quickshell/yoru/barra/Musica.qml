@@ -125,7 +125,7 @@ Isla {
             acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
             onClicked: e => {
                 if (e.button === Qt.RightButton)
-                    isla.reproductor.next();
+                    Reproductor.siguiente(isla.reproductor);
                 else if (e.button === Qt.MiddleButton)
                     isla.reproductor.togglePlaying();
                 else
@@ -138,7 +138,7 @@ Isla {
         icono: "󰒮"
         tamIcono: 15
         relleno: 5
-        onClic: isla.reproductor.previous()
+        onClic: Reproductor.anterior(isla.reproductor)
     }
     // Play/pausa en un círculo blanco, como en DMS
     Item {
@@ -180,6 +180,6 @@ Isla {
         icono: "󰒭"
         tamIcono: 15
         relleno: 5
-        onClic: isla.reproductor.next()
+        onClic: Reproductor.siguiente(isla.reproductor)
     }
 }

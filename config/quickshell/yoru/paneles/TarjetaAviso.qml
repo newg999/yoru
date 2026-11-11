@@ -2,14 +2,19 @@
 //  TarjetaAviso — una notificación (en los avisos emergentes y en el panel)
 //
 //    ┌────────────────────────────────────┐
-//    │ [img]  Discord · hace 2 min      ✕ │
-//    │        Título                      │
-//    │        Texto, hasta 4 líneas…      │
-//    │        [Responder] [Marcar leído]  │
+//    │        DISCORD            hace 2 min │   ← al pasar el ratón, ✕
+//    │ [img]  Título                        │
+//    │        Texto, hasta 4 líneas…        │
+//    │        [Responder] [Marcar leído]    │
 //    └────────────────────────────────────┘
 //
+//  Con el mismo orden que la tarjeta de la música: de dónde viene en
+//  pequeño y mayúsculas, el título y, más suave, el texto.
+//
 //  Clic = su acción por defecto (suele abrir la app) · ✕ = descartarla
-//  Las urgentes llevan el borde rojo.
+//  (la ✕ sale al pasar el ratón). Las urgentes llevan el borde rojo.
+//  Con tiempo (0-1, los avisos emergentes), una raya fina abajo marca lo
+//  que le queda antes de irse.
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -28,8 +33,11 @@ Rectangle {
     readonly property bool hover: encima.hovered
     readonly property bool urgente: n?.urgency === NotificationUrgency.Critical
     readonly property string foto: Notificaciones.imagen(n)
+    property real tiempo: -1                // lo que le queda (0-1); -1 = sin raya
 
-    implicitHeight: Math.max(columna.implicitHeight, 44) + 24
+    // El margen de dentro (más holgado que el de las tarjetas pequeñas)
+    readonly property int margen: 14
+    implicitHeight: Math.max(columna.implicitHeight, marco.height) + 2 * margen
     radius: Tema.esquina(12)
     color: encima.hovered ? Tema.cajaHover : Tema.caja
     border.width: 1
@@ -45,11 +53,12 @@ Rectangle {
         onClicked: Notificaciones.abrir(tarjeta.entrada)
     }
 
-    // Imagen o icono de la app; si no hay, una campana
+    // Imagen o icono de la app (centrado con el texto); si no hay, su inicial
     Item {
         id: marco
-        x: 12; y: 12
-        width: 44; height: 44
+        x: tarjeta.margen
+        y: tarjeta.margen + Math.max(0, Math.min(columna.height, 72) - height) / 2
+        width: 40; height: 40
 
         ClippingRectangle {
             anchors.fill: parent
@@ -61,7 +70,7 @@ Rectangle {
                 id: imagen
                 anchors.fill: parent
                 source: tarjeta.foto
-                sourceSize: Qt.size(88, 88)
+                sourceSize: Qt.size(80, 80)
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 smooth: true
@@ -70,14 +79,15 @@ Rectangle {
         Rectangle {
             anchors.fill: parent
             radius: Tema.esquina(10)
-            color: Tema.caja
+            color: tarjeta.urgente ? Qt.rgba(Tema.rojo.r, Tema.rojo.g, Tema.rojo.b, 0.18) : Tema.claro(0.08)
             visible: tarjeta.foto === "" || imagen.status === Image.Error
 
             Texto {
                 anchors.centerIn: parent
-                text: "󰂚"
-                font.pixelSize: 20
-                color: tarjeta.urgente ? Tema.rojo : Tema.gris
+                readonly property string nombre: (tarjeta.n?.appName ?? "").trim()
+                text: nombre !== "" ? nombre[0].toUpperCase() : "󰂚"
+                font.pixelSize: 18
+                color: tarjeta.urgente ? Tema.rojo : Tema.texto
             }
         }
     }
@@ -86,33 +96,44 @@ Rectangle {
         id: columna
         anchors {
             left: marco.right; leftMargin: 12
-            right: parent.right; rightMargin: 12
-            top: parent.top; topMargin: 12
+            right: parent.right; rightMargin: tarjeta.margen
+            top: parent.top; topMargin: tarjeta.margen
         }
-        spacing: 3
+        spacing: 2
 
-        // App · hora                                                    ✕
+        // APP                                            ahora  (✕ encima)
         Item {
             width: parent.width
-            height: 18
+            height: 14
 
             Texto {
-                anchors { left: parent.left; right: cerrar.left; rightMargin: 6; verticalCenter: parent.verticalCenter }
-                text: Tema.html(tarjeta.n?.appName || "Aviso")
-                    + Tema.suave("  ·  " + Notificaciones.hace(tarjeta.entrada?.hora ?? new Date()))
-                textFormat: Text.StyledText
-                font.pixelSize: 11
+                anchors { left: parent.left; right: cuando.left; rightMargin: 8; verticalCenter: parent.verticalCenter }
+                text: (tarjeta.n?.appName || "Aviso").toUpperCase()
+                textFormat: Text.PlainText
+                font.pixelSize: 9
+                font.letterSpacing: 1.2
+                color: tarjeta.urgente ? Tema.rojo : Tema.gris
+                elide: Text.ElideRight
+            }
+            Texto {
+                id: cuando
+                anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                text: Notificaciones.hace(tarjeta.entrada?.hora ?? new Date())
+                font.pixelSize: 10
                 font.bold: false
                 color: Tema.gris
-                elide: Text.ElideRight
+                opacity: encima.hovered ? 0 : 1
+                Behavior on opacity { NumberAnimation { duration: Tema.rapida } }
             }
             BotonIcono {
                 id: cerrar
                 anchors { right: parent.right; rightMargin: -6; verticalCenter: parent.verticalCenter }
-                implicitWidth: 24; implicitHeight: 24
+                implicitWidth: 22; implicitHeight: 22
                 icono: "󰅖"
-                colorIcono: Tema.gris
-                opacity: encima.hovered ? 1 : 0.5
+                colorIcono: Tema.texto
+                opacity: encima.hovered ? 1 : 0
+                visible: opacity > 0
+                Behavior on opacity { NumberAnimation { duration: Tema.rapida } }
                 onClic: Notificaciones.descartar(tarjeta.entrada)
             }
         }
@@ -123,7 +144,7 @@ Rectangle {
             text: tarjeta.n?.summary ?? ""
             textFormat: Text.PlainText
             font.pixelSize: 13
-            color: Tema.blanco
+            color: Tema.texto
             elide: Text.ElideRight
             maximumLineCount: 2
             wrapMode: Text.Wrap
@@ -138,6 +159,7 @@ Rectangle {
             font.pixelSize: 12
             font.bold: false
             color: Tema.texto
+            opacity: 0.7
             linkColor: Tema.blanco
             wrapMode: Text.Wrap
             maximumLineCount: tarjeta.lineas
@@ -148,7 +170,7 @@ Rectangle {
         // Botones de acción
         Item {
             width: parent.width
-            height: 34
+            height: 36
             visible: botones.count > 0
 
             Row {
@@ -165,7 +187,7 @@ Rectangle {
                         width: Math.min(etiqueta.implicitWidth + 24, columna.width)
                         height: 28
                         radius: Tema.esquina(8)
-                        color: sobre.containsMouse ? Tema.claro(0.9) : Tema.claro(0.1)
+                        color: sobre.containsMouse ? Tema.claro(0.16) : Tema.claro(0.08)
                         Behavior on color { ColorAnimation { duration: Tema.rapida } }
 
                         Texto {
@@ -174,7 +196,7 @@ Rectangle {
                             width: Math.min(implicitWidth, columna.width - 24)
                             text: accion.modelData.text
                             font.pixelSize: 12
-                            color: sobre.containsMouse ? Tema.oscuro : Tema.texto
+                            color: Tema.texto
                             elide: Text.ElideRight
                         }
                         MouseArea {
@@ -188,5 +210,18 @@ Rectangle {
                 }
             }
         }
+    }
+
+    // Lo que le queda antes de irse (los avisos emergentes): una raya fina
+    // en el borde de abajo, entre las esquinas
+    Rectangle {
+        visible: tarjeta.tiempo >= 0
+        x: tarjeta.radius
+        y: parent.height - height - 1
+        width: (parent.width - 2 * tarjeta.radius) * Math.max(0, tarjeta.tiempo)
+        height: 2
+        radius: 1
+        color: tarjeta.urgente ? Tema.rojo : Tema.blanco
+        opacity: 0.45
     }
 }

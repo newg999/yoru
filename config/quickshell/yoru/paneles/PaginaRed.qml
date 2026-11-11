@@ -170,7 +170,7 @@ Item {
                 height: 4 + index * 3.3
                 y: barras.height - height
                 color: index < barras.n ? barras.on : barras.off
-                Behavior on color { ColorAnimation { duration: 250 } }
+                Behavior on color { ColorAnimation { duration: Tema.normal } }
             }
         }
     }
@@ -263,7 +263,7 @@ Item {
             color: online ? pagina.tinte(0.13) : Tema.caja
             border.width: 1
             border.color: online ? pagina.tinte(0.35) : Tema.claro(0.08)
-            Behavior on color { ColorAnimation { duration: 250 } }
+            Behavior on color { ColorAnimation { duration: Tema.normal } }
             opacity: Math.min(1, pagina.entrada * 2)
             transform: Translate { y: -(1 - pagina.entrada) * 16 }
 
@@ -295,7 +295,7 @@ Item {
                     anchors.fill: parent
                     radius: 23
                     color: actual.online ? pagina.acento : Tema.claro(0.08)
-                    Behavior on color { ColorAnimation { duration: 250 } }
+                    Behavior on color { ColorAnimation { duration: Tema.normal } }
                     Texto {
                         anchors.centerIn: parent
                         text: actual.eth ? "󰈀"
@@ -369,8 +369,8 @@ Item {
                     border.color: on ? pagina.tinte(0.5) : Tema.claro(0.08)
                     opacity: modelData.hay ? 1 : 0.35
                     scale: teclaRaton.pressed ? 0.95 : 1
-                    Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
-                    Behavior on color { ColorAnimation { duration: 200 } }
+                    Behavior on scale { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutBack } }
+                    Behavior on color { ColorAnimation { duration: Tema.normal } }
 
                     function alternar() {
                         switch (index) {
@@ -421,13 +421,13 @@ Item {
                         x: parent.width - width - 10; y: 13
                         width: 24; height: 14; radius: 7
                         color: tecla.on ? pagina.acento : Tema.claro(0.15)
-                        Behavior on color { ColorAnimation { duration: 200 } }
+                        Behavior on color { ColorAnimation { duration: Tema.normal } }
                         Rectangle {
                             width: 10; height: 10; radius: 5
                             y: 2
                             x: tecla.on ? parent.width - width - 2 : 2
                             color: tecla.on ? Tema.oscuro : Tema.gris
-                            Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+                            Behavior on x { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutBack } }
                         }
                     }
                     Texto {
@@ -444,15 +444,15 @@ Item {
                         width: 18; height: 18; radius: 6
                         color: "transparent"
                         scale: flechaRaton.pressed ? 0.88 : flechaRaton.containsMouse ? 1.1 : 1
-                        Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
+                        Behavior on scale { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutBack } }
                         Texto {
                             anchors.centerIn: parent
                             text: "󰅂"
                             font.pixelSize: 16
                             color: tecla.elegida ? pagina.acento : flechaRaton.containsMouse ? Tema.blanco : Tema.gris
                             rotation: tecla.elegida ? 90 : 0
-                            Behavior on color { ColorAnimation { duration: 180 } }
-                            Behavior on rotation { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
+                            Behavior on color { ColorAnimation { duration: Tema.rapida } }
+                            Behavior on rotation { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutBack } }
                         }
                         MouseArea {
                             id: flechaRaton
@@ -568,7 +568,7 @@ Item {
                 readonly property bool escribiendo: !esVpn && pagina.pidiendo === red.name
                 width: ListView.view.width
                 height: escribiendo ? 98 : 50
-                Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                Behavior on height { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
 
                 // Entran una detrás de otra
                 opacity: 0
@@ -600,7 +600,7 @@ Item {
                     color: fila.enUso ? pagina.tinte(0.14) : filaHover.hovered || fila.escribiendo ? Tema.caja : "transparent"
                     border.width: fila.escribiendo ? 1 : 0
                     border.color: pagina.tinte(0.4)
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Tema.rapida } }
                 }
                 // La rayita de la que está en uso
                 Rectangle {
@@ -706,9 +706,9 @@ Item {
                         height: 24
                         radius: Tema.esquina(8)
                         color: descRaton.containsMouse ? Tema.cajaHover : Tema.sombra(0.6)
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Tema.rapida } }
                         scale: descRaton.pressed ? 0.94 : 1
-                        Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
+                        Behavior on scale { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutBack } }
                         Texto {
                             id: textoDesc
                             anchors.centerIn: parent
@@ -829,7 +829,7 @@ Item {
                     anchors.fill: parent
                     radius: Tema.esquina(14)
                     color: aparato.d.connected ? pagina.tinte(0.14) : aparatoHover.hovered ? Tema.caja : "transparent"
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Tema.rapida } }
                 }
                 Rectangle {
                     x: 0; y: 15
@@ -932,7 +932,7 @@ Item {
                         height: 24
                         radius: Tema.esquina(8)
                         color: descBtRaton.containsMouse ? Tema.conAlfa(Tema.rojo, 0.25) : Tema.sombra(0.6)
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Tema.rapida } }
                         Texto {
                             id: textoDescBt
                             anchors.centerIn: parent

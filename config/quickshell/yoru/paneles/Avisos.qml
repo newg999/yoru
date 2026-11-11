@@ -8,10 +8,9 @@
 //  Salen en la pantalla que tiene el foco. Con el panel de notificaciones
 //  abierto no salen: ya están ahí.
 //
-//  Con la barra de islas, cuelgan de la campana fundidas con ella, como sus
-//  paneles: un recuadro bajo la isla (que pierde sus esquinas de abajo y
-//  toma su color), con las curvas que los unen, que baja desde ella y
-//  vuelve a subir a ella al irse la última.
+//  Con la barra de islas, salen bajo la campana: cada una en su tarjeta,
+//  como un panel pequeño, que baja un poco al llegar. Una raya fina abajo
+//  marca lo que le queda (se para con el ratón encima).
 //
 //  Con la barra minimalista, dentro de un recuadro pegado a ella (mismo
 //  fondo, esquinas rectas, hasta el borde de la pantalla) que baja como una
@@ -38,7 +37,7 @@ PanelWindow {
     readonly property bool pegada: Ajustes.minimalista || abajo
     readonly property bool abajo: Ajustes.abajo
     readonly property bool aLaDerecha: Ajustes.avisosLado !== "centro"
-    readonly property int relleno: pegada || colgada ? 10 : 0
+    readonly property int relleno: pegada ? 10 : 0
 
     // ----------------------------------------------- Colgando de la campana
     readonly property Item campana: Ajustes.pildoras && aLaDerecha && !pegada && !Ajustes.vertical
@@ -56,9 +55,11 @@ PanelWindow {
     }
     readonly property real campanaAncho: campana?.width ?? 0
     readonly property bool colgada: campana !== null && campana.visible && campanaAncho > 0
-    // Lo que sube la ventana por encima del recuadro: ahí van las curvas
-    // (ya no hay curvas: es el hueco entre la campana y el recuadro)
-    readonly property int curvas: colgada ? 6 : 0
+    // (de cuando colgaban fundidas con curvas: ya no hay)
+    readonly property int curvas: 0
+    // El hueco entre la barra y la primera tarjeta (como entre la barra y
+    // las ventanas, y algo más: así no parece pegada)
+    readonly property int hueco: 10
     // Dónde queda la campana dentro de la ventana
     readonly property real campanaDentro: campanaX - (modelData.width - margins.right - implicitWidth)
 
@@ -112,11 +113,14 @@ PanelWindow {
     // Bajo la barra (pegados a ella con la minimalista o a la campana); con
     // la barra a la izquierda, arriba del todo; con la de abajo, encima de
     // ella, tapando su línea de arriba
-    margins.top: colgada ? Tema.margenBarra + Tema.altoBarra - curvas
+    margins.top: colgada ? Tema.margenBarra + Tema.altoBarra + hueco
         : Ajustes.minimalista ? Tema.altoBarra + 2 : Ajustes.vertical ? Tema.margenLados + 6 : Tema.hueco
     margins.bottom: Tema.altoTareas - 1
-    // Colgando: centrado bajo la campana, sin salirse de la pantalla
+    // Bajo la campana: alineadas con el borde derecho de la barra (como los
+    // paneles de ese lado), si así la campana queda encima; si no, centradas
+    // bajo ella, sin salirse de la pantalla
     margins.right: pegada ? 0
+        : colgada && campanaX + campanaAncho >= modelData.width - Tema.margenLados - implicitWidth ? Tema.margenLados
         : colgada ? Math.round(Math.max(Tema.margenLados, modelData.width - (campanaX + campanaAncho / 2) - implicitWidth / 2))
         : Tema.margenLados
     implicitWidth: pegada ? 400 : 380
@@ -133,13 +137,13 @@ PanelWindow {
     // la campana. Sueltas (otras barras), sin recuadro
     Rectangle {
         id: fondo
-        readonly property bool hay: ventana.pegada || ventana.colgada
+        readonly property bool hay: ventana.pegada
         // Pegado al borde de la pantalla, su borde de ese lado queda fuera
         width: parent.width + (ventana.pegada && ventana.aLaDerecha ? border.width : 0)
-        height: ventana.colgada ? ventana.alto * ventana.aparecer : hay ? pila.height + 2 * ventana.relleno : pila.height
+        height: ventana.colgada ? ventana.alto : hay ? pila.height + 2 * ventana.relleno : pila.height
         y: ventana.colgada ? ventana.curvas : hay ? (ventana.abajo ? 1 : -1) * (1 - ventana.aparecer) * height : 0
         color: hay ? Tema.panel : "transparent"
-        clip: ventana.colgada
+        clip: false
         // Pegado: todo recto, como la barra minimalista; con la de Windows,
         // como sus paneles: redonda solo la esquina de arriba hacia dentro.
         // Colgando: redondo (la campana es estrecha: sus esquinas de arriba
@@ -148,7 +152,7 @@ PanelWindow {
         topLeftRadius: ventana.colgada ? Tema.radioPanel
             : ventana.abajo && ventana.aLaDerecha ? Tema.radioPanel : 0
         topRightRadius: ventana.colgada ? Tema.radioPanel : 0
-        border.width: ventana.pegada ? Tema.borde(1) : ventana.colgada ? Tema.borde(2) : 0
+        border.width: ventana.pegada ? Tema.borde(1) : 0
         border.color: ventana.colgada ? Tema.panelBorde : Tema.claro(0.08)
         Behavior on height {
             enabled: !ventana.colgada
@@ -175,7 +179,8 @@ PanelWindow {
             interactive: false
             clip: true
             // Colgando: lo de dentro asoma cuando el recuadro ya ha bajado
-            opacity: ventana.colgada ? Math.max(0, Math.min(1, (ventana.aparecer - 0.35) / 0.5)) : 1
+            // Colgando: al irse la última, se funde
+            opacity: ventana.colgada ? Math.min(1, ventana.aparecer * 2) : 1
 
             model: ScriptModel { values: Notificaciones.emergentes.slice(0, 5) }
 
@@ -192,8 +197,10 @@ PanelWindow {
                 // Sueltas, con el fondo y el borde de un panel; dentro de un
                 // recuadro, como las del centro de control
                 color: fondo.hay ? (hover ? Tema.cajaHover : Tema.caja) : hover ? Tema.sombra(0.95) : Tema.panel
-                border.color: urgente ? Tema.rojo : fondo.hay ? Tema.claro(0.06) : Tema.panelBorde
-                border.width: urgente ? 2 : fondo.hay ? 1 : Tema.borde(2)
+                // (sueltas, siempre con un borde fino aunque se quiten en
+                // Ajustes: sin él, se perdían contra lo de detrás)
+                border.color: urgente ? Tema.rojo : fondo.hay ? Tema.claro(0.06) : Tema.claro(0.10)
+                border.width: urgente ? 2 : fondo.hay ? 1 : Math.max(1, Tema.borde(2))
                 radius: fondo.hay ? 12 : Tema.radioPanel
 
                 // Entra desde la derecha; en un recuadro, se funde y baja un
@@ -203,13 +210,27 @@ PanelWindow {
                 // animación se quedaba corrida para siempre)
                 transform: Translate { id: desliz }
                 Component.onCompleted: {
-                    desliz.x = fondo.hay ? 0 : 60;
+                    desliz.x = fondo.hay || ventana.colgada ? 0 : 60;
                     desliz.y = ventana.colgada ? -10 : 0;
                     llega.start();
+                    if (duracion > 0)
+                        cuenta.start();
+                }
+                // Lo que le queda: la raya de abajo (se para con el ratón encima)
+                property real resta: 1
+                tiempo: duracion > 0 ? resta : -1
+                NumberAnimation {
+                    id: cuenta
+                    target: aviso
+                    property: "resta"
+                    from: 1; to: 0
+                    duration: aviso.duracion
+                    paused: running && (aviso.hover || !ventana.mostrar)
+                    onFinished: Notificaciones.ocultar(aviso.modelData)
                 }
                 ParallelAnimation {
                     id: llega
-                    NumberAnimation { target: desliz; properties: "x,y"; to: 0; duration: Tema.normal; easing.type: Easing.OutCubic }
+                    NumberAnimation { target: desliz; properties: "x,y"; to: 0; duration: ventana.colgada ? Tema.rebote : Tema.normal; easing.type: ventana.colgada ? Easing.OutBack : Easing.OutCubic }
                     NumberAnimation { target: aviso; property: "opacity"; from: 0; to: 1; duration: Tema.normal }
                 }
 
@@ -217,11 +238,6 @@ PanelWindow {
                 // (Quickshell da expireTimeout en segundos)
                 readonly property int duracion: aviso.n?.expireTimeout > 0 ? aviso.n.expireTimeout * 1000
                     : aviso.urgente ? 0 : Ajustes.avisosSegundos * 1000
-                Timer {
-                    interval: aviso.duracion
-                    running: aviso.duracion > 0 && !aviso.hover && ventana.mostrar
-                    onTriggered: Notificaciones.ocultar(aviso.modelData)
-                }
             }
         }
     }

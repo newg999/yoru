@@ -140,7 +140,7 @@ Column {
                         asynchronous: true
                         // Late un poco con la música
                         scale: tarjetaMusica.sonando ? 1 : 0.94
-                        Behavior on scale { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: Tema.ms(500); easing.type: Easing.OutCubic } }
                     }
                 }
                 Column {
@@ -212,15 +212,14 @@ Column {
                 spacing: 22
                 BotonIcono {
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: pagina.reproductor?.canGoPrevious ?? true
                     icono: "󰒮"
-                    onClic: pagina.reproductor?.previous()
+                    onClic: Reproductor.anterior(pagina.reproductor)
                 }
                 Rectangle {
                     width: 42; height: 42; radius: 21
                     color: Tema.blanco
                     scale: playRaton.pressed ? 0.92 : playRaton.containsMouse ? 1.06 : 1
-                    Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                    Behavior on scale { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
                     Texto {
                         anchors.centerIn: parent
                         // (el de pausa, centrado; el de play, un poco a la derecha: se ve centrado)
@@ -239,9 +238,8 @@ Column {
                 }
                 BotonIcono {
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: pagina.reproductor?.canGoNext ?? true
                     icono: "󰒭"
-                    onClic: pagina.reproductor?.next()
+                    onClic: Reproductor.siguiente(pagina.reproductor)
                 }
             }
         }

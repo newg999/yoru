@@ -159,8 +159,8 @@ PanelWindow {
     SequentialAnimation {
         id: animSubida
         PropertyAction { target: ventana; property: "subida"; value: 1 }
-        PauseAnimation { duration: 80 }
-        NumberAnimation { target: ventana; property: "subida"; to: 0; duration: 560; easing.type: Easing.OutQuart }
+        PauseAnimation { duration: Tema.rapida }
+        NumberAnimation { target: ventana; property: "subida"; to: 0; duration: Tema.ms(560); easing.type: Easing.OutQuart }
     }
 
     screen: modelData

@@ -88,7 +88,7 @@ PanelWindow {
         id: caja
         width: fila.width + 24
         height: 34
-        radius: 10
+        radius: Tema.esquina(10)
         color: Tema.sombra(0.85)
         border.width: 1
         border.color: Qt.alpha(ventana.estado, 0.6)

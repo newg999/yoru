@@ -91,7 +91,7 @@ Item {
                         // Raíz cuadrada: así la voz normal llega a media barra
                         width: parent.width * Math.min(1, Math.sqrt(nivel.peak))
                         color: nivel.peak > 0.8 ? Tema.amarillo : Tema.blanco
-                        Behavior on width { NumberAnimation { duration: 80 } }
+                        Behavior on width { NumberAnimation { duration: Tema.rapida } }
                     }
                 }
             }

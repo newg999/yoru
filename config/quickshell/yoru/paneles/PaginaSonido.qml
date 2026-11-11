@@ -86,7 +86,7 @@ Item {
                 font.pixelSize: 20
                 color: atrasRaton.containsMouse ? pagina.acento : Tema.texto
                 scale: atrasRaton.pressed ? 0.85 : atrasRaton.containsMouse ? 1.12 : 1
-                Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
+                Behavior on scale { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutBack } }
                 MouseArea { id: atrasRaton; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Paneles.cerrar() }
             }
             Texto {
@@ -103,7 +103,7 @@ Item {
                 font.pixelSize: 17
                 color: ajustesRaton.containsMouse ? pagina.acento : Tema.gris
                 scale: ajustesRaton.pressed ? 0.85 : ajustesRaton.containsMouse ? 1.12 : 1
-                Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
+                Behavior on scale { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutBack } }
                 MouseArea {
                     id: ajustesRaton
                     anchors.fill: parent
@@ -125,15 +125,15 @@ Item {
             color: pagina.mudo ? Tema.caja : pagina.tinte(0.12)
             border.width: 1
             border.color: pagina.mudo ? Tema.claro(0.08) : pagina.tinte(0.35)
-            Behavior on color { ColorAnimation { duration: 220 } }
+            Behavior on color { ColorAnimation { duration: Tema.normal } }
 
             Rectangle {
                 x: 14; y: 14
                 width: 44; height: 44; radius: 22
                 color: pagina.mudo ? Tema.claro(0.08) : pagina.acento
-                Behavior on color { ColorAnimation { duration: 200 } }
+                Behavior on color { ColorAnimation { duration: Tema.normal } }
                 scale: mudoRaton.pressed ? 0.9 : mudoRaton.containsMouse ? 1.06 : 1
-                Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
+                Behavior on scale { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutBack } }
                 Texto {
                     anchors.centerIn: parent
                     text: pagina.mudo ? "󰖁" : pagina.volumen < 0.34 ? "󰕿" : pagina.volumen < 0.67 ? "󰖀" : "󰕾"
@@ -210,7 +210,7 @@ Item {
                 color: pagina.tinte(0.2)
                 border.width: 1.5
                 border.color: pagina.acento
-                Behavior on x { NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
+                Behavior on x { NumberAnimation { duration: Tema.ms(300); easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
             }
             Repeater {
                 model: [["󰓃", "Salida"], ["󰍬", "Entrada"], ["󰀻", "Apps"]]
@@ -275,7 +275,7 @@ Item {
             SequentialAnimation {
                 id: cambio
                 PropertyAction { target: lista; property: "lado"; value: 24 }
-                NumberAnimation { target: lista; property: "lado"; to: 0; duration: 320; easing.type: Easing.OutBack; easing.overshoot: 1.3 }
+                NumberAnimation { target: lista; property: "lado"; to: 0; duration: Tema.ms(320); easing.type: Easing.OutBack; easing.overshoot: 1.3 }
             }
 
             delegate: Item {
@@ -287,7 +287,7 @@ Item {
                 readonly property bool elegida: !app && n === (lista.deEntrada ? pagina.entrada : pagina.salida)
                 width: ListView.view.width
                 height: app || elegida ? 66 : 52
-                Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                Behavior on height { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
 
                 opacity: 0
                 property real baja: -8
@@ -307,7 +307,7 @@ Item {
                     anchors.fill: parent
                     radius: Tema.esquina(14)
                     color: fila.elegida ? pagina.tinte(0.14) : filaHover.hovered ? Tema.caja : "transparent"
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Tema.rapida } }
                 }
                 Rectangle {
                     x: 0; y: 16

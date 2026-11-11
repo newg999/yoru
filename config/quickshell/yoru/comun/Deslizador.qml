@@ -26,7 +26,7 @@ Item {
 
     // La onda: crece y se aplana poco a poco, y se desplaza mientras hay ondas
     property real amplitudOnda: ondas ? 3 : 0
-    Behavior on amplitudOnda { NumberAnimation { duration: 500; easing.type: Easing.InOutQuad } }
+    Behavior on amplitudOnda { NumberAnimation { duration: Tema.ms(500); easing.type: Easing.InOutQuad } }
     property real faseOnda: 0
     NumberAnimation on faseOnda {
         running: deslizador.conOndas && deslizador.amplitudOnda > 0 && Ajustes.animaciones

@@ -84,8 +84,8 @@ Item {
         font.pixelSize: 17
         color: icRaton.containsMouse ? pagina.acento : Tema.gris
         scale: icRaton.pressed ? 0.85 : icRaton.containsMouse ? 1.12 : 1
-        Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on scale { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutBack } }
+        Behavior on color { ColorAnimation { duration: Tema.rapida } }
         MouseArea { id: icRaton; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ic.clic() }
     }
     // Interruptor como los del panel de red del dock
@@ -107,8 +107,8 @@ Item {
         border.color: on ? pagina.tinte(0.5) : Tema.claro(0.08)
         opacity: hay ? 1 : 0.35
         scale: teclaRaton.pressed ? 0.95 : 1
-        Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
-        Behavior on color { ColorAnimation { duration: 200 } }
+        Behavior on scale { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutBack } }
+        Behavior on color { ColorAnimation { duration: Tema.normal } }
         MouseArea {
             id: teclaRaton
             anchors.fill: parent
@@ -127,13 +127,13 @@ Item {
             x: parent.width - width - 10; y: 13
             width: 24; height: 14; radius: 7
             color: tecla.on ? pagina.acento : Tema.claro(0.15)
-            Behavior on color { ColorAnimation { duration: 200 } }
+            Behavior on color { ColorAnimation { duration: Tema.normal } }
             Rectangle {
                 width: 10; height: 10; radius: 5
                 y: 2
                 x: tecla.on ? parent.width - width - 2 : 2
                 color: tecla.on ? Tema.oscuro : Tema.gris
-                Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+                Behavior on x { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutBack } }
             }
         }
         Column {
@@ -167,7 +167,7 @@ Item {
             font.pixelSize: 16
             color: flechaRaton.containsMouse ? Tema.blanco : Tema.gris
             scale: flechaRaton.pressed ? 0.88 : flechaRaton.containsMouse ? 1.1 : 1
-            Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
+            Behavior on scale { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutBack } }
             MouseArea {
                 id: flechaRaton
                 anchors.fill: parent
@@ -425,7 +425,7 @@ Item {
                 color: pagina.tinte(0.2)
                 border.width: 1.5
                 border.color: pagina.acento
-                Behavior on x { NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
+                Behavior on x { NumberAnimation { duration: Tema.ms(300); easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
             }
             Repeater {
                 model: perfiles.lista
@@ -494,8 +494,8 @@ Item {
                         border.width: 1
                         border.color: boton.armado ? Tema.rojo : botonRaton.containsMouse ? pagina.tinte(0.4) : Tema.claro(0.08)
                         scale: botonRaton.pressed ? 0.92 : botonRaton.containsMouse ? 1.06 : 1
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on scale { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutBack } }
+                        Behavior on color { ColorAnimation { duration: Tema.rapida } }
                         Texto {
                             anchors.centerIn: parent
                             text: boton.modelData.icono
@@ -568,7 +568,7 @@ Item {
                         height: 44
                         radius: Tema.esquina(12)
                         color: avisoRaton.containsMouse ? Tema.cajaHover : "transparent"
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Tema.rapida } }
                         Rectangle {
                             id: letra
                             anchors { left: parent.left; leftMargin: 6; verticalCenter: parent.verticalCenter }

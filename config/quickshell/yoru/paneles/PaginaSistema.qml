@@ -58,7 +58,7 @@ Column {
                         height: parent.height
                         radius: 3
                         color: medidor.modelData.valor > 0.9 ? Tema.rojo : Tema.blanco
-                        Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                        Behavior on width { NumberAnimation { duration: Tema.ms(400); easing.type: Easing.OutCubic } }
                     }
                 }
                 MouseArea {

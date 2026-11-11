@@ -109,7 +109,7 @@ Panel {
         onActivoChanged: if (activo) maximo = 100
 
         property real mostrado: valor
-        Behavior on mostrado { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+        Behavior on mostrado { NumberAnimation { duration: Tema.ms(400); easing.type: Easing.OutCubic } }
         property real fraccion: Math.min(1, mostrado / maximo)
         Behavior on maximo { NumberAnimation { duration: Tema.normal } }
 
@@ -276,7 +276,7 @@ Panel {
                     width: parent.width * (panel.fase === "fin" ? 1
                         : panel.fase === "subida" ? 0.5 + panel.progreso / 2
                         : panel.fase === "bajada" ? panel.progreso / 2 : 0)
-                    Behavior on width { NumberAnimation { duration: 250 } }
+                    Behavior on width { NumberAnimation { duration: Tema.normal } }
                 }
             }
 

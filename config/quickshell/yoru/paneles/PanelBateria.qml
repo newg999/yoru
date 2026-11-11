@@ -91,7 +91,7 @@ Panel {
                 font.pixelSize: 20
                 color: atrasRaton.containsMouse ? panel.acento : Tema.texto
                 scale: atrasRaton.pressed ? 0.85 : atrasRaton.containsMouse ? 1.12 : 1
-                Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
+                Behavior on scale { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutBack } }
                 MouseArea { id: atrasRaton; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Paneles.cerrar() }
             }
             Texto {
@@ -351,7 +351,7 @@ Panel {
                 color: panel.tinte(0.2)
                 border.width: 1.5
                 border.color: panel.acento
-                Behavior on x { NumberAnimation { duration: 320; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
+                Behavior on x { NumberAnimation { duration: Tema.ms(320); easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
             }
             Repeater {
                 model: perfiles.lista
@@ -400,7 +400,7 @@ Panel {
             color: cafeRaton.containsMouse ? Tema.cajaHover : Tema.caja
             border.width: 1
             border.color: Despierto.activo ? panel.tinte(0.5) : Tema.claro(0.08)
-            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on color { ColorAnimation { duration: Tema.rapida } }
             Row {
                 x: 12
                 anchors.verticalCenter: parent.verticalCenter
@@ -436,13 +436,13 @@ Panel {
                 anchors { right: parent.right; rightMargin: 12; verticalCenter: parent.verticalCenter }
                 width: 38; height: 22; radius: 11
                 color: Despierto.activo ? panel.acento : Tema.claro(0.15)
-                Behavior on color { ColorAnimation { duration: 160 } }
+                Behavior on color { ColorAnimation { duration: Tema.rapida } }
                 Rectangle {
                     width: 16; height: 16; radius: 8
                     anchors.verticalCenter: parent.verticalCenter
                     x: Despierto.activo ? parent.width - width - 3 : 3
                     color: Despierto.activo ? Tema.oscuro : Tema.gris
-                    Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                    Behavior on x { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutCubic } }
                 }
             }
             MouseArea {

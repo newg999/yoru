@@ -89,4 +89,27 @@ Singleton {
         const t = ventana.title.replace(new RegExp("\\s+[—–-]\\s+" + (p.identity ?? "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$"), "");
         return t === p.identity ? "" : t;
     }
+
+    // Siguiente y anterior, también en los navegadores: YouTube en Brave no
+    // deja pasar de canción por MPRIS (canGoNext/canGoPrevious a false) y el
+    // botón no hacía nada. Entonces, «anterior» vuelve al principio y
+    // «siguiente» salta al final, y YouTube pasa solo al siguiente vídeo
+    // (con la reproducción automática). Con más de 3 s ya sonados,
+    // «anterior» también vuelve al principio, como en cualquier reproductor
+    function siguiente(p) {
+        if (!p)
+            return;
+        if (p.canGoNext)
+            p.next();
+        else if (p.canSeek && p.length > 0)
+            p.position = Math.max(0, p.length - 0.5);
+    }
+    function anterior(p) {
+        if (!p)
+            return;
+        if (p.canGoPrevious && !(p.canSeek && p.position > 3))
+            p.previous();
+        else if (p.canSeek)
+            p.position = 0;
+    }
 }

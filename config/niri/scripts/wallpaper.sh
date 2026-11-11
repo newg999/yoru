@@ -5,6 +5,8 @@
 #
 #  Uso:
 #    wallpaper.sh          -> pone el último fondo usado (o el primero)
+#    wallpaper.sh inicio   -> lo mismo, al entrar en la sesión (niri): al
+#                             momento, con swaybg y una copia ligera
 #    wallpaper.sh next     -> pasa al siguiente fondo de la carpeta
 #    wallpaper.sh <ruta>   -> pone esa imagen concreta
 #
@@ -22,6 +24,10 @@ STATE="$HOME/.cache/wallpaper-actual"
 BLOQUEO="$HOME/.cache/fondo-bloqueo"
 BORROSO="$HOME/.cache/fondo-bloqueo-borroso.jpg"     # ya desenfocado: carga al instante
 BORROSO_ORIGEN="$HOME/.cache/fondo-bloqueo-origen"
+# Una copia ligera (JPG del tamaño de la pantalla) para pintarlo al entrar:
+# un PNG 4K de 20 MB tardaba un par de segundos en abrirse (pantalla negra)
+RAPIDO="$HOME/.cache/fondo-rapido.jpg"
+RAPIDO_ORIGEN="$HOME/.cache/fondo-rapido-origen"
 INICIO="/usr/share/backgrounds/yoru/inicio"
 INICIO_ORIGEN="$HOME/.cache/fondo-inicio-origen"   # de qué fondo salió
 FALLBACK_COLOR="#2e3440"
@@ -32,6 +38,9 @@ mapfile -t FONDOS < <(find -L "$DIR" -maxdepth 1 -type f \
     \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) 2>/dev/null | sort)
 
 actual="$(cat "$STATE" 2>/dev/null)"
+
+inicio=false
+[[ "${1:-}" == inicio ]] && { inicio=true; shift; }
 
 case "${1:-}" in
     "")
@@ -54,19 +63,29 @@ esac
 
 # El fondo lo pinta Yoru (quickshell/yoru/barra/Fondo.qml, con transición):
 # lee $STATE al cambiar. Si la barra no responde, swaybg, de reserva
-# (al entrar en la sesión la barra aún está arrancando: entonces ni se le
-# pregunta, swaybg pone el fondo al momento y la barra lo quita al pintar el
-# suyo. Esperar su respuesta dejaba un segundo de pantalla negra)
+# (al entrar en la sesión, «inicio», ni se le pregunta: la barra aún está
+# arrancando. swaybg pone el fondo al momento y la barra lo quita al pintar
+# el suyo. Esperar su respuesta dejaba pantalla negra)
 con_yoru=false
-pgrep -f "^(/usr/bin/)?qs -c yoru( |$)" >/dev/null \
-    && [[ "$(timeout 1 qs -c yoru ipc call fondo listo 2>/dev/null)" == true ]] && con_yoru=true
+if ! $inicio && pgrep -f "^(/usr/bin/)?qs -c yoru( |$)" >/dev/null \
+    && [[ "$(timeout 1 qs -c yoru ipc call fondo listo 2>/dev/null)" == true ]]; then
+    con_yoru=true
+fi
 
 $con_yoru || pkill -x swaybg
 
 if [[ -n "$img" && -f "$img" ]]; then
     mkdir -p "$(dirname "$STATE")"
     echo "$img" > "$STATE"
-    $con_yoru || setsid -f swaybg -m fill -i "$img" >/dev/null 2>&1
+    # (al entrar, la copia ligera si es de este fondo: se abre al instante)
+    rapida="$img"
+    [[ -f "$RAPIDO" && "$(cat "$RAPIDO_ORIGEN" 2>/dev/null)" == "$img" ]] && rapida="$RAPIDO"
+    $con_yoru || setsid -f swaybg -m fill -i "$rapida" >/dev/null 2>&1
+    # La copia ligera, para la próxima vez (si ha cambiado el fondo)
+    if [[ "$(cat "$RAPIDO_ORIGEN" 2>/dev/null)" != "$img" ]] && command -v magick >/dev/null; then
+        setsid -f sh -c 'magick "$1" -resize 1920x1080^ -quality 92 "jpg:$2.tmp" \
+            && mv "$2.tmp" "$2" && echo "$1" > "$3"' _ "$img" "$RAPIDO" "$RAPIDO_ORIGEN" >/dev/null 2>&1
+    fi
     ln -sfn "$(realpath "$img")" "$BLOQUEO"
     # Pantalla de bloqueo: el fondo ya desenfocado (poco: se tiene que ver). Desenfocarlo al
     # bloquear (con la imagen entera) tardaba y se veía aparecer de golpe

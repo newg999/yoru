@@ -32,8 +32,8 @@ Item {
             radius: 1.4
             width: Math.max(1.5, (parent.width - 5.2) * Math.max(0, Math.min(1, pila.carga)))
             color: pila.relleno
-            Behavior on color { ColorAnimation { duration: 600 } }
-            Behavior on width { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
+            Behavior on color { ColorAnimation { duration: Tema.ms(600) } }
+            Behavior on width { NumberAnimation { duration: Tema.ms(600); easing.type: Easing.OutCubic } }
         }
     }
     // El polo

@@ -134,10 +134,13 @@ Singleton {
     // Islas: con las píldoras, redondas del todo
     readonly property int radioIsla: Ajustes.pildoras ? altoBarra / 2 : radio
     readonly property int radioPanel: Ajustes.recto ? 0 : Ajustes.radio + 4
-    // Esquinas de tarjetas, botones y cajas de los paneles: con la barra
-    // minimalista, rectas, como ella (los círculos no:
-    // no son esquinas). Uso:  radius: Tema.esquina(12)
-    function esquina(n) { return Ajustes.recto ? 0 : n; }
+    // Esquinas de tarjetas, botones y cajas de los paneles: siguen al
+    // regulador «Esquinas» (Ajustes › Aspecto) en proporción a las del panel
+    // (n es lo que mide con las de serie, 10 px: así lo de dentro nunca es
+    // más redondo que el panel que lo lleva); con la barra minimalista,
+    // rectas, como ella (los círculos no: no son esquinas).
+    // Uso:  radius: Tema.esquina(12)
+    function esquina(n) { return Ajustes.recto ? 0 : Math.round(n * (Ajustes.radio + 4) / 14); }
 
     // ----------------------------------------------------------- Animaciones
     readonly property int rapida: Ajustes.animaciones ? 120 : 0
@@ -145,4 +148,6 @@ Singleton {
     // Con rebote (Easing.OutBack), como el dock: lo que crece, se abre o se
     // pulsa se pasa un poco y vuelve
     readonly property int rebote: Ajustes.animaciones ? 420 : 0
+    // Otra duración cualquiera, que también se quita sin animaciones
+    function ms(n) { return Ajustes.animaciones ? n : 0; }
 }

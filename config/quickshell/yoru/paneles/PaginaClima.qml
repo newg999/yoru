@@ -77,7 +77,7 @@ FocusScope {
                 font.pixelSize: 20
                 color: atrasRaton.containsMouse ? pagina.acento : Tema.texto
                 scale: atrasRaton.pressed ? 0.85 : atrasRaton.containsMouse ? 1.12 : 1
-                Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
+                Behavior on scale { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutBack } }
                 MouseArea {
                     id: atrasRaton
                     anchors.fill: parent
@@ -464,7 +464,7 @@ FocusScope {
                 color: Tiempo.automatico ? pagina.tinte(0.13) : ipRaton.containsMouse ? Tema.cajaHover : Tema.caja
                 border.width: 1
                 border.color: Tiempo.automatico ? pagina.tinte(0.35) : Tema.claro(0.08)
-                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on color { ColorAnimation { duration: Tema.rapida } }
                 Texto {
                     x: 12
                     anchors.verticalCenter: parent.verticalCenter
@@ -520,7 +520,7 @@ FocusScope {
                     height: 46
                     radius: Tema.esquina(14)
                     color: sitioRaton.containsMouse ? Tema.caja : "transparent"
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Tema.rapida } }
                     Texto {
                         x: 12
                         anchors.verticalCenter: parent.verticalCenter

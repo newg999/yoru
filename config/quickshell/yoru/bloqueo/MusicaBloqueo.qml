@@ -222,9 +222,9 @@ ClippingRectangle {
         anchors.bottomMargin: 5
         spacing: 26
         Boton {
-            visible: tarjeta.reproductor?.canGoPrevious ?? false
+            visible: tarjeta.reproductor !== null
             icono: "󰒮"
-            onPulsado: tarjeta.reproductor.previous()
+            onPulsado: Reproductor.anterior(tarjeta.reproductor)
         }
         Boton {
             grande: true
@@ -233,9 +233,9 @@ ClippingRectangle {
             onPulsado: tarjeta.reproductor.togglePlaying()
         }
         Boton {
-            visible: tarjeta.reproductor?.canGoNext ?? false
+            visible: tarjeta.reproductor !== null
             icono: "󰒭"
-            onPulsado: tarjeta.reproductor.next()
+            onPulsado: Reproductor.siguiente(tarjeta.reproductor)
         }
     }
 }

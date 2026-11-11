@@ -119,7 +119,7 @@ PanelWindow {
                         Rectangle {
                             anchors.centerIn: imagen
                             width: dock.icono + 8; height: width
-                            radius: 9
+                            radius: Tema.esquina(9)
                             color: Tema.blanco
                             opacity: raton.containsMouse ? 0.08 : 0
                             Behavior on opacity { NumberAnimation { duration: Tema.rapida } }
@@ -194,7 +194,7 @@ PanelWindow {
                                 visible: true
                                 Rectangle {
                                     anchors.fill: parent
-                                    radius: 10
+                                    radius: Tema.radioPanel
                                     color: Tema.panel
                                     border.width: Tema.borde(1)
                                     border.color: Tema.claro(0.25)

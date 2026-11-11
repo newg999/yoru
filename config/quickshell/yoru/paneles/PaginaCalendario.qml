@@ -90,7 +90,7 @@ FocusScope {
                 font.pixelSize: 20
                 color: atrasRaton.containsMouse ? pagina.acento : Tema.texto
                 scale: atrasRaton.pressed ? 0.85 : atrasRaton.containsMouse ? 1.12 : 1
-                Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
+                Behavior on scale { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutBack } }
                 MouseArea { id: atrasRaton; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Paneles.cerrar() }
             }
             Texto {
@@ -170,7 +170,7 @@ FocusScope {
                         width: 34; height: 34
                         radius: Tema.esquina(12)
                         color: navRaton.containsMouse ? Tema.cajaHover : "transparent"
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Tema.rapida } }
                         Texto {
                             anchors.centerIn: parent
                             text: parent.modelData < 0 ? "󰅁" : "󰅂"
@@ -218,7 +218,7 @@ FocusScope {
                 SequentialAnimation {
                     id: cambioMes
                     PropertyAction { target: rejilla; property: "lado"; value: 14 }
-                    NumberAnimation { target: rejilla; property: "lado"; to: 0; duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.3 }
+                    NumberAnimation { target: rejilla; property: "lado"; to: 0; duration: Tema.ms(300); easing.type: Easing.OutBack; easing.overshoot: 1.3 }
                 }
 
                 Repeater {
@@ -247,7 +247,7 @@ FocusScope {
                             width: 34; height: 34; radius: 17
                             color: casilla.modelData.hoy ? pagina.acento
                                 : casillaRaton.containsMouse && casilla.modelData.delMes ? Tema.cajaHover : "transparent"
-                            Behavior on color { ColorAnimation { duration: 120 } }
+                            Behavior on color { ColorAnimation { duration: Tema.rapida } }
                         }
                         Texto {
                             anchors.centerIn: parent
@@ -282,9 +282,9 @@ FocusScope {
                     border.color: botonRaton.containsMouse && !apagado ? pagina.tinte(0.5) : Tema.claro(0.08)
                     opacity: apagado ? 0.45 : 1
                     scale: botonRaton.pressed && !apagado ? 0.95 : 1
-                    Behavior on color { ColorAnimation { duration: 150 } }
-                    Behavior on opacity { NumberAnimation { duration: 150 } }
-                    Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                    Behavior on color { ColorAnimation { duration: Tema.rapida } }
+                    Behavior on opacity { NumberAnimation { duration: Tema.rapida } }
+                    Behavior on scale { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutCubic } }
                     Row {
                         anchors.centerIn: parent
                         spacing: 8

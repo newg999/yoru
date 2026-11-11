@@ -216,7 +216,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 38; height: 38
                     icono: "󰒮"
-                    onClic: multimedia.reproductor.previous()
+                    onClic: Reproductor.anterior(multimedia.reproductor)
                 }
                 Rectangle {
                     width: 56; height: 56; radius: 28
@@ -241,7 +241,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 38; height: 38
                     icono: "󰒭"
-                    onClic: multimedia.reproductor.next()
+                    onClic: Reproductor.siguiente(multimedia.reproductor)
                 }
                 BotonIcono {
                     anchors.verticalCenter: parent.verticalCenter

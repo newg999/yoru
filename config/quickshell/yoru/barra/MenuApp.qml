@@ -61,7 +61,7 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                radius: 12
+                radius: Tema.radioPanel
                 color: Tema.panel
                 border.width: Tema.borde(1)
                 border.color: Tema.claro(0.25)

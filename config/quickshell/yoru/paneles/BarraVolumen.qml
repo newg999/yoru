@@ -28,8 +28,8 @@ Item {
             height: parent.height
             radius: parent.radius
             color: barra.apagado ? Tema.claro(0.25) : Tema.blanco
-            Behavior on width { enabled: !raton.pressed; NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-            Behavior on color { ColorAnimation { duration: 180 } }
+            Behavior on width { enabled: !raton.pressed; NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutCubic } }
+            Behavior on color { ColorAnimation { duration: Tema.rapida } }
         }
     }
     Rectangle {
@@ -42,8 +42,8 @@ Item {
         border.width: 2
         border.color: Tema.oscuro
         scale: raton.pressed ? 1.25 : raton.containsMouse ? 1.1 : 1
-        Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
-        Behavior on x { enabled: !raton.pressed; NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutBack } }
+        Behavior on x { enabled: !raton.pressed; NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutCubic } }
     }
     MouseArea {
         id: raton
