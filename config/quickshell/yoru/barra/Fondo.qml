@@ -30,7 +30,10 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Background
     WlrLayershell.namespace: "wallpaper"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-    color: Tema.oscuro
+    // Transparente hasta tener la imagen: al entrar en la sesión, swaybg ya
+    // ha puesto el fondo debajo, y pintar el color mientras se abre el PNG
+    // (uno 4K de 20 MB tarda más de un segundo) era el pantallazo negro
+    color: debajo.status === Image.Ready ? Tema.oscuro : "transparent"
     mask: Region {}
 
     // Lo que se ve ahora y lo que entra

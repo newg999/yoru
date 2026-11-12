@@ -77,9 +77,14 @@ ShellRoot {
     }
 
     // Una barra y un juego de paneles por pantalla
-    Variants {
-        model: Quickshell.screens
-        Barra {}
+    // (cada estilo de barra, y el dock, solo existe si está elegido: crearlos
+    // todos, aunque no se vieran, retrasaba la barra al entrar)
+    LazyLoader {
+        active: Ajustes.vertical
+        Variants {
+            model: Quickshell.screens
+            Barra {}
+        }
     }
     Component.onCompleted: {
         // El estilo Dock (yoru-dock) ya no existe: si quedó uno abierto de
@@ -89,11 +94,18 @@ ShellRoot {
         // Bluetooth: como lo dejaste la última vez (comun/Radios.qml)
         Radios.recuerdo;
     }
+    // Los paneles (páginas, Ajustes, lanzador, monitor, tienda...) se crean
+    // en segundo plano (LazyLoader con «loading»), después de la barra y el
+    // fondo: creándolos todos antes, la barra tardaba un par de segundos en
+    // salir al entrar en la sesión
     // Las páginas (control, calendario, multimedia, clima...) bajo las
     // islas o la minimalista
-    Variants {
-        model: Quickshell.screens
-        PanelPaginas {}
+    LazyLoader {
+        loading: true
+        Variants {
+            model: Quickshell.screens
+            PanelPaginas {}
+        }
     }
     // O la barra de píldoras: las islas arriba, o la minimalista (la misma
     // en una franja entera) (barra/BarraIslas.qml). Y los widgets sobre el
@@ -103,9 +115,12 @@ ShellRoot {
         BarraIslas {}
     }
     // O la barra de tareas abajo, como la de Windows 11
-    Variants {
-        model: Quickshell.screens
-        BarraWindows {}
+    LazyLoader {
+        active: Ajustes.windows
+        Variants {
+            model: Quickshell.screens
+            BarraWindows {}
+        }
     }
     Variants {
         model: Quickshell.screens
@@ -118,55 +133,63 @@ ShellRoot {
         NotasEscritorio {}
     }
     // Dock de apps abajo (barra/Dock.qml)
-    Variants {
-        model: Quickshell.screens
-        Dock {}
+    LazyLoader {
+        active: Ajustes.dock !== "nunca" && !Ajustes.windows
+        Variants {
+            model: Quickshell.screens
+            Dock {}
+        }
     }
     // Ajustes: una ventana aparte, una sola (no una por pantalla)
-    VentanaAjustes {}
-    Variants {
-        model: Quickshell.screens
-        PanelBateria {}
-    }
-    Variants {
-        model: Quickshell.screens
-        PanelUso {}
-    }
-    Variants {
-        model: Quickshell.screens
-        PanelDiscos {}
-    }
-    Variants {
-        model: Quickshell.screens
-        PanelActualizaciones {}
-    }
-    Variants {
-        model: Quickshell.screens
-        Lanzador {}
-    }
-    Variants {
-        model: Quickshell.screens
-        Monitor {}
-    }
-    Variants {
-        model: Quickshell.screens
-        Apagado {}
-    }
-    Variants {
-        model: Quickshell.screens
-        Portapapeles {}
-    }
-    Variants {
-        model: Quickshell.screens
-        Fondos {}
-    }
-    Variants {
-        model: Quickshell.screens
-        Tienda {}
-    }
-    Variants {
-        model: Quickshell.screens
-        Velocidad {}
+    LazyLoader {
+        loading: true
+        Scope {
+            VentanaAjustes {}
+            Variants {
+                model: Quickshell.screens
+                PanelBateria {}
+            }
+            Variants {
+                model: Quickshell.screens
+                PanelUso {}
+            }
+            Variants {
+                model: Quickshell.screens
+                PanelDiscos {}
+            }
+            Variants {
+                model: Quickshell.screens
+                PanelActualizaciones {}
+            }
+            Variants {
+                model: Quickshell.screens
+                Lanzador {}
+            }
+            Variants {
+                model: Quickshell.screens
+                Monitor {}
+            }
+            Variants {
+                model: Quickshell.screens
+                Apagado {}
+            }
+            Variants {
+                model: Quickshell.screens
+                Portapapeles {}
+            }
+            Variants {
+                model: Quickshell.screens
+                Fondos {}
+            }
+            Variants {
+                model: Quickshell.screens
+                Tienda {}
+            }
+            Variants {
+                model: Quickshell.screens
+                Velocidad {}
+            }
+        }
     }
     Variants {
         model: Quickshell.screens
@@ -177,9 +200,12 @@ ShellRoot {
         model: Quickshell.screens
         Avisos {}
     }
-    Variants {
-        model: Quickshell.screens
-        PanelNotificaciones {}
+    LazyLoader {
+        loading: true
+        Variants {
+            model: Quickshell.screens
+            PanelNotificaciones {}
+        }
     }
 
     // Abrir paneles desde fuera (atajos de niri, scripts...):
@@ -215,9 +241,12 @@ ShellRoot {
     // Contador de fotogramas (paneles/Fotogramas.qml), para ver si algo va a
     // tirones:  qs -c yoru ipc call fotogramas alternar   (Mod+Alt+F)
     property bool fotogramas: false
-    Variants {
-        model: Quickshell.screens
-        Fotogramas { activo: raiz.fotogramas }
+    LazyLoader {
+        loading: true
+        Variants {
+            model: Quickshell.screens
+            Fotogramas { activo: raiz.fotogramas }
+        }
     }
     IpcHandler {
         target: "fotogramas"
