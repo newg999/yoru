@@ -32,7 +32,8 @@
 //
 //  La luna (Personaje.qml): contenta con música, se asusta un poco con cada
 //  aviso, suda con poca batería, se duerme si no usas el equipo y te sigue
-//  con la mirada. Los paneles que se abren desde fuera (calendario, wifi...)
+//  con la mirada. Clic en ella: juega · pasarle el ratón de lado a lado:
+//  mimos · mira hacia el escritorio al que vas · chispas con el cargador. Los paneles que se abren desde fuera (calendario, wifi...)
 //  cuelgan de la isla (Paneles.islaUnica).
 // ============================================================================
 import QtQuick
@@ -278,7 +279,11 @@ PanelWindow {
     // Volumen, micrófono y brillo
     Connections {
         target: barra.salida?.audio ?? null
-        function onVolumeChanged() { barra.mostrar("volumen", 1500); }
+        function onVolumeChanged() {
+            barra.mostrar("volumen", 1500);
+            if (barra.listo && barra.volumen >= 0.95)
+                luna.apretar();
+        }
         function onMutedChanged() { barra.mostrar("volumen", 1500); }
     }
     Connections {
@@ -294,7 +299,20 @@ PanelWindow {
     readonly property string cancion: musica ? (musica.trackTitle ?? "") + "·" + (musica.trackArtist ?? "") : ""
     onCancionChanged: if (sonando && musica?.trackTitle && actividad !== "aviso") mostrar("cancion", 3200)
     // El cargador
-    onCargandoChanged: if (hayBateria && actividad !== "aviso") mostrar("cargador", 2500)
+    onCargandoChanged: {
+        if (hayBateria && actividad !== "aviso")
+            mostrar("cargador", 2500);
+        if (cargando && listo)
+            luna.chispas();
+    }
+    // Al cambiar de escritorio, la luna mira hacia donde vas (arriba o abajo)
+    readonly property int escritorio: Niri.escritorios.find(e => e.output === modelData.name && e.is_active)?.idx ?? 0
+    property int _escritorioAntes: 0
+    onEscritorioChanged: {
+        if (listo && _escritorioAntes > 0)
+            luna.mirarHacia(0, escritorio > _escritorioAntes ? 1 : -1);
+        _escritorioAntes = escritorio;
+    }
 
     // ------------------------------------------------------- La isla
     // Cómo se transforma: suave, sin rebote (como el resto de Yoru)
@@ -325,7 +343,9 @@ PanelWindow {
         color: reposando ? Tema.isla : Tema.sombra(Math.max(0.96, Ajustes.opacidadIslas))
         border.width: Tema.borde(1)
         border.color: Tema.islaBorde
-        clip: true
+        // En reposo sin recortar: los corazones y las notas de la luna
+        // salen por encima de la píldora
+        clip: !reposando
         Behavior on width { Suave {} }
         Behavior on height { Suave {} }
         Behavior on color { ColorAnimation { duration: Tema.normal } }
@@ -349,8 +369,22 @@ PanelWindow {
                     gastado = barra.arrastre(e.x - desde.x, e.y - desde.y);
             }
             onClicked: e => {
-                if (gastado || barra.abierta)
+                if (gastado)
                     return;
+                // Clic en la luna: juega (en reposo o en la cabecera del menú)
+                const sobre = l => {
+                    const p = l.mapFromItem(raton, e.x, e.y);
+                    return l.visible && p.x >= -2 && p.y >= -2 && p.x <= l.width + 2 && p.y <= l.height + 2;
+                };
+                if (barra.abierta) {
+                    if (barra.pagina === 1 && sobre(lunaGrande))
+                        lunaGrande.jugar();
+                    return;
+                }
+                if (isla.reposando && e.button === Qt.LeftButton && sobre(luna)) {
+                    luna.jugar();
+                    return;
+                }
                 if (barra.actividad === "aviso" && barra.aviso) {
                     const a = barra.aviso;
                     barra.terminar();
@@ -384,6 +418,7 @@ PanelWindow {
                 id: luna
                 anchors.verticalCenter: parent.verticalCenter
                 tam: Tema.altoBarra - (barra.k > 1 ? 6 : 8)
+                interactivo: true
                 contento: barra.sonando
                 dormido: reposo.isIdle
                 preocupado: barra.hayBateria && !barra.cargando && barra.carga <= 15
@@ -716,8 +751,10 @@ PanelWindow {
                     Row {
                         spacing: 12
                         Personaje {
+                            id: lunaGrande
                             anchors.verticalCenter: parent.verticalCenter
                             tam: barra.m(40)
+                            interactivo: true
                             contento: barra.sonando
                             preocupado: barra.hayBateria && !barra.cargando && barra.carga <= 15
                             siguiendo: menuHover.hovered
