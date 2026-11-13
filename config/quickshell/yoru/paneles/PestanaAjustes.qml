@@ -320,7 +320,7 @@ Item {
                 leftPadding: 12
                 wrapMode: Text.WordWrap
                 text: Ajustes.isla
-                    ? "Una sola isla arriba en el centro, pegada al borde: en reposo, la lunita de Yoru y la hora. Clic (o Mod+X): se convierte en su menú (buscar, volumen, brillo y accesos rápidos). Y cambia de forma para enseñarte lo que pasa: avisos, volumen, la canción que empieza, el cargador. Rueda: cambiar de escritorio."
+                    ? "Una sola isla, una píldora arriba en el centro: en reposo, la lunita de Yoru y la hora. Clic, Mod+X o deslizar hacia abajo: su menú (buscar, la canción, volumen, brillo y accesos rápidos). Deslizar a la derecha: Sistema (CPU, memoria, temperatura); a la izquierda: las apps en segundo plano. Rueda: cambiar de escritorio. Y cambia de forma un momento para enseñarte avisos, volumen, la canción que empieza o el cargador."
                     : Ajustes.windows
                     ? "Una barra de tareas abajo, como la de Windows 11: 夜 (Inicio), buscar y tus apps en el centro; el tiempo a la izquierda; la bandeja, la conexión y la hora a la derecha. Los paneles suben encima de ella."
                     : "Una barra fina de lado a lado: escritorios y ventana a la izquierda, la hora en el centro y la bandeja a la derecha. Al pulsarla, el centro de control se abre debajo."

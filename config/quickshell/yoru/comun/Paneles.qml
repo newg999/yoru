@@ -139,9 +139,9 @@ Singleton {
     // buscador pasa al lanzador, y cerrar sesión, reiniciar o apagar abren
     // el menú de apagado con esa opción ya en marcha (su cuenta atrás de 3 s)
     property string textoLanzador: ""
-    // Abrir o cerrar el menú de la isla en una pantalla (Mod+X:
-    // qs -c yoru ipc call isla menu)
-    signal menuIsla(string pantalla)
+    // Abrir o cerrar la isla en una pantalla, en una página (0 Sistema,
+    // 1 Menú, 2 Segundo plano): qs -c yoru ipc call isla menu (Mod+X)
+    signal menuIsla(string pantalla, int pagina)
     property string sesionElegida: ""
     function atras() {
         const a = anterior;

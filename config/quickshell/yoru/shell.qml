@@ -244,13 +244,16 @@ ShellRoot {
     //                                                          abre la ventana de Ajustes en esa sección)
     //   qs -c yoru ipc call panel cerrar
     // El menú de la isla (estilo Isla), en la pantalla con el foco:
-    //   qs -c yoru ipc call isla menu          (Mod+X)
+    //   qs -c yoru ipc call isla menu          (Mod+X)     o sistema, bandeja
     IpcHandler {
         target: "isla"
-        function menu(): void {
+        function abrirEn(pagina: int): void {
             const salida = Niri.escritorios.find(e => e.is_focused)?.output ?? Quickshell.screens[0]?.name;
-            Paneles.menuIsla(salida);
+            Paneles.menuIsla(salida, pagina);
         }
+        function menu(): void { abrirEn(1); }
+        function sistema(): void { abrirEn(0); }
+        function bandeja(): void { abrirEn(2); }
     }
     IpcHandler {
         target: "panel"
