@@ -1,15 +1,18 @@
 // ============================================================================
-//  Personaje — la lunita de Yoru (夜, «noche»): vive en la isla y reacciona
+//  Personaje — la luna de Yoru (夜, «noche»): vive en la isla y reacciona
 //  a lo que pasa. Dibujada con formas, en una rejilla de 24×24 que escala.
+//  Seria y algo siniestra: gris hueso, media cara en sombra (un eclipse),
+//  cráteres hondos y una cicatriz, cejas en V y una brasa en cada ojo.
 //
 //        ╭───────╮
-//      ╭─╯ °     ╰─╮        un disco claro con dos cráteres, que respira
-//      │   ●   ●   │        ojos: parpadean, miran alrededor y, con el
-//      │     ‿     │        ratón encima, lo siguen
-//      ╰─╮     ° ╭─╯
+//      ╭─╯ °  ░░░╰─╮        un disco gris con su sombra, que respira
+//      │  ╲▬   ▬╱░░│        cejas fruncidas; ojos entornados con brasa:
+//      │         ░░│        parpadean, miran alrededor y siguen al ratón
+//      ╰─╮     °░╭─╯
 //        ╰───────╯
 //
-//    contento     hay música: ojos ^ ^, mofletes, sonrisa y se mece al ritmo
+//    contento     hay música: ojos de «tranquilo», media sonrisa ladeada y
+//                 se mece al ritmo
 //    dormido      el equipo lleva un rato sin usarse: ojos cerrados y «z z»
 //    preocupado   poca batería: una gota de sudor
 //    sorpresa()   llega un aviso: un saltito con los ojos muy abiertos
@@ -43,8 +46,11 @@ Item {
     // Acepta mimos (pasarle el ratón por encima de lado a lado)
     property bool interactivo: false
 
-    property color luna: Tema.texto
-    property color tinta: Tema.oscuro
+    // Gris hueso frío (más apagado que el texto), tinta casi negra y la
+    // brasa de los ojos
+    property color luna: Qt.darker(Tema.texto, 1.32)
+    property color tinta: "#0b0c10"
+    property color brasa: "#ff5a48"
     property bool animado: Ajustes.animaciones
 
     width: tam
@@ -339,25 +345,74 @@ Item {
             color: yo.luna
             opacity: yo.dormido ? 0.8 : 1
             Behavior on opacity { NumberAnimation { duration: 800 } }
-            // Una sombra suave abajo a la derecha: que parezca redonda
-            Rectangle {
-                x: parent.width * 0.18; y: parent.height * 0.2
-                width: parent.width * 0.9; height: width
-                radius: width / 2
-                color: Qt.rgba(yo.tinta.r, yo.tinta.g, yo.tinta.b, 0.07)
+        }
+        // La sombra: media luna a oscuras por la derecha (un eclipse), sin
+        // salirse del disco: el borde del disco y, de vuelta, una curva
+        Shape {
+            anchors.fill: parent
+            opacity: yo.dormido ? 0.8 : 1
+            preferredRendererType: Shape.CurveRenderer
+            ShapePath {
+                strokeColor: "transparent"
+                fillColor: Qt.rgba(yo.tinta.r, yo.tinta.g, yo.tinta.b, 0.32)
+                startX: 12 * yo.u; startY: 2.5 * yo.u
+                PathArc { x: 12 * yo.u; y: 22.5 * yo.u; radiusX: 10 * yo.u; radiusY: 10 * yo.u }
+                PathArc { x: 12 * yo.u; y: 2.5 * yo.u; radiusX: 4.2 * yo.u; radiusY: 10 * yo.u; direction: PathArc.Counterclockwise }
             }
-            clip: true
         }
-        // Cráteres
+        // Cráteres, hondos
         Rectangle {
-            x: 5.2 * yo.u; y: 6.6 * yo.u
-            width: 2.8 * yo.u; height: width; radius: width / 2
-            color: Qt.rgba(yo.tinta.r, yo.tinta.g, yo.tinta.b, 0.12)
+            x: 5.2 * yo.u; y: 5.6 * yo.u
+            width: 3 * yo.u; height: width; radius: width / 2
+            color: Qt.rgba(yo.tinta.r, yo.tinta.g, yo.tinta.b, 0.26)
         }
         Rectangle {
-            x: 16.4 * yo.u; y: 17.4 * yo.u
-            width: 1.8 * yo.u; height: width; radius: width / 2
-            color: Qt.rgba(yo.tinta.r, yo.tinta.g, yo.tinta.b, 0.1)
+            x: 15.6 * yo.u; y: 17.2 * yo.u
+            width: 2.2 * yo.u; height: width; radius: width / 2
+            color: Qt.rgba(yo.tinta.r, yo.tinta.g, yo.tinta.b, 0.24)
+        }
+        Rectangle {
+            x: 10.4 * yo.u; y: 19.4 * yo.u
+            width: 1.3 * yo.u; height: width; radius: width / 2
+            color: Qt.rgba(yo.tinta.r, yo.tinta.g, yo.tinta.b, 0.2)
+        }
+
+        // La cicatriz: un tajo con sus puntos, en la mejilla izquierda
+        Shape {
+            anchors.fill: parent
+            preferredRendererType: Shape.CurveRenderer
+            opacity: 0.5
+            ShapePath {
+                strokeColor: yo.tinta; strokeWidth: 0.8 * yo.u
+                fillColor: "transparent"; capStyle: ShapePath.RoundCap
+                startX: 4.8 * yo.u; startY: 14.6 * yo.u
+                PathLine { x: 7.8 * yo.u; y: 18.4 * yo.u }
+                PathMove { x: 5.3 * yo.u; y: 16.6 * yo.u }
+                PathLine { x: 6.6 * yo.u; y: 15.6 * yo.u }
+                PathMove { x: 6.3 * yo.u; y: 17.9 * yo.u }
+                PathLine { x: 7.6 * yo.u; y: 16.9 * yo.u }
+            }
+        }
+
+        // Las cejas, en V (fruncidas); preocupado, al revés. Siguen a la
+        // mirada un poco y se esconden con los ojos cerrados
+        Shape {
+            id: cejas
+            visible: !yo.cerrados
+            anchors.fill: parent
+            preferredRendererType: Shape.CurveRenderer
+            readonly property real dx: yo.mx * 1.2
+            readonly property real dy: yo.my * 0.8 - yo.asombro * 1.4
+            // 1 = ceño · -1 = preocupado · con música, casi rectas
+            readonly property real ceno: yo.preocupado ? -0.8 : yo.felices ? 0.35 : 1
+            ShapePath {
+                strokeColor: yo.tinta; strokeWidth: 1.5 * yo.u
+                fillColor: "transparent"; capStyle: ShapePath.RoundCap
+                startX: (6.6 + cejas.dx) * yo.u; startY: (9.6 + cejas.dy - cejas.ceno * 0.6) * yo.u
+                PathLine { x: (10.8 + cejas.dx) * yo.u; y: (9.6 + cejas.dy + cejas.ceno * 1.2) * yo.u }
+                PathMove { x: (17.4 + cejas.dx) * yo.u; y: (9.6 + cejas.dy - cejas.ceno * 0.6) * yo.u }
+                PathLine { x: (13.2 + cejas.dx) * yo.u; y: (9.6 + cejas.dy + cejas.ceno * 1.2) * yo.u }
+            }
         }
 
         // Los mofletes (contento o sorprendido)
@@ -369,7 +424,8 @@ Item {
                 width: 3.2 * yo.u; height: 1.7 * yo.u
                 radius: height / 2
                 color: Tema.rojo
-                opacity: yo.dormido ? 0 : Math.max(yo.contento ? 0.55 : 0, yo.mimado * 0.75, yo.ojosX * 0.5, yo.asombro * 0.4)
+                // (nada de mofletes: solo un rubor leve con mimos)
+                opacity: yo.dormido ? 0 : yo.mimado * 0.35
                 Behavior on opacity { NumberAnimation { duration: 300 } }
             }
         }
@@ -381,26 +437,29 @@ Item {
                 id: ojo
                 required property real modelData
                 required property int index
-                readonly property real abre: yo.parpado * (index === 1 ? yo.guinando : 1) * (yo.trasnoche ? 0.55 : 1)
-                readonly property real crece: 1 + yo.asombro * 0.35
+                readonly property real abre: yo.parpado * (index === 1 ? yo.guinando : 1) * (yo.trasnoche ? 0.6 : 1)
+                readonly property real crece: 1 + yo.asombro * 0.45
                 visible: !yo.felices && !yo.cerrados && yo.ojosX < 0.5
-                width: 2.5 * yo.u * crece
-                height: Math.max(0.5 * yo.u, 3.8 * yo.u * crece * abre)
-                radius: width / 2
+                // Entornados (más anchos que altos), salvo con el susto
+                width: 2.9 * yo.u * crece
+                height: Math.max(0.5 * yo.u, (2.4 + yo.asombro * 1.4) * yo.u * crece * abre)
+                radius: height / 2
                 x: (modelData + yo.mx * 2.2) * yo.u - width / 2
                 y: (13 + yo.my * 1.8 + (yo.preocupado ? 0.6 : 0)) * yo.u - height / 2
                 color: yo.tinta
-                // El brillo del ojo
+                // La brasa: un punto rojo que late despacio
                 Rectangle {
-                    visible: yo.tam >= 26 && ojo.abre > 0.5
-                    x: parent.width * 0.18; y: parent.height * 0.14
-                    width: parent.width * 0.38; height: width; radius: width / 2
-                    color: yo.luna
+                    visible: ojo.abre > 0.45
+                    anchors.centerIn: parent
+                    width: Math.max(1.5, parent.width * 0.36); height: Math.min(width, parent.height * 0.7); radius: width / 2
+                    color: yo.brasa
+                    opacity: 0.75 + yo.respiro * 0.25
                 }
             }
         }
 
-        // Contento o con mimos: ojos ^ ^ y una sonrisa
+        // Contento o con mimos: ojos de «tranquilo» (medio cerrados, con su
+        // brasa debajo) y media sonrisa ladeada
         Shape {
             visible: yo.felices
             anchors.fill: parent
@@ -408,12 +467,23 @@ Item {
             ShapePath {
                 strokeColor: yo.tinta; strokeWidth: 1.5 * yo.u
                 fillColor: "transparent"; capStyle: ShapePath.RoundCap
-                startX: 7.2 * yo.u; startY: 13.8 * yo.u
-                PathArc { x: 10.8 * yo.u; y: 13.8 * yo.u; radiusX: 1.9 * yo.u; radiusY: 1.9 * yo.u }
-                PathMove { x: 13.2 * yo.u; y: 13.8 * yo.u }
-                PathArc { x: 16.8 * yo.u; y: 13.8 * yo.u; radiusX: 1.9 * yo.u; radiusY: 1.9 * yo.u }
-                PathMove { x: 10.6 * yo.u; y: 16.6 * yo.u }
-                PathArc { x: 13.4 * yo.u; y: 16.6 * yo.u; radiusX: 1.7 * yo.u; radiusY: 1.4 * yo.u; direction: PathArc.Counterclockwise }
+                startX: 7.4 * yo.u; startY: 13.2 * yo.u
+                PathLine { x: 10.6 * yo.u; y: 13.2 * yo.u }
+                PathMove { x: 13.4 * yo.u; y: 13.2 * yo.u }
+                PathLine { x: 16.6 * yo.u; y: 13.2 * yo.u }
+                // La media sonrisa: plana a la izquierda, sube a la derecha
+                PathMove { x: 10 * yo.u; y: 17 * yo.u }
+                PathQuad { x: 14.6 * yo.u; y: 15.6 * yo.u; controlX: 13 * yo.u; controlY: 17.4 * yo.u }
+            }
+            ShapePath {
+                strokeColor: "transparent"
+                fillColor: yo.brasa
+                startX: 7.9 * yo.u; startY: 13.9 * yo.u
+                PathArc { x: 10.1 * yo.u; y: 13.9 * yo.u; radiusX: 1.1 * yo.u; radiusY: 0.8 * yo.u; direction: PathArc.Counterclockwise }
+                PathLine { x: 7.9 * yo.u; y: 13.9 * yo.u }
+                PathMove { x: 13.9 * yo.u; y: 13.9 * yo.u }
+                PathArc { x: 16.1 * yo.u; y: 13.9 * yo.u; radiusX: 1.1 * yo.u; radiusY: 0.8 * yo.u; direction: PathArc.Counterclockwise }
+                PathLine { x: 13.9 * yo.u; y: 13.9 * yo.u }
             }
         }
 

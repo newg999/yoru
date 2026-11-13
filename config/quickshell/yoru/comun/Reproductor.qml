@@ -83,11 +83,26 @@ Singleton {
             const id = (v.app_id ?? "").toLowerCase();
             return (app && id === app) || (nombreApp && id.endsWith(nombreApp));
         });
-        if (!ventana)
+        if (ventana) {
+            // Quita « — Elisa», « - Elisa»... del final
+            const t = ventana.title.replace(new RegExp("\\s+[—–-]\\s+" + (p.identity ?? "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$"), "");
+            if (t && t !== p.identity)
+                return t;
+        }
+        // Último recurso: el nombre del archivo (Elisa con un mp3 sin
+        // etiquetas deja la ventana en «Elisa» y la barra solo decía eso)
+        return nombreArchivo(String((p.metadata ?? {})["xesam:url"] ?? ""));
+    }
+    function nombreArchivo(url) {
+        if (!url)
             return "";
-        // Quita « — Elisa», « - Elisa»... del final
-        const t = ventana.title.replace(new RegExp("\\s+[—–-]\\s+" + (p.identity ?? "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$"), "");
-        return t === p.identity ? "" : t;
+        let n = url.split("/").pop();
+        try {
+            n = decodeURIComponent(n);
+        } catch (e) {}
+        return n.replace(/\.[A-Za-z0-9]{2,4}$/, "")      // extensión
+            .replace(/_\d+_soundcloud$/i, "")           // «_204992644_soundcloud»
+            .replace(/_/g, " ").trim();
     }
 
     // Siguiente y anterior, también en los navegadores: YouTube en Brave no

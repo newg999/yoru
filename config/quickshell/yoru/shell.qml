@@ -264,7 +264,11 @@ ShellRoot {
             const pantalla = Quickshell.screens.find(s => s.name === salida) ?? Quickshell.screens[0];
             // Las páginas: el control y sus listas a la derecha (bajo la
             // conexión), el resto en el centro
-            if (nombre === "pildora")
+            // Con la isla, el lanzador es su buscador (página Menú, ya con
+            // el cursor en «Buscar»): Mod+Space la abre o la cierra
+            if (nombre === "lanzador" && Ajustes.isla && (Paneles.islaUnica[pantalla.name]?.visible ?? false))
+                Paneles.menuIsla(pantalla.name, 1);
+            else if (nombre === "pildora")
                 Paneles.abrirPagina(pantalla, seccion,
                     ["control", "wifi", "bluetooth", "audio", "micro", ""].includes(seccion) ? "derecha" : "centro");
             else

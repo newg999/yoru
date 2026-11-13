@@ -784,6 +784,17 @@ PanelWindow {
                     x: (1 - carril.desplazado) * (parent.width + 40)
                     opacity: 1 - Math.min(1, Math.abs(1 - carril.desplazado))
                     spacing: 12
+                    // Al escribir en «Buscar», los resultados salen aquí mismo
+                    // (en lugar de la música, los niveles y los botones)
+                    readonly property bool buscando: buscar.text.trim() !== ""
+                    readonly property var resultados: buscando ? Apps.buscar(buscar.text).slice(0, 6) : []
+                    property int elegido: 0
+                    onResultadosChanged: elegido = 0
+                    function abrirResultado(i) {
+                        const app = resultados[i];
+                        if (app)
+                            barra.hacer(() => Apps.abrir(app, barra.modelData));
+                    }
 
                     // La luna (grande), la hora y la fecha
                     Row {
@@ -822,7 +833,7 @@ PanelWindow {
                         }
                     }
 
-                    // Buscar: lo que escribas abre el lanzador con ello
+                    // Buscar: apps y ajustes, aquí mismo (comun/Apps.qml)
                     Rectangle {
                         width: parent.width
                         height: barra.m(36)
@@ -845,14 +856,17 @@ PanelWindow {
                             font.family: Tema.fuente
                             font.pixelSize: barra.m(13)
                             clip: true
-                            onTextChanged: {
-                                if (text === "" || !barra.abierta)
-                                    return;
-                                Paneles.textoLanzador = text;
-                                barra.hacer(() => Paneles.alternar("lanzador", barra.modelData, ""));
+                            onAccepted: paginaMenu.abrirResultado(paginaMenu.elegido)
+                            // Esc: borra lo escrito; sin nada escrito, cierra
+                            Keys.onEscapePressed: {
+                                if (text !== "")
+                                    text = "";
+                                else
+                                    barra.abierta = false;
                             }
-                            onAccepted: barra.hacer(() => Paneles.alternar("lanzador", barra.modelData, ""))
-                            Keys.onEscapePressed: barra.abierta = false
+                            Keys.onUpPressed: paginaMenu.elegido = Math.max(0, paginaMenu.elegido - 1)
+                            Keys.onDownPressed: paginaMenu.elegido = Math.min(paginaMenu.resultados.length - 1, paginaMenu.elegido + 1)
+                            Keys.onTabPressed: paginaMenu.elegido = (paginaMenu.elegido + 1) % Math.max(1, paginaMenu.resultados.length)
                             // (las flechas, para pasar de página si no hay nada escrito)
                             Keys.onLeftPressed: e => { if (text === "") barra.pasar(-1); else e.accepted = false; }
                             Keys.onRightPressed: e => { if (text === "") barra.pasar(1); else e.accepted = false; }
@@ -868,21 +882,121 @@ PanelWindow {
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.IBeamCursor
-                            onClicked: barra.hacer(() => Paneles.alternar("lanzador", barra.modelData, ""))
+                            onClicked: buscar.forceActiveFocus()
+                        }
+                    }
+
+                    // Los resultados (hasta 6): ↑ ↓ para elegir, Enter o clic para abrir
+                    Column {
+                        visible: paginaMenu.buscando
+                        width: parent.width
+                        spacing: 2
+                        Repeater {
+                            model: paginaMenu.resultados
+                            Rectangle {
+                                id: resultado
+                                required property var modelData
+                                required property int index
+                                readonly property bool elegida: paginaMenu.elegido === index
+                                width: parent.width
+                                height: barra.m(44)
+                                radius: Tema.esquina(12)
+                                color: elegida ? Tema.cajaHover : "transparent"
+                                Behavior on color { ColorAnimation { duration: Tema.normal } }
+                                IconImage {
+                                    id: iconoResultado
+                                    visible: !resultado.modelData.ajuste
+                                    anchors { left: parent.left; leftMargin: 8; verticalCenter: parent.verticalCenter }
+                                    implicitSize: barra.m(28)
+                                    source: resultado.modelData.ajuste ? "" : Quickshell.iconPath(resultado.modelData.icon, true) || Quickshell.iconPath("application-x-executable")
+                                    asynchronous: true
+                                }
+                                // Los ajustes de Yoru, con su icono de la barra
+                                Rectangle {
+                                    visible: resultado.modelData.ajuste ?? false
+                                    anchors.centerIn: iconoResultado
+                                    width: barra.m(28); height: width
+                                    radius: Tema.esquina(8)
+                                    color: Tema.caja
+                                    Texto {
+                                        anchors.centerIn: parent
+                                        text: resultado.modelData.glifo ?? ""
+                                        font.pixelSize: barra.m(15)
+                                        color: resultado.elegida ? Tema.blanco : Tema.texto
+                                    }
+                                }
+                                Column {
+                                    anchors { left: iconoResultado.right; leftMargin: 10; right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
+                                    Texto {
+                                        width: parent.width
+                                        text: resultado.modelData.name
+                                        elide: Text.ElideRight
+                                        textFormat: Text.PlainText
+                                        font.pixelSize: barra.m(12)
+                                        color: resultado.elegida ? Tema.blanco : Tema.texto
+                                    }
+                                    Texto {
+                                        width: parent.width
+                                        visible: text !== ""
+                                        text: resultado.modelData.comment || resultado.modelData.genericName || ""
+                                        elide: Text.ElideRight
+                                        textFormat: Text.PlainText
+                                        font.bold: false
+                                        font.pixelSize: barra.m(10)
+                                        color: Tema.gris
+                                    }
+                                }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onEntered: paginaMenu.elegido = resultado.index
+                                    onClicked: paginaMenu.abrirResultado(resultado.index)
+                                }
+                            }
+                        }
+                        // Nada: se dice, y Enter no hace nada
+                        Texto {
+                            visible: paginaMenu.resultados.length === 0
+                            width: parent.width
+                            topPadding: 8; bottomPadding: 8
+                            horizontalAlignment: Text.AlignHCenter
+                            text: "Nada se llama así"
+                            font.bold: false
+                            font.pixelSize: barra.m(12)
+                            color: Tema.gris
                         }
                     }
 
                     // La canción (si suena algo)
                     Rectangle {
-                        visible: barra.musica !== null
+                        id: tarjetaCancion
+                        visible: barra.musica !== null && !paginaMenu.buscando
                         width: parent.width
-                        height: barra.m(56)
+                        height: barra.m(56) + (progreso.visible ? barra.m(22) : 0)
                         radius: Tema.esquina(16)
                         color: Tema.caja
+
+                        // La posición no avisa sola: se pregunta cada segundo mientras suena
+                        Timer {
+                            running: tarjetaCancion.visible && barra.sonando
+                            interval: 1000
+                            repeat: true
+                            onTriggered: barra.musica?.positionChanged()
+                        }
+                        function tiempo(s) {
+                            s = Math.max(0, Math.round(s));
+                            return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+                        }
+                        Item {
+                            id: filaCancion
+                            width: parent.width
+                            height: barra.m(56)
+                        }
                         ClippingRectangle {
                             id: caratula
                             x: 8
-                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.verticalCenter: filaCancion.verticalCenter
                             width: barra.m(40); height: width
                             radius: Tema.esquina(10)
                             color: Tema.cajaHover
@@ -900,12 +1014,12 @@ PanelWindow {
                             }
                         }
                         Column {
-                            anchors { left: caratula.right; leftMargin: 10; right: mandos.left; rightMargin: 6; verticalCenter: parent.verticalCenter }
+                            anchors { left: caratula.right; leftMargin: 10; right: mandos.left; rightMargin: 6; verticalCenter: filaCancion.verticalCenter }
                             spacing: 1
                             Texto {
                                 width: parent.width
                                 elide: Text.ElideRight
-                                text: barra.musica?.trackTitle || Reproductor.nombre(barra.musica)
+                                text: Reproductor.titulo(barra.musica) || Reproductor.nombre(barra.musica)
                                 textFormat: Text.PlainText
                                 font.pixelSize: barra.m(12)
                                 color: Tema.blanco
@@ -922,7 +1036,7 @@ PanelWindow {
                         }
                         Row {
                             id: mandos
-                            anchors { right: parent.right; rightMargin: 6; verticalCenter: parent.verticalCenter }
+                            anchors { right: parent.right; rightMargin: 6; verticalCenter: filaCancion.verticalCenter }
                             Repeater {
                                 model: [
                                     {icono: "󰒮", hacer: () => Reproductor.anterior(barra.musica)},
@@ -948,10 +1062,81 @@ PanelWindow {
                                 }
                             }
                         }
+
+                        // Barra para avanzar: se pulsa o se arrastra
+                        Item {
+                            id: progreso
+                            readonly property real largo: barra.musica?.length ?? 0
+                            readonly property real posicion: arrastre.pressed ? arrastre.destino : (barra.musica?.position ?? 0)
+                            visible: (barra.musica?.canSeek ?? false) && largo > 0
+                            anchors { left: parent.left; right: parent.right; leftMargin: 10; rightMargin: 10; top: filaCancion.bottom; topMargin: -barra.m(4) }
+                            height: barra.m(18)
+                            Texto {
+                                id: tiempoYa
+                                anchors { left: parent.left; verticalCenter: parent.verticalCenter }
+                                width: barra.m(30)
+                                text: tarjetaCancion.tiempo(progreso.posicion)
+                                font.bold: false
+                                font.pixelSize: barra.m(9)
+                                color: Tema.gris
+                            }
+                            Texto {
+                                id: tiempoFalta
+                                anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                                width: barra.m(30)
+                                horizontalAlignment: Text.AlignRight
+                                text: "-" + tarjetaCancion.tiempo(progreso.largo - progreso.posicion)
+                                font.bold: false
+                                font.pixelSize: barra.m(9)
+                                color: Tema.gris
+                            }
+                            Item {
+                                id: pista
+                                anchors { left: tiempoYa.right; right: tiempoFalta.left; leftMargin: 6; rightMargin: 6; top: parent.top; bottom: parent.bottom }
+                                readonly property real fraccion: Math.max(0, Math.min(1, progreso.posicion / Math.max(1, progreso.largo)))
+                                Rectangle {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.width
+                                    height: arrastre.containsMouse || arrastre.pressed ? 5 : 3
+                                    radius: height / 2
+                                    color: Tema.cajaHover
+                                    Rectangle {
+                                        width: parent.width * pista.fraccion
+                                        height: parent.height
+                                        radius: parent.radius
+                                        color: Tema.blanco
+                                    }
+                                }
+                                Rectangle {
+                                    visible: arrastre.containsMouse || arrastre.pressed
+                                    x: pista.width * pista.fraccion - width / 2
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 11; height: 11; radius: 5.5
+                                    color: Tema.blanco
+                                }
+                                MouseArea {
+                                    id: arrastre
+                                    property real destino: 0
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    function calcular(x) {
+                                        destino = Math.max(0, Math.min(1, x / Math.max(1, width))) * progreso.largo;
+                                    }
+                                    onPressed: e => calcular(e.x)
+                                    onPositionChanged: e => { if (pressed) calcular(e.x); }
+                                    onReleased: {
+                                        if (barra.musica?.canSeek)
+                                            barra.musica.position = destino;
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     // Volumen y brillo
                     NivelMenu {
+                        visible: !paginaMenu.buscando
                         width: parent.width
                         valor: barra.volumen
                         apagada: barra.mudo
@@ -964,7 +1149,7 @@ PanelWindow {
                         }
                     }
                     NivelMenu {
-                        visible: Brillo.pantallas.length > 0
+                        visible: Brillo.pantallas.length > 0 && !paginaMenu.buscando
                         width: parent.width
                         readonly property var pantalla: Brillo.pantallas[0] ?? null
                         valor: pantalla?.valor ?? 0
@@ -974,6 +1159,7 @@ PanelWindow {
 
                     // Los botones
                     Grid {
+                        visible: !paginaMenu.buscando
                         columns: 4
                         columnSpacing: barra.m(6)
                         rowSpacing: 6
