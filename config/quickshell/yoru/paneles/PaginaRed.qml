@@ -15,7 +15,10 @@
 //                                                si es nueva y con candado)
 //  La lógica de las redes es la de SeccionWifi.qml; la de Bluetooth, la de
 //  SeccionBluetooth.qml; las VPN, comun/Vpn.qml.
-//  La página «bt» de las islas es esta misma con la lista de Bluetooth.
+//  La página «bt» de las islas es esta misma en modo Bluetooth (esBt): su
+//  propia cabecera, una tarjeta con el estado (clic = encender/apagar) y la
+//  lista de dispositivos, sin las teclas de Wi-Fi/Ethernet/VPN. Y la de red
+//  ya no lleva Bluetooth: cada una va por su lado.
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -33,6 +36,8 @@ Item {
     // La lista de abajo: "wifi", "bt" o "vpn" (al abrir, la de «inicial»)
     property string inicial: "wifi"
     property string vista: "wifi"
+    // Página de Bluetooth (sola) en vez de la de red
+    readonly property bool esBt: inicial === "bt"
     onInicialChanged: if (activa) vista = inicial
     onActivaChanged: {
         if (activa) {
@@ -56,6 +61,7 @@ Item {
     readonly property int senalWifi: redWifi ? Math.round(redWifi.signalStrength * 100) : 0
     readonly property var adaptador: Bluetooth.defaultAdapter
     readonly property bool btOn: adaptador?.enabled ?? false
+    readonly property var btConectados: aparatos.filter(d => d.connected)
     readonly property var aparatos: {
         if (!adaptador)
             return [];
@@ -226,7 +232,7 @@ Item {
             }
             Texto {
                 anchors { left: atras.right; leftMargin: 6; verticalCenter: parent.verticalCenter }
-                text: "Red"
+                text: pagina.esBt ? "Bluetooth" : "Red"
                 font.pixelSize: 16
                 color: Tema.blanco
             }
@@ -254,18 +260,46 @@ Item {
         // ------------------------------------- La conexión de ahora
         Rectangle {
             id: actual
-            readonly property bool eth: pagina.conCable
-            readonly property bool wifi: !eth && pagina.redWifi !== null
-            readonly property bool online: eth || wifi
+            readonly property bool bt: pagina.esBt
+            readonly property bool eth: !bt && pagina.conCable
+            readonly property bool wifi: !bt && !eth && pagina.redWifi !== null
+            readonly property bool online: bt ? pagina.btOn : eth || wifi
+            readonly property var btPrimero: pagina.btConectados[0] ?? null
             width: parent.width
             height: 78
             radius: Tema.esquina(18)
-            color: online ? pagina.tinte(0.13) : Tema.caja
+            color: online ? pagina.tinte(bt && tarjetaRaton.containsMouse ? 0.2 : 0.13)
+                : bt && tarjetaRaton.containsMouse ? Tema.cajaHover : Tema.caja
             border.width: 1
             border.color: online ? pagina.tinte(0.35) : Tema.claro(0.08)
             Behavior on color { ColorAnimation { duration: Tema.normal } }
             opacity: Math.min(1, pagina.entrada * 2)
             transform: Translate { y: -(1 - pagina.entrada) * 16 }
+
+            // En Bluetooth la tarjeta entera enciende/apaga
+            MouseArea {
+                id: tarjetaRaton
+                anchors.fill: parent
+                enabled: actual.bt && pagina.adaptador !== null
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Radios.alternarBluetooth()
+            }
+            Rectangle {
+                visible: actual.bt
+                opacity: pagina.adaptador ? 1 : 0.35
+                anchors { right: parent.right; rightMargin: 16; verticalCenter: parent.verticalCenter }
+                width: 34; height: 20; radius: 10
+                color: pagina.btOn ? pagina.acento : Tema.claro(0.15)
+                Behavior on color { ColorAnimation { duration: Tema.normal } }
+                Rectangle {
+                    width: 14; height: 14; radius: 7
+                    y: 3
+                    x: pagina.btOn ? parent.width - width - 3 : 3
+                    color: pagina.btOn ? Tema.oscuro : Tema.gris
+                    Behavior on x { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutBack } }
+                }
+            }
 
             // El icono, con una onda que se expande mientras hay conexión
             Item {
@@ -298,7 +332,8 @@ Item {
                     Behavior on color { ColorAnimation { duration: Tema.normal } }
                     Texto {
                         anchors.centerIn: parent
-                        text: actual.eth ? "󰈀"
+                        text: actual.bt ? (!pagina.btOn ? "󰂲" : actual.btPrimero ? "󰂱" : "󰂯")
+                            : actual.eth ? "󰈀"
                             : actual.wifi ? ["󰤟", "󰤢", "󰤥", "󰤨"][Math.min(3, Math.floor(pagina.senalWifi / 25))]
                             : "󰤭"
                         font.pixelSize: 22
@@ -309,12 +344,14 @@ Item {
             Column {
                 x: 72
                 anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - 72 - 14
+                width: parent.width - 72 - (actual.bt ? 64 : 14)
                 spacing: 3
                 Texto {
                     width: parent.width
                     elide: Text.ElideRight
-                    text: actual.eth ? "Ethernet" : actual.wifi ? pagina.redWifi.name : "Sin conexión"
+                    text: actual.bt ? (!pagina.adaptador ? "Sin Bluetooth" : !pagina.btOn ? "Bluetooth apagado"
+                            : actual.btPrimero ? actual.btPrimero.name : "Bluetooth encendido")
+                        : actual.eth ? "Ethernet" : actual.wifi ? pagina.redWifi.name : "Sin conexión"
                     textFormat: Text.PlainText
                     font.pixelSize: 15
                     color: Tema.blanco
@@ -324,7 +361,13 @@ Item {
                     elide: Text.ElideRight
                     readonly property string dir: actual.eth ? (pagina.ips[pagina.cable?.name] ?? "")
                         : (pagina.ips[pagina.wifi?.name] ?? "")
-                    text: actual.eth ? "Por cable" + (dir ? " · " + dir : "")
+                    text: actual.bt ? (!pagina.adaptador ? "No hay adaptador en este equipo"
+                            : !pagina.btOn ? "Pulsa para encenderlo"
+                            : actual.btPrimero ? "Conectado"
+                                + (actual.btPrimero.batteryAvailable ? " · " + Math.round(actual.btPrimero.battery * 100) + "%" : "")
+                                + (pagina.btConectados.length > 1 ? " · y " + (pagina.btConectados.length - 1) + " más" : "")
+                            : "Ningún dispositivo conectado")
+                        : actual.eth ? "Por cable" + (dir ? " · " + dir : "")
                         : actual.wifi ? "Wi-Fi · " + pagina.senalWifi + "%" + (dir ? " · " + dir : "")
                         : Networking.wifiEnabled ? "Elige una red aquí debajo" : "El wifi está apagado"
                     font.bold: false
@@ -334,9 +377,10 @@ Item {
             }
         }
 
-        // -------------------------- Wi-Fi · Ethernet · Bluetooth · VPN
+        // ------------------------------------- Wi-Fi · Ethernet · VPN
         Row {
             id: interruptores
+            visible: !pagina.esBt
             width: parent.width
             spacing: 8
             opacity: Math.min(1, Math.max(0, pagina.entrada * 2 - 0.2))
@@ -348,8 +392,6 @@ Item {
                      icono: Networking.wifiEnabled ? "󰖩" : "󰖪", lista: "wifi"},
                     {nombre: "Ethernet", hay: pagina.cable !== null, on: pagina.conCable,
                      icono: "󰈀", lista: ""},
-                    {nombre: "Bluetooth", hay: pagina.adaptador !== null, on: pagina.btOn,
-                     icono: pagina.btOn ? "󰂯" : "󰂲", lista: "bt"},
                     {nombre: "VPN", hay: true, on: Vpn.conectadas.length > 0,
                      icono: "󰦝", lista: "vpn"}
                 ]
@@ -360,7 +402,7 @@ Item {
                     required property int index
                     readonly property bool on: modelData.on
                     readonly property bool elegida: modelData.lista !== "" && modelData.lista === pagina.vista
-                    width: (interruptores.width - 3 * interruptores.spacing) / 4
+                    width: (interruptores.width - 2 * interruptores.spacing) / 3
                     height: 80
                     radius: Tema.esquina(16)
                     color: on ? pagina.tinte(teclaRaton.containsMouse ? 0.28 : 0.2)
@@ -373,17 +415,14 @@ Item {
                     Behavior on color { ColorAnimation { duration: Tema.normal } }
 
                     function alternar() {
-                        switch (index) {
-                        case 0:
+                        switch (modelData.nombre) {
+                        case "Wi-Fi":
                             Networking.wifiEnabled = !Networking.wifiEnabled;
                             break;
-                        case 1:
+                        case "Ethernet":
                             Quickshell.execDetached(["nmcli", "device", on ? "disconnect" : "connect", pagina.cable.name]);
                             break;
-                        case 2:
-                            Radios.alternarBluetooth();
-                            break;
-                        case 3:
+                        case "VPN":
                             if (Vpn.conectadas.length > 0)
                                 Vpn.conectadas.forEach(v => Vpn.alternar(v));
                             else if (Vpn.lista.length === 1)
@@ -408,9 +447,9 @@ Item {
                         text: tecla.modelData.icono
                         font.pixelSize: 18
                         color: tecla.on ? pagina.acento : Tema.gris
-                        opacity: tecla.index === 3 && Vpn.ocupada !== "" ? 0.4 : 1
+                        opacity: tecla.modelData.lista === "vpn" && Vpn.ocupada !== "" ? 0.4 : 1
                         SequentialAnimation on opacity {
-                            running: tecla.index === 3 && Vpn.ocupada !== ""
+                            running: tecla.modelData.lista === "vpn" && Vpn.ocupada !== ""
                             loops: Animation.Infinite
                             NumberAnimation { to: 1; duration: 450 }
                             NumberAnimation { to: 0.4; duration: 450 }
@@ -436,7 +475,7 @@ Item {
                         font.pixelSize: 10
                         color: tecla.on ? Tema.blanco : Tema.gris
                     }
-                    // › su lista aquí debajo (Bluetooth: su página)
+                    // › su lista aquí debajo
                     Rectangle {
                         visible: tecla.modelData.lista !== ""
                         x: parent.width - width - 7
@@ -782,7 +821,7 @@ Item {
         ListView {
             id: listaBt
             width: parent.width
-            height: Math.min(contentHeight, Math.max(160, pagina.altoMax - 250))
+            height: Math.min(contentHeight, Math.max(160, pagina.altoMax - 160))
             visible: count > 0
             clip: true
             spacing: 4
