@@ -12,9 +12,9 @@
 //
 //  Los datos son de UPower. La salud es la capacidad de ahora frente a la
 //  de fábrica: con el tiempo baja y la batería dura menos.
-//  Basado en QsDock de LeyzS (MIT): ver LICENSES/QsDock-LeyzS.txt
 // ============================================================================
 import QtQuick
+import QtQuick.Shapes
 import Quickshell.Widgets
 import Quickshell.Services.UPower
 import qs.comun
@@ -67,7 +67,6 @@ Panel {
     // El color del líquido, como en el iPhone: verde llena o cargando y,
     // según baja, amarillo, naranja y rojo (Tema.bateria)
     readonly property color liquido: Tema.bateria(carga / 100, cargando || llena)
-    onLiquidoChanged: nivelCanvas.requestPaint()
 
     component Titulo: Texto {
         x: 2
@@ -154,84 +153,92 @@ Panel {
                         height: parent.height - 10
                         radius: Tema.esquina(11)
                         color: "transparent"
-                        Canvas {
-                            id: nivelCanvas
+                        // El líquido: una forma con el borde en ola (dos ondas
+                        // sumadas, que se mueven; más agitada al cargar)
+                        Shape {
+                            id: liquido
                             anchors.fill: parent
-                            property real fase: 0
+                            preferredRendererType: Shape.CurveRenderer
                             property real nivel: panel.carga / 100
-                            Behavior on nivel { NumberAnimation { duration: 900; easing.type: Easing.OutCubic } }
-                            onNivelChanged: requestPaint()
-                            onFaseChanged: requestPaint()
-                            NumberAnimation on fase {
+                            Behavior on nivel { NumberAnimation { duration: Tema.ms(900); easing.type: Easing.OutCubic } }
+                            property real tiempo: 0
+                            NumberAnimation on tiempo {
                                 running: panel.abierto && Ajustes.animaciones
                                 loops: Animation.Infinite
-                                from: 0; to: Math.PI * 2
-                                duration: panel.cargando ? 1400 : 3600
+                                from: 0; to: 1
+                                duration: panel.cargando ? 1600 : 4200
                             }
-                            onPaint: {
-                                const c = getContext("2d");
-                                c.reset();
-                                const w = width, h = height;
-                                const fx = w * Math.max(0.03, nivel);
-                                const amp = panel.cargando ? 3.2 : 1.4;
-                                c.beginPath();
-                                c.moveTo(0, 0);
-                                for (let y = 0; y <= h; y += 2)
-                                    c.lineTo(Math.min(w, fx + Math.sin(y / h * Math.PI * 2 + fase) * amp), y);
-                                c.lineTo(0, h);
-                                c.closePath();
-                                const fc = panel.liquido;
-                                const g = c.createLinearGradient(0, 0, w, 0);
-                                g.addColorStop(0, Qt.rgba(fc.r, fc.g, fc.b, 0.55));
-                                g.addColorStop(1, Qt.rgba(fc.r, fc.g, fc.b, 1));
-                                c.fillStyle = g;
-                                c.fill();
+                            readonly property real borde: width * Math.max(0.04, nivel)
+                            readonly property real agitado: panel.cargando ? 2.6 : 1.1
+                            // De arriba abajo: el borde derecho del líquido en cada altura
+                            readonly property var ola: {
+                                const pts = [Qt.point(0, 0)];
+                                const giro = tiempo * 2 * Math.PI;
+                                for (let i = 0; i <= 16; i++) {
+                                    const y = height * i / 16;
+                                    const d = agitado * (Math.cos(i / 16 * 2 * Math.PI - giro)
+                                        + 0.4 * Math.cos(i / 16 * 4 * Math.PI + giro * 2));
+                                    pts.push(Qt.point(Math.max(0, Math.min(width, borde + d)), y));
+                                }
+                                pts.push(Qt.point(0, height));
+                                return pts;
+                            }
+                            ShapePath {
+                                strokeColor: "transparent"
+                                fillGradient: LinearGradient {
+                                    x1: 0; y1: 0; x2: liquido.borde; y2: 0
+                                    GradientStop { position: 0; color: Tema.conAlfa(panel.liquido, 0.5) }
+                                    GradientStop { position: 1; color: panel.liquido }
+                                }
+                                PathPolyline { path: liquido.ola }
                             }
                         }
-                        // Burbujas, al cargar
+                        // Al cargar, unas chispas suben por el líquido
                         Repeater {
-                            model: 4
+                            model: 5
                             Rectangle {
-                                id: burbuja
+                                id: chispa
                                 required property int index
-                                width: 4 + (index % 2) * 2
+                                readonly property real paso: index / 5
+                                width: index % 3 === 0 ? 5 : 3
                                 height: width
                                 radius: width / 2
                                 color: Tema.oscuro
                                 visible: panel.cargando
-                                property real t: 0
-                                x: Math.max(4, nivelCanvas.width * panel.carga / 100 * (0.2 + index * 0.18))
-                                y: nivelCanvas.height - t * (nivelCanvas.height + 6)
-                                opacity: 0.35 * (1 - t)
-                                NumberAnimation on t {
+                                property real sube: 0
+                                x: 3 + (liquido.borde - 10) * ((paso * 0.73 + 0.11) % 1)
+                                y: (liquido.height + 4) * (1 - sube) - 4
+                                opacity: 0.4 * Math.sin(sube * Math.PI)
+                                SequentialAnimation on sube {
                                     running: panel.cargando && panel.abierto && Ajustes.animaciones
                                     loops: Animation.Infinite
-                                    from: 0; to: 1
-                                    duration: 1500 + burbuja.index * 380
+                                    PauseAnimation { duration: chispa.index * 260 }
+                                    NumberAnimation { from: 0; to: 1; duration: 1900 }
                                 }
                             }
                         }
                     }
-                    // El rayo, al cargar
+                    // El rayo, al cargar: respira
                     Texto {
                         anchors.centerIn: parent
                         visible: panel.cargando
                         text: "󱐋"
                         font.pixelSize: 26
                         color: Tema.oscuro
-                        SequentialAnimation on scale {
+                        SequentialAnimation on opacity {
                             running: panel.cargando && panel.abierto && Ajustes.animaciones
                             loops: Animation.Infinite
-                            NumberAnimation { from: 1; to: 1.12; duration: 700; easing.type: Easing.InOutSine }
-                            NumberAnimation { from: 1.12; to: 1; duration: 700; easing.type: Easing.InOutSine }
+                            NumberAnimation { to: 0.55; duration: 900; easing.type: Easing.InOutQuad }
+                            NumberAnimation { to: 1; duration: 900; easing.type: Easing.InOutQuad }
                         }
                     }
                 }
                 // El polo
                 Rectangle {
-                    x: cuerpo.width + 2
+                    x: cuerpo.width + 3
                     anchors.verticalCenter: cuerpo.verticalCenter
-                    width: 6; height: 22; radius: 3
+                    width: 5; height: 20
+                    radius: 2.5
                     color: Tema.claro(0.22)
                 }
             }

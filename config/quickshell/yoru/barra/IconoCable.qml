@@ -1,7 +1,13 @@
 // ============================================================================
-//  IconoCable — el ethernet del dock (el antiguo estilo Dock): pantalla, pie y la clavija
-//  RJ45 con su cable, dibujado. Lo usa Ficha.qml.
-//  Basado en QsDock de LeyzS (MIT): ver LICENSES/QsDock-LeyzS.txt
+//  IconoCable — la conexión por cable de la ficha de red, dibujada: un
+//  conector RJ45 visto de frente, con sus contactos y el cable saliendo por
+//  abajo (rejilla de 24×24). Lo usa Ficha.qml.
+//
+//      ╭──────────╮
+//      │ ╷  ╷  ╷  │      los contactos
+//      ╰─╮      ╭─╯
+//        ╰──┬───╯        la lengüeta
+//           │            el cable
 // ============================================================================
 import QtQuick
 import QtQuick.Shapes
@@ -15,48 +21,43 @@ Item {
     height: tam
 
     Shape {
-        width: 512
-        height: 512
+        width: 24
+        height: 24
         preferredRendererType: Shape.CurveRenderer
-        transform: Scale { xScale: cable.tam / 512; yScale: cable.tam / 512 }
+        transform: Scale { xScale: cable.tam / 24; yScale: cable.tam / 24 }
+
+        // El cuerpo: ancho arriba y estrecho abajo, con las esquinas redondas
         ShapePath {
-            strokeColor: cable.color; strokeWidth: 42; fillColor: "transparent"
-            capStyle: ShapePath.RoundCap; joinStyle: ShapePath.RoundJoin
-            startX: 304; startY: 80
-            PathLine { x: 112; y: 80 }
-            PathArc { x: 64; y: 128; radiusX: 48; radiusY: 48; direction: PathArc.Counterclockwise }
-            PathLine { x: 64; y: 288 }
-            PathArc { x: 112; y: 336; radiusX: 48; radiusY: 48; direction: PathArc.Counterclockwise }
-            PathLine { x: 400; y: 336 }
-            PathArc { x: 448; y: 288; radiusX: 48; radiusY: 48; direction: PathArc.Counterclockwise }
-            PathLine { x: 448; y: 272 }
-        }
-        ShapePath {
-            strokeColor: cable.color; strokeWidth: 42; fillColor: "transparent"
-            capStyle: ShapePath.RoundCap
-            startX: 208; startY: 350
-            PathLine { x: 208; y: 420 }
-            PathMove { x: 304; y: 350 }
-            PathLine { x: 304; y: 420 }
-            PathMove { x: 160; y: 432 }
-            PathLine { x: 352; y: 432 }
-            PathMove { x: 400; y: 226 }
-            PathLine { x: 400; y: 432 }
-        }
-        ShapePath {
-            strokeColor: cable.color; strokeWidth: 42; fillColor: "transparent"
+            strokeColor: cable.color; strokeWidth: 2; fillColor: "transparent"
             joinStyle: ShapePath.RoundJoin
-            startX: 384; startY: 80
-            PathLine { x: 416; y: 80 }
-            PathArc { x: 432; y: 96; radiusX: 16; radiusY: 16 }
-            PathLine { x: 432; y: 192 }
-            PathArc { x: 416; y: 208; radiusX: 16; radiusY: 16 }
-            PathLine { x: 384; y: 208 }
-            PathArc { x: 368; y: 192; radiusX: 16; radiusY: 16 }
-            PathLine { x: 368; y: 96 }
-            PathArc { x: 384; y: 80; radiusX: 16; radiusY: 16 }
-            PathMove { x: 368; y: 128 }
-            PathLine { x: 432; y: 128 }
+            startX: 6.5; startY: 3.5
+            PathLine { x: 17.5; y: 3.5 }
+            PathArc { x: 19.5; y: 5.5; radiusX: 2; radiusY: 2 }
+            PathLine { x: 19.5; y: 11 }
+            PathArc { x: 17.5; y: 13; radiusX: 2; radiusY: 2 }
+            PathLine { x: 16; y: 13 }
+            PathLine { x: 16; y: 15.5 }
+            PathArc { x: 14.5; y: 17; radiusX: 1.5; radiusY: 1.5 }
+            PathLine { x: 9.5; y: 17 }
+            PathArc { x: 8; y: 15.5; radiusX: 1.5; radiusY: 1.5 }
+            PathLine { x: 8; y: 13 }
+            PathLine { x: 6.5; y: 13 }
+            PathArc { x: 4.5; y: 11; radiusX: 2; radiusY: 2 }
+            PathLine { x: 4.5; y: 5.5 }
+            PathArc { x: 6.5; y: 3.5; radiusX: 2; radiusY: 2 }
+        }
+        // Los contactos y el cable
+        ShapePath {
+            strokeColor: cable.color; strokeWidth: 2; fillColor: "transparent"
+            capStyle: ShapePath.RoundCap
+            startX: 9; startY: 7
+            PathLine { x: 9; y: 9 }
+            PathMove { x: 12; y: 7 }
+            PathLine { x: 12; y: 9 }
+            PathMove { x: 15; y: 7 }
+            PathLine { x: 15; y: 9 }
+            PathMove { x: 12; y: 17 }
+            PathLine { x: 12; y: 21 }
         }
     }
 }

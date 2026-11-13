@@ -19,7 +19,6 @@
 //  propia cabecera, una tarjeta con el estado (clic = encender/apagar) y la
 //  lista de dispositivos, sin las teclas de Wi-Fi/Ethernet/VPN. Y la de red
 //  ya no lleva Bluetooth: cada una va por su lado.
-//  Basado en QsDock de LeyzS (MIT): ver LICENSES/QsDock-LeyzS.txt
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -162,21 +161,24 @@ Item {
 
     // ---------------------------------------------------- Piezas sueltas
     // Barras de señal (4, se llenan según la fuerza)
-    component Barras: Item {
+    component Barras: Row {
         id: barras
         property int senal: 0
         property color on: Tema.texto
         property color off: Tema.claro(0.15)
-        width: 18; height: 14
-        readonly property int n: senal >= 75 ? 4 : senal >= 50 ? 3 : senal >= 25 ? 2 : senal > 0 ? 1 : 0
+        height: 14
+        spacing: 2
+        // Cuántas se encienden: una por cada cuarto de señal (con algo, una)
+        readonly property int encendidas: senal <= 0 ? 0 : Math.min(4, Math.ceil(senal / 25))
         Repeater {
             model: 4
             Rectangle {
                 required property int index
-                x: index * 4.6; width: 3; radius: 1.5
-                height: 4 + index * 3.3
-                y: barras.height - height
-                color: index < barras.n ? barras.on : barras.off
+                anchors.bottom: parent.bottom
+                width: 2.5
+                height: barras.height * (index + 1) / 4
+                radius: width / 2
+                color: index < barras.encendidas ? barras.on : barras.off
                 Behavior on color { ColorAnimation { duration: Tema.normal } }
             }
         }
@@ -197,8 +199,8 @@ Item {
             font.pixelSize: ic.tam
             color: icRaton.containsMouse || ic.girando ? pagina.acento : ic.color
             scale: icRaton.pressed ? 0.85 : icRaton.containsMouse ? 1.12 : 1
-            Behavior on color { ColorAnimation { duration: 150 } }
-            Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
+            Behavior on color { ColorAnimation { duration: Tema.rapida } }
+            Behavior on scale { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutBack } }
             RotationAnimation on rotation { running: ic.girando; from: 0; to: 360; duration: 900; loops: Animation.Infinite }
         }
         Connections {
@@ -307,28 +309,29 @@ Item {
                 x: 14
                 anchors.verticalCenter: parent.verticalCenter
                 width: 46; height: 46
+                // Un aro que se abre y se apaga, una y otra vez
                 Rectangle {
+                    id: aro
                     anchors.centerIn: parent
-                    width: 46; height: 46; radius: 23
+                    width: parent.width; height: width
+                    radius: width / 2
                     color: "transparent"
-                    border.width: 2
+                    border.width: 1.5
                     border.color: pagina.acento
-                    opacity: 0
                     visible: actual.online
-                    SequentialAnimation on scale {
+                    property real abre: 0
+                    scale: 1 + 0.45 * abre
+                    opacity: 0.6 * (1 - abre) * (1 - abre)
+                    SequentialAnimation on abre {
                         running: actual.online && pagina.activa && Ajustes.animaciones
                         loops: Animation.Infinite
-                        NumberAnimation { from: 1; to: 1.5; duration: 1600; easing.type: Easing.OutCubic }
-                    }
-                    SequentialAnimation on opacity {
-                        running: actual.online && pagina.activa && Ajustes.animaciones
-                        loops: Animation.Infinite
-                        NumberAnimation { from: 0.55; to: 0; duration: 1600; easing.type: Easing.OutCubic }
+                        NumberAnimation { from: 0; to: 1; duration: 2000; easing.type: Easing.OutQuad }
+                        PauseAnimation { duration: 300 }
                     }
                 }
                 Rectangle {
                     anchors.fill: parent
-                    radius: 23
+                    radius: width / 2
                     color: actual.online ? pagina.acento : Tema.claro(0.08)
                     Behavior on color { ColorAnimation { duration: Tema.normal } }
                     Texto {
@@ -452,8 +455,8 @@ Item {
                         SequentialAnimation on opacity {
                             running: tecla.modelData.lista === "vpn" && Vpn.ocupada !== ""
                             loops: Animation.Infinite
-                            NumberAnimation { to: 1; duration: 450 }
-                            NumberAnimation { to: 0.4; duration: 450 }
+                            NumberAnimation { to: 1; duration: Tema.ms(520); easing.type: Easing.InOutQuad }
+                            NumberAnimation { to: 0.35; duration: Tema.ms(520); easing.type: Easing.InOutQuad }
                         }
                     }
                     // El interruptor pequeño

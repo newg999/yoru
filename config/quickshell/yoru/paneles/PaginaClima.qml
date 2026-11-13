@@ -11,7 +11,6 @@
 //    [Sensación] [Humedad] [Viento] [Sol]
 //    PRÓXIMAS HORAS   (se desliza de lado)
 //    7 DÍAS           con la barra de la mínima a la máxima
-//  Basado en QsDock de LeyzS (MIT): ver LICENSES/QsDock-LeyzS.txt
 // ============================================================================
 import QtQuick
 import Quickshell

@@ -1,7 +1,10 @@
 // ============================================================================
-//  IconoVolumen — el altavoz del dock (el antiguo estilo Dock), dibujado: las ondas salen
-//  una a una según sube el volumen; silenciado, una X. Lo usa Ficha.qml.
-//  Basado en QsDock de LeyzS (MIT): ver LICENSES/QsDock-LeyzS.txt
+//  IconoVolumen — el altavoz de la ficha del sonido, dibujado (rejilla de
+//  24×24): las ondas aparecen según sube el volumen y, silenciado, una X.
+//  Siempre centrado: se corre según lo que se ve. Lo usa Ficha.qml.
+//
+//      ▐◣  )  )        0 % → solo el altavoz (y la X si está en silencio)
+//      ▐◤  )  )        20 % → la onda corta entera · 45-70 % → sale la larga
 // ============================================================================
 import QtQuick
 import QtQuick.Shapes
@@ -16,60 +19,77 @@ Item {
     width: tam
     height: tam
 
-    readonly property bool silencio: mudo || volumen <= 0.001
-    property real onda1: silencio ? 0 : Math.max(0, Math.min(1, volumen / 0.15))
-    property real onda2: silencio ? 0 : Math.max(0, Math.min(1, (volumen - 0.4) / 0.3))
-    property real equis: silencio ? 1 : 0
-    Behavior on onda1 { NumberAnimation { duration: Tema.normal * 0.8; easing.type: Easing.OutCubic } }
-    Behavior on onda2 { NumberAnimation { duration: Tema.normal * 0.8; easing.type: Easing.OutCubic } }
-    Behavior on equis { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutBack } }
+    function entre(v, desde, hasta) { return Math.max(0, Math.min(1, (v - desde) / (hasta - desde))); }
+    function tinta(a) { return Qt.rgba(color.r, color.g, color.b, Math.max(0, Math.min(1, a))); }
 
-    // Lo que se ve (cuerpo y ondas encendidas), siempre centrado: se corre
-    // según cuántas ondas hay
-    readonly property real k: tam / 24
-    readonly property real bordeDerecho: Math.max(12.8 + 5.0 * onda1 + 3.7 * onda2, 12.8 + 8.2 * Math.min(1, equis))
-    readonly property real desvio: 12 - (2.2 + bordeDerecho) / 2
+    readonly property bool calla: mudo || volumen <= 0.001
+    // Cuánto se ve cada pieza (0..1), animado
+    property real corta: calla ? 0 : entre(volumen, 0, 0.2)
+    property real larga: calla ? 0 : entre(volumen, 0.45, 0.7)
+    property real cruz: calla ? 1 : 0
+    Behavior on corta { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutQuad } }
+    Behavior on larga { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutQuad } }
+    Behavior on cruz { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutBack } }
+
+    // La boca del cono: de ahí salen las ondas (arcos de ±50°)
+    readonly property real bocaX: 12.5
+    readonly property var radios: [3.4, 7]
+    function arco(r, arriba) {
+        const a = 50 * Math.PI / 180;
+        return { x: bocaX + r * Math.cos(a), y: 12 + (arriba ? -1 : 1) * r * Math.sin(a) };
+    }
+    // Centrado: del borde izquierdo del cuerpo (3,2) a lo último que se ve
+    readonly property real fin: Math.max(13.3 + 3.6 * corta + 3.6 * larga, 13.3 + 9 * Math.min(1, cruz))
+    readonly property real escala: tam / 24
 
     Shape {
         width: 24
         height: 24
-        x: icono.desvio * icono.k
+        x: (12 - (3.2 + icono.fin) / 2) * icono.escala
         preferredRendererType: Shape.CurveRenderer
-        transform: Scale { xScale: icono.k; yScale: icono.k }
-        // El cuerpo
+        transform: Scale { xScale: icono.escala; yScale: icono.escala }
+
+        // El cuerpo y el cono, de una pieza
         ShapePath {
-            fillColor: icono.color; strokeColor: icono.color
-            strokeWidth: 2; joinStyle: ShapePath.RoundJoin
-            startX: 3; startY: 9.2
-            PathLine { x: 7; y: 9.2 }
-            PathLine { x: 12; y: 5 }
-            PathLine { x: 12; y: 19 }
-            PathLine { x: 7; y: 14.8 }
-            PathLine { x: 3; y: 14.8 }
-            PathLine { x: 3; y: 9.2 }
+            fillColor: icono.color
+            strokeColor: icono.color
+            strokeWidth: 1.6
+            joinStyle: ShapePath.RoundJoin
+            startX: 4; startY: 9.5
+            PathLine { x: 7.5; y: 9.5 }
+            PathLine { x: icono.bocaX; y: 5.2 }
+            PathLine { x: icono.bocaX; y: 18.8 }
+            PathLine { x: 7.5; y: 14.5 }
+            PathLine { x: 4; y: 14.5 }
+            PathLine { x: 4; y: 9.5 }
         }
-        // Onda pequeña
+        // Las dos ondas
         ShapePath {
-            strokeColor: Qt.rgba(icono.color.r, icono.color.g, icono.color.b, icono.onda1)
-            strokeWidth: 2.5; fillColor: "transparent"; capStyle: ShapePath.RoundCap
-            startX: 15.5; startY: 9
-            PathArc { x: 15.5; y: 15; radiusX: 4.2; radiusY: 4.2 }
+            strokeColor: icono.tinta(icono.corta)
+            strokeWidth: 2; fillColor: "transparent"; capStyle: ShapePath.RoundCap
+            startX: icono.arco(icono.radios[0], true).x; startY: icono.arco(icono.radios[0], true).y
+            PathArc {
+                x: icono.arco(icono.radios[0], false).x; y: icono.arco(icono.radios[0], false).y
+                radiusX: icono.radios[0]; radiusY: icono.radios[0]
+            }
         }
-        // Onda grande
         ShapePath {
-            strokeColor: Qt.rgba(icono.color.r, icono.color.g, icono.color.b, icono.onda2)
-            strokeWidth: 2.5; fillColor: "transparent"; capStyle: ShapePath.RoundCap
-            startX: 18; startY: 6
-            PathArc { x: 18; y: 18; radiusX: 8.5; radiusY: 8.5 }
+            strokeColor: icono.tinta(icono.larga)
+            strokeWidth: 2; fillColor: "transparent"; capStyle: ShapePath.RoundCap
+            startX: icono.arco(icono.radios[1], true).x; startY: icono.arco(icono.radios[1], true).y
+            PathArc {
+                x: icono.arco(icono.radios[1], false).x; y: icono.arco(icono.radios[1], false).y
+                radiusX: icono.radios[1]; radiusY: icono.radios[1]
+            }
         }
-        // Silenciado: una X
+        // Silencio: una X donde irían las ondas
         ShapePath {
-            strokeColor: Qt.rgba(icono.color.r, icono.color.g, icono.color.b, Math.max(0, Math.min(1, icono.equis)))
-            strokeWidth: 2.5; fillColor: "transparent"; capStyle: ShapePath.RoundCap
-            startX: 15.5; startY: 9.5
-            PathLine { x: 20.5; y: 14.5 }
-            PathMove { x: 20.5; y: 9.5 }
-            PathLine { x: 15.5; y: 14.5 }
+            strokeColor: icono.tinta(icono.cruz)
+            strokeWidth: 2; fillColor: "transparent"; capStyle: ShapePath.RoundCap
+            startX: 16.5; startY: 9.5
+            PathLine { x: 21.5; y: 14.5 }
+            PathMove { x: 21.5; y: 9.5 }
+            PathLine { x: 16.5; y: 14.5 }
         }
     }
 }

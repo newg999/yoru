@@ -12,7 +12,6 @@
 //    │ …                            │            o Inicio = hoy
 //    └──────────────────────────────┘
 //    [󰃶 Hoy] [󰃭 Abrir Calendario]                 (gnome-calendar)
-//  Basado en QsDock de LeyzS (MIT): ver LICENSES/QsDock-LeyzS.txt
 // ============================================================================
 import QtQuick
 import Quickshell
