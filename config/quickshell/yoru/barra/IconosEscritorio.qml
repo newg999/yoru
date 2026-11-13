@@ -290,6 +290,13 @@ PanelWindow {
         ].filter(o => !o.oculta);
     }
 
+    // Por dónde va el ratón (la luna de la isla lo mira). La capa respeta
+    // la barra: se le suma lo de arriba para tener la posición en pantalla
+    HoverHandler {
+        onPointChanged: if (hovered) Paneles.ratonEscritorio = {pantalla: capa.modelData.name, x: point.position.x, y: point.position.y + (capa.modelData.height - capa.height)}
+        onHoveredChanged: if (!hovered && Paneles.ratonEscritorio?.pantalla === capa.modelData.name) Paneles.ratonEscritorio = null
+    }
+
     // ------------------------------------------------------- Teclado
     Item {
         id: teclas

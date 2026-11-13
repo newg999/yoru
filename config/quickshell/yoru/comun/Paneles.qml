@@ -139,6 +139,10 @@ Singleton {
     // buscador pasa al lanzador, y cerrar sesión, reiniciar o apagar abren
     // el menú de apagado con esa opción ya en marcha (su cuenta atrás de 3 s)
     property string textoLanzador: ""
+    // Por dónde va el ratón cuando está sobre el escritorio (el fondo o los
+    // iconos lo apuntan): {pantalla, x, y} o null. Lo usa la luna de la
+    // isla para mirarlo. (Wayland no dice dónde está sobre otras ventanas)
+    property var ratonEscritorio: null
     // Abrir o cerrar la isla en una pantalla, en una página (0 Sistema,
     // 1 Menú, 2 Segundo plano): qs -c yoru ipc call isla menu (Mod+X)
     signal menuIsla(string pantalla, int pagina)

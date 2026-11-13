@@ -442,11 +442,21 @@ PanelWindow {
                 contento: barra.sonando
                 dormido: reposo.isIdle
                 preocupado: barra.hayBateria && !barra.cargando && barra.carga <= 15
-                siguiendo: raton.containsMouse
+                // El ratón: encima de la isla, o por el escritorio de esta pantalla
+                readonly property var enEscritorio: Paneles.ratonEscritorio?.pantalla === barra.modelData.name ? Paneles.ratonEscritorio : null
+                siguiendo: raton.containsMouse || enEscritorio !== null
                 mirada: {
-                    const p = luna.mapFromItem(isla, raton.mouseX, raton.mouseY);
-                    return Qt.point(Math.max(-1, Math.min(1, (p.x - luna.width / 2) / 60)),
-                                    Math.max(-1, Math.min(1, (p.y - luna.height / 2) / 14)));
+                    if (raton.containsMouse) {
+                        const p = luna.mapFromItem(isla, raton.mouseX, raton.mouseY);
+                        return Qt.point(Math.max(-1, Math.min(1, (p.x - luna.width / 2) / 60)),
+                                        Math.max(-1, Math.min(1, (p.y - luna.height / 2) / 14)));
+                    }
+                    if (!enEscritorio)
+                        return Qt.point(0, 0);
+                    // Desde el centro de la luna (en la pantalla) hasta el ratón
+                    const c = luna.mapToItem(null, luna.width / 2, luna.height / 2);
+                    const dx = enEscritorio.x - c.x, dy = enEscritorio.y - c.y;
+                    return Qt.point(Math.max(-1, Math.min(1, dx / 350)), Math.max(-1, Math.min(1, dy / 220)));
                 }
             }
             // Grabando: punto rojo y lo que lleva
