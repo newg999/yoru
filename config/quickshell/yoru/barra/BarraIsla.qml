@@ -317,6 +317,14 @@ PanelWindow {
     // ------------------------------------------------------- La isla
     // Cómo se transforma: suave, sin rebote (como el resto de Yoru)
     component Suave: NumberAnimation { duration: Tema.ms(380); easing.type: Easing.OutQuint }
+    // Lo de dentro: al llegar, espera a que la isla casi tenga su forma y
+    // aparece; al irse, se va enseguida (si no, se veía recortado por los
+    // lados mientras crecía, o suelto en medio de una isla que encogía)
+    component Aparecer: SequentialAnimation {
+        property bool activa: false
+        PauseAnimation { duration: activa ? Tema.ms(190) : 0 }
+        NumberAnimation { duration: activa ? Tema.normal : Tema.rapida; easing.type: Easing.OutCubic }
+    }
     // El tamaño (Ajustes › Barra y dock › Tamaño de la isla): todo lo de
     // dentro se mide por él (sin «scale», que deja la letra borrosa)
     readonly property real k: Ajustes.tamIsla
@@ -343,9 +351,13 @@ PanelWindow {
         color: reposando ? Tema.isla : Tema.sombra(Math.max(0.96, Ajustes.opacidadIslas))
         border.width: Tema.borde(1)
         border.color: Tema.islaBorde
-        // En reposo sin recortar: los corazones y las notas de la luna
-        // salen por encima de la píldora
-        clip: !reposando
+        // Sin recortar solo con la píldora ya en su sitio (así los corazones
+        // y las notas de la luna salen por encima); mientras encoge, sí: si
+        // no, lo que se iba se dibujaba fuera de ella
+        readonly property bool asentada: reposando
+            && Math.abs(width - (cajaReposo.implicitWidth + 2 * relleno)) < 1
+            && Math.abs(height - Tema.altoBarra) < 1
+        clip: !asentada
         Behavior on width { Suave {} }
         Behavior on height { Suave {} }
         Behavior on color { ColorAnimation { duration: Tema.normal } }
@@ -412,7 +424,7 @@ PanelWindow {
             spacing: 9
             opacity: activa ? 1 : 0
             visible: opacity > 0
-            Behavior on opacity { NumberAnimation { duration: cajaReposo.activa ? Tema.normal * 1.5 : Tema.rapida } }
+            Behavior on opacity { Aparecer { activa: cajaReposo.activa } }
 
             Personaje {
                 id: luna
@@ -647,14 +659,7 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             opacity: activa ? 1 : 0
             visible: opacity > 0
-            // Al abrir, aparece cuando la isla ya casi ha crecido (si no, se
-            // veía recortado por los lados mientras se ensanchaba)
-            Behavior on opacity {
-                SequentialAnimation {
-                    PauseAnimation { duration: cajaPaginas.activa ? Tema.ms(170) : 0 }
-                    NumberAnimation { duration: cajaPaginas.activa ? Tema.normal : Tema.rapida }
-                }
-            }
+            Behavior on opacity { Aparecer { activa: cajaPaginas.activa } }
             Keys.onEscapePressed: barra.abierta = false
             Keys.onLeftPressed: barra.pasar(-1)
             Keys.onRightPressed: barra.pasar(1)
@@ -1106,7 +1111,7 @@ PanelWindow {
             anchors.centerIn: parent
             opacity: activa ? 1 : 0
             visible: opacity > 0
-            Behavior on opacity { NumberAnimation { duration: Tema.normal } }
+            Behavior on opacity { Aparecer { activa: cajaAviso.activa } }
             implicitWidth: Math.min(barra.m(440), Math.max(barra.m(260), barra.m(40) + 12 + textosAviso.implicitWidth))
             implicitHeight: filaAviso.implicitHeight
             width: implicitWidth
@@ -1192,7 +1197,7 @@ PanelWindow {
             height: Tema.altoBarra
             opacity: activa ? 1 : 0
             visible: opacity > 0
-            Behavior on opacity { NumberAnimation { duration: Tema.normal } }
+            Behavior on opacity { Aparecer { activa: cajaNivel.activa } }
 
             Texto {
                 anchors.verticalCenter: parent.verticalCenter
@@ -1231,7 +1236,7 @@ PanelWindow {
             spacing: 12
             opacity: activa ? 1 : 0
             visible: opacity > 0
-            Behavior on opacity { NumberAnimation { duration: Tema.normal } }
+            Behavior on opacity { Aparecer { activa: cajaCancion.activa } }
 
             ClippingRectangle {
                 width: barra.m(40); height: width
@@ -1301,7 +1306,7 @@ PanelWindow {
             height: Tema.altoBarra
             opacity: activa ? 1 : 0
             visible: opacity > 0
-            Behavior on opacity { NumberAnimation { duration: Tema.normal } }
+            Behavior on opacity { Aparecer { activa: cajaCargador.activa } }
             Texto {
                 anchors.verticalCenter: parent.verticalCenter
                 text: barra.cargando ? "󰂄" : "󰁹"
