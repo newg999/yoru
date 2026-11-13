@@ -5,7 +5,6 @@
 //  (Ajustes › Barra y dock › Isla)
 //
 //    reposo     ( ◕‿◕  • ━ •   18:42   󰖩 󰂯 󰕾 󰁹 )
-//    asomarse   con el ratón encima: la fecha y la bandeja
 //    aviso      ( [icono]  Telegram                       )   4,5 s
 //               (          Ana: ¿bajas ya?                )   (ratón encima: espera)
 //    volumen    ( 󰕾  ━━━━━━━━━━━○──────  45% )            1,5 s (brillo y micro igual)
@@ -46,10 +45,24 @@ PanelWindow {
     WlrLayershell.namespace: "yoru-barra"
     WlrLayershell.layer: WlrLayer.Top
 
-    // Solo la isla recibe clics (y nada en el overview)
-    mask: Niri.overview ? vacia : region
+    // Solo la isla recibe clics (y nada en el overview). Con un panel
+    // abierto, toda la franja de arriba: un clic al lado de la isla lo
+    // cierra (como con las islas de siempre)
+    mask: Niri.overview ? vacia : barra.algoAbierto ? regionFranja : region
     Region { id: vacia }
     Region { id: region; item: isla }
+    Region { id: regionFranja; item: franja }
+    readonly property bool algoAbierto: Paneles.abierto !== ""
+    Item {
+        id: franja
+        width: parent.width
+        height: Tema.margenBarra + Tema.altoBarra
+    }
+    MouseArea {
+        anchors.fill: franja
+        enabled: barra.algoAbierto
+        onClicked: Paneles.cerrar()
+    }
     BackgroundEffect.blurRegion: Niri.overview || !Ajustes.desenfoque ? null : desenfoque
     Region { id: desenfoque; item: isla; radius: isla.radius }
 
@@ -197,7 +210,7 @@ PanelWindow {
         function aportar(clave, cuanto) {}
         readonly property bool vacia: false
 
-        // El ratón: la luna mira, y al rato asoma lo de más
+        // El ratón: la luna lo sigue con la mirada (la isla no cambia de tamaño)
         MouseArea {
             id: raton
             anchors.fill: parent
@@ -219,10 +232,7 @@ PanelWindow {
                 }
             }
             onWheel: e => Niri.accion(e.angleDelta.y > 0 ? "focus-workspace-up" : "focus-workspace-down")
-            onContainsMouseChanged: containsMouse ? asomar.restart() : (asomar.stop(), isla.asomada = false)
         }
-        property bool asomada: false
-        Timer { id: asomar; interval: 350; onTriggered: isla.asomada = true }
 
         // ------------------------------------------------- Reposo
         Row {
@@ -313,7 +323,7 @@ PanelWindow {
                 }
             }
 
-            // La hora (con el ratón encima, también la fecha): clic = calendario
+            // La hora: clic = calendario
             Item {
                 width: hora.implicitWidth
                 height: parent.height
@@ -321,11 +331,7 @@ PanelWindow {
                 Texto {
                     id: hora
                     anchors.centerIn: parent
-                    readonly property var dias: ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"]
-                    readonly property var meses: ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
                     text: Qt.formatTime(reloj.date, Ajustes.relojSegundos ? "HH:mm:ss" : "HH:mm")
-                        + (isla.asomada ? "  " + Tema.suave(dias[reloj.date.getDay()] + " " + reloj.date.getDate() + " " + meses[reloj.date.getMonth()]) : "")
-                    textFormat: Text.StyledText
                     color: Tema.blanco
                 }
                 MouseArea {
@@ -335,9 +341,9 @@ PanelWindow {
                 }
             }
 
-            // Con el ratón encima: la bandeja
+            // La bandeja (siempre: que la isla no cambie de ancho con el ratón)
             Bandeja {
-                visible: isla.asomada && Ajustes.islaBandeja
+                visible: Ajustes.islaBandeja
                 anchors.verticalCenter: parent.verticalCenter
                 ventana: barra
                 color: "transparent"
@@ -376,7 +382,7 @@ PanelWindow {
                         color: !barra.cargando && barra.carga <= 15 ? Tema.rojo : Tema.texto
                     }
                     Texto {
-                        visible: isla.asomada || barra.carga <= 20
+                        visible: barra.carga <= 20
                         anchors.verticalCenter: parent.verticalCenter
                         text: barra.carga + "%"
                         font.pixelSize: Tema.letra - 1
