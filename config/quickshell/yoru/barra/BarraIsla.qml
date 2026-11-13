@@ -1,26 +1,36 @@
 // ============================================================================
-//  BarraIsla — una sola isla arriba en el centro, viva: en reposo es una
-//  píldora pequeña y, cuando pasa algo, cambia de forma para enseñarlo y
-//  vuelve a su tamaño. Dentro vive la lunita (Personaje.qml).
+//  BarraIsla — una sola isla arriba en el centro, pegada al borde, viva:
+//  en reposo solo la lunita y la hora; al pulsarla se transforma en su menú
+//  y, cuando pasa algo, cambia de forma para enseñarlo y vuelve a su sitio.
 //  (Ajustes › Barra y dock › Isla)
 //
-//    reposo     ( ◕‿◕  • ━ •   18:42   󰖩 󰂯 󰕾 󰁹 )
-//    aviso      ( [icono]  Telegram                       )   4,5 s
-//               (          Ana: ¿bajas ya?                )   (ratón encima: espera)
+//    reposo     ╰ ◕‿◕  18:42 ╯                    (grabando: un punto rojo)
+//
+//    menú       ╭─────────────────────────────╮   clic en la isla
+//               │ ◕‿◕  18:42                  │
+//               │      jueves, 13 de noviembre│
+//               │ [󰍉 Buscar               ]   │   escribir = el lanzador
+//               │ [█████ 󰕾 ───────── 80%]     │   volumen (arrastrar / rueda)
+//               │ [█████ 󰃠 ───────── 90%]     │   brillo
+//               │  ⏺     ⧉     ▦     󰅍      │   grabar · captura ·
+//               │  󰆍     󰖟     󰉋     󰶐      │   escritorios · portapapeles ·
+//               │  󰍃     󰜉     󰐥     󰒓      │   terminal · navegador ·
+//               ╰─────────────────────────────╯   archivos · apagar pantalla ·
+//                                                 sesión · reiniciar · apagar · ajustes
+//
+//    aviso      ( [icono]  TELEGRAM · Ana · ¿bajas ya? )   4,5 s (ratón encima: espera)
 //    volumen    ( 󰕾  ━━━━━━━━━━━○──────  45% )            1,5 s (brillo y micro igual)
 //    canción    ( [carátula]  Título · Artista   ılıl )     3 s al empezar una
 //    cargador   ( 󰂄  Cargando · 54% )                       2,5 s al enchufar o desenchufar
 //
-//    clic en la luna = tus apps · en la hora = calendario · a la derecha =
-//    centro de control · rueda = escritorio anterior / siguiente
-//    en un aviso: clic = abrirlo · clic derecho = quitarlo
-//    en la canción: clic = Multimedia
+//    rueda sobre la isla = escritorio anterior / siguiente · Esc o clic
+//    fuera = cerrar el menú · en un aviso: clic = abrirlo, derecho = quitarlo
 //
-//  La luna: contenta con música, se asusta un poco con cada aviso, suda con
-//  poca batería, se duerme si no usas el equipo y te sigue con la mirada
-//  si pasas el ratón por la isla. Clic en ella: te guiña un ojo.
-//  Los paneles cuelgan de la isla (Paneles.islaUnica), y con uno abierto
-//  la isla no cambia de forma.
+//  La luna (Personaje.qml): contenta con música, se asusta un poco con cada
+//  aviso, suda con poca batería, se duerme si no usas el equipo y te sigue
+//  con la mirada si pasas el ratón por la isla.
+//  Los paneles que se abren desde fuera (calendario, wifi...) cuelgan de
+//  ella (Paneles.islaUnica); con uno abierto, la isla no cambia de forma.
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -28,8 +38,6 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import Quickshell.Services.Pipewire
 import Quickshell.Services.UPower
-import Quickshell.Networking
-import Quickshell.Bluetooth
 import qs.comun
 
 PanelWindow {
@@ -37,34 +45,39 @@ PanelWindow {
     required property ShellScreen modelData
     screen: modelData
 
+    // Del alto de la pantalla (transparente): así un clic fuera del menú lo
+    // cierra. Anclada arriba y a los lados, no a los cuatro: si no, niri no
+    // respeta la franja reservada. Solo reserva lo de la barra
     anchors { top: true; left: true; right: true }
-    // Sitio para cuando crece; solo reserva lo de la barra
-    implicitHeight: Tema.margenBarra + 120
+    implicitHeight: modelData.height
     exclusiveZone: Tema.zonaBarra
     color: "transparent"
     WlrLayershell.namespace: "yoru-barra"
     WlrLayershell.layer: WlrLayer.Top
+    WlrLayershell.keyboardFocus: menu ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-    // Solo la isla recibe clics (y nada en el overview). Con un panel
-    // abierto, toda la franja de arriba: un clic al lado de la isla lo
-    // cierra (como con las islas de siempre)
-    mask: Niri.overview ? vacia : barra.algoAbierto ? regionFranja : region
+    // Qué recibe clics: la isla; con el menú, toda la pantalla (un clic
+    // fuera lo cierra); con otro panel abierto, la franja de arriba (un clic
+    // al lado de la isla lo cierra, como con las islas de siempre)
+    mask: Niri.overview ? vacia : menu ? regionTodo : algoAbierto ? regionFranja : region
     Region { id: vacia }
     Region { id: region; item: isla }
     Region { id: regionFranja; item: franja }
+    Region { id: regionTodo; item: todo }
     readonly property bool algoAbierto: Paneles.abierto !== ""
+    Item { id: todo; anchors.fill: parent }
     Item {
         id: franja
         width: parent.width
         height: Tema.margenBarra + Tema.altoBarra
     }
     MouseArea {
-        anchors.fill: franja
-        enabled: barra.algoAbierto
-        onClicked: Paneles.cerrar()
+        anchors.fill: parent
+        enabled: barra.menu || barra.algoAbierto
+        onClicked: barra.menu ? (barra.menu = false) : Paneles.cerrar()
     }
     BackgroundEffect.blurRegion: Niri.overview || !Ajustes.desenfoque ? null : desenfoque
-    Region { id: desenfoque; item: isla; radius: isla.radius }
+    Region { id: desenfoque; item: isla; radius: isla.bottomLeftRadius }
 
     // La cafeína (Despierto) se agarra a una ventana visible: esta
     IdleInhibitor {
@@ -82,7 +95,31 @@ PanelWindow {
     Component.onCompleted: Paneles.islaUnica = Object.assign({}, Paneles.islaUnica, {[modelData.name]: isla})
 
     readonly property bool enfocada: (Niri.escritorios.find(e => e.is_focused)?.output ?? modelData.name) === modelData.name
-    readonly property bool panelAbierto: Paneles.abierto !== "" && Paneles.pantalla === modelData
+    readonly property bool panelAbierto: algoAbierto && Paneles.pantalla === modelData
+
+    // ---------------------------------------------------------- El menú
+    property bool menu: false
+    onMenuChanged: {
+        if (menu) {
+            terminar();
+            buscar.text = "";
+            buscar.forceActiveFocus();
+            Sesion.leerEncendido();
+        }
+    }
+    Connections {
+        target: Paneles
+        function onMenuIsla(pantalla) {
+            if (pantalla === barra.modelData.name)
+                barra.menu = !barra.menu;
+        }
+    }
+    // Al abrir un panel (o los Ajustes), el menú se cierra
+    onAlgoAbiertoChanged: if (algoAbierto) menu = false
+    function hacer(f) {
+        menu = false;
+        f();
+    }
 
     // ------------------------------------------------------- Estado
     readonly property var salida: Pipewire.defaultAudioSink
@@ -90,12 +127,6 @@ PanelWindow {
     PwObjectTracker { objects: [barra.salida, barra.entrada] }
     readonly property real volumen: salida?.audio?.volume ?? 0
     readonly property bool mudo: salida?.audio?.muted ?? true
-
-    readonly property var dispositivos: Networking.devices.values
-    readonly property var cable: dispositivos.find(d => d.type === DeviceType.Wired && d.connected) ?? null
-    readonly property var wifi: dispositivos.find(d => d.type === DeviceType.Wifi) ?? null
-    readonly property var redWifi: wifi?.networks.values.find(r => r.connected) ?? null
-    readonly property var adaptador: Bluetooth.defaultAdapter
 
     readonly property var bateria: UPower.displayDevice
     readonly property bool hayBateria: bateria && bateria.isLaptopBattery
@@ -107,13 +138,14 @@ PanelWindow {
     readonly property bool sonando: musica?.isPlaying ?? false
 
     // ------------------------------------------------------- Actividades
-    // Lo que enseña ahora: "" (reposo) · "aviso" · "volumen" · "micro" ·
-    // "brillo" · "cancion" · "cargador"
+    // Lo que enseña ahora (sin el menú): "" (reposo) · "aviso" · "volumen" ·
+    // "micro" · "brillo" · "cancion" · "cargador"
     property string actividad: ""
     property var aviso: null            // la entrada de Notificaciones
     function mostrar(que, ms) {
-        // Al arrancar, todo «cambia» de golpe: eso no cuenta
-        if (!listo || !enfocada || panelAbierto)
+        // Al arrancar, todo «cambia» de golpe: eso no cuenta. Con el menú o
+        // un panel abierto, tampoco (ya se ve ahí)
+        if (!listo || !enfocada || panelAbierto || menu)
             return;
         actividad = que;
         fin.interval = ms;
@@ -148,7 +180,8 @@ PanelWindow {
             const e = Notificaciones.emergentes[0];
             if (!e || e === barra.aviso)
                 return;
-            if (!barra.listo || !barra.enfocada || barra.panelAbierto) {
+            luna.sorpresa();
+            if (!barra.listo || !barra.enfocada || barra.panelAbierto || barra.menu) {
                 // No se enseña: que no se quede pendiente para siempre
                 if (barra.listo && barra.enfocada)
                     Notificaciones.ocultar(e);
@@ -156,7 +189,6 @@ PanelWindow {
             }
             barra.aviso = e;
             barra.mostrar("aviso", 4500);
-            luna.sorpresa();
         }
     }
     // Volumen, micrófono y brillo
@@ -183,55 +215,75 @@ PanelWindow {
     // ------------------------------------------------------- La isla
     Rectangle {
         id: isla
-        readonly property bool reposando: barra.actividad === ""
-        // El ancho y el alto de lo que se enseña ahora
-        readonly property Item contenido: barra.actividad === "aviso" ? cajaAviso
+        readonly property bool reposando: barra.actividad === "" && !barra.menu
+        // Lo que se enseña ahora; la isla toma su tamaño
+        readonly property Item contenido: barra.menu ? cajaMenu
+            : barra.actividad === "aviso" ? cajaAviso
             : ["volumen", "micro", "brillo"].includes(barra.actividad) ? cajaNivel
             : barra.actividad === "cancion" ? cajaCancion
             : barra.actividad === "cargador" ? cajaCargador
             : cajaReposo
-        // Lo que pide su contenido + el margen (cada uno dice su alto)
         width: Math.round(contenido.implicitWidth + 2 * relleno)
         height: contenido.altoIsla
-        readonly property int relleno: reposando ? 8 : 14
+        readonly property int relleno: reposando ? 14 : barra.menu ? 16 : 16
         x: Math.round((barra.width - width) / 2)
-        y: Tema.margenBarra
-        radius: Math.min(height / 2, Tema.altoBarra / 2 + 8)
+        // Pegada al borde de arriba: esquinas redondas solo abajo
+        y: 0
+        topLeftRadius: 0
+        topRightRadius: 0
+        bottomLeftRadius: Math.min(height / 2, barra.menu ? 26 : 20)
+        bottomRightRadius: bottomLeftRadius
         // Creciendo queda encima de las ventanas: casi opaca, para leerse
         color: reposando ? Tema.isla : Tema.sombra(Math.max(0.96, Ajustes.opacidadIslas))
         Behavior on color { ColorAnimation { duration: Tema.normal } }
         border.width: Tema.borde(1)
         border.color: Tema.islaBorde
         clip: true
-        Behavior on width { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutBack; easing.overshoot: 1.25 } }
-        Behavior on height { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutBack; easing.overshoot: 1.25 } }
+        Behavior on width { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutBack; easing.overshoot: 1.15 } }
+        Behavior on height { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutBack; easing.overshoot: 1.15 } }
+        // (el borde de arriba, fuera de la pantalla)
+        Rectangle {
+            visible: parent.border.width > 0
+            width: parent.width; height: 1
+            color: parent.color
+        }
 
         // Para Panel.qml (las islas de siempre se funden; esta, no)
         function aportar(clave, cuanto) {}
         readonly property bool vacia: false
 
-        // El ratón: la luna lo sigue con la mirada (la isla no cambia de tamaño)
+        // Clic: el menú (o, en un aviso, abrirlo) · rueda: escritorios ·
+        // el ratón encima: la luna lo sigue con la mirada
         MouseArea {
             id: raton
             anchors.fill: parent
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
             onClicked: e => {
+                if (barra.menu)
+                    return;
                 if (barra.actividad === "aviso" && barra.aviso) {
                     const a = barra.aviso;
                     barra.terminar();
                     if (e.button === Qt.LeftButton)
                         Notificaciones.abrir(a);
-                } else if (barra.actividad === "cancion") {
+                    return;
+                }
+                if (barra.actividad === "cancion") {
                     barra.terminar();
                     Paneles.abrirPagina(barra.modelData, "multimedia", "centro");
-                } else if (barra.actividad !== "") {
-                    barra.terminar();
-                } else {
-                    Paneles.abrirPagina(barra.modelData, "control", "centro");
+                    return;
                 }
+                barra.terminar();
+                if (barra.algoAbierto)
+                    Paneles.cerrar();
+                barra.menu = true;
+                luna.guino();
             }
-            onWheel: e => Niri.accion(e.angleDelta.y > 0 ? "focus-workspace-up" : "focus-workspace-down")
+            onWheel: e => {
+                if (!barra.menu)
+                    Niri.accion(e.angleDelta.y > 0 ? "focus-workspace-up" : "focus-workspace-down");
+            }
         }
 
         // ------------------------------------------------- Reposo
@@ -239,158 +291,323 @@ PanelWindow {
             id: cajaReposo
             readonly property int altoIsla: Tema.altoBarra
             readonly property bool activa: isla.contenido === cajaReposo
-            anchors.centerIn: parent
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: 0
+            height: Tema.altoBarra
             spacing: 10
             opacity: activa ? 1 : 0
             visible: opacity > 0
             Behavior on opacity { NumberAnimation { duration: Tema.normal } }
-            height: Tema.altoBarra
 
-            // La luna: clic = tus apps
-            Item {
-                width: luna.width
-                height: parent.height
-                Personaje {
-                    id: luna
-                    anchors.verticalCenter: parent.verticalCenter
-                    tam: Tema.altoBarra - 8
-                    contento: barra.sonando
-                    dormido: reposo.isIdle
-                    preocupado: barra.hayBateria && !barra.cargando && barra.carga <= 15
-                    siguiendo: raton.containsMouse
-                    mirada: {
-                        const p = luna.mapFromItem(isla, raton.mouseX, raton.mouseY);
-                        return Qt.point(Math.max(-1, Math.min(1, (p.x - luna.width / 2) / 60)),
-                                        Math.max(-1, Math.min(1, (p.y - luna.height / 2) / 14)));
-                    }
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        luna.guino();
-                        Paneles.alternar("lanzador", barra.modelData, "");
-                    }
-                }
-            }
-
-            // Escritorios: el activo, alargado
-            Row {
+            Personaje {
+                id: luna
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 5
-                Repeater {
-                    model: Niri.escritoriosDe(barra.modelData.name)
-                    Rectangle {
-                        required property var modelData
-                        readonly property bool activo: modelData.is_active
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: activo ? 18 : 7
-                        height: 7
-                        radius: 3.5
-                        color: activo ? Tema.blanco : modelData.active_window_id !== null ? Tema.claro(0.45) : Tema.claro(0.2)
-                        Behavior on width { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutBack } }
-                        Behavior on color { ColorAnimation { duration: Tema.normal } }
-                        MouseArea {
-                            anchors.fill: parent
-                            anchors.margins: -4
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Niri.irA(parent.modelData)
-                        }
-                    }
+                tam: Tema.altoBarra - 8
+                contento: barra.sonando
+                dormido: reposo.isIdle
+                preocupado: barra.hayBateria && !barra.cargando && barra.carga <= 15
+                siguiendo: raton.containsMouse
+                mirada: {
+                    const p = luna.mapFromItem(isla, raton.mouseX, raton.mouseY);
+                    return Qt.point(Math.max(-1, Math.min(1, (p.x - luna.width / 2) / 60)),
+                                    Math.max(-1, Math.min(1, (p.y - luna.height / 2) / 14)));
                 }
             }
-
-            // Grabando: punto rojo y lo que lleva
-            Row {
+            // Grabando: punto rojo
+            Rectangle {
                 visible: Grabacion.grabando
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 5
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 8; height: 8; radius: 4
-                    color: Tema.rojo
-                    SequentialAnimation on opacity {
-                        running: Grabacion.grabando && Ajustes.animaciones
-                        loops: Animation.Infinite
-                        NumberAnimation { to: 0.3; duration: 600 }
-                        NumberAnimation { to: 1; duration: 600 }
-                    }
-                }
-                Texto {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: Grabacion.tiempo
-                    color: Tema.rojo
+                width: 8; height: 8; radius: 4
+                color: Tema.rojo
+                SequentialAnimation on opacity {
+                    running: Grabacion.grabando && Ajustes.animaciones
+                    loops: Animation.Infinite
+                    NumberAnimation { to: 0.3; duration: 600 }
+                    NumberAnimation { to: 1; duration: 600 }
                 }
             }
+            SystemClock { id: reloj; precision: Ajustes.relojSegundos ? SystemClock.Seconds : SystemClock.Minutes }
+            Texto {
+                anchors.verticalCenter: parent.verticalCenter
+                text: Qt.formatTime(reloj.date, Ajustes.relojSegundos ? "HH:mm:ss" : "HH:mm")
+                color: Tema.blanco
+            }
+        }
 
-            // La hora: clic = calendario
-            Item {
-                width: hora.implicitWidth
-                height: parent.height
-                SystemClock { id: reloj; precision: Ajustes.relojSegundos ? SystemClock.Seconds : SystemClock.Minutes }
+        // ------------------------------------------------- El menú
+        // Un botón redondo con su nombre debajo
+        component BotonMenu: Item {
+            id: boton
+            property string icono: ""
+            property string texto: ""
+            property bool encendido: false
+            property bool peligro: false
+            signal pulsar()
+            width: 64
+            height: 62
+            Rectangle {
+                id: circulo
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 40; height: 40
+                radius: 20
+                color: boton.encendido ? Tema.blanco
+                    : botonRaton.containsMouse ? (boton.peligro ? Tema.conAlfa(Tema.rojo, 0.22) : Tema.cajaHover)
+                    : Tema.caja
+                scale: botonRaton.pressed ? 0.9 : 1
+                Behavior on color { ColorAnimation { duration: Tema.rapida } }
+                Behavior on scale { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutBack } }
                 Texto {
-                    id: hora
                     anchors.centerIn: parent
-                    text: Qt.formatTime(reloj.date, Ajustes.relojSegundos ? "HH:mm:ss" : "HH:mm")
-                    color: Tema.blanco
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Paneles.abrirPagina(barra.modelData, "calendario", "centro")
+                    text: boton.icono
+                    font.pixelSize: 17
+                    color: boton.encendido ? Tema.oscuro
+                        : boton.peligro && botonRaton.containsMouse ? Tema.rojo : Tema.texto
                 }
             }
-
-            // La bandeja (siempre: que la isla no cambie de ancho con el ratón)
-            Bandeja {
-                visible: Ajustes.islaBandeja
-                anchors.verticalCenter: parent.verticalCenter
-                ventana: barra
-                color: "transparent"
-                border.width: 0
-                relleno: 0
+            Texto {
+                anchors { top: circulo.bottom; topMargin: 5; horizontalCenter: parent.horizontalCenter }
+                text: boton.texto
+                font.bold: boton.encendido
+                font.pixelSize: 10
+                color: boton.encendido ? Tema.blanco : Tema.gris
             }
+            MouseArea {
+                id: botonRaton
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: boton.pulsar()
+            }
+        }
+        // Una barra gruesa: arrastrar, clic o rueda. El relleno lleva el icono
+        component NivelMenu: Rectangle {
+            id: barraNivel
+            property real valor: 0
+            property string icono: ""
+            property bool apagada: false
+            signal mover(real v)
+            height: 34
+            radius: 17
+            color: Tema.caja
+            Rectangle {
+                width: Math.max(parent.height, parent.width * Math.min(1, barraNivel.valor))
+                height: parent.height
+                radius: parent.radius
+                color: barraNivel.apagada ? Tema.tenue : Tema.blanco
+                Behavior on width { enabled: !nivelRaton.pressed; NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutCubic } }
+                Texto {
+                    x: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: barraNivel.icono
+                    font.pixelSize: 15
+                    color: Tema.oscuro
+                }
+            }
+            Texto {
+                anchors { right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter }
+                text: Math.round(barraNivel.valor * 100) + "%"
+                font.pixelSize: 11
+                color: barraNivel.valor > 0.85 ? Tema.oscuro : Tema.gris
+            }
+            MouseArea {
+                id: nivelRaton
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                function poner(mx) { barraNivel.mover(Math.max(0, Math.min(1, mx / width))); }
+                onPressed: e => poner(e.x)
+                onPositionChanged: e => { if (pressed) poner(e.x); }
+                onWheel: e => barraNivel.mover(Math.max(0, Math.min(1, barraNivel.valor + (e.angleDelta.y > 0 ? 0.05 : -0.05))))
+            }
+        }
 
-            // El estado: clic = centro de control
+        Column {
+            id: cajaMenu
+            readonly property int altoIsla: implicitHeight + 16 + 14
+            readonly property bool activa: isla.contenido === cajaMenu
+            width: 4 * 64 + 3 * 4
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: 14
+            spacing: 12
+            opacity: activa ? 1 : 0
+            visible: opacity > 0
+            Behavior on opacity { NumberAnimation { duration: cajaMenu.activa ? Tema.normal * 1.5 : Tema.rapida } }
+            Keys.onEscapePressed: barra.menu = false
+
+            // La luna (grande), la hora y la fecha
             Row {
-                id: estado
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 8
-                Texto {
-                    readonly property var senales: ["󰤟", "󰤢", "󰤥", "󰤨"]
-                    visible: barra.cable !== null || Networking.wifiEnabled
-                    text: barra.cable ? "󰈀" : barra.redWifi ? senales[Math.min(3, Math.floor(barra.redWifi.signalStrength * 4))] : "󰤮"
-                    font.pixelSize: Tema.letra + 2
-                    color: barra.cable || barra.redWifi ? Tema.texto : Tema.tenue
+                spacing: 12
+                Personaje {
+                    anchors.verticalCenter: parent.verticalCenter
+                    tam: 40
+                    contento: barra.sonando
+                    preocupado: barra.hayBateria && !barra.cargando && barra.carga <= 15
+                    siguiendo: menuHover.hovered
+                    mirada: Qt.point(Math.max(-1, Math.min(1, (menuHover.point.position.x - 36) / 120)),
+                                     Math.max(-1, Math.min(1, (menuHover.point.position.y - 34) / 80)))
                 }
-                Texto {
-                    visible: barra.adaptador?.enabled ?? false
-                    text: Bluetooth.devices.values.some(d => d.connected) ? "󰂱" : "󰂯"
-                    font.pixelSize: Tema.letra + 2
-                }
-                Texto {
-                    text: barra.mudo ? "󰖁" : barra.volumen < 0.34 ? "󰕿" : barra.volumen < 0.67 ? "󰖀" : "󰕾"
-                    font.pixelSize: Tema.letra + 2
-                    color: barra.mudo ? Tema.tenue : Tema.texto
-                }
-                Row {
-                    visible: barra.hayBateria
-                    spacing: 3
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 1
                     Texto {
-                        text: barra.cargando ? "󰂄" : ["󰁺", "󰁼", "󰁾", "󰂀", "󰁹"][Math.min(4, Math.floor(barra.carga / 20))]
-                        font.pixelSize: Tema.letra + 2
-                        color: !barra.cargando && barra.carga <= 15 ? Tema.rojo : Tema.texto
+                        text: Qt.formatTime(reloj.date, "HH:mm")
+                        font.pixelSize: 24
+                        color: Tema.blanco
                     }
                     Texto {
-                        visible: barra.carga <= 20
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: barra.carga + "%"
-                        font.pixelSize: Tema.letra - 1
+                        readonly property var dias: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"]
+                        readonly property var meses: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+                            "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+                        text: dias[reloj.date.getDay()] + ", " + reloj.date.getDate() + " de " + meses[reloj.date.getMonth()]
+                        font.bold: false
+                        font.pixelSize: 11
                         color: Tema.gris
                     }
                 }
             }
+
+            // Buscar: lo que escribas abre el lanzador con ello
+            Rectangle {
+                width: parent.width
+                height: 36
+                radius: 18
+                color: Tema.caja
+                border.width: 1
+                border.color: buscar.activeFocus ? Tema.claro(0.18) : "transparent"
+                Texto {
+                    id: lupa
+                    x: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "󰍉"
+                    font.pixelSize: 14
+                    color: Tema.gris
+                }
+                TextInput {
+                    id: buscar
+                    anchors { left: lupa.right; leftMargin: 8; right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter }
+                    color: Tema.texto
+                    font.family: Tema.fuente
+                    font.pixelSize: 13
+                    clip: true
+                    onTextChanged: {
+                        if (text === "" || !barra.menu)
+                            return;
+                        Paneles.textoLanzador = text;
+                        barra.hacer(() => Paneles.alternar("lanzador", barra.modelData, ""));
+                    }
+                    onAccepted: barra.hacer(() => Paneles.alternar("lanzador", barra.modelData, ""))
+                    Keys.onEscapePressed: barra.menu = false
+                    Texto {
+                        visible: buscar.text === ""
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Buscar"
+                        font.bold: false
+                        font.pixelSize: 13
+                        color: Tema.gris
+                    }
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.IBeamCursor
+                    onClicked: barra.hacer(() => Paneles.alternar("lanzador", barra.modelData, ""))
+                }
+            }
+
+            // Volumen y brillo
+            NivelMenu {
+                width: parent.width
+                valor: barra.volumen
+                apagada: barra.mudo
+                icono: barra.mudo ? "󰖁" : barra.volumen < 0.34 ? "󰕿" : barra.volumen < 0.67 ? "󰖀" : "󰕾"
+                onMover: v => {
+                    if (!barra.salida?.audio)
+                        return;
+                    barra.salida.audio.muted = false;
+                    barra.salida.audio.volume = v;
+                }
+            }
+            NivelMenu {
+                visible: Brillo.pantallas.length > 0
+                width: parent.width
+                readonly property var pantalla: Brillo.pantallas[0] ?? null
+                valor: pantalla?.valor ?? 0
+                icono: valor < 0.35 ? "󰃞" : valor < 0.7 ? "󰃟" : "󰃠"
+                onMover: v => { if (pantalla) Brillo.poner(pantalla.id, v); }
+            }
+
+            // Los botones
+            Grid {
+                columns: 4
+                columnSpacing: 4
+                rowSpacing: 6
+                BotonMenu {
+                    icono: Grabacion.grabando ? "󰓛" : "󰑊"
+                    texto: Grabacion.grabando ? "Detener" : "Grabar"
+                    encendido: Grabacion.grabando
+                    onPulsar: barra.hacer(() => Grabacion.alternar())
+                }
+                BotonMenu {
+                    icono: "󰹑"
+                    texto: "Captura"
+                    onPulsar: barra.hacer(() => Niri.accion("screenshot"))
+                }
+                BotonMenu {
+                    icono: "󰕰"
+                    texto: "Escritorios"
+                    onPulsar: barra.hacer(() => Niri.accion("toggle-overview"))
+                }
+                BotonMenu {
+                    icono: "󰅍"
+                    texto: "Portapapeles"
+                    onPulsar: barra.hacer(() => Paneles.alternar("portapapeles", barra.modelData, ""))
+                }
+                BotonMenu {
+                    icono: "󰆍"
+                    texto: "Terminal"
+                    onPulsar: barra.hacer(() => Niri.lanzar(["kitty"]))
+                }
+                BotonMenu {
+                    icono: "󰖟"
+                    texto: "Navegador"
+                    onPulsar: barra.hacer(() => Niri.lanzar(["sh", "-c", 'gtk-launch "$(xdg-settings get default-web-browser)"']))
+                }
+                BotonMenu {
+                    icono: "󰉋"
+                    texto: "Archivos"
+                    onPulsar: barra.hacer(() => Niri.lanzar(["nautilus"]))
+                }
+                BotonMenu {
+                    icono: "󰶐"
+                    texto: "Pantalla off"
+                    onPulsar: barra.hacer(() => Niri.accion("power-off-monitors"))
+                }
+                BotonMenu {
+                    icono: "󰍃"
+                    texto: "Cerrar sesión"
+                    peligro: true
+                    onPulsar: barra.hacer(() => { Paneles.sesionElegida = "Cerrar sesión"; Paneles.alternar("apagado", barra.modelData, ""); })
+                }
+                BotonMenu {
+                    icono: "󰜉"
+                    texto: "Reiniciar"
+                    peligro: true
+                    onPulsar: barra.hacer(() => { Paneles.sesionElegida = "Reiniciar"; Paneles.alternar("apagado", barra.modelData, ""); })
+                }
+                BotonMenu {
+                    icono: "󰐥"
+                    texto: "Apagar"
+                    peligro: true
+                    onPulsar: barra.hacer(() => { Paneles.sesionElegida = "Apagar"; Paneles.alternar("apagado", barra.modelData, ""); })
+                }
+                BotonMenu {
+                    icono: "󰒓"
+                    texto: "Ajustes"
+                    onPulsar: barra.hacer(() => Paneles.alternarAjustes(""))
+                }
+            }
         }
+        // Para que la luna grande siga al ratón por todo el menú (un
+        // HoverHandler no le quita el ratón a los botones)
+        HoverHandler { id: menuHover; enabled: barra.menu }
 
         // ------------------------------------------------- Un aviso
         Item {

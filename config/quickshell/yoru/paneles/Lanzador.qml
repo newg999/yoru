@@ -102,7 +102,10 @@ Panel {
     onAbiertoChanged: {
         if (!abierto)
             return;
-        busqueda.text = "";
+        // (lo que se empezó a escribir en el buscador de la isla)
+        busqueda.text = Paneles.textoLanzador;
+        Paneles.textoLanzador = "";
+        busqueda.cursorPosition = busqueda.text.length;
         todas = false;
         menuApagar = false;
         lista.currentIndex = 0;

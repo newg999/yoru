@@ -243,6 +243,15 @@ ShellRoot {
     //   qs -c yoru ipc call panel alternar ajustes tema       (o fondo, barra, aspecto, pantallas, sonido, raton, teclado, atajos, notificaciones, apps;
     //                                                          abre la ventana de Ajustes en esa sección)
     //   qs -c yoru ipc call panel cerrar
+    // El menú de la isla (estilo Isla), en la pantalla con el foco:
+    //   qs -c yoru ipc call isla menu          (Mod+X)
+    IpcHandler {
+        target: "isla"
+        function menu(): void {
+            const salida = Niri.escritorios.find(e => e.is_focused)?.output ?? Quickshell.screens[0]?.name;
+            Paneles.menuIsla(salida);
+        }
+    }
     IpcHandler {
         target: "panel"
 

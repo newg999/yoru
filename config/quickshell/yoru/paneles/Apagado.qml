@@ -80,6 +80,11 @@ PanelWindow {
             elegida = 0;
             Sesion.leerEncendido();
             teclas.forceActiveFocus();
+            // Desde el menú de la isla: esa opción, ya en marcha
+            const pedida = opciones.find(o => o.titulo === Paneles.sesionElegida);
+            Paneles.sesionElegida = "";
+            if (pedida)
+                elegir(pedida);
         }
     }
 

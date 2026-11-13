@@ -134,6 +134,15 @@ Singleton {
     // «‹» y Esc: a la página de la que se vino (el wifi → el centro de
     // control) o, si no se vino de ninguna, cerrar
     property var anterior: null
+
+    // Desde el menú de la isla (barra/BarraIsla.qml): lo ya escrito en su
+    // buscador pasa al lanzador, y cerrar sesión, reiniciar o apagar abren
+    // el menú de apagado con esa opción ya en marcha (su cuenta atrás de 3 s)
+    property string textoLanzador: ""
+    // Abrir o cerrar el menú de la isla en una pantalla (Mod+X:
+    // qs -c yoru ipc call isla menu)
+    signal menuIsla(string pantalla)
+    property string sesionElegida: ""
     function atras() {
         const a = anterior;
         if (!a || abierto !== "pildora") {
