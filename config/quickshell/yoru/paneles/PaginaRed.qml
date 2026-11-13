@@ -231,7 +231,7 @@ Item {
                 texto: "󰅁"
                 tam: 20
                 color: Tema.texto
-                onClic: Paneles.cerrar()
+                onClic: Paneles.atras()
             }
             Texto {
                 anchors { left: atras.right; leftMargin: 6; verticalCenter: parent.verticalCenter }

@@ -30,7 +30,7 @@ FocusScope {
     }
     Keys.onEscapePressed: e => {
         if (eligiendo) eligiendo = false;
-        else Paneles.cerrar();
+        else Paneles.atras();
     }
 
     readonly property color acento: Tema.blanco
@@ -83,7 +83,7 @@ FocusScope {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: pagina.eligiendo ? pagina.eligiendo = false : Paneles.cerrar()
+                    onClicked: pagina.eligiendo ? pagina.eligiendo = false : Paneles.atras()
                 }
             }
             Texto {

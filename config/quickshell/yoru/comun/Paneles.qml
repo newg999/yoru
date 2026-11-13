@@ -61,6 +61,10 @@ Singleton {
             return;
         }
         const ya = abierto === "pildora" && pantalla === enPantalla && seccion === pagina;
+        // De una página a otra dentro del mismo panel (del centro de control
+        // al wifi): se recuerda de dónde se vino, para «atrás»
+        anterior = abierto === "pildora" && pantalla === enPantalla && !ya
+            ? {pagina: seccion, lado: origen, ancla: ancla} : null;
         origen = lado ?? "centro";
         ancla = bajoIsla ?? null;
         // Islas con animaciones: si la página nueva cuelga de otra isla, el
@@ -124,6 +128,20 @@ Singleton {
 
     function cerrar() {
         abierto = "";
+        anterior = null;
+    }
+
+    // «‹» y Esc: a la página de la que se vino (el wifi → el centro de
+    // control) o, si no se vino de ninguna, cerrar
+    property var anterior: null
+    function atras() {
+        const a = anterior;
+        if (!a || abierto !== "pildora") {
+            cerrar();
+            return;
+        }
+        abrirPagina(pantalla, a.pagina, a.lado, a.ancla);
+        anterior = null;
     }
 
     // La ventana de Ajustes. Si ya la tienes delante (con el foco) en esa

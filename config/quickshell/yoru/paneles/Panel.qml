@@ -326,7 +326,7 @@ PanelWindow {
                 id: foco
                 anchors.fill: parent
                 focus: true
-                Keys.onEscapePressed: Paneles.cerrar()
+                Keys.onEscapePressed: Paneles.atras()
 
                 // Colgando, el contenido no se mueve ni se recoloca mientras el
                 // recuadro se ensancha: está ya en su sitio y aparece con un fundido

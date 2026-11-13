@@ -87,7 +87,7 @@ Item {
                 color: atrasRaton.containsMouse ? pagina.acento : Tema.texto
                 scale: atrasRaton.pressed ? 0.85 : atrasRaton.containsMouse ? 1.12 : 1
                 Behavior on scale { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutBack } }
-                MouseArea { id: atrasRaton; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Paneles.cerrar() }
+                MouseArea { id: atrasRaton; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Paneles.atras() }
             }
             Texto {
                 anchors { left: atras.right; leftMargin: 6; verticalCenter: parent.verticalCenter }
