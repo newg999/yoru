@@ -11,6 +11,7 @@
 //    [ Salida | Entrada | Apps ]
 //    ▌ Altavoces            ━━━━━○── 80%    clic = usar ese · el elegido y
 //      Auriculares                            cada app llevan su volumen
+//  Basado en QsDock de LeyzS (MIT): ver LICENSES/QsDock-LeyzS.txt
 // ============================================================================
 import QtQuick
 import Quickshell

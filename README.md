@@ -203,6 +203,10 @@ niri msg outputs         # ver tus monitores
 
 ## Créditos
 
-- Inspirado en [SygurDot](https://github.com/sygurd24/SygurDot).
-- Configuración base a partir de la config por defecto de [Niri](https://github.com/niri-wm/niri).
-- Colores de la terminal: [Nord](https://www.nordtheme.com).
+- Los paneles de las islas (red, sonido, calendario, clima, control y batería) y los iconos dibujados de la barra parten de [LeyzS QsDock](https://github.com/L3yzs/LeyzS-QsDock) (MIT): ver [`LICENSES/QsDock-LeyzS.txt`](LICENSES/QsDock-LeyzS.txt).
+- Inspirado en [SygurDot](https://github.com/sygurd24/SygurDot), [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) y [Omarchy](https://omarchy.org).
+- Paletas de colores: [Nord](https://www.nordtheme.com), [Catppuccin](https://catppuccin.com), [Gruvbox](https://github.com/morhetz/gruvbox), [Rosé Pine](https://rosepinetheme.com) y [Tokyo Night](https://github.com/folke/tokyonight.nvim).
+
+## Licencia
+
+[MIT](LICENSE) © 2026 newg999. Las partes de terceros conservan su licencia: ver [`LICENSES/`](LICENSES/).

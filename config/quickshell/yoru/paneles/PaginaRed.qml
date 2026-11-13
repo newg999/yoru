@@ -19,6 +19,7 @@
 //  propia cabecera, una tarjeta con el estado (clic = encender/apagar) y la
 //  lista de dispositivos, sin las teclas de Wi-Fi/Ethernet/VPN. Y la de red
 //  ya no lleva Bluetooth: cada una va por su lado.
+//  Basado en QsDock de LeyzS (MIT): ver LICENSES/QsDock-LeyzS.txt
 // ============================================================================
 import QtQuick
 import Quickshell

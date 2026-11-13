@@ -15,6 +15,7 @@
 //    [ Ahorro | Equilibrado | Rendimiento ]
 //    ENERGÍA     [󰌾] [󰤄] [󰍃] [󰜉] [󰐥]          los peligrosos: otra vez para confirmar
 //    NOTIFICACIONES                  Borrar      las dos últimas
+//  Basado en QsDock de LeyzS (MIT): ver LICENSES/QsDock-LeyzS.txt
 // ============================================================================
 import QtQuick
 import Quickshell

@@ -12,6 +12,7 @@
 //
 //  Los datos son de UPower. La salud es la capacidad de ahora frente a la
 //  de fábrica: con el tiempo baja y la batería dura menos.
+//  Basado en QsDock de LeyzS (MIT): ver LICENSES/QsDock-LeyzS.txt
 // ============================================================================
 import QtQuick
 import Quickshell.Widgets

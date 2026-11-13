@@ -1,6 +1,7 @@
 // ============================================================================
 //  IconoVolumen — el altavoz del dock (el antiguo estilo Dock), dibujado: las ondas salen
 //  una a una según sube el volumen; silenciado, una X. Lo usa Ficha.qml.
+//  Basado en QsDock de LeyzS (MIT): ver LICENSES/QsDock-LeyzS.txt
 // ============================================================================
 import QtQuick
 import QtQuick.Shapes
