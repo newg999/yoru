@@ -437,7 +437,7 @@ PanelWindow {
             property string imagen: ""        // un icono de app (la bandeja)
             signal pulsar()
             signal menu()
-            width: barra.m(64)
+            width: barra.m(72)
             height: barra.m(62)
             Rectangle {
                 id: circulo
@@ -602,7 +602,7 @@ PanelWindow {
         Item {
             id: cajaPaginas
             readonly property bool activa: isla.contenido === cajaPaginas
-            readonly property int ancho: 4 * barra.m(64) + 3 * 4
+            readonly property int ancho: 4 * barra.m(72) + 3 * barra.m(6)
             readonly property Item actual: [paginaSistema, paginaMenu, paginaBandeja][barra.pagina]
             // Lo de la página + los puntitos de abajo
             readonly property int altoIsla: actual.implicitHeight + barra.m(14) + 12 + puntos.height + barra.m(12)
@@ -612,7 +612,14 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             opacity: activa ? 1 : 0
             visible: opacity > 0
-            Behavior on opacity { NumberAnimation { duration: cajaPaginas.activa ? Tema.normal * 1.5 : Tema.rapida } }
+            // Al abrir, aparece cuando la isla ya casi ha crecido (si no, se
+            // veía recortado por los lados mientras se ensanchaba)
+            Behavior on opacity {
+                SequentialAnimation {
+                    PauseAnimation { duration: cajaPaginas.activa ? Tema.ms(170) : 0 }
+                    NumberAnimation { duration: cajaPaginas.activa ? Tema.normal : Tema.rapida }
+                }
+            }
             Keys.onEscapePressed: barra.abierta = false
             Keys.onLeftPressed: barra.pasar(-1)
             Keys.onRightPressed: barra.pasar(1)
@@ -890,7 +897,7 @@ PanelWindow {
                     // Los botones
                     Grid {
                         columns: 4
-                        columnSpacing: 4
+                        columnSpacing: barra.m(6)
                         rowSpacing: 6
                         BotonMenu {
                             icono: Grabacion.grabando ? "󰓛" : "󰑊"
@@ -978,7 +985,7 @@ PanelWindow {
                     Grid {
                         visible: paginaBandeja.apps.length > 0
                         columns: 4
-                        columnSpacing: 4
+                        columnSpacing: barra.m(6)
                         rowSpacing: 6
                         Repeater {
                             model: paginaBandeja.apps
