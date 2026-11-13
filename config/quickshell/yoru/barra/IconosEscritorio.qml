@@ -292,9 +292,12 @@ PanelWindow {
 
     // Por dónde va el ratón (la luna de la isla lo mira). La capa respeta
     // la barra: se le suma lo de arriba para tener la posición en pantalla
-    HoverHandler {
-        onPointChanged: if (hovered) Paneles.ratonEscritorio = {pantalla: capa.modelData.name, x: point.position.x, y: point.position.y + (capa.modelData.height - capa.height)}
-        onHoveredChanged: if (!hovered && Paneles.ratonEscritorio?.pantalla === capa.modelData.name) Paneles.ratonEscritorio = null
+    function apuntar(x, y) {
+        Paneles.ratonEscritorio = {pantalla: capa.modelData.name, x: x, y: y + (capa.modelData.height - capa.height)};
+    }
+    function soltarRaton() {
+        if (Paneles.ratonEscritorio?.pantalla === capa.modelData.name)
+            Paneles.ratonEscritorio = null;
     }
 
     // ------------------------------------------------------- Teclado
@@ -324,6 +327,8 @@ PanelWindow {
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         property point desde: Qt.point(0, 0)
         property bool recuadro: false
+        hoverEnabled: true
+        onExited: capa.soltarRaton()
         onPressed: e => {
             teclas.forceActiveFocus();
             capa.menuDe = null;
@@ -337,6 +342,7 @@ PanelWindow {
             desde = Qt.point(e.x, e.y);
         }
         onPositionChanged: e => {
+            capa.apuntar(e.x, e.y);
             if (!pressed || !(pressedButtons & Qt.LeftButton))
                 return;
             recuadro = true;
@@ -597,9 +603,10 @@ PanelWindow {
                     desde = mapToItem(capa.contentItem, e.x, e.y);
                 }
                 onPositionChanged: e => {
+                    const p = mapToItem(capa.contentItem, e.x, e.y);
+                    capa.apuntar(p.x, p.y);
                     if (!pressed || !(pressedButtons & Qt.LeftButton) || !icono.sel)
                         return;
-                    const p = mapToItem(capa.contentItem, e.x, e.y);
                     const d = Qt.point(p.x - desde.x, p.y - desde.y);
                     if (!capa.moviendo && Math.abs(d.x) + Math.abs(d.y) < 8)
                         return;

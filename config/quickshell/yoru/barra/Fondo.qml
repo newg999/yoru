@@ -34,14 +34,10 @@ PanelWindow {
     // ha puesto el fondo debajo, y pintar el color mientras se abre el PNG
     // (uno 4K de 20 MB tarda más de un segundo) era el pantallazo negro
     color: debajo.status === Image.Ready ? Tema.oscuro : "transparent"
-    // Recibe el ratón solo para saber por dónde va (la luna de la isla lo
-    // mira); en el overview, nada (que no estorbe a niri)
-    mask: Niri.overview ? sinRaton : null
-    Region { id: sinRaton }
-    HoverHandler {
-        onPointChanged: if (hovered) Paneles.ratonEscritorio = {pantalla: fondo.modelData.name, x: point.position.x, y: point.position.y}
-        onHoveredChanged: if (!hovered && Paneles.ratonEscritorio?.pantalla === fondo.modelData.name) Paneles.ratonEscritorio = null
-    }
+    // Sin ratón: niri lo pone en el backdrop (rules.kdl), que no recibe
+    // eventos; con entrada, se quedaba el ratón del escritorio y no llegaba
+    // ni a los iconos
+    mask: Region {}
 
     // Lo que se ve ahora y lo que entra
     property string actual: ""
