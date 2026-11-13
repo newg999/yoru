@@ -48,6 +48,7 @@ Singleton {
     // ------------------------------------------------------ Fecha y hora
     property alias reloj24: datos.reloj24               // 14:30 · 2:30 p. m.
     property alias relojSegundos: datos.relojSegundos   // segundos en el reloj de la barra
+    property alias tamIsla: datos.tamIsla               // estilo Isla: su tamaño abierta (1 · 1.2 · 1.4)
 
     // ----------------------------------------------------- Notificaciones
     property alias avisosSegundos: datos.avisosSegundos // lo que dura un aviso en pantalla
@@ -215,6 +216,7 @@ window-rule {
             property bool suspenderEnchufado: false
             property bool reloj24: true
             property bool relojSegundos: false
+            property real tamIsla: 1.2
 
             property int avisosSegundos: 5
             property string avisosLado: "derecha"

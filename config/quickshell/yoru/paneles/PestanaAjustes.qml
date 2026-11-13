@@ -329,6 +329,20 @@ Item {
                 color: Tema.gris
             }
 
+            Item { width: 1; height: 6; visible: Ajustes.isla }
+            Titular { texto: "Tamaño de la isla"; width: parent.width; visible: Ajustes.isla }
+            Opciones {
+                visible: Ajustes.isla
+                width: parent.width
+                opciones: [
+                    {id: "1", icono: "󰘖", texto: "Normal"},
+                    {id: "1.2", icono: "󰊓", texto: "Grande"},
+                    {id: "1.4", icono: "󰊓", texto: "Muy grande"}
+                ]
+                valor: String(Ajustes.tamIsla)
+                onElegir: id => Ajustes.tamIsla = Number(id)
+            }
+
             Item { width: 1; height: 6; visible: !Ajustes.centrada }
             Titular { texto: "Qué se ve en la barra"; width: parent.width; visible: !Ajustes.centrada }
             Interruptor {

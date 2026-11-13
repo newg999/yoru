@@ -299,6 +299,10 @@ PanelWindow {
     // ------------------------------------------------------- La isla
     // Cómo se transforma: suave, sin rebote (como el resto de Yoru)
     component Suave: NumberAnimation { duration: Tema.ms(380); easing.type: Easing.OutQuint }
+    // El tamaño (Ajustes › Barra y dock › Tamaño de la isla): todo lo de
+    // dentro se mide por él (sin «scale», que deja la letra borrosa)
+    readonly property real k: Ajustes.tamIsla
+    function m(n) { return Math.round(n * k); }
 
     Rectangle {
         id: isla
@@ -310,7 +314,7 @@ PanelWindow {
             : barra.actividad === "cancion" ? cajaCancion
             : barra.actividad === "cargador" ? cajaCargador
             : cajaReposo
-        readonly property int relleno: reposando ? 12 : 16
+        readonly property int relleno: reposando ? 12 : barra.m(16)
         width: Math.round(contenido.implicitWidth + 2 * relleno)
         height: contenido.altoIsla
         x: Math.round((barra.width - width) / 2)
@@ -379,7 +383,7 @@ PanelWindow {
             Personaje {
                 id: luna
                 anchors.verticalCenter: parent.verticalCenter
-                tam: Tema.altoBarra - 8
+                tam: Tema.altoBarra - (barra.k > 1 ? 6 : 8)
                 contento: barra.sonando
                 dormido: reposo.isIdle
                 preocupado: barra.hayBateria && !barra.cargando && barra.carga <= 15
@@ -417,6 +421,7 @@ PanelWindow {
             Texto {
                 anchors.verticalCenter: parent.verticalCenter
                 text: Qt.formatTime(reloj.date, Ajustes.relojSegundos ? "HH:mm:ss" : "HH:mm")
+                font.pixelSize: Tema.letra + (barra.k > 1 ? 1 : 0)
                 color: Tema.blanco
             }
         }
@@ -432,13 +437,13 @@ PanelWindow {
             property string imagen: ""        // un icono de app (la bandeja)
             signal pulsar()
             signal menu()
-            width: 64
-            height: 62
+            width: barra.m(64)
+            height: barra.m(62)
             Rectangle {
                 id: circulo
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: 40; height: 40
-                radius: 20
+                width: barra.m(40); height: width
+                radius: width / 2
                 color: boton.encendido ? Tema.blanco
                     : botonRaton.containsMouse ? (boton.peligro ? Tema.conAlfa(Tema.rojo, 0.22) : Tema.cajaHover)
                     : Tema.caja
@@ -449,14 +454,14 @@ PanelWindow {
                     visible: boton.imagen === ""
                     anchors.centerIn: parent
                     text: boton.icono
-                    font.pixelSize: 17
+                    font.pixelSize: barra.m(17)
                     color: boton.encendido ? Tema.oscuro
                         : boton.peligro && botonRaton.containsMouse ? Tema.rojo : Tema.texto
                 }
                 IconImage {
                     visible: boton.imagen !== ""
                     anchors.centerIn: parent
-                    implicitSize: 22
+                    implicitSize: barra.m(22)
                     source: boton.imagen
                 }
             }
@@ -467,7 +472,7 @@ PanelWindow {
                 elide: Text.ElideRight
                 text: boton.texto
                 font.bold: boton.encendido
-                font.pixelSize: 10
+                font.pixelSize: barra.m(10)
                 color: boton.encendido ? Tema.blanco : Tema.gris
             }
             MouseArea {
@@ -486,8 +491,8 @@ PanelWindow {
             property string icono: ""
             property bool apagada: false
             signal mover(real v)
-            height: 34
-            radius: 17
+            height: barra.m(34)
+            radius: height / 2
             color: Tema.caja
             Rectangle {
                 width: Math.max(parent.height, parent.width * Math.min(1, barraNivel.valor))
@@ -499,15 +504,17 @@ PanelWindow {
                     x: 12
                     anchors.verticalCenter: parent.verticalCenter
                     text: barraNivel.icono
-                    font.pixelSize: 15
+                    font.pixelSize: barra.m(15)
                     color: Tema.oscuro
                 }
             }
             Texto {
+                id: porcentaje
                 anchors { right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter }
                 text: Math.round(barraNivel.valor * 100) + "%"
-                font.pixelSize: 11
-                color: barraNivel.valor > 0.85 ? Tema.oscuro : Tema.gris
+                font.pixelSize: barra.m(11)
+                // Oscuro en cuanto el relleno le llega (si no, medio tapado)
+                color: barraNivel.width * barraNivel.valor > porcentaje.x + 2 ? Tema.oscuro : Tema.gris
             }
             MouseArea {
                 id: nivelRaton
@@ -525,11 +532,11 @@ PanelWindow {
             property real valor: 0          // 0..1
             property string titulo: ""
             property string detalle: ""
-            width: 112
-            height: 128
+            width: barra.m(112)
+            height: barra.m(128)
             Canvas {
                 id: lienzo
-                width: 96; height: 96
+                width: barra.m(96); height: width
                 anchors.horizontalCenter: parent.horizontalCenter
                 property real v: anillo.valor
                 Behavior on v { NumberAnimation { duration: Tema.ms(600); easing.type: Easing.OutCubic } }
@@ -554,7 +561,7 @@ PanelWindow {
                 Texto {
                     anchors.centerIn: parent
                     text: Math.round(anillo.valor * 100) + "%"
-                    font.pixelSize: 18
+                    font.pixelSize: barra.m(18)
                     color: Tema.blanco
                 }
             }
@@ -563,13 +570,13 @@ PanelWindow {
                 Texto {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: anillo.titulo
-                    font.pixelSize: 12
+                    font.pixelSize: barra.m(12)
                 }
                 Texto {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: anillo.detalle
                     font.bold: false
-                    font.pixelSize: 10
+                    font.pixelSize: barra.m(10)
                     color: Tema.gris
                 }
             }
@@ -580,13 +587,13 @@ PanelWindow {
             property string icono: ""
             property string nombre: ""
             property string valor: ""
-            height: 30
-            Texto { x: 4; anchors.verticalCenter: parent.verticalCenter; text: dato.icono; font.pixelSize: 15; color: Tema.gris }
-            Texto { x: 30; anchors.verticalCenter: parent.verticalCenter; text: dato.nombre; font.bold: false; font.pixelSize: 12 }
+            height: barra.m(30)
+            Texto { x: 4; anchors.verticalCenter: parent.verticalCenter; text: dato.icono; font.pixelSize: barra.m(15); color: Tema.gris }
+            Texto { x: barra.m(30); anchors.verticalCenter: parent.verticalCenter; text: dato.nombre; font.bold: false; font.pixelSize: barra.m(12) }
             Texto {
                 anchors { right: parent.right; rightMargin: 4; verticalCenter: parent.verticalCenter }
                 text: dato.valor
-                font.pixelSize: 12
+                font.pixelSize: barra.m(12)
                 color: Tema.blanco
             }
         }
@@ -595,10 +602,10 @@ PanelWindow {
         Item {
             id: cajaPaginas
             readonly property bool activa: isla.contenido === cajaPaginas
-            readonly property int ancho: 4 * 64 + 3 * 4
+            readonly property int ancho: 4 * barra.m(64) + 3 * 4
             readonly property Item actual: [paginaSistema, paginaMenu, paginaBandeja][barra.pagina]
             // Lo de la página + los puntitos de abajo
-            readonly property int altoIsla: actual.implicitHeight + 14 + 12 + puntos.height + 12
+            readonly property int altoIsla: actual.implicitHeight + barra.m(14) + 12 + puntos.height + barra.m(12)
             implicitWidth: ancho
             width: ancho
             height: parent.height
@@ -613,7 +620,7 @@ PanelWindow {
             // Las tres, una al lado de otra; se ve la elegida
             Item {
                 id: carril
-                y: 14
+                y: barra.m(14)
                 width: parent.width
                 height: cajaPaginas.actual.implicitHeight
                 property real desplazado: barra.pagina
@@ -631,7 +638,7 @@ PanelWindow {
                     spacing: 12
                     Texto {
                         text: "Sistema"
-                        font.pixelSize: 15
+                        font.pixelSize: barra.m(15)
                         color: Tema.blanco
                     }
                     Row {
@@ -669,13 +676,13 @@ PanelWindow {
                     }
                     Rectangle {
                         width: parent.width
-                        height: 34
-                        radius: 17
+                        height: barra.m(34)
+                        radius: height / 2
                         color: monitorRaton.containsMouse ? Tema.cajaHover : Tema.caja
                         Texto {
                             anchors.centerIn: parent
                             text: "󰍛  Monitor del sistema"
-                            font.pixelSize: 12
+                            font.pixelSize: barra.m(12)
                         }
                         MouseArea {
                             id: monitorRaton
@@ -703,7 +710,7 @@ PanelWindow {
                         spacing: 12
                         Personaje {
                             anchors.verticalCenter: parent.verticalCenter
-                            tam: 40
+                            tam: barra.m(40)
                             contento: barra.sonando
                             preocupado: barra.hayBateria && !barra.cargando && barra.carga <= 15
                             siguiendo: menuHover.hovered
@@ -715,7 +722,7 @@ PanelWindow {
                             spacing: 1
                             Texto {
                                 text: Qt.formatTime(reloj.date, "HH:mm")
-                                font.pixelSize: 24
+                                font.pixelSize: barra.m(24)
                                 color: Tema.blanco
                             }
                             Texto {
@@ -724,7 +731,7 @@ PanelWindow {
                                     "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
                                 text: dias[reloj.date.getDay()] + ", " + reloj.date.getDate() + " de " + meses[reloj.date.getMonth()]
                                 font.bold: false
-                                font.pixelSize: 11
+                                font.pixelSize: barra.m(11)
                                 color: Tema.gris
                             }
                         }
@@ -733,8 +740,8 @@ PanelWindow {
                     // Buscar: lo que escribas abre el lanzador con ello
                     Rectangle {
                         width: parent.width
-                        height: 36
-                        radius: 18
+                        height: barra.m(36)
+                        radius: height / 2
                         color: Tema.caja
                         border.width: 1
                         border.color: buscar.activeFocus ? Tema.claro(0.18) : "transparent"
@@ -743,7 +750,7 @@ PanelWindow {
                             x: 14
                             anchors.verticalCenter: parent.verticalCenter
                             text: "󰍉"
-                            font.pixelSize: 14
+                            font.pixelSize: barra.m(14)
                             color: Tema.gris
                         }
                         TextInput {
@@ -751,7 +758,7 @@ PanelWindow {
                             anchors { left: lupa.right; leftMargin: 8; right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter }
                             color: Tema.texto
                             font.family: Tema.fuente
-                            font.pixelSize: 13
+                            font.pixelSize: barra.m(13)
                             clip: true
                             onTextChanged: {
                                 if (text === "" || !barra.abierta)
@@ -769,7 +776,7 @@ PanelWindow {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "Buscar"
                                 font.bold: false
-                                font.pixelSize: 13
+                                font.pixelSize: barra.m(13)
                                 color: Tema.gris
                             }
                         }
@@ -784,14 +791,14 @@ PanelWindow {
                     Rectangle {
                         visible: barra.musica !== null
                         width: parent.width
-                        height: 56
+                        height: barra.m(56)
                         radius: Tema.esquina(16)
                         color: Tema.caja
                         ClippingRectangle {
                             id: caratula
                             x: 8
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 40; height: 40
+                            width: barra.m(40); height: width
                             radius: Tema.esquina(10)
                             color: Tema.cajaHover
                             Image {
@@ -815,7 +822,7 @@ PanelWindow {
                                 elide: Text.ElideRight
                                 text: barra.musica?.trackTitle || Reproductor.nombre(barra.musica)
                                 textFormat: Text.PlainText
-                                font.pixelSize: 12
+                                font.pixelSize: barra.m(12)
                                 color: Tema.blanco
                             }
                             Texto {
@@ -824,7 +831,7 @@ PanelWindow {
                                 text: barra.musica?.trackArtist ?? ""
                                 textFormat: Text.PlainText
                                 font.bold: false
-                                font.pixelSize: 10
+                                font.pixelSize: barra.m(10)
                                 color: Tema.gris
                             }
                         }
@@ -839,11 +846,11 @@ PanelWindow {
                                 ]
                                 Item {
                                     required property var modelData
-                                    width: 28; height: 28
+                                    width: barra.m(28); height: width
                                     Texto {
                                         anchors.centerIn: parent
                                         text: parent.modelData.icono
-                                        font.pixelSize: 16
+                                        font.pixelSize: barra.m(16)
                                         color: mandoRaton.containsMouse ? Tema.blanco : Tema.texto
                                     }
                                     MouseArea {
@@ -965,7 +972,7 @@ PanelWindow {
                     readonly property var apps: SystemTray.items.values.filter(i => i.status !== Status.Passive)
                     Texto {
                         text: "Segundo plano"
-                        font.pixelSize: 15
+                        font.pixelSize: barra.m(15)
                         color: Tema.blanco
                     }
                     Grid {
@@ -1049,14 +1056,14 @@ PanelWindow {
         // ------------------------------------------------- Un aviso
         Item {
             id: cajaAviso
-            readonly property int altoIsla: Math.max(60, textosAviso.implicitHeight + 24)
+            readonly property int altoIsla: Math.max(barra.m(60), textosAviso.implicitHeight + barra.m(24))
             readonly property bool activa: isla.contenido === cajaAviso
             readonly property var n: barra.aviso?.n ?? null
             anchors.centerIn: parent
             opacity: activa ? 1 : 0
             visible: opacity > 0
             Behavior on opacity { NumberAnimation { duration: Tema.normal } }
-            implicitWidth: Math.min(440, Math.max(260, 40 + 12 + textosAviso.implicitWidth))
+            implicitWidth: Math.min(barra.m(440), Math.max(barra.m(260), barra.m(40) + 12 + textosAviso.implicitWidth))
             implicitHeight: filaAviso.implicitHeight
             width: implicitWidth
             height: implicitHeight
@@ -1065,14 +1072,14 @@ PanelWindow {
             spacing: 12
 
             Rectangle {
-                width: 40; height: 40
+                width: barra.m(40); height: width
                 anchors.verticalCenter: parent.verticalCenter
                 radius: Tema.esquina(12)
                 color: Tema.caja
                 IconImage {
                     id: iconoAviso
                     anchors.centerIn: parent
-                    implicitSize: 26
+                    implicitSize: barra.m(26)
                     source: cajaAviso.n ? Notificaciones.imagen(cajaAviso.n) : ""
                     // Sin icono (o uno que no existe): la campana
                     visible: source !== "" && status === Image.Ready
@@ -1081,36 +1088,36 @@ PanelWindow {
                     visible: !iconoAviso.visible
                     anchors.centerIn: parent
                     text: "󰂚"
-                    font.pixelSize: 18
+                    font.pixelSize: barra.m(18)
                     color: Tema.blanco
                 }
             }
             Column {
                 id: textosAviso
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(implicitWidth, 440 - 52)
+                width: Math.min(implicitWidth, barra.m(440) - barra.m(52))
                 spacing: 2
                 // La app, en mayúsculas pequeñas (como las tarjetas de avisos)
                 Texto {
                     visible: text !== ""
-                    width: Math.min(implicitWidth, 388)
+                    width: Math.min(implicitWidth, barra.m(388))
                     elide: Text.ElideRight
                     text: (cajaAviso.n?.appName ?? "").toUpperCase()
                     textFormat: Text.PlainText
-                    font.pixelSize: 9
+                    font.pixelSize: barra.m(9)
                     font.letterSpacing: 1.2
                     color: Tema.gris
                 }
                 Texto {
-                    width: Math.min(implicitWidth, 388)
+                    width: Math.min(implicitWidth, barra.m(388))
                     elide: Text.ElideRight
                     text: cajaAviso.n ? (cajaAviso.n.summary || cajaAviso.n.appName || "Aviso") : ""
                     textFormat: Text.PlainText
-                    font.pixelSize: 13
+                    font.pixelSize: barra.m(13)
                     color: Tema.blanco
                 }
                 Texto {
-                    width: Math.min(implicitWidth, 388)
+                    width: Math.min(implicitWidth, barra.m(388))
                     visible: text !== ""
                     elide: Text.ElideRight
                     maximumLineCount: 2
@@ -1118,7 +1125,7 @@ PanelWindow {
                     text: cajaAviso.n ? (cajaAviso.n.body ?? "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim() : ""
                     textFormat: Text.PlainText
                     font.bold: false
-                    font.pixelSize: 12
+                    font.pixelSize: barra.m(12)
                     color: Tema.gris
                 }
             }
@@ -1153,7 +1160,7 @@ PanelWindow {
             }
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
-                width: 190; height: 6; radius: 3
+                width: barra.m(190); height: 6; radius: 3
                 color: Tema.claro(0.12)
                 Rectangle {
                     width: parent.width * Math.min(1, cajaNivel.valor)
@@ -1174,7 +1181,7 @@ PanelWindow {
         // -------------------------------------------- Empieza una canción
         Row {
             id: cajaCancion
-            readonly property int altoIsla: 58
+            readonly property int altoIsla: barra.m(58)
             readonly property bool activa: isla.contenido === cajaCancion
             anchors.centerIn: parent
             spacing: 12
@@ -1183,7 +1190,7 @@ PanelWindow {
             Behavior on opacity { NumberAnimation { duration: Tema.normal } }
 
             ClippingRectangle {
-                width: 40; height: 40
+                width: barra.m(40); height: width
                 anchors.verticalCenter: parent.verticalCenter
                 radius: Tema.esquina(10)
                 color: Tema.caja
@@ -1199,20 +1206,20 @@ PanelWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 2
                 Texto {
-                    width: Math.min(implicitWidth, 260)
+                    width: Math.min(implicitWidth, barra.m(260))
                     elide: Text.ElideRight
                     text: barra.musica?.trackTitle ?? ""
                     textFormat: Text.PlainText
-                    font.pixelSize: 13
+                    font.pixelSize: barra.m(13)
                     color: Tema.blanco
                 }
                 Texto {
-                    width: Math.min(implicitWidth, 260)
+                    width: Math.min(implicitWidth, barra.m(260))
                     elide: Text.ElideRight
                     text: barra.musica?.trackArtist ?? ""
                     textFormat: Text.PlainText
                     font.bold: false
-                    font.pixelSize: 12
+                    font.pixelSize: barra.m(12)
                     color: Tema.gris
                 }
             }
