@@ -190,30 +190,60 @@ PanelWindow {
     // ------------------------------------------------- Arrastrar iconos
     property bool moviendo: false
     property point desplazamiento: Qt.point(0, 0)
+    // Al soltar, cada icono sale de donde se soltó y se encaja en su celda
+    // con un solo movimiento: «restos» es lo que le falta (en píxeles) y
+    // «retorno» lo lleva de 1 a 0. (Antes volvía a su sitio de origen y
+    // desde ahí viajaba a la celda nueva: hacía el recorrido dos veces)
+    property var restos: ({})            // nombre → [dx, dy]
+    property real retorno: 0
+    property bool soltando: false
+    NumberAnimation {
+        id: encajar
+        target: capa
+        property: "retorno"
+        from: 1; to: 0
+        duration: Tema.normal
+        easing.type: Easing.OutCubic
+    }
     function soltar() {
         if (!moviendo)
             return;
-        const dc = Math.round(desplazamiento.x / celdaAncho);
-        const df = Math.round(desplazamiento.y / celdaAlto);
-        moviendo = false;
-        desplazamiento = Qt.point(0, 0);
-        if (dc === 0 && df === 0)
-            return;
+        const d = desplazamiento;
+        const dc = Math.round(d.x / celdaAncho);
+        const df = Math.round(d.y / celdaAlto);
         // Los que no se mueven siguen donde están; los movidos, a su celda
         // o, si está cogida, a la libre más cercana
-        const ocupado = {};
-        for (const x of cosas)
-            if (!elegidos[x.nombre]) ocupado[sitios[x.nombre]] = true;
         const nuevos = {};
-        for (const x of lista) {
-            const s = sitios[x.nombre];
-            let c = Math.max(0, Math.min(columnas - 1, s[0] + dc));
-            let f = Math.max(0, Math.min(filas - 1, s[1] + df));
-            const hueco = cercano(c, f, ocupado);
-            ocupado[hueco] = true;
-            nuevos[x.nombre] = hueco;
+        if (dc !== 0 || df !== 0) {
+            const ocupado = {};
+            for (const x of cosas)
+                if (!elegidos[x.nombre]) ocupado[sitios[x.nombre]] = true;
+            for (const x of lista) {
+                const s = sitios[x.nombre];
+                const c = Math.max(0, Math.min(columnas - 1, s[0] + dc));
+                const f = Math.max(0, Math.min(filas - 1, s[1] + df));
+                const hueco = cercano(c, f, ocupado);
+                ocupado[hueco] = true;
+                nuevos[x.nombre] = hueco;
+            }
         }
-        guardar(nuevos);
+        // Desde donde está ahora (su celda vieja + el arrastre) a la nueva
+        const r = {};
+        for (const x of lista) {
+            const viejo = sitios[x.nombre];
+            const nuevo = nuevos[x.nombre] ?? viejo;
+            r[x.nombre] = [(viejo[0] - nuevo[0]) * celdaAncho + d.x, (viejo[1] - nuevo[1]) * celdaAlto + d.y];
+        }
+        // Todo de golpe y sin las animaciones de siempre; luego, encajar
+        soltando = true;
+        restos = r;
+        retorno = 1;
+        if (dc !== 0 || df !== 0)
+            guardar(nuevos);
+        moviendo = false;
+        desplazamiento = Qt.point(0, 0);
+        encajar.restart();
+        soltando = false;
     }
     function cercano(c, f, ocupado) {
         for (let d = 0; d < columnas + filas; d++)
@@ -371,12 +401,16 @@ PanelWindow {
 
             width: capa.celdaAncho - 4
             height: capa.celdaAlto - 4
-            x: capa.margen + x0[0] * capa.celdaAncho + 2 + (arrastrado ? capa.desplazamiento.x : 0)
-            y: capa.margen + x0[1] * capa.celdaAlto + 2 + (arrastrado ? capa.desplazamiento.y : 0)
+            // Lo que le falta para encajar en su celda tras soltarlo
+            readonly property var resto: capa.restos[modelData.nombre] ?? [0, 0]
+            x: capa.margen + x0[0] * capa.celdaAncho + 2
+                + (arrastrado ? capa.desplazamiento.x : resto[0] * capa.retorno)
+            y: capa.margen + x0[1] * capa.celdaAlto + 2
+                + (arrastrado ? capa.desplazamiento.y : resto[1] * capa.retorno)
             z: arrastrado ? 10 : sel ? 2 : 1
             opacity: arrastrado ? 0.75 : 1
-            Behavior on x { enabled: !capa.moviendo; NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
-            Behavior on y { enabled: !capa.moviendo; NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
+            Behavior on x { enabled: !capa.moviendo && !capa.soltando && !encajar.running; NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
+            Behavior on y { enabled: !capa.moviendo && !capa.soltando && !encajar.running; NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
 
             // Fondo: al pasar el ratón y elegido
             Rectangle {
