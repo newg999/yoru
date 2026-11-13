@@ -2,7 +2,8 @@ pragma Singleton
 
 // ============================================================================
 //  Widgets — los del escritorio (barra/Escritorio.qml): cuáles salen, dónde,
-//  de qué tamaño y su aspecto. Se cambian en Ajustes › Escritorio o sobre el
+//  de qué tamaño y su aspecto. También los iconos de archivos y accesos
+//  directos (barra/IconosEscritorio.qml): si salen, su tamaño y su sitio. Se cambian en Ajustes › Escritorio o sobre el
 //  propio escritorio en modo edición (clic derecho en un widget):
 //    arrastrar = moverlo · rueda = su tamaño · × = quitarlo
 //
@@ -52,6 +53,10 @@ Singleton {
     readonly property real opacidad: datos.opacidad
     readonly property bool segundos: datos.segundos
     readonly property bool fecha: datos.fecha
+    // Iconos del escritorio (barra/IconosEscritorio.qml): lo de ~/Escritorio
+    readonly property bool iconos: datos.iconos
+    readonly property real tamIconos: datos.tamIconos
+    readonly property var sitiosIconos: datos.sitiosIconos
 
     function activo(id) {
         return datos.activos.includes(id);
@@ -83,6 +88,11 @@ Singleton {
     function ponerOpacidad(v) { datos.opacidad = Math.round(Math.max(0, Math.min(1, v)) * 100) / 100; }
     function ponerSegundos(v) { datos.segundos = v; }
     function ponerFecha(v) { datos.fecha = v; }
+    function ponerIconos(v) { datos.iconos = v; }
+    function ponerTamIconos(v) { datos.tamIconos = Math.round(Math.max(0.7, Math.min(1.6, v)) * 100) / 100; }
+    // nombre del archivo → [columna, fila]
+    function colocarIconos(sitios) { datos.sitiosIconos = sitios; }
+    function ordenarIconos() { datos.sitiosIconos = {}; }
 
     // Todo a su sitio de la columna y a su tamaño
     function restablecer() {
@@ -111,6 +121,9 @@ Singleton {
             property real opacidad: 0.8     // el fondo de las tarjetas
             property bool segundos: true    // en la hora
             property bool fecha: false      // bajo la hora
+            property bool iconos: true      // archivos y accesos directos
+            property real tamIconos: 1
+            property var sitiosIconos: ({}) // nombre → [columna, fila]
         }
     }
 }

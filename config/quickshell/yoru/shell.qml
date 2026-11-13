@@ -126,6 +126,15 @@ ShellRoot {
         model: Quickshell.screens
         Escritorio {}
     }
+    // Archivos y accesos directos de ~/Escritorio sobre el fondo, como en
+    // Windows (barra/IconosEscritorio.qml), en la primera pantalla
+    LazyLoader {
+        active: Widgets.iconos
+        Variants {
+            model: Quickshell.screens.slice(0, 1)
+            IconosEscritorio {}
+        }
+    }
     // Notas adhesivas en el escritorio (barra/NotasEscritorio.qml), con
     // cualquier estilo de barra
     Variants {

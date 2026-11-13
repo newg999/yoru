@@ -1,18 +1,58 @@
 // ============================================================================
-//  Ajustes › Escritorio: los widgets sobre el fondo (barra/Escritorio.qml,
-//  los datos en comun/Widgets.qml)
+//  Ajustes › Escritorio: los iconos de archivos (barra/IconosEscritorio.qml)
+//  y los widgets sobre el fondo (barra/Escritorio.qml); los datos de los
+//  dos, en comun/Widgets.qml
 //
+//    Iconos             archivos y accesos directos · su tamaño · ordenar
 //    Widgets            un interruptor para cada uno
 //    Colocarlos         modo edición (arrastrar, rueda = tamaño) · restablecer
 //    Aspecto            tamaño de todos, el fondo de las tarjetas, la hora
 // ============================================================================
 import QtQuick
+import Quickshell
 import qs.comun
 
 Column {
     id: seccion
     spacing: 8
 
+    Titular { texto: "Iconos"; width: parent.width }
+    Interruptor {
+        width: parent.width
+        titulo: "󰉋  Archivos y accesos directos"
+        detalle: "Lo que hay en tu carpeta Escritorio, como en Windows: doble clic abre, arrástralos para colocarlos y clic derecho para más"
+        activo: Widgets.iconos
+        onCambiar: v => Widgets.ponerIconos(v)
+    }
+    Opciones {
+        visible: Widgets.iconos
+        width: parent.width
+        opciones: [
+            {id: "0.85", icono: "󰘕", texto: "Pequeños"},
+            {id: "1", icono: "󰘖", texto: "Normales"},
+            {id: "1.25", icono: "󰊓", texto: "Grandes"}
+        ]
+        valor: String(Widgets.tamIconos)
+        onElegir: id => Widgets.ponerTamIconos(Number(id))
+    }
+    Fila {
+        visible: Widgets.iconos
+        width: parent.width
+        icono: "󰒺"
+        titulo: "Ordenar por nombre"
+        detalle: "Todos en columnas desde arriba a la izquierda, en orden alfabético"
+        onClic: Widgets.ordenarIconos()
+    }
+    Fila {
+        visible: Widgets.iconos
+        width: parent.width
+        icono: "󰉖"
+        titulo: "Abrir la carpeta Escritorio"
+        detalle: "Lo que pongas en ella sale en el escritorio"
+        onClic: Quickshell.execDetached(["sh", "-c", 'xdg-open "$(xdg-user-dir DESKTOP)"'])
+    }
+
+    Item { width: 1; height: 6 }
     Titular { texto: "Colocarlos"; width: parent.width }
     Fila {
         width: parent.width
