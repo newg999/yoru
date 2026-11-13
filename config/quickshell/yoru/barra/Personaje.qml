@@ -16,7 +16,7 @@
 //    guino()      guiña un ojo y da un brinco
 //    jugar()      al hacerle clic: cada vez una cosa (guiño, saltitos, una
 //                 vuelta entera o una risita con los ojos > <)
-//    mimos        pasarle el ratón por encima de lado a lado (interactivo):
+//    mimos        pasarle el ratón por encima de lado a lado (rozar(x)):
 //                 cierra los ojos contenta, se sonroja y suelta corazones
 //    bostezar()   al despertar (y de madrugada, de vez en cuando)
 //    mirarHacia() mira un momento a un sitio (al cambiar de escritorio)
@@ -263,34 +263,37 @@ Item {
     }
 
     // Mimos con el ratón: pasar por encima de lado a lado (tres cambios de
-    // sentido seguidos)
-    HoverHandler {
-        id: mano
-        enabled: yo.interactivo
-        property real ultimoX: -1
-        property int sentido: 0
-        property int vueltas: 0
-        onPointChanged: {
-            const x = point.position.x;
-            if (ultimoX < 0 || Math.abs(x - ultimoX) < 1.5) {
-                if (ultimoX < 0) ultimoX = x;
-                return;
-            }
-            const s = x > ultimoX ? 1 : -1;
-            if (sentido !== 0 && s !== sentido) {
-                vueltas++;
-                olvidarMimos.restart();
-                if (vueltas >= 3) {
-                    vueltas = 0;
-                    yo.mimar();
-                }
-            }
-            sentido = s;
-            ultimoX = x;
+    // sentido seguidos). Quien la usa llama a rozar(x) con el ratón encima
+    // (un HoverHandler aquí no se enteraba)
+    property real _ultimoX: -1
+    property int _sentido: 0
+    property int _vueltas: 0
+    function rozar(x) {
+        if (!interactivo)
+            return;
+        if (_ultimoX < 0) {
+            _ultimoX = x;
+            return;
         }
-        onHoveredChanged: if (!hovered) { ultimoX = -1; sentido = 0; }
+        if (Math.abs(x - _ultimoX) < 1.5)
+            return;
+        const s = x > _ultimoX ? 1 : -1;
+        if (_sentido !== 0 && s !== _sentido) {
+            _vueltas++;
+            olvidarMimos.restart();
+            if (_vueltas >= 3) {
+                _vueltas = 0;
+                mimar();
+            }
+        }
+        _sentido = s;
+        _ultimoX = x;
     }
-    Timer { id: olvidarMimos; interval: 700; onTriggered: mano.vueltas = 0 }
+    function dejarDeRozar() {
+        _ultimoX = -1;
+        _sentido = 0;
+    }
+    Timer { id: olvidarMimos; interval: 700; onTriggered: yo._vueltas = 0 }
 
     // Respirar (más despacio dormido) y mecerse con la música
     property real respiro: 0

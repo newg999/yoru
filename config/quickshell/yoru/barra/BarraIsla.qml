@@ -384,7 +384,19 @@ PanelWindow {
             onPositionChanged: e => {
                 if (pressed && !gastado)
                     gastado = barra.arrastre(e.x - desde.x, e.y - desde.y);
+                // Mimos: el ratón pasando por encima de la luna
+                if (!pressed) {
+                    const l = barra.abierta ? lunaGrande : isla.reposando ? luna : null;
+                    if (l) {
+                        const p = l.mapFromItem(raton, e.x, e.y);
+                        if (p.x >= 0 && p.y >= 0 && p.x <= l.width && p.y <= l.height)
+                            l.rozar(p.x);
+                        else
+                            l.dejarDeRozar();
+                    }
+                }
             }
+            onExited: { luna.dejarDeRozar(); lunaGrande.dejarDeRozar(); }
             onClicked: e => {
                 if (gastado)
                     return;
@@ -480,6 +492,94 @@ PanelWindow {
                     text: Grabacion.tiempo
                     font.pixelSize: Tema.letra - 1
                     color: Tema.rojo
+                }
+            }
+            // Lo que suena: el título; con el ratón encima de la isla, en el
+            // mismo hueco (la píldora no cambia de ancho), ⏮ ⏯ ⏭
+            Item {
+                id: cancionReposo
+                visible: barra.musica !== null && (barra.musica.trackTitle ?? "") !== ""
+                anchors.verticalCenter: parent.verticalCenter
+                width: barra.m(150)
+                height: parent.height
+                readonly property bool mandos: raton.containsMouse && !raton.pressed
+
+                Row {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width
+                    spacing: 6
+                    opacity: cancionReposo.mandos ? 0 : 1
+                    Behavior on opacity { NumberAnimation { duration: Tema.normal } }
+                    // Unas barritas que bailan (quietas en pausa)
+                    Row {
+                        id: barritas
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 1.5
+                        Repeater {
+                            model: 3
+                            Rectangle {
+                                id: barrita
+                                required property int index
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 2.5; radius: 1.25
+                                height: 4
+                                color: barra.sonando ? Tema.blanco : Tema.tenue
+                                SequentialAnimation on height {
+                                    running: barra.sonando && Ajustes.animaciones && cancionReposo.visible
+                                    loops: Animation.Infinite
+                                    NumberAnimation { to: 6 + (barrita.index === 1 ? 6 : 3); duration: 300 + barrita.index * 90; easing.type: Easing.InOutSine }
+                                    NumberAnimation { to: 4; duration: 300 + barrita.index * 90; easing.type: Easing.InOutSine }
+                                }
+                            }
+                        }
+                    }
+                    Texto {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - barritas.width - 6
+                        elide: Text.ElideRight
+                        text: (barra.musica?.trackTitle ?? "") + (barra.musica?.trackArtist ? "  " : "")
+                        textFormat: Text.PlainText
+                        font.bold: false
+                        font.pixelSize: Tema.letra - 1
+                        color: barra.sonando ? Tema.texto : Tema.gris
+                    }
+                }
+
+                // Los mandos (sin «hover» propio: así el ratón sigue contando
+                // como encima de la isla y no parpadean)
+                Row {
+                    anchors.centerIn: parent
+                    spacing: barra.m(10)
+                    opacity: cancionReposo.mandos ? 1 : 0
+                    visible: opacity > 0.01
+                    Behavior on opacity { NumberAnimation { duration: Tema.normal } }
+                    Repeater {
+                        model: [
+                            {icono: "󰒮", hacer: () => Reproductor.anterior(barra.musica)},
+                            {icono: barra.sonando ? "󰏤" : "󰐊", hacer: () => barra.musica?.togglePlaying(), grande: true},
+                            {icono: "󰒭", hacer: () => Reproductor.siguiente(barra.musica)}
+                        ]
+                        Item {
+                            required property var modelData
+                            width: barra.m(26)
+                            height: cancionReposo.height
+                            Texto {
+                                anchors.centerIn: parent
+                                text: parent.modelData.icono
+                                font.pixelSize: Tema.letra + (parent.modelData.grande ? 5 : 2)
+                                color: Tema.blanco
+                                scale: mandoRaton.pressed ? 0.82 : 1
+                                Behavior on scale { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutCubic } }
+                            }
+                            MouseArea {
+                                id: mandoRaton
+                                anchors.fill: parent
+                                enabled: cancionReposo.mandos || pressed
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: parent.modelData.hacer()
+                            }
+                        }
+                    }
                 }
             }
             SystemClock { id: reloj; precision: Ajustes.relojSegundos ? SystemClock.Seconds : SystemClock.Minutes }
@@ -783,9 +883,12 @@ PanelWindow {
                             interactivo: true
                             contento: barra.sonando
                             preocupado: barra.hayBateria && !barra.cargando && barra.carga <= 15
-                            siguiendo: menuHover.hovered
-                            mirada: Qt.point(Math.max(-1, Math.min(1, (menuHover.point.position.x - 36) / 120)),
-                                             Math.max(-1, Math.min(1, (menuHover.point.position.y - 34) / 80)))
+                            siguiendo: barra.abierta && raton.containsMouse
+                            mirada: {
+                                const p = lunaGrande.mapFromItem(raton, raton.mouseX, raton.mouseY);
+                                return Qt.point(Math.max(-1, Math.min(1, (p.x - lunaGrande.width / 2) / 120)),
+                                                Math.max(-1, Math.min(1, (p.y - lunaGrande.height / 2) / 80)));
+                            }
                         }
                         Column {
                             anchors.verticalCenter: parent.verticalCenter
@@ -1119,9 +1222,6 @@ PanelWindow {
                 }
             }
         }
-        // Para que la luna grande siga al ratón por todo el menú (un
-        // HoverHandler no le quita el ratón a los botones)
-        HoverHandler { id: menuHover; enabled: barra.abierta }
 
         // ------------------------------------------------- Un aviso
         Item {
