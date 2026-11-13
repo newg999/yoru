@@ -320,10 +320,13 @@ PanelWindow {
     // Lo de dentro: al llegar, espera a que la isla casi tenga su forma y
     // aparece; al irse, se va enseguida (si no, se veía recortado por los
     // lados mientras crecía, o suelto en medio de una isla que encogía)
+    // («entrando» sale del valor al que va la opacidad, no de si la caja
+    // está activa: cuando la animación arranca, eso aún tiene el valor de
+    // antes, y lo que llegaba no esperaba y lo que se iba tardaba en irse)
     component Aparecer: SequentialAnimation {
-        property bool activa: false
-        PauseAnimation { duration: activa ? Tema.ms(190) : 0 }
-        NumberAnimation { duration: activa ? Tema.normal : Tema.rapida; easing.type: Easing.OutCubic }
+        property bool entrando: false
+        PauseAnimation { duration: entrando ? Tema.ms(70) : 0 }
+        NumberAnimation { duration: entrando ? Tema.normal : Tema.rapida; easing.type: Easing.OutCubic }
     }
     // El tamaño (Ajustes › Barra y dock › Tamaño de la isla): todo lo de
     // dentro se mide por él (sin «scale», que deja la letra borrosa)
@@ -357,6 +360,8 @@ PanelWindow {
         readonly property bool asentada: reposando
             && Math.abs(width - (cajaReposo.implicitWidth + 2 * relleno)) < 1
             && Math.abs(height - Tema.altoBarra) < 1
+            && cajaPaginas.opacity < 0.01 && cajaAviso.opacity < 0.01 && cajaNivel.opacity < 0.01
+            && cajaCancion.opacity < 0.01 && cajaCargador.opacity < 0.01
         clip: !asentada
         Behavior on width { Suave {} }
         Behavior on height { Suave {} }
@@ -423,8 +428,11 @@ PanelWindow {
             height: Tema.altoBarra
             spacing: 9
             opacity: activa ? 1 : 0
-            visible: opacity > 0
-            Behavior on opacity { Aparecer { activa: cajaReposo.activa } }
+            // Siempre «visible» (si no, oculta mide 0 y la isla crecía o
+            // encogía en dos tiempos); lo que no se ve no recibe clics
+            enabled: activa
+            scale: 0.96 + 0.04 * opacity
+            Behavior on opacity { id: aparece1; Aparecer { entrando: aparece1.targetValue > 0.5 } }
 
             Personaje {
                 id: luna
@@ -658,8 +666,11 @@ PanelWindow {
             height: parent.height
             anchors.horizontalCenter: parent.horizontalCenter
             opacity: activa ? 1 : 0
-            visible: opacity > 0
-            Behavior on opacity { Aparecer { activa: cajaPaginas.activa } }
+            // Siempre «visible» (si no, oculta mide 0 y la isla crecía o
+            // encogía en dos tiempos); lo que no se ve no recibe clics
+            enabled: activa
+            scale: 0.96 + 0.04 * opacity
+            Behavior on opacity { id: aparece2; Aparecer { entrando: aparece2.targetValue > 0.5 } }
             Keys.onEscapePressed: barra.abierta = false
             Keys.onLeftPressed: barra.pasar(-1)
             Keys.onRightPressed: barra.pasar(1)
@@ -1110,8 +1121,11 @@ PanelWindow {
             readonly property var n: barra.aviso?.n ?? null
             anchors.centerIn: parent
             opacity: activa ? 1 : 0
-            visible: opacity > 0
-            Behavior on opacity { Aparecer { activa: cajaAviso.activa } }
+            // Siempre «visible» (si no, oculta mide 0 y la isla crecía o
+            // encogía en dos tiempos); lo que no se ve no recibe clics
+            enabled: activa
+            scale: 0.96 + 0.04 * opacity
+            Behavior on opacity { id: aparece3; Aparecer { entrando: aparece3.targetValue > 0.5 } }
             implicitWidth: Math.min(barra.m(440), Math.max(barra.m(260), barra.m(40) + 12 + textosAviso.implicitWidth))
             implicitHeight: filaAviso.implicitHeight
             width: implicitWidth
@@ -1196,8 +1210,11 @@ PanelWindow {
             spacing: 12
             height: Tema.altoBarra
             opacity: activa ? 1 : 0
-            visible: opacity > 0
-            Behavior on opacity { Aparecer { activa: cajaNivel.activa } }
+            // Siempre «visible» (si no, oculta mide 0 y la isla crecía o
+            // encogía en dos tiempos); lo que no se ve no recibe clics
+            enabled: activa
+            scale: 0.96 + 0.04 * opacity
+            Behavior on opacity { id: aparece4; Aparecer { entrando: aparece4.targetValue > 0.5 } }
 
             Texto {
                 anchors.verticalCenter: parent.verticalCenter
@@ -1235,8 +1252,11 @@ PanelWindow {
             anchors.centerIn: parent
             spacing: 12
             opacity: activa ? 1 : 0
-            visible: opacity > 0
-            Behavior on opacity { Aparecer { activa: cajaCancion.activa } }
+            // Siempre «visible» (si no, oculta mide 0 y la isla crecía o
+            // encogía en dos tiempos); lo que no se ve no recibe clics
+            enabled: activa
+            scale: 0.96 + 0.04 * opacity
+            Behavior on opacity { id: aparece5; Aparecer { entrando: aparece5.targetValue > 0.5 } }
 
             ClippingRectangle {
                 width: barra.m(40); height: width
@@ -1305,8 +1325,11 @@ PanelWindow {
             spacing: 10
             height: Tema.altoBarra
             opacity: activa ? 1 : 0
-            visible: opacity > 0
-            Behavior on opacity { Aparecer { activa: cajaCargador.activa } }
+            // Siempre «visible» (si no, oculta mide 0 y la isla crecía o
+            // encogía en dos tiempos); lo que no se ve no recibe clics
+            enabled: activa
+            scale: 0.96 + 0.04 * opacity
+            Behavior on opacity { id: aparece6; Aparecer { entrando: aparece6.targetValue > 0.5 } }
             Texto {
                 anchors.verticalCenter: parent.verticalCenter
                 text: barra.cargando ? "󰂄" : "󰁹"
