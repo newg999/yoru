@@ -47,7 +47,7 @@ PanelWindow {
     // barra/BarraIslas.qml (en una franja entera) o el dock
     // Arriba, con píldoras, se ve barra/BarraIslas.qml: esta queda para la
     // barra a la izquierda
-    visible: !Ajustes.centrada && !Ajustes.pildoras
+    visible: !Ajustes.centrada && !Ajustes.pildoras && !Ajustes.isla
     WlrLayershell.namespace: "yoru-barra"
     WlrLayershell.layer: WlrLayer.Top
 

@@ -31,7 +31,8 @@ PanelWindow {
     screen: modelData
 
     readonly property bool enfocada: (Niri.escritorios.find(e => e.is_focused)?.output ?? modelData.name) === modelData.name
-    readonly property bool mostrar: enfocada && !Paneles.esta("notificaciones", modelData)
+    // (con la isla, los avisos salen dentro de ella: barra/BarraIsla.qml)
+    readonly property bool mostrar: enfocada && !Paneles.esta("notificaciones", modelData) && !Ajustes.isla
         && Notificaciones.emergentes.length > 0
 
     readonly property bool pegada: Ajustes.minimalista || abajo

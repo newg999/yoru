@@ -114,6 +114,14 @@ ShellRoot {
         model: Quickshell.screens
         BarraIslas {}
     }
+    // O una sola isla viva arriba, con la lunita (barra/BarraIsla.qml)
+    LazyLoader {
+        active: Ajustes.isla
+        Variants {
+            model: Quickshell.screens
+            BarraIsla {}
+        }
+    }
     // O la barra de tareas abajo, como la de Windows 11
     LazyLoader {
         active: Ajustes.windows

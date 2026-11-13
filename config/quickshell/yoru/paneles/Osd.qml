@@ -41,7 +41,8 @@ PanelWindow {
 
     function avisar(que) {
         // Al arrancar, Pipewire «cambia» todo de golpe: eso no cuenta
-        if (!listo || !enfocada)
+        // (con la isla, el volumen y el brillo salen dentro de ella)
+        if (!listo || !enfocada || Ajustes.isla)
             return;
         tipo = que;
         mostrar = true;

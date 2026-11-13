@@ -24,7 +24,13 @@ Singleton {
     // Islas en píldoras: el panel sale de la isla que lo abre, fundido con
     // ella (Panel.qml). BarraIslas apunta aquí sus islas, por pantalla
     property var islas: ({})
+    // Con la isla (barra/BarraIsla.qml), todo cuelga de ella: pantalla → isla
+    property var islaUnica: ({})
     function islaDe(enPantalla, nombre, enSeccion) {
+        if (Ajustes.isla) {
+            const u = islaUnica[enPantalla?.name] ?? null;
+            return u && u.visible ? u : null;
+        }
         if (!Ajustes.pildoras)
             return null;
         const i = islas[enPantalla?.name];

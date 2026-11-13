@@ -41,7 +41,7 @@ PanelWindow {
     // (con la minimalista, niri no deja huecos: las ventanas, justo debajo)
     exclusiveZone: entera ? altoFranja : Tema.zonaBarra
     color: "transparent"
-    visible: Ajustes.conPildoras
+    visible: Ajustes.conPildoras && !Ajustes.isla
     WlrLayershell.namespace: "yoru-barra"
     WlrLayershell.layer: WlrLayer.Top
 
@@ -437,7 +437,7 @@ PanelWindow {
                 Ficha {
                     visible: estado.adaptador?.enabled ?? false
                     icono: estado.conectados > 0 ? "󰂱" : "󰂯"
-                    texto: estado.conectados > 0 ? String(estado.conectados) : "On"
+                    texto: estado.conectados > 0 ? String(estado.conectados) : ""
                     activa: true
                     onClic: Paneles.abrirPagina(barra.modelData, "bt", "derecha")
                 }

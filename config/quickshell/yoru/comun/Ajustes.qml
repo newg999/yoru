@@ -15,7 +15,7 @@ Singleton {
     id: ajustes
 
     // ------------------------------------------------------- Barra y dock
-    property alias barra: datos.barra                 // "arriba" · "izquierda" (islas) · "minimalista" · "windows"
+    property alias barra: datos.barra                 // "arriba" · "izquierda" (islas) · "minimalista" · "windows" · "isla"
     property alias dock: datos.dock                   // "overview" · "siempre" · "nunca"
     property alias islaTitulo: datos.islaTitulo
     property alias ventanas: datos.ventanas           // "activa" (icono y título) · "abiertas" (todas)
@@ -66,7 +66,11 @@ Singleton {
     readonly property bool pildoras: barra === "arriba"
     // La barra de píldoras: las islas arriba, o la minimalista (la misma,
     // sobre una franja entera de lado a lado)
-    readonly property bool conPildoras: pildoras || barra === "minimalista"
+    readonly property bool conPildoras: pildoras || barra === "minimalista" || isla
+    // Una sola isla arriba en el centro, que cambia de forma para enseñar lo
+    // que pasa (avisos, volumen, la canción...), con la lunita dentro
+    // (barra/BarraIsla.qml). Los paneles cuelgan de ella, como en las islas
+    readonly property bool isla: barra === "isla"
     readonly property bool minimalista: barra === "minimalista"
     // Todo recto: con la minimalista
     readonly property bool recto: minimalista
@@ -74,8 +78,8 @@ Singleton {
     // la única que va abajo, así que los paneles salen hacia arriba
     readonly property bool windows: barra === "windows"
     readonly property bool abajo: windows
-    // Minimalista y Windows: sin islas
-    readonly property bool centrada: minimalista || windows
+    // Minimalista, Windows e isla: sin las islas de siempre
+    readonly property bool centrada: minimalista || windows || isla
 
 
     // Vuelve a dejar el aspecto (no la barra ni el dock) como al principio
