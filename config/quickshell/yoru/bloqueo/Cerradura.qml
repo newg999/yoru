@@ -14,7 +14,7 @@
 //
 //                      (D)
 //                      don
-//            󰌾                       󰈈 󰌌 →   ← lo escrito no se ve
+//            󰌾                       󰈈 󰌌 →   ← un punto por letra
 //            ──────═══▓▓█▓▓═══──────────   ← la luz crece con cada letra,
 //                                              y cada tecla lanza destellos
 //   ⏻                Contraseña incorrecta              (esquina)
@@ -783,7 +783,7 @@ Item {
                 verticalAlignment: TextInput.AlignVCenter
                 horizontalAlignment: ver ? TextInput.AlignHCenter : TextInput.AlignLeft
                 echoMode: ver ? TextInput.Normal : TextInput.Password
-                // Lo escrito no se ve: en su lugar, los puntos de abajo
+                // Lo escrito no se ve: en su lugar, los puntos (más abajo)
                 color: ver ? cerradura.colorTexto : "transparent"
                 selectionColor: cerradura.conAlfa(cerradura.colorAcento, 0.35)
                 selectedTextColor: color
@@ -822,6 +822,40 @@ Item {
                     font.letterSpacing: 0.5
                 }
 
+                // Un punto por letra (centrados en la raya, como la pista):
+                // sin ellos no se sabía si faltaba o sobraba algo. Cada uno
+                // entra creciendo y se encoge al borrarlo; si no caben, se
+                // juntan y se hacen más pequeños
+                Row {
+                    id: puntos
+                    readonly property int n: campo.ver ? 0 : campo.text.length
+                    readonly property real tam: Math.max(4, Math.min(8, campo.width / Math.max(1, n) * 0.5))
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: Math.round(caja.width / 2 - campo.x - width / 2)
+                    spacing: tam * 0.9
+                    Repeater {
+                        // Fijos y reutilizados: así solo se anima el que entra o sale
+                        model: 64
+                        Rectangle {
+                            id: punto
+                            required property int index
+                            readonly property bool puesto: index < puntos.n
+                            width: puntos.tam
+                            height: width
+                            radius: width / 2
+                            color: cerradura.enRojo ? cerradura.colorRojo : cerradura.colorTexto
+                            scale: puesto ? 1 : 0
+                            visible: puesto || scale > 0.01
+                            Behavior on scale {
+                                NumberAnimation {
+                                    duration: cerradura.animar ? (punto.puesto ? 260 : 140) : 0
+                                    easing.type: punto.puesto ? Easing.OutBack : Easing.InCubic
+                                    easing.overshoot: 2.2
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             Row {
