@@ -117,19 +117,20 @@ Panel {
             width: parent.width
             // 480, o menos si la pantalla es pequeña (159 = resto del panel)
             maximo: Math.min(480, panel.altoMax - 159)
-            height: Math.max(implicitHeight, 60)
+            height: Math.max(implicitHeight, panel.resultados.length === 0 ? 150 : 60)
             model: panel.resultados
             highlightMoveDuration: 0
             keyNavigationWraps: true
 
-            Texto {
+            Vacio {
                 visible: panel.resultados.length === 0
                 anchors.centerIn: parent
-                text: !panel.hayCliphist ? "cliphist no está instalado"
+                icono: !panel.hayCliphist ? "󰅙" : panel.entradas.length === 0 ? "󰅇" : "󰍉"
+                titulo: !panel.hayCliphist ? "cliphist no está instalado"
                     : panel.entradas.length === 0 ? "Aún no has copiado nada"
                     : "Nada coincide"
-                font.bold: false
-                color: Tema.gris
+                detalle: !panel.hayCliphist ? "Instálalo con: sudo dnf install cliphist"
+                    : panel.entradas.length === 0 ? "Lo que copies (texto o imágenes) saldrá aquí" : ""
             }
 
             delegate: Fila {

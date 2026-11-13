@@ -54,26 +54,16 @@ Panel {
             id: lista
             width: parent.width
             maximo: Math.round(panel.modelData.height * 0.7)
-            height: Math.max(implicitHeight, 80)
+            height: Math.max(implicitHeight, Notificaciones.cuantas === 0 ? 150 : 80)
             spacing: 6
             model: ScriptModel { values: Notificaciones.lista }
 
-            Column {
+            Vacio {
                 visible: Notificaciones.cuantas === 0
                 anchors.centerIn: parent
-                spacing: 6
-                Texto {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "󰂜"
-                    font.pixelSize: 26
-                    color: Tema.tenue
-                }
-                Texto {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "No hay notificaciones"
-                    font.bold: false
-                    color: Tema.gris
-                }
+                icono: "󰂜"
+                titulo: "Todo al día"
+                detalle: "No hay notificaciones"
             }
 
             remove: Transition {

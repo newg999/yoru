@@ -37,7 +37,9 @@ Item {
                 .some(x => x && nombres.includes(x.toLowerCase()))) ?? null;
     }
 
-    implicitHeight: 420
+    // Sin nada sonando, más bajo: no hace falta tanto hueco para decirlo
+    implicitHeight: reproductor ? 420 : 210
+    Behavior on implicitHeight { NumberAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
 
     // Mpris no avisa de la posición: se pregunta cada segundo mientras se ve,
     // y nada más abrir (si no, el primer segundo enseña la de la última vez
@@ -85,22 +87,12 @@ Item {
         }
 
         // ------------------------------------------------ Nada sonando
-        Column {
+        Vacio {
             visible: !multimedia.reproductor
             anchors.centerIn: parent
-            spacing: 10
-            Texto {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "󰝛"
-                font.pixelSize: 56
-                color: Tema.tenue
-            }
-            Texto {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "No suena nada"
-                font.bold: false
-                color: Tema.gris
-            }
+            icono: "󰝛"
+            titulo: "No suena nada"
+            detalle: "Pon música o un vídeo y lo controlas desde aquí"
         }
 
         // ------------------------------------------------ Reproductor

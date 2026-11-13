@@ -502,24 +502,20 @@ Panel {
             highlightMoveDuration: 0
             keyNavigationWraps: true
 
-            Column {
-                visible: panel.lista.length === 0
+            // Cargando: las baldosas que van a salir, latiendo
+            Esqueleto {
+                visible: panel.lista.length === 0 && panel.cargando !== ""
+                width: parent.width
+                columnas: 3
+                filas: Math.ceil(parent.height / 92)
+                alto: 84
+            }
+            Vacio {
+                visible: panel.lista.length === 0 && panel.cargando === ""
                 anchors.centerIn: parent
-                spacing: 10
-                BotonIcono {
-                    visible: panel.cargando !== ""
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    icono: "󰑓"
-                    girando: true
-                    colorIcono: Tema.gris
-                }
-                Texto {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: panel.cargando !== "" ? "Cargando apps de Flathub…"
-                        : "No hay apps que enseñar (¿está Flathub añadido?)"
-                    font.bold: false
-                    color: Tema.gris
-                }
+                icono: "󰏗"
+                titulo: "No hay apps que enseñar"
+                detalle: "¿Está Flathub añadido? (flatpak remotes)"
             }
 
             delegate: Item {

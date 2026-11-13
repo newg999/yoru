@@ -365,12 +365,12 @@ Panel {
             highlightMoveDuration: 0
             keyNavigationWraps: true
 
-            Texto {
+            Vacio {
                 visible: panel.resultados.length === 0
                 anchors.centerIn: parent
-                text: "No hay nada que se llame así"
-                font.bold: false
-                color: Tema.gris
+                icono: "󰍉"
+                titulo: "No hay nada que se llame así"
+                detalle: "Prueba con otra palabra, o búscalo en la Tienda (Mod+Alt+S)"
             }
 
             delegate: Rectangle {

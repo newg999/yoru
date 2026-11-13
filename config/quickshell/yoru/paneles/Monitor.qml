@@ -335,12 +335,13 @@ Panel {
                 model: panel.filas
                 boundsBehavior: Flickable.StopAtBounds
 
-                Texto {
+                // Mientras lee: la forma de las filas, latiendo
+                Esqueleto {
                     visible: !panel.datos
-                    anchors.centerIn: parent
-                    text: "Leyendo procesos…"
-                    font.bold: false
-                    color: Tema.gris
+                    width: parent.width
+                    filas: Math.ceil(parent.height / 38)
+                    alto: 36
+                    icono: false
                 }
 
                 delegate: Rectangle {
