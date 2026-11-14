@@ -4,7 +4,7 @@
 //    󰤨 󰂯 󰕾  │  󰁹 80%
 //
 //  La red, el bluetooth, el volumen y la batería (si la hay). Lo que no
-//  hay, no sale. (La música y el tiempo van junto a la hora: Bloqueo.qml)
+//  hay, no sale.
 // ============================================================================
 import QtQuick
 import Quickshell.Services.Pipewire

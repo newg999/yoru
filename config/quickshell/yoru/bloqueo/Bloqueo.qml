@@ -226,8 +226,6 @@ Scope {
         fotos: ["file://" + Quickshell.env("HOME") + "/.face",
                 "file:///var/lib/AccountsService/icons/" + Quickshell.env("USER")]
         teclado: bloqueo.teclados.length > 1 ? bloqueo.teclado : ""
-        // Junto a la fecha: la temperatura y el cielo
-        detalle: Tiempo.listo ? `${Tiempo.temperatura}° ${Tiempo.descripcion.toLowerCase()}` : ""
         mensaje: bloqueo.mensaje
         error: bloqueo.error
         ocupada: pam.active
@@ -253,11 +251,7 @@ Scope {
             }
         }
 
-        // En medio, lo que suena y las notificaciones (abiertas hasta un
-        // clic fuera o Esc); arriba a la derecha, la red, el bluetooth, el
-        // volumen y la batería
-        abajo: CentroBloqueo { id: centro }
-        onToque: centro.cerrar()
+        // Arriba a la derecha, la red, el bluetooth, el volumen y la batería
         arriba: EstadoBloqueo {}
     }
 
