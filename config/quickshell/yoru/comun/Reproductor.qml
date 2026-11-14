@@ -66,6 +66,39 @@ Singleton {
         }
     }
 
+    // ¿Es música? (la luna solo se mece con música, no con cualquier vídeo)
+    //  · reproductores de música (Spotify, Elisa...): sí
+    //  · mpv, VLC...: según la extensión del archivo
+    //  · navegadores (YouTube...): solo si el título o el canal lo parecen
+    //    («Video Oficial», «Lyrics», «ft.», «Remix», «- Topic», «VEVO»...)
+    readonly property var appsVideo: ["mpv", "vlc", "celluloid", "totem", "showtime", "haruna", "smplayer", "clapper", "kodi"]
+    readonly property var navegadores: ["brave", "firefox", "chromium", "chrome", "vivaldi", "opera", "edge", "zen", "librewolf", "epiphany", "falkon", "qutebrowser", "floorp"]
+    function esMusica(p) {
+        if (!p)
+            return false;
+        const app = ((p.desktopEntry ?? "") + " " + (p.identity ?? "") + " " + (p.dbusName ?? "")).toLowerCase();
+        const md = p.metadata ?? {};
+        const url = String(md["xesam:url"] ?? "").toLowerCase();
+        if (appsVideo.some(a => app.includes(a))) {
+            if (/\.(mp3|flac|ogg|oga|opus|m4a|aac|wav|wma|alac|aiff?|ape|wv)(\?|$)/.test(url))
+                return true;
+            if (/\.(mkv|mp4|webm|avi|mov|m4v|wmv|flv|ts|mpe?g|3gp)(\?|$)/.test(url))
+                return false;
+            return (p.trackArtist ?? "") !== "" && (p.trackAlbum ?? "") !== "";
+        }
+        if (navegadores.some(a => app.includes(a))) {
+            if (/music\.youtube\.com|soundcloud\.com|open\.spotify\.com|bandcamp\.com|deezer\.com|tidal\.com/.test(url))
+                return true;
+            const titulo = p.trackTitle ?? "";
+            const canal = p.trackArtist ?? "";
+            if (/(\s-\s*topic$|vevo$|records$|music$)/i.test(canal.trim()))
+                return true;
+            return /(v[ií]deo\s*(oficial|clip|musical)|official\s*(music\s*)?(video|audio|visualizer|lyric)|music\s*video|lyric|letra|\(audio\)|\[audio\]|visualizer|videoclip|\bft\.|\bfeat\.?\s|\bremix\b|\(prod\.?|\bsped\s*up\b|\bslowed\b|\bacoustic\b|\bac[uú]stico\b|\blive\s*session\b|\bsession\s*#?\d|\bbzrp\b)/i.test(titulo);
+        }
+        // El resto (Spotify, Elisa, Rhythmbox, Amberol...): reproductores de música
+        return true;
+    }
+
     function nombre(p) {
         return p?.identity || p?.desktopEntry || "Reproductor";
     }

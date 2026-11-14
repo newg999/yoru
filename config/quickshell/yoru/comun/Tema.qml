@@ -110,7 +110,9 @@ Singleton {
     // (Ajustes.barra). «grosor» es lo que ocupa desde su borde: el alto de
     // las islas arriba, su ancho a la izquierda, el de la barra de tareas
     // abajo. «hueco» es donde empiezan los paneles y avisos, al lado.
-    readonly property int altoBarra: 30      // islas de la barra de arriba
+    // islas de la barra de arriba; con la Isla, crece con su tamaño
+    // (Ajustes › Barra › Tamaño de la isla: 30 · 36 · 42 px)
+    readonly property int altoBarra: Ajustes.isla ? Math.round(30 * Ajustes.tamIsla) : 30
     readonly property int anchoBarra: 40     // islas de la barra de la izquierda
     readonly property int altoTareas: 48     // la barra de tareas (Windows)
     readonly property int grosor: Ajustes.vertical ? anchoBarra : Ajustes.abajo ? altoTareas : altoBarra

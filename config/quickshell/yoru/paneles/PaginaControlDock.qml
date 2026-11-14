@@ -22,6 +22,7 @@ import Quickshell.Networking
 import Quickshell.Bluetooth
 import Quickshell.Services.Pipewire
 import Quickshell.Services.UPower
+import Quickshell.Widgets
 import qs.comun
 
 Item {
@@ -29,7 +30,24 @@ Item {
 
     required property var pantalla
     property bool activa: false
-    onActivaChanged: if (!activa) armado = -1
+    // Dentro de la isla (barra/BarraIsla.qml, su página Menú): sin la
+    // cabecera (la isla ya lleva la luna, la hora y esos dos iconos) y con
+    // la música arriba
+    property bool conCabecera: true
+    property bool conMusica: false
+    // En la isla, las listas (redes, Bluetooth, salidas de audio) se
+    // despliegan aquí mismo en vez de abrir su panel: "wifi" · "bluetooth"
+    // · "audio" · "" (la misma flecha otra vez = recogerla)
+    property bool enLinea: false
+    property string desplegada: ""
+    readonly property bool conRedes: desplegada === "wifi" || desplegada === "bluetooth"
+    function abrirLista(l, panel) {
+        if (enLinea)
+            desplegada = desplegada === l ? "" : l;
+        else
+            Paneles.abrirPagina(pantalla, panel, "derecha");
+    }
+    onActivaChanged: if (!activa) { armado = -1; desplegada = ""; }
 
     readonly property color acento: Tema.blanco
     function tinte(a) { return Tema.conAlfa(acento, a); }
@@ -236,6 +254,7 @@ Item {
 
         // ------------------------------------------------- Quién eres
         Item {
+            visible: pagina.conCabecera
             width: parent.width
             height: 48
             Row {
@@ -276,6 +295,183 @@ Item {
             }
         }
 
+        // ------------------------------------------------- Música
+        // Dentro de la isla (conMusica): lo que suena, con anterior /
+        // pausa / siguiente y la barra para avanzar
+        Caja {
+            id: musica
+            readonly property var r: Reproductor.actual
+            readonly property bool sonando: r?.isPlaying ?? false
+            readonly property real largo: r?.length ?? 0
+            readonly property bool conBarra: (r?.canSeek ?? false) && largo > 0
+            readonly property real posicion: arrastre.pressed ? arrastre.destino : (r?.position ?? 0)
+            visible: pagina.conMusica && r !== null
+            width: parent.width
+            height: 66 + (conBarra ? 22 : 0)
+            function tiempo(s) {
+                s = Math.max(0, Math.round(s));
+                return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+            }
+            // La posición no avisa sola: se pregunta cada segundo mientras suena
+            Timer {
+                running: musica.visible && pagina.activa && musica.sonando
+                interval: 1000
+                repeat: true
+                onTriggered: musica.r?.positionChanged()
+            }
+            Item {
+                id: filaMusica
+                width: parent.width
+                height: 66
+            }
+            ClippingRectangle {
+                id: caratulaMusica
+                x: 11
+                anchors.verticalCenter: filaMusica.verticalCenter
+                width: 44; height: 44
+                radius: Tema.esquina(10)
+                color: Tema.cajaHover
+                Image {
+                    id: imagenCaratula
+                    anchors.fill: parent
+                    source: musica.r ? Reproductor.caratula(musica.r) : ""
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    sourceSize: Qt.size(88, 88)
+                }
+                Texto {
+                    visible: imagenCaratula.status !== Image.Ready
+                    anchors.centerIn: parent
+                    text: "󰎆"
+                    font.pixelSize: 18
+                    color: Tema.gris
+                }
+                // (fuera de la isla, abre Multimedia; dentro, nada: no se sale)
+                MouseArea {
+                    enabled: !pagina.enLinea
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Paneles.abrirPagina(pagina.pantalla, "multimedia", "centro")
+                }
+            }
+            Column {
+                anchors { left: caratulaMusica.right; leftMargin: 12; right: mandosMusica.left; rightMargin: 6; verticalCenter: filaMusica.verticalCenter }
+                spacing: 2
+                Texto {
+                    width: parent.width
+                    elide: Text.ElideRight
+                    text: Reproductor.titulo(musica.r) || Reproductor.nombre(musica.r)
+                    textFormat: Text.PlainText
+                    font.pixelSize: 13
+                    color: Tema.blanco
+                }
+                Texto {
+                    width: parent.width
+                    visible: text !== ""
+                    elide: Text.ElideRight
+                    text: musica.r?.trackArtist ?? ""
+                    textFormat: Text.PlainText
+                    font.bold: false
+                    font.pixelSize: 11
+                    color: Tema.gris
+                }
+            }
+            Row {
+                id: mandosMusica
+                anchors { right: parent.right; rightMargin: 8; verticalCenter: filaMusica.verticalCenter }
+                Repeater {
+                    model: [
+                        {icono: "󰒮", hacer: () => Reproductor.anterior(musica.r)},
+                        {icono: musica.sonando ? "󰏤" : "󰐊", hacer: () => musica.r?.togglePlaying()},
+                        {icono: "󰒭", hacer: () => Reproductor.siguiente(musica.r)}
+                    ]
+                    Item {
+                        required property var modelData
+                        width: 30; height: 30
+                        Texto {
+                            anchors.centerIn: parent
+                            text: parent.modelData.icono
+                            font.pixelSize: 17
+                            color: mandoRaton.containsMouse ? pagina.acento : Tema.texto
+                        }
+                        MouseArea {
+                            id: mandoRaton
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: parent.modelData.hacer()
+                        }
+                    }
+                }
+            }
+            // La barra para avanzar: se pulsa o se arrastra
+            Item {
+                visible: musica.conBarra
+                anchors { left: parent.left; right: parent.right; leftMargin: 12; rightMargin: 12; top: filaMusica.bottom; topMargin: -6 }
+                height: 18
+                Texto {
+                    id: tiempoYa
+                    anchors { left: parent.left; verticalCenter: parent.verticalCenter }
+                    width: 32
+                    text: musica.tiempo(musica.posicion)
+                    font.bold: false
+                    font.pixelSize: 10
+                    color: Tema.gris
+                }
+                Texto {
+                    id: tiempoFalta
+                    anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                    width: 32
+                    horizontalAlignment: Text.AlignRight
+                    text: "-" + musica.tiempo(musica.largo - musica.posicion)
+                    font.bold: false
+                    font.pixelSize: 10
+                    color: Tema.gris
+                }
+                Item {
+                    id: pista
+                    anchors { left: tiempoYa.right; right: tiempoFalta.left; leftMargin: 6; rightMargin: 6; top: parent.top; bottom: parent.bottom }
+                    readonly property real fraccion: Math.max(0, Math.min(1, musica.posicion / Math.max(1, musica.largo)))
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width
+                        height: arrastre.containsMouse || arrastre.pressed ? 5 : 3
+                        radius: height / 2
+                        color: Tema.claro(0.12)
+                        Rectangle {
+                            width: parent.width * pista.fraccion
+                            height: parent.height
+                            radius: parent.radius
+                            color: pagina.acento
+                        }
+                    }
+                    Rectangle {
+                        visible: arrastre.containsMouse || arrastre.pressed
+                        x: pista.width * pista.fraccion - width / 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 11; height: 11; radius: 5.5
+                        color: pagina.acento
+                    }
+                    MouseArea {
+                        id: arrastre
+                        property real destino: 0
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        function calcular(x) {
+                            destino = Math.max(0, Math.min(1, x / Math.max(1, width))) * musica.largo;
+                        }
+                        onPressed: e => calcular(e.x)
+                        onPositionChanged: e => { if (pressed) calcular(e.x); }
+                        onReleased: {
+                            if (musica.r?.canSeek)
+                                musica.r.position = destino;
+                        }
+                    }
+                }
+            }
+        }
+
         // ------------------------------------------------- Interruptores
         Grid {
             id: teclas
@@ -292,7 +488,7 @@ Item {
                 on: Networking.wifiEnabled
                 conFlecha: true
                 onAlternar: Networking.wifiEnabled = !Networking.wifiEnabled
-                onAbrir: Paneles.abrirPagina(pagina.pantalla, "red", "derecha")
+                onAbrir: pagina.abrirLista("wifi", "red")
             }
             Tecla {
                 width: teclas.ancho
@@ -305,7 +501,7 @@ Item {
                 on: pagina.adaptador?.enabled ?? false
                 conFlecha: true
                 onAlternar: Radios.alternarBluetooth()
-                onAbrir: Paneles.abrirPagina(pagina.pantalla, "bt", "derecha")
+                onAbrir: pagina.abrirLista("bluetooth", "bt")
             }
             Tecla {
                 width: teclas.ancho
@@ -353,8 +549,22 @@ Item {
             }
         }
 
+        // Las listas de redes y de Bluetooth, aquí mismo (en la isla); con
+        // una abierta, lo de debajo se esconde hasta recogerla
+        SeccionWifi {
+            visible: pagina.desplegada === "wifi"
+            width: parent.width
+            activa: pagina.activa && pagina.desplegada === "wifi"
+        }
+        SeccionBluetooth {
+            visible: pagina.desplegada === "bluetooth"
+            width: parent.width
+            activa: pagina.activa && pagina.desplegada === "bluetooth"
+        }
+
         // ------------------------------------ Volumen, micro y brillo
         Caja {
+            visible: !pagina.conRedes
             width: parent.width
             height: barras.implicitHeight + 16
             Column {
@@ -373,7 +583,7 @@ Item {
                         pagina.salida.audio.volume = v;
                     }
                     onIcono_: if (pagina.salida?.audio) pagina.salida.audio.muted = !pagina.salida.audio.muted
-                    onAbrir: Paneles.abrirPagina(pagina.pantalla, "sonido", "derecha")
+                    onAbrir: pagina.abrirLista("audio", "sonido")
                 }
                 FilaBarra {
                     icono: (pagina.entrada?.audio?.muted ?? true) ? "󰍭" : "󰍬"
@@ -399,10 +609,16 @@ Item {
             }
         }
 
+        // Las salidas de audio (altavoces, auriculares...), aquí mismo
+        SeccionAudio {
+            visible: pagina.desplegada === "audio"
+            width: parent.width
+        }
+
         // ------------------------------------------- Perfil de energía
         Rectangle {
             id: perfiles
-            visible: lista.length > 0
+            visible: lista.length > 0 && !pagina.conRedes
             width: parent.width
             height: 40
             radius: Tema.esquina(13)
@@ -468,11 +684,13 @@ Item {
 
         // ------------------------------------------------------ Energía
         Titulo {
+            visible: !pagina.conRedes
             text: pagina.armado >= 0 ? "¿SEGURO? PULSA OTRA VEZ" : "ENERGÍA"
             color: pagina.armado >= 0 ? Tema.rojo : Tema.gris
         }
         Row {
             id: energia
+            visible: !pagina.conRedes
             width: parent.width
             spacing: 8
             Repeater {
@@ -523,6 +741,7 @@ Item {
 
         // ----------------------------------------------- Notificaciones
         Item {
+            visible: !pagina.conRedes
             width: parent.width
             height: 16
             Titulo { text: "NOTIFICACIONES" }
@@ -542,6 +761,7 @@ Item {
             }
         }
         Caja {
+            visible: !pagina.conRedes
             width: parent.width
             height: avisos.implicitHeight + 12
             Column {
