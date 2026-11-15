@@ -356,7 +356,10 @@ print(url(lambda n: n.endswith("-linux-" + sys.argv[1] + ".flatpak")), url(lambd
 
 # cliphist (historial del portapapeles) no está en los repositorios de
 # Fedora 43: en ese caso se baja el programa oficial de su GitHub
+# (comprobando su suma). Para actualizarlo: sube CLIPHIST_VERSION y
+# CLIPHIST_SHA256 (sale en la página de la versión, junto a -linux-amd64).
 CLIPHIST_VERSION="v0.7.0"
+CLIPHIST_SHA256="d21ca6846bd25f7bd2dabb157912e2e07226db76be32885bc53d7f27db98d08a"
 cliphist_si_falta() {
     command -v cliphist >/dev/null && return 0
     if [[ "$(uname -m)" != "x86_64" ]]; then
@@ -368,10 +371,11 @@ cliphist_si_falta() {
     tmp="$(mktemp)"
     if curl -fsSL -o "$tmp" \
             "https://github.com/sentriz/cliphist/releases/download/$CLIPHIST_VERSION/$CLIPHIST_VERSION-linux-amd64" \
+            && echo "$CLIPHIST_SHA256  $tmp" | sha256sum -c --quiet - \
             && sudo install -m 755 "$tmp" /usr/local/bin/cliphist; then
         ok "cliphist $CLIPHIST_VERSION en /usr/local/bin"
     else
-        aviso "No se pudo descargar cliphist: el portapapeles funciona, pero sin historial"
+        aviso "No se pudo descargar cliphist (o no coincide su suma): el portapapeles funciona, pero sin historial"
     fi
     rm -f "$tmp"
 }
