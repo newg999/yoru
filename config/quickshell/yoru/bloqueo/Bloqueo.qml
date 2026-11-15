@@ -216,6 +216,8 @@ Scope {
         anchors.fill: parent
         animar: Ajustes.animaciones
         fondo: "file://" + Quickshell.env("HOME") + "/.cache/fondo-bloqueo-borroso.jpg"
+        // En reposo solo la hora: la contraseña sale al escribir
+        soloAlEscribir: true
         colorTexto: Tema.texto
         colorGris: Tema.gris
         colorAcento: Tema.blanco

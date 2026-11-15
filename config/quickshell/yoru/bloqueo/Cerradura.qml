@@ -12,6 +12,17 @@
 //                  Contraseña incorrecta
 //   ⏻                                                  (esquina)
 //
+//  soloAlEscribir (el bloqueo): al estilo de la isla de la barra. En reposo,
+//  solo la hora y la fecha en el centro. Al escribir (o con un clic) sube un
+//  poco y debajo sale una isla: una píldora oscura con una luna creciente,
+//  que crece con cada letra (los puntos salen con un rebote y, mientras se
+//  comprueba, laten en ola). Sin foto ni nombre. Se va tras 10 s sin
+//  escribir nada, o con Esc.
+//
+//                         16:29
+//                 sábado · 14 de noviembre
+//                    ( ☾  • • • • •  )
+//
 //  Animaciones (animar: false las quita): al bloquear todo aparece con un
 //  fundido; al fallar, la caja se pone roja y tiembla; al acertar, salir()
 //  lo funde y avisa con la señal fuera() (entonces se desbloquea).
@@ -40,6 +51,8 @@ Item {
     property color colorRojo: "#bf616a"
     property string fuente: "Noto Sans"
     property bool animar: true
+    // En reposo, solo la hora: la contraseña sale al escribir (o con un clic)
+    property bool soloAlEscribir: false
 
     // Contenido
     property string nombre: ""                // quien entra (su inicial, sin foto)
@@ -68,6 +81,26 @@ Item {
         sacudida.restart();
     }
 
+    // ----------------------------------------------- Solo la hora en reposo
+    property bool despierta: false
+    readonly property bool conAcceso: !soloAlEscribir || despierta || campo.text !== ""
+        || ocupada || encima.children.length > 0
+    function despertar() {
+        despierta = true;
+        dormir.restart();
+    }
+    Timer {
+        id: dormir
+        interval: 10000
+        onTriggered: if (campo.text === "" && !cerradura.ocupada && !menu.abierto)
+            cerradura.despierta = false
+    }
+    onErrorChanged: if (error) despertar()
+    onMensajeChanged: if (mensaje !== "") despertar()
+    // 0 = solo la hora · 1 = con la contraseña
+    property real acceder: conAcceso ? 1 : 0
+    Behavior on acceder { NumberAnimation { duration: cerradura.animar ? 350 : 0; easing.type: Easing.OutCubic } }
+
     // Contraseña buena: todo se funde
     property bool abierto: false
     function salir() {
@@ -88,6 +121,7 @@ Item {
         ojo: "M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z",
         ojoTachado: "M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.08L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.74,7.13 11.35,7 12,7Z",
         teclado: "M19,10H17V8H19M19,13H17V11H19M16,10H14V8H16M16,13H14V11H16M16,17H8V15H16M7,10H5V8H7M7,13H5V11H7M8,11H10V13H8M8,8H10V10H8M11,11H13V13H11M11,8H13V10H11M20,5H4C2.89,5 2,5.89 2,7V17A2,2 0 0,0 4,19H20A2,2 0 0,0 22,17V7C22,5.89 21.1,5 20,5Z",
+        creciente: "M2,12A10,10 0 0,0 15,21.54A10,10 0 0,1 15,2.46A10,10 0 0,0 2,12Z",
         energia: "M16.56,5.44L15.11,6.89C16.84,7.94 18,9.83 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12C6,9.83 7.16,7.94 8.88,6.88L7.44,5.44C5.36,6.88 4,9.28 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12C20,9.28 18.64,6.88 16.56,5.44M13,3H11V13H13",
         luna: "M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95Z",
         reiniciar: "M12,4C14.1,4 16.1,4.8 17.6,6.3C20.7,9.4 20.7,14.5 17.6,17.6C15.8,19.5 13.3,20.2 10.9,19.9L11.4,17.9C13.1,18.1 14.9,17.5 16.2,16.2C18.5,13.9 18.5,10.1 16.2,7.7C15.1,6.6 13.5,6 12,6V10.6L7,5.6L12,0.6V4M6.3,17.6C3.7,15 3.3,11 5.1,7.9L6.6,9.4C5.5,11.6 5.9,14.4 7.8,16.2C8.3,16.7 8.9,17.1 9.6,17.4L9,19.4C8,19 7.1,18.4 6.3,17.6Z"
@@ -175,6 +209,7 @@ Item {
         onClicked: {
             menu.abierto = false;
             cerradura.toque();
+            cerradura.despertar();
             campo.forceActiveFocus();
         }
     }
@@ -192,7 +227,11 @@ Item {
     Column {
         id: cabeza
         anchors.horizontalCenter: parent.horizontalCenter
-        y: Math.round(cerradura.height * 0.14)
+        // Isla: en el centro exacto; con la contraseña, sube un poco para
+        // dejarle sitio. Si no, arriba
+        y: cerradura.soloAlEscribir
+            ? Math.round((cerradura.height - height) / 2 - 36 * cerradura.acceder)
+            : Math.round(cerradura.height * 0.14)
         spacing: 4
         opacity: cerradura.visto
 
@@ -207,11 +246,14 @@ Item {
         }
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: Qt.locale("es_ES").toString(cerradura.ahora, "dddd, d 'de' MMMM")
+            text: cerradura.soloAlEscribir
+                ? Qt.locale("es_ES").toString(cerradura.ahora, "dddd · d 'de' MMMM")
+                : Qt.locale("es_ES").toString(cerradura.ahora, "dddd, d 'de' MMMM")
             color: cerradura.colorTexto
             opacity: 0.75
             font.family: cerradura.fuente
             font.pixelSize: Math.round(Math.max(15, cerradura.height * 0.019))
+            font.letterSpacing: cerradura.soloAlEscribir ? 2 : 0
         }
     }
 
@@ -221,15 +263,20 @@ Item {
     Column {
         id: acceso
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: Math.round(cerradura.height * 0.14)
+        // Isla: justo debajo de la hora. Si no, abajo
+        y: cerradura.soloAlEscribir
+            ? cabeza.y + cabeza.height + 30
+            : cerradura.height - Math.round(cerradura.height * 0.14) - height
         width: cerradura.anchoCampo
         spacing: 12
-        opacity: cerradura.visto
+        // Escondida sigue ahí (y con el foco): la primera tecla ya se escribe
+        opacity: cerradura.visto * cerradura.acceder
+        transform: Translate { y: 24 * (1 - cerradura.acceder) }
 
         // Foto (~/.face o la de AccountsService) o la inicial en un círculo
         Item {
             id: avatar
+            visible: !cerradura.soloAlEscribir
             anchors.horizontalCenter: parent.horizontalCenter
             width: 72
             height: 72
@@ -282,7 +329,7 @@ Item {
         // El nombre (o lo que ponga la pantalla de inicio: elegir usuario)
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            visible: encima.children.length === 0
+            visible: encima.children.length === 0 && !cerradura.soloAlEscribir
             text: cerradura.nombre
             color: cerradura.colorTexto
             font.family: cerradura.fuente
@@ -297,15 +344,21 @@ Item {
             visible: children.length > 0
         }
 
-        Item { width: 1; height: 2 }
+        Item { width: 1; height: 2; visible: !cerradura.soloAlEscribir }
 
         // La contraseña: una caja redondeada con un punto por letra
         Rectangle {
             id: caja
-            width: cerradura.anchoCampo
+            anchors.horizontalCenter: parent.horizontalCenter
+            // Isla: crece con cada letra
+            width: cerradura.soloAlEscribir
+                ? Math.min(cerradura.anchoCampo, Math.max(180, 120 + campo.text.length * 15))
+                : cerradura.anchoCampo
+            Behavior on width { NumberAnimation { duration: cerradura.animar ? 220 : 0; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
             height: 44
             radius: height / 2
-            color: cerradura.conAlfa(cerradura.colorAcento, 0.08)
+            color: cerradura.soloAlEscribir ? cerradura.conAlfa(cerradura.colorOscuro, 0.6)
+                : cerradura.conAlfa(cerradura.colorAcento, 0.08)
             border.width: 1
             border.color: cerradura.enRojo ? cerradura.colorRojo
                 : campo.activeFocus ? cerradura.conAlfa(cerradura.colorAcento, 0.3)
@@ -322,11 +375,21 @@ Item {
                 NumberAnimation { target: desplazamiento; property: "x"; to: 0; duration: 60 }
             }
 
+            // La luna de la isla (roja si falla)
+            Icono {
+                visible: cerradura.soloAlEscribir
+                anchors { left: parent.left; leftMargin: 15; verticalCenter: parent.verticalCenter }
+                width: 16; height: 16
+                trazo: cerradura.trazos.creciente
+                tinta: cerradura.enRojo ? cerradura.colorRojo : cerradura.colorTexto
+                opacity: cerradura.ocupada ? 0.5 : 0.9
+            }
+
             TextInput {
                 id: campo
                 property bool ver: false
                 anchors {
-                    left: parent.left; leftMargin: 18
+                    left: parent.left; leftMargin: cerradura.soloAlEscribir ? 42 : 18
                     right: botones.left; rightMargin: 4
                     top: parent.top; bottom: parent.bottom
                 }
@@ -347,14 +410,21 @@ Item {
                     visible: campo.cursorVisible && campo.ver
                 }
                 onAccepted: if (text !== "") cerradura.enviar(text)
+                onTextChanged: cerradura.despertar()
                 // Esc: cierra lo abierto (menú de apagar) y borra lo escrito
                 Keys.onEscapePressed: {
                     cerradura.toque();
-                    menu.abierto ? menu.abierto = false : campo.clear();
+                    if (menu.abierto)
+                        menu.abierto = false;
+                    else if (campo.text !== "")
+                        campo.clear();
+                    else
+                        cerradura.despierta = false;    // Esc sin nada: solo la hora
                 }
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
+                    x: cerradura.soloAlEscribir ? Math.round((campo.width - width) / 2) : 0
                     visible: campo.text === ""
                     text: cerradura.ocupada ? "Comprobando…" : cerradura.pista
                     color: cerradura.colorGris
@@ -368,14 +438,30 @@ Item {
                     readonly property int n: campo.ver ? 0 : campo.text.length
                     readonly property real tam: Math.max(4, Math.min(7, campo.width / Math.max(1, n) * 0.5))
                     anchors.verticalCenter: parent.verticalCenter
+                    x: cerradura.soloAlEscribir ? Math.round((campo.width - width) / 2) : 0
                     spacing: tam * 0.8
                     Repeater {
                         model: puntos.n
                         Rectangle {
+                            id: punto
+                            required property int index
                             width: puntos.tam
                             height: width
                             radius: width / 2
                             color: cerradura.colorTexto
+                            // Isla: sale con un rebote y, comprobando, late en ola
+                            NumberAnimation on scale {
+                                running: cerradura.soloAlEscribir && cerradura.animar
+                                from: 0; to: 1; duration: 260
+                                easing.type: Easing.OutBack; easing.overshoot: 2.5
+                            }
+                            SequentialAnimation on opacity {
+                                running: cerradura.soloAlEscribir && cerradura.ocupada
+                                loops: Animation.Infinite
+                                PauseAnimation { duration: punto.index * 70 }
+                                NumberAnimation { to: 0.25; duration: 280; easing.type: Easing.InOutSine }
+                                NumberAnimation { to: 1; duration: 280; easing.type: Easing.InOutSine }
+                            }
                         }
                     }
                 }
@@ -386,6 +472,8 @@ Item {
                 anchors { right: parent.right; rightMargin: 7; verticalCenter: parent.verticalCenter }
 
                 BotonIcono {
+                    // Isla: solo con algo escrito (vacía es más corta)
+                    visible: !cerradura.soloAlEscribir || campo.text !== ""
                     trazo: campo.ver ? cerradura.trazos.ojoTachado : cerradura.trazos.ojo
                     tam: 16
                     onPulsado: {
@@ -415,7 +503,7 @@ Item {
         }
 
         Text {
-            width: caja.width
+            width: cerradura.anchoCampo
             height: 16
             horizontalAlignment: Text.AlignHCenter
             text: cerradura.mensaje
