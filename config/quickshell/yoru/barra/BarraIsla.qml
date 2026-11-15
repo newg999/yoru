@@ -7,20 +7,20 @@
 //    reposo     ( ◕‿◕  18:42 )                   (grabando: un punto rojo)
 //
 //    abierta    ╭──────────────────────────────╮
-//               │  Sistema ‹  Menú  › Segundo  │  tres páginas: se pasa de
+//               │  Música ‹  Menú  › Segundo   │  tres páginas: se pasa de
 //               │          plano               │  una a otra deslizando
 //               │   ◕‿◕  18:42                 │
-//               │        jueves, 13 de nov.    │  Menú: buscar, la canción,
-//               │  [󰍉 Buscar             ]     │  volumen, brillo y botones
-//               │  [████ 󰕾 ──────── 80%]       │  Sistema: CPU, memoria,
-//               │   ⏺   ⧉   ▦   󰅍            │  temperatura, encendido
+//               │        jueves, 13 de nov.    │  Menú: buscar, volumen,
+//               │  [󰍉 Buscar             ]     │  brillo y botones
+//               │  [████ 󰕾 ──────── 80%]       │  Música: la canción en
+//               │   ⏺   ⧉   ▦   󰅍            │  grande
 //               │          •  ●  •             │  Segundo plano: la bandeja
 //               ╰──────────────────────────────╯
 //
 //    Gestos (touchpad, rueda o arrastrando con el ratón):
 //      clic · Mod+X · deslizar abajo   abrir (en el Menú)
 //      rueda del ratón (cerrada)       escritorio anterior / siguiente
-//      deslizar a la derecha           Sistema
+//      deslizar a la derecha           Música
 //      deslizar a la izquierda         Segundo plano
 //      abierta: de lado = otra página · hacia arriba, Esc o clic fuera = cerrar
 //
@@ -30,11 +30,13 @@
 //      canción    ( [carátula]  Título · Artista   ılıl )    3 s al empezar una
 //      cargador   ( 󰂄  Cargando · 54% )                      2,5 s
 //
-//  La luna (Personaje.qml): contenta con música, se asusta un poco con cada
-//  aviso, suda con poca batería, se duerme si no usas el equipo y te sigue
-//  con la mirada. Clic en ella: juega · pasarle el ratón de lado a lado:
-//  mimos · mira hacia el escritorio al que vas · chispas con el cargador. Los paneles que se abren desde fuera (calendario, wifi...)
-//  cuelgan de la isla (Paneles.islaUnica).
+//  La luna, Hotaru (Personaje.qml), seria: con música cabecea al ritmo, da
+//  un respingo con cada aviso, suda con poca batería, se duerme si no usas
+//  el equipo y te sigue con la mirada. Clic en ella: con música, abre la
+//  página de la música; sin música, guiña o se enciende ·
+//  mira hacia el escritorio al que vas · chispas con el cargador. Los
+//  paneles que se abren desde fuera (calendario, wifi...) cuelgan de la
+//  isla (Paneles.islaUnica).
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -106,10 +108,10 @@ PanelWindow {
     readonly property bool panelAbierto: algoAbierto && Paneles.pantalla === modelData
 
     // ------------------------------------------------- Abierta y páginas
-    // 0 = Sistema · 1 = Menú · 2 = Segundo plano
+    // 0 = Música · 1 = Menú · 2 = Segundo plano
     property bool abierta: false
     property int pagina: 1
-    readonly property var nombresPaginas: ["Sistema", "Menú", "Segundo plano"]
+    readonly property var nombresPaginas: ["Música", "Menú", "Segundo plano"]
     function abrir(p) {
         terminar();
         if (algoAbierto)
@@ -132,7 +134,6 @@ PanelWindow {
         if (abierta) {
             buscar.text = "";
             enfocar();
-            Sesion.leerEncendido();
             luna.guino();
         }
     }
@@ -359,8 +360,8 @@ PanelWindow {
         color: reposando ? Tema.isla : Tema.sombra(Math.max(0.96, Ajustes.opacidadIslas))
         border.width: Tema.borde(1)
         border.color: Tema.islaBorde
-        // Sin recortar solo con la píldora ya en su sitio (así los corazones
-        // y las notas de la luna salen por encima); mientras encoge, sí: si
+        // Sin recortar solo con la píldora ya en su sitio (así las chispas
+        // de la luna salen por encima); mientras encoge, sí: si
         // no, lo que se iba se dibujaba fuera de ella
         readonly property bool asentada: reposando
             && Math.abs(width - (cajaReposo.implicitWidth + 2 * relleno)) < 1
@@ -387,21 +388,12 @@ PanelWindow {
             property bool gastado: false
             onPressed: e => { desde = Qt.point(e.x, e.y); gastado = false; }
             onPositionChanged: e => {
+                // Para Hotaru: dónde está el ratón en la pantalla
+                const g = raton.mapToItem(null, e.x, e.y);
+                Raton.apuntar(barra.modelData, g.x, g.y);
                 if (pressed && !gastado)
                     gastado = barra.arrastre(e.x - desde.x, e.y - desde.y);
-                // Mimos: el ratón pasando por encima de la luna
-                if (!pressed) {
-                    const l = barra.abierta ? lunaGrande : isla.reposando ? luna : null;
-                    if (l) {
-                        const p = l.mapFromItem(raton, e.x, e.y);
-                        if (p.x >= 0 && p.y >= 0 && p.x <= l.width && p.y <= l.height)
-                            l.rozar(p.x);
-                        else
-                            l.dejarDeRozar();
-                    }
-                }
             }
-            onExited: { luna.dejarDeRozar(); lunaGrande.dejarDeRozar(); }
             onClicked: e => {
                 if (gastado)
                     return;
@@ -415,8 +407,13 @@ PanelWindow {
                         lunaGrande.jugar();
                     return;
                 }
+                // Clic en Hotaru: con música sonando, a la página de la música;
+                // sin música, juega
                 if (isla.reposando && e.button === Qt.LeftButton && sobre(luna)) {
-                    luna.jugar();
+                    if (barra.sonando)
+                        barra.abrir(0);
+                    else
+                        luna.jugar();
                     return;
                 }
                 if (barra.actividad === "aviso" && barra.aviso) {
@@ -426,9 +423,10 @@ PanelWindow {
                         Notificaciones.abrir(a);
                     return;
                 }
+                // La canción: la isla se abre en su página de la izquierda,
+                // donde está la música
                 if (barra.actividad === "cancion") {
-                    barra.terminar();
-                    Paneles.abrirPagina(barra.modelData, "multimedia", "centro");
+                    barra.abrir(0);
                     return;
                 }
                 barra.abrir(1);
@@ -459,22 +457,8 @@ PanelWindow {
                 contento: barra.sonandoMusica
                 dormido: reposo.isIdle
                 preocupado: barra.hayBateria && !barra.cargando && barra.carga <= 15
-                // El ratón: encima de la isla, o por el escritorio de esta pantalla
-                readonly property var enEscritorio: Paneles.ratonEscritorio?.pantalla === barra.modelData.name ? Paneles.ratonEscritorio : null
-                siguiendo: raton.containsMouse || enEscritorio !== null
-                mirada: {
-                    if (raton.containsMouse) {
-                        const p = luna.mapFromItem(isla, raton.mouseX, raton.mouseY);
-                        return Qt.point(Math.max(-1, Math.min(1, (p.x - luna.width / 2) / 60)),
-                                        Math.max(-1, Math.min(1, (p.y - luna.height / 2) / 14)));
-                    }
-                    if (!enEscritorio)
-                        return Qt.point(0, 0);
-                    // Desde el centro de la luna (en la pantalla) hasta el ratón
-                    const c = luna.mapToItem(null, luna.width / 2, luna.height / 2);
-                    const dx = enEscritorio.x - c.x, dy = enEscritorio.y - c.y;
-                    return Qt.point(Math.max(-1, Math.min(1, dx / 350)), Math.max(-1, Math.min(1, dy / 220)));
-                }
+                // Mira siempre al cursor (comun/Raton.qml)
+                pantalla: barra.modelData
             }
             // Grabando: punto rojo y lo que lleva
             Row {
@@ -608,95 +592,25 @@ PanelWindow {
                 onWheel: e => barraNivel.mover(Math.max(0, Math.min(1, barraNivel.valor + (e.angleDelta.y > 0 ? 0.05 : -0.05))))
             }
         }
-        // Un anillo con su % dentro (Sistema)
-        component Anillo: Item {
-            id: anillo
-            property real valor: 0          // 0..1
-            property string titulo: ""
-            property string detalle: ""
-            width: barra.m(112)
-            height: barra.m(128)
-            Canvas {
-                id: lienzo
-                width: barra.m(96); height: width
-                anchors.horizontalCenter: parent.horizontalCenter
-                property real v: anillo.valor
-                Behavior on v { NumberAnimation { duration: Tema.ms(600); easing.type: Easing.OutCubic } }
-                onVChanged: requestPaint()
-                onPaint: {
-                    const c = getContext("2d");
-                    c.reset();
-                    const r = width / 2 - 6;
-                    c.lineWidth = 8;
-                    c.lineCap = "round";
-                    c.strokeStyle = Tema.caja;
-                    c.beginPath();
-                    c.arc(width / 2, height / 2, r, 0, 2 * Math.PI);
-                    c.stroke();
-                    if (v > 0.005) {
-                        c.strokeStyle = v > 0.85 ? Tema.rojo : Tema.blanco;
-                        c.beginPath();
-                        c.arc(width / 2, height / 2, r, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI * Math.min(1, v));
-                        c.stroke();
-                    }
-                }
-                Texto {
-                    anchors.centerIn: parent
-                    text: Math.round(anillo.valor * 100) + "%"
-                    font.pixelSize: barra.m(18)
-                    color: Tema.blanco
-                }
-            }
-            Column {
-                anchors { top: lienzo.bottom; topMargin: 6; horizontalCenter: parent.horizontalCenter }
-                Texto {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: anillo.titulo
-                    font.pixelSize: barra.m(12)
-                }
-                Texto {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: anillo.detalle
-                    font.bold: false
-                    font.pixelSize: barra.m(10)
-                    color: Tema.gris
-                }
-            }
-        }
-        // Una línea de dato: icono · nombre ........ valor
-        component Dato: Item {
-            id: dato
-            property string icono: ""
-            property string nombre: ""
-            property string valor: ""
-            height: barra.m(30)
-            Texto { x: 4; anchors.verticalCenter: parent.verticalCenter; text: dato.icono; font.pixelSize: barra.m(15); color: Tema.gris }
-            Texto { x: barra.m(30); anchors.verticalCenter: parent.verticalCenter; text: dato.nombre; font.bold: false; font.pixelSize: barra.m(12) }
-            Texto {
-                anchors { right: parent.right; rightMargin: 4; verticalCenter: parent.verticalCenter }
-                text: dato.valor
-                font.pixelSize: barra.m(12)
-                color: Tema.blanco
-            }
-        }
-
         // ------------------------------------------------- Las páginas
         Item {
             id: cajaPaginas
             readonly property bool activa: isla.contenido === cajaPaginas
             readonly property int ancho: 4 * barra.m(72) + 3 * barra.m(6)
-            readonly property Item actual: [paginaSistema, paginaMenu, paginaBandeja][barra.pagina]
+            readonly property Item actual: [paginaMusica, paginaMenu, paginaBandeja][barra.pagina]
             // Lo de la página + los puntitos de abajo
             readonly property int altoIsla: actual.implicitHeight + barra.m(14) + 12 + puntos.height + barra.m(12)
             implicitWidth: ancho
             width: ancho
             height: parent.height
-            anchors.horizontalCenter: parent.horizontalCenter
+            // Quieta en la pantalla y sin zoom al entrar: centrada en la
+            // pantalla (no en la isla, que crece y redondea a cada paso), si
+            // no bailaba un píxel a los lados mientras se abría
+            x: Math.round((barra.width - width) / 2) - isla.x
             opacity: activa ? 1 : 0
             // Siempre «visible» (si no, oculta mide 0 y la isla crecía o
             // encogía en dos tiempos); lo que no se ve no recibe clics
             enabled: activa
-            scale: 0.96 + 0.04 * opacity
             Behavior on opacity { id: aparece2; Aparecer { entrando: aparece2.targetValue > 0.5 } }
             Keys.onEscapePressed: barra.abierta = false
             Keys.onLeftPressed: barra.pasar(-1)
@@ -709,73 +623,24 @@ PanelWindow {
                 width: parent.width
                 height: cajaPaginas.actual.implicitHeight
                 property real desplazado: barra.pagina
-                Behavior on desplazado { Suave {} }
+                // Solo se desliza con la isla ya abierta: al abrirla en otra
+                // página (clic en Hotaru, la canción...), aparece ya en ella
+                Behavior on desplazado { enabled: barra.abierta; Suave {} }
 
-                // ---------------------------------------- Sistema
+                // ---------------------------------------- Música
                 Column {
-                    id: paginaSistema
+                    id: paginaMusica
                     width: parent.width
                     // Solo la que se ve recibe clics (las otras siguen ahí, fuera de la isla)
                     enabled: barra.pagina === 0
                     visible: opacity > 0.01
                     x: (0 - carril.desplazado) * (parent.width + 40)
                     opacity: 1 - Math.min(1, Math.abs(0 - carril.desplazado))
-                    spacing: 12
-                    Texto {
-                        text: "Sistema"
-                        font.pixelSize: barra.m(15)
-                        color: Tema.blanco
-                    }
-                    Row {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 16
-                        Anillo {
-                            valor: Sistema.cpu / 100
-                            titulo: "CPU"
-                            detalle: Sistema.temperatura > 0 ? Sistema.temperatura + " °C" : ""
-                        }
-                        Anillo {
-                            valor: Sistema.memoria / 100
-                            titulo: "Memoria"
-                            detalle: Sistema.memUsada.toFixed(1) + " de " + Sistema.memTotal.toFixed(0) + " GB"
-                        }
-                    }
-                    Column {
+                    TarjetaMusica {
                         width: parent.width
-                        Dato {
-                            width: parent.width
-                            icono: "󰔏"; nombre: "Temperatura"
-                            valor: Sistema.temperatura > 0 ? Sistema.temperatura + " °C" : "—"
-                        }
-                        Dato {
-                            width: parent.width
-                            visible: barra.hayBateria
-                            icono: barra.cargando ? "󰂄" : "󰁹"; nombre: "Batería"
-                            valor: barra.carga + "%" + (barra.cargando ? " · cargando" : "")
-                        }
-                        Dato {
-                            width: parent.width
-                            icono: "󰔟"; nombre: "Encendido"
-                            valor: Sesion.encendido
-                        }
-                    }
-                    Rectangle {
-                        width: parent.width
-                        height: barra.m(34)
-                        radius: height / 2
-                        color: monitorRaton.containsMouse ? Tema.cajaHover : Tema.caja
-                        Texto {
-                            anchors.centerIn: parent
-                            text: "󰍛  Monitor del sistema"
-                            font.pixelSize: barra.m(12)
-                        }
-                        MouseArea {
-                            id: monitorRaton
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: barra.hacer(() => Paneles.alternar("monitor", barra.modelData, "procesos"))
-                        }
+                        k: barra.k
+                        pantalla: barra.modelData
+                        activa: barra.abierta && barra.pagina === 0
                     }
                 }
 
@@ -816,12 +681,8 @@ PanelWindow {
                             interactivo: true
                             contento: barra.sonandoMusica
                             preocupado: barra.hayBateria && !barra.cargando && barra.carga <= 15
-                            siguiendo: barra.abierta && raton.containsMouse
-                            mirada: {
-                                const p = lunaGrande.mapFromItem(raton, raton.mouseX, raton.mouseY);
-                                return Qt.point(Math.max(-1, Math.min(1, (p.x - lunaGrande.width / 2) / 120)),
-                                                Math.max(-1, Math.min(1, (p.y - lunaGrande.height / 2) / 80)));
-                            }
+                            pantalla: barra.modelData
+                            alcance: barra.m(260)
                         }
                         Column {
                             anchors.verticalCenter: parent.verticalCenter
@@ -1014,7 +875,6 @@ PanelWindow {
                         pantalla: barra.modelData
                         activa: barra.abierta && barra.pagina === 1
                         conCabecera: false
-                        conMusica: true
                         enLinea: true
                     }
                 }

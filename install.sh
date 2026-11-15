@@ -664,10 +664,24 @@ configurar_sistema() {
     steam_niri
     ajustes_juegos
     apps_predeterminadas
+    raton_luna
 
     pantalla_login
     pantalla_arranque
     menu_grub
+}
+
+# Hotaru (la luna de la barra) sigue el cursor también por encima de las
+# ventanas: puede leer los ratones (solo los ratones, no los teclados)
+raton_luna() {
+    if sudo install -D -m 644 "$REPO/system/udev/70-yoru-raton.rules" \
+            /etc/udev/rules.d/70-yoru-raton.rules; then
+        sudo udevadm control --reload >/dev/null 2>&1 || true
+        sudo udevadm trigger --subsystem-match=input --action=change >/dev/null 2>&1 || true
+        ok "La luna de la barra sigue al ratón"
+    else
+        aviso "No se pudo instalar la regla del ratón: la luna solo lo verá sobre la barra y el escritorio"
+    fi
 }
 
 # Pantalla de arranque (Plymouth): el 夜 sobre fondo oscuro mientras arranca

@@ -244,7 +244,7 @@ ShellRoot {
     //                                                          abre la ventana de Ajustes en esa sección)
     //   qs -c yoru ipc call panel cerrar
     // El menú de la isla (estilo Isla), en la pantalla con el foco:
-    //   qs -c yoru ipc call isla menu          (Mod+X)     o sistema, bandeja
+    //   qs -c yoru ipc call isla menu          (Mod+X)     o musica, bandeja
     IpcHandler {
         target: "isla"
         function abrirEn(pagina: int): void {
@@ -252,7 +252,8 @@ ShellRoot {
             Paneles.menuIsla(salida, pagina);
         }
         function menu(): void { abrirEn(1); }
-        function sistema(): void { abrirEn(0); }
+        function musica(): void { abrirEn(0); }
+        function sistema(): void { abrirEn(0); }    // (antes; ahora es la música)
         function bandeja(): void { abrirEn(2); }
     }
     IpcHandler {

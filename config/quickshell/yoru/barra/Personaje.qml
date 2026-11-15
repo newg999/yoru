@@ -1,5 +1,6 @@
 // ============================================================================
-//  Personaje — la luna de Yoru (夜, «noche»): vive en la isla y reacciona
+//  Personaje — Hotaru (蛍, luciérnaga), la luna de Yoru (夜, «noche»):
+//  vive en la isla y reacciona
 //  a lo que pasa. Dibujada con formas, en una rejilla de 24×24 que escala.
 //  Seria y algo siniestra: gris hueso, media cara en sombra (un eclipse),
 //  cráteres hondos y una cicatriz, cejas en V y una brasa en cada ojo.
@@ -11,24 +12,25 @@
 //      ╰─╮     °░╭─╯
 //        ╰───────╯
 //
-//    contento     hay música: ojos de «tranquilo», media sonrisa ladeada y
-//                 se mece al ritmo
+//    Seria: nada de corazones, rubor ni saltitos.
+//    contento     hay música: sin sonreír, con su cara seria, cabecea
+//                 despacio (baja la cabeza y vuelve)
 //    dormido      el equipo lleva un rato sin usarse: ojos cerrados y «z z»
 //    preocupado   poca batería: una gota de sudor
-//    sorpresa()   llega un aviso: un saltito con los ojos muy abiertos
-//    guino()      guiña un ojo y da un brinco
-//    jugar()      al hacerle clic: cada vez una cosa (guiño, saltitos, una
-//                 vuelta entera o una risita con los ojos > <)
-//    mimos        pasarle el ratón por encima de lado a lado (rozar(x)):
-//                 cierra los ojos contenta, se sonroja y suelta corazones
+//    sorpresa()   llega un aviso: un respingo con los ojos muy abiertos
+//    guino()      guiña un ojo
+//    jugar()      al hacerle clic: guiña o se enciende (la brasa y el aura)
 //    bostezar()   al despertar (y de madrugada, de vez en cuando)
 //    mirarHacia() mira un momento a un sitio (al cambiar de escritorio)
 //    apretar()    ojos > < un momento (el volumen muy alto)
 //    chispas()    unas chispitas (al enchufar el cargador)
-//    De madrugada (0-6 h) tiene sueño: ojos entornados. Con música, de vez
-//    en cuando le sale una notita.
-//    mirada       hacia dónde mira (-1..1 en x e y); «siguiendo» = la manda
-//                 quien lo usa (el ratón); si no, mira por su cuenta
+//    De madrugada (0-6 h) tiene sueño: ojos entornados.
+//    aura         un halo de brasa detrás y una corona de eclipse que asoma
+//                 por el lado oscuro: late con su respiración; con música,
+//                 al ritmo y más fuerte; dormido, casi apagada
+//    pantalla     con ella, mira siempre al cursor (comun/Raton.qml)
+//    mirada       si no: hacia dónde mira (-1..1 en x e y); «siguiendo» = la
+//                 manda quien lo usa; si no, mira por su cuenta
 // ============================================================================
 import QtQuick
 import QtQuick.Shapes
@@ -52,6 +54,7 @@ Item {
     property color tinta: "#0b0c10"
     property color brasa: "#ff5a48"
     property bool animado: Ajustes.animaciones
+    readonly property string nombre: "Hotaru"
 
     width: tam
     height: tam
@@ -60,14 +63,39 @@ Item {
     // ------------------------------------------------------------ Mirada
     // La de verdad (suave): la que manda quien lo usa o la suya propia
     property point ojeada: Qt.point(0, 0)
-    readonly property point objetivo: dormido ? Qt.point(0, 0.3) : siguiendo ? mirada : ojeada
+    // Con «pantalla» (la ShellScreen donde está), mira siempre al cursor
+    // (comun/Raton.qml): en su dirección, y más de lado cuanto más lejos
+    property var pantalla: null
+    property real alcance: tam * 8      // a esta distancia, ya del todo de lado
+    readonly property bool conRaton: pantalla !== null && Raton.pos !== null
+    property int _tic: 0                // la luna se mueve (la isla se abre...)
+    Timer {
+        running: yo.conRaton && yo.visible
+        repeat: true
+        interval: 100
+        onTriggered: yo._tic++
+    }
+    readonly property point miradaRaton: {
+        _tic;
+        const p = Raton.pos;
+        if (!conRaton)
+            return Qt.point(0, 0);
+        const c = yo.mapToItem(null, width / 2, height / 2);
+        const dx = p.x - (pantalla.x + c.x), dy = p.y - (pantalla.y + c.y);
+        const d = Math.hypot(dx, dy);
+        if (d < 1)
+            return Qt.point(0, 0);
+        const k = Math.min(1, d / alcance);
+        return Qt.point(dx / d * k, dy / d * k);
+    }
+    readonly property point objetivo: dormido ? Qt.point(0, 0.3) : conRaton ? miradaRaton : siguiendo ? mirada : ojeada
     property real mx: objetivo.x
     property real my: objetivo.y
-    Behavior on mx { NumberAnimation { duration: yo.siguiendo ? 90 : 420; easing.type: Easing.OutCubic } }
-    Behavior on my { NumberAnimation { duration: yo.siguiendo ? 90 : 420; easing.type: Easing.OutCubic } }
+    Behavior on mx { NumberAnimation { duration: (yo.siguiendo || yo.conRaton) ? 90 : 420; easing.type: Easing.OutCubic } }
+    Behavior on my { NumberAnimation { duration: (yo.siguiendo || yo.conRaton) ? 90 : 420; easing.type: Easing.OutCubic } }
     // Por su cuenta: de vez en cuando mira a algún lado y vuelve al frente
     Timer {
-        running: yo.animado && !yo.dormido && !yo.siguiendo && yo.visible
+        running: yo.animado && !yo.dormido && !yo.siguiendo && !yo.conRaton && yo.visible
         repeat: true
         interval: 3500
         onTriggered: {
@@ -123,26 +151,22 @@ Item {
     SequentialAnimation {
         id: animSorpresa
         ParallelAnimation {
-            NumberAnimation { target: yo; property: "salto"; to: 4.5; duration: 150; easing.type: Easing.OutQuad }
-            NumberAnimation { target: yo; property: "asombro"; to: 1; duration: 150 }
+            NumberAnimation { target: yo; property: "salto"; to: 1.5; duration: 110; easing.type: Easing.OutQuad }
+            NumberAnimation { target: yo; property: "asombro"; to: 1; duration: 110 }
         }
-        NumberAnimation { target: yo; property: "salto"; to: 0; duration: 420; easing.type: Easing.OutBounce }
+        NumberAnimation { target: yo; property: "salto"; to: 0; duration: 260; easing.type: Easing.OutCubic }
         PauseAnimation { duration: 500 }
         NumberAnimation { target: yo; property: "asombro"; to: 0; duration: 300 }
     }
     SequentialAnimation {
         id: animGuino
-        ParallelAnimation {
-            NumberAnimation { target: yo; property: "guinando"; to: 0.08; duration: 90 }
-            NumberAnimation { target: yo; property: "salto"; to: 2.5; duration: 140; easing.type: Easing.OutQuad }
-        }
-        NumberAnimation { target: yo; property: "salto"; to: 0; duration: 260; easing.type: Easing.OutBounce }
-        PauseAnimation { duration: 220 }
+        NumberAnimation { target: yo; property: "guinando"; to: 0.08; duration: 90 }
+        PauseAnimation { duration: 420 }
         NumberAnimation { target: yo; property: "guinando"; to: 1; duration: 140 }
     }
 
-    // Jugar (clic): cada vez una distinta, sin repetir la última
-    property int _ultimoJuego: -1
+    // Jugar (clic): guiña o se enciende, una cada vez
+    property bool _guinoAntes: false
     function jugar() {
         if (!animado)
             return;
@@ -150,47 +174,19 @@ Item {
             bostezar();
             return;
         }
-        let n = Math.floor(Math.random() * 4);
-        if (n === _ultimoJuego)
-            n = (n + 1) % 4;
-        _ultimoJuego = n;
-        [animGuino, animSaltitos, animVuelta, animRisita][n].restart();
-        if (n === 1)
-            soltar("♪", luna, 1);
+        _guinoAntes = !_guinoAntes;
+        (_guinoAntes ? animGuino : animEncender).restart();
     }
-    property real giro: 0               // grados de más (la vuelta)
-    property real sacudida: 0           // -1..1 (la risita)
+    property real giro: 0               // grados de más
+    property real sacudida: 0           // -1..1
     property real ojosX: 0              // 0..1: ojos > <
+    // Encenderse: la brasa de los ojos y el aura suben y se apagan despacio
+    property real encendido: 0          // 0..1
     SequentialAnimation {
-        id: animSaltitos
-        NumberAnimation { target: yo; property: "salto"; to: 3; duration: 130; easing.type: Easing.OutQuad }
-        NumberAnimation { target: yo; property: "salto"; to: 0; duration: 150; easing.type: Easing.InQuad }
-        NumberAnimation { target: yo; property: "salto"; to: 2.2; duration: 120; easing.type: Easing.OutQuad }
-        NumberAnimation { target: yo; property: "salto"; to: 0; duration: 260; easing.type: Easing.OutBounce }
-    }
-    SequentialAnimation {
-        id: animVuelta
-        ParallelAnimation {
-            NumberAnimation { target: yo; property: "giro"; from: 0; to: 360; duration: 620; easing.type: Easing.InOutCubic }
-            SequentialAnimation {
-                NumberAnimation { target: yo; property: "salto"; to: 3.5; duration: 310; easing.type: Easing.OutQuad }
-                NumberAnimation { target: yo; property: "salto"; to: 0; duration: 310; easing.type: Easing.InQuad }
-            }
-        }
-        PropertyAction { target: yo; property: "giro"; value: 0 }
-        ScriptAction { script: yo.mirarHacia(0.6, -0.2) }
-    }
-    SequentialAnimation {
-        id: animRisita
-        NumberAnimation { target: yo; property: "ojosX"; to: 1; duration: 80 }
-        SequentialAnimation {
-            loops: 3
-            NumberAnimation { target: yo; property: "sacudida"; to: 1; duration: 70 }
-            NumberAnimation { target: yo; property: "sacudida"; to: -1; duration: 140 }
-            NumberAnimation { target: yo; property: "sacudida"; to: 0; duration: 70 }
-        }
-        PauseAnimation { duration: 150 }
-        NumberAnimation { target: yo; property: "ojosX"; to: 0; duration: 120 }
+        id: animEncender
+        NumberAnimation { target: yo; property: "encendido"; to: 1; duration: 180; easing.type: Easing.OutQuad }
+        PauseAnimation { duration: 500 }
+        NumberAnimation { target: yo; property: "encendido"; to: 0; duration: 900; easing.type: Easing.InOutSine }
     }
     // El volumen muy alto: ojos apretados un momento
     function apretar() {
@@ -205,20 +201,6 @@ Item {
         NumberAnimation { target: yo; property: "ojosX"; to: 0; duration: 150 }
     }
 
-    // Mimos: ojos ^ ^, mofletes y corazones (mientras siga, se mantiene)
-    property real mimado: 0
-    function mimar() {
-        if (!animado || dormido)
-            return;
-        if (mimado < 1)
-            animMimos.restart();
-        soltar("♥", Tema.rojo, 2);
-        finMimos.restart();
-    }
-    NumberAnimation { id: animMimos; target: yo; property: "mimado"; to: 1; duration: 200 }
-    Timer { id: finMimos; interval: 1600; onTriggered: animFinMimos.restart() }
-    NumberAnimation { id: animFinMimos; target: yo; property: "mimado"; to: 0; duration: 400 }
-
     // Bostezo: ojos cerrados, la boca abierta y un estirón
     property real bostezo: 0
     function bostezar() {
@@ -232,9 +214,8 @@ Item {
         PauseAnimation { duration: 700 }
         NumberAnimation { target: yo; property: "bostezo"; to: 0; duration: 450; easing.type: Easing.InOutSine }
     }
-    // Al despertar: bosteza y da un saltito
-    onDormidoChanged: if (!dormido && animado) { bostezar(); despertarSalto.start(); }
-    Timer { id: despertarSalto; interval: 1800; onTriggered: animSaltitos.restart() }
+    // Al despertar: bosteza
+    onDormidoChanged: if (!dormido && animado) bostezar()
 
     // De madrugada tiene sueño: ojos entornados y algún bostezo
     property bool trasnoche: false
@@ -257,50 +238,6 @@ Item {
             return;
         soltar("✦", Tema.amarillo, 3);
     }
-    // Con música, de vez en cuando una notita
-    Timer {
-        running: yo.animado && yo.contento && !yo.dormido && yo.visible
-        repeat: true
-        interval: 5000
-        onTriggered: {
-            interval = 4000 + Math.random() * 5000;
-            yo.soltar(Math.random() < 0.5 ? "♪" : "♫", yo.luna, 1);
-        }
-    }
-
-    // Mimos con el ratón: pasar por encima de lado a lado (tres cambios de
-    // sentido seguidos). Quien la usa llama a rozar(x) con el ratón encima
-    // (un HoverHandler aquí no se enteraba)
-    property real _ultimoX: -1
-    property int _sentido: 0
-    property int _vueltas: 0
-    function rozar(x) {
-        if (!interactivo)
-            return;
-        if (_ultimoX < 0) {
-            _ultimoX = x;
-            return;
-        }
-        if (Math.abs(x - _ultimoX) < 1.5)
-            return;
-        const s = x > _ultimoX ? 1 : -1;
-        if (_sentido !== 0 && s !== _sentido) {
-            _vueltas++;
-            olvidarMimos.restart();
-            if (_vueltas >= 3) {
-                _vueltas = 0;
-                mimar();
-            }
-        }
-        _sentido = s;
-        _ultimoX = x;
-    }
-    function dejarDeRozar() {
-        _ultimoX = -1;
-        _sentido = 0;
-    }
-    Timer { id: olvidarMimos; interval: 700; onTriggered: yo._vueltas = 0 }
-
     // Respirar (más despacio dormido) y mecerse con la música
     property real respiro: 0
     SequentialAnimation on respiro {
@@ -309,31 +246,75 @@ Item {
         NumberAnimation { to: 1; duration: yo.dormido ? 2600 : 1700; easing.type: Easing.InOutSine }
         NumberAnimation { to: 0; duration: yo.dormido ? 2600 : 1700; easing.type: Easing.InOutSine }
     }
-    property real vaiven: 0             // -1..1
-    SequentialAnimation on vaiven {
+    // Con música, cabecea despacio: baja la cabeza, vuelve y espera un poco
+    property real cabeceo: 0            // 0..1 (1 = abajo)
+    SequentialAnimation on cabeceo {
         running: yo.animado && yo.contento && !yo.dormido && yo.visible
         loops: Animation.Infinite
-        NumberAnimation { to: 1; duration: 280; easing.type: Easing.OutSine }
-        NumberAnimation { to: 0; duration: 280; easing.type: Easing.InSine }
-        NumberAnimation { to: -1; duration: 280; easing.type: Easing.OutSine }
-        NumberAnimation { to: 0; duration: 280; easing.type: Easing.InSine }
+        NumberAnimation { to: 1; duration: 420; easing.type: Easing.InOutSine }
+        NumberAnimation { to: 0; duration: 900; easing.type: Easing.InOutSine }
+        PauseAnimation { duration: 180 }
     }
-    onContentoChanged: if (!contento) vaiven = 0
+    onContentoChanged: if (!contento) cabeceo = 0
 
     // --------------------------------------------------------- El dibujo
     Item {
         id: cuerpo
         width: yo.tam
         height: yo.tam
-        y: -yo.salto * yo.u + Math.abs(yo.vaiven) * -0.8 * yo.u
+        y: (-yo.salto + yo.cabeceo * 1.3) * yo.u
         x: yo.sacudida * 0.9 * yo.u
         rotation: inclinado + yo.giro
-        readonly property real inclinado: yo.dormido ? -12 : yo.vaiven * 7 + yo.sacudida * 6
+        readonly property real inclinado: yo.dormido ? -12 : yo.sacudida * 6
         transform: Scale {
             origin.x: cuerpo.width / 2
             origin.y: cuerpo.height
             xScale: 1 + yo.respiro * 0.015 - yo.bostezo * 0.04
-            yScale: 1 + yo.respiro * 0.035 + yo.bostezo * 0.09
+            yScale: 1 + yo.respiro * 0.035 + yo.bostezo * 0.09 - yo.cabeceo * 0.06
+        }
+
+        // El aura: la brasa de dentro que se escapa (un halo detrás) y la
+        // corona del eclipse, que asoma por el lado de la sombra
+        Item {
+            id: aura
+            anchors.fill: parent
+            z: -1
+            // 0..1: en calma respira; con música, golpea al ritmo
+            property real fuerza: yo.dormido ? 0.15
+                : yo.contento ? 0.6 + yo.cabeceo * 0.4
+                : 0.35 + yo.respiro * 0.25 + yo.encendido * 0.65 + yo.asombro * 0.3
+            Behavior on fuerza { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+            Shape {
+                anchors.fill: parent
+                opacity: aura.fuerza
+                preferredRendererType: Shape.CurveRenderer
+                ShapePath {
+                    strokeColor: "transparent"
+                    fillGradient: RadialGradient {
+                        centerX: 12 * yo.u; centerY: 12.5 * yo.u; centerRadius: (15 + aura.fuerza * 2) * yo.u
+                        focalX: 12 * yo.u; focalY: 12.5 * yo.u
+                        GradientStop { position: 0.58; color: Qt.rgba(yo.brasa.r, yo.brasa.g, yo.brasa.b, 0.85) }
+                        GradientStop { position: 0.76; color: Qt.rgba(yo.brasa.r, yo.brasa.g, yo.brasa.b, 0.32) }
+                        GradientStop { position: 1; color: "transparent" }
+                    }
+                    startX: 12 * yo.u; startY: (12.5 - 17) * yo.u
+                    PathArc { x: 12 * yo.u; y: (12.5 + 17) * yo.u; radiusX: 17 * yo.u; radiusY: 17 * yo.u }
+                    PathArc { x: 12 * yo.u; y: (12.5 - 17) * yo.u; radiusX: 17 * yo.u; radiusY: 17 * yo.u }
+                }
+            }
+            // La corona: un filo de luz por la derecha, detrás del disco
+            Shape {
+                anchors.fill: parent
+                opacity: 0.35 + aura.fuerza * 0.65
+                preferredRendererType: Shape.CurveRenderer
+                ShapePath {
+                    strokeColor: Qt.lighter(yo.brasa, 1.25)
+                    strokeWidth: (0.7 + aura.fuerza * 0.6) * yo.u
+                    fillColor: "transparent"; capStyle: ShapePath.RoundCap
+                    startX: 13.5 * yo.u; startY: 1.85 * yo.u
+                    PathArc { x: 13.5 * yo.u; y: 23.15 * yo.u; radiusX: 10.7 * yo.u; radiusY: 10.7 * yo.u }
+                }
+            }
         }
 
         // La luna
@@ -402,7 +383,7 @@ Item {
             anchors.fill: parent
             preferredRendererType: Shape.CurveRenderer
             readonly property real dx: yo.mx * 1.2
-            readonly property real dy: yo.my * 0.8 - yo.asombro * 1.4
+            readonly property real dy: yo.my * 0.8 - yo.asombro * 1.4 + yo.cabeceo * 0.9
             // 1 = ceño · -1 = preocupado · con música, casi rectas
             readonly property real ceno: yo.preocupado ? -0.8 : yo.felices ? 0.35 : 1
             ShapePath {
@@ -412,21 +393,6 @@ Item {
                 PathLine { x: (10.8 + cejas.dx) * yo.u; y: (9.6 + cejas.dy + cejas.ceno * 1.2) * yo.u }
                 PathMove { x: (17.4 + cejas.dx) * yo.u; y: (9.6 + cejas.dy - cejas.ceno * 0.6) * yo.u }
                 PathLine { x: (13.2 + cejas.dx) * yo.u; y: (9.6 + cejas.dy + cejas.ceno * 1.2) * yo.u }
-            }
-        }
-
-        // Los mofletes (contento o sorprendido)
-        Repeater {
-            model: [6.4, 17.6]
-            Rectangle {
-                required property real modelData
-                x: (modelData - 1.6) * yo.u; y: 15.6 * yo.u
-                width: 3.2 * yo.u; height: 1.7 * yo.u
-                radius: height / 2
-                color: Tema.rojo
-                // (nada de mofletes: solo un rubor leve con mimos)
-                opacity: yo.dormido ? 0 : yo.mimado * 0.35
-                Behavior on opacity { NumberAnimation { duration: 300 } }
             }
         }
 
@@ -445,15 +411,15 @@ Item {
                 height: Math.max(0.5 * yo.u, (2.4 + yo.asombro * 1.4) * yo.u * crece * abre)
                 radius: height / 2
                 x: (modelData + yo.mx * 2.2) * yo.u - width / 2
-                y: (13 + yo.my * 1.8 + (yo.preocupado ? 0.6 : 0)) * yo.u - height / 2
+                y: (13 + yo.my * 1.8 + yo.cabeceo * 0.9 + (yo.preocupado ? 0.6 : 0)) * yo.u - height / 2
                 color: yo.tinta
                 // La brasa: un punto rojo que late despacio
                 Rectangle {
                     visible: ojo.abre > 0.45
                     anchors.centerIn: parent
-                    width: Math.max(1.5, parent.width * 0.36); height: Math.min(width, parent.height * 0.7); radius: width / 2
-                    color: yo.brasa
-                    opacity: 0.75 + yo.respiro * 0.25
+                    width: Math.max(1.5, parent.width * (0.36 + yo.encendido * 0.2)); height: Math.min(width, parent.height * 0.7); radius: width / 2
+                    color: yo.encendido > 0.3 ? Qt.lighter(yo.brasa, 1 + yo.encendido * 0.25) : yo.brasa
+                    opacity: Math.min(1, 0.75 + yo.respiro * 0.25 + yo.encendido)
                 }
             }
         }
@@ -463,6 +429,7 @@ Item {
         Shape {
             visible: yo.felices
             anchors.fill: parent
+            transform: Translate { y: yo.cabeceo * 0.9 * yo.u }
             preferredRendererType: Shape.CurveRenderer
             ShapePath {
                 strokeColor: yo.tinta; strokeWidth: 1.5 * yo.u
@@ -565,9 +532,10 @@ Item {
 
     // Qué ojos lleva (de más a menos importante)
     readonly property bool cerrados: dormido || bostezo > 0.5
-    readonly property bool felices: !cerrados && ojosX < 0.5 && (contento || mimado > 0.5)
+    // (con música no sonríe: sigue con su cara seria y solo cabecea)
+    readonly property bool felices: false
 
-    // Partículas: corazones, notas, chispas... suben y se desvanecen
+    // Partículas (las chispas del cargador) suben y se desvanecen
     property int _siguiente: 0
     function soltar(simbolo, color, cuantas) {
         for (let i = 0; i < cuantas; i++) {

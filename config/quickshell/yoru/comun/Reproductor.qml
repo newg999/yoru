@@ -89,6 +89,10 @@ Singleton {
         if (navegadores.some(a => app.includes(a))) {
             if (/music\.youtube\.com|soundcloud\.com|open\.spotify\.com|bandcamp\.com|deezer\.com|tidal\.com/.test(url))
                 return true;
+            // Con artista y álbum, música (Aonsoku/Navidrome, YouTube Music...
+            // en una pestaña: un vídeo normal no manda álbum)
+            if ((p.trackArtist ?? "") !== "" && (p.trackAlbum ?? "") !== "")
+                return true;
             const titulo = p.trackTitle ?? "";
             const canal = p.trackArtist ?? "";
             if (/(\s-\s*topic$|vevo$|records$|music$)/i.test(canal.trim()))

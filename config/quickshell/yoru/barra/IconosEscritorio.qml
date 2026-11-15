@@ -293,11 +293,7 @@ PanelWindow {
     // Por dónde va el ratón (la luna de la isla lo mira). La capa respeta
     // la barra: se le suma lo de arriba para tener la posición en pantalla
     function apuntar(x, y) {
-        Paneles.ratonEscritorio = {pantalla: capa.modelData.name, x: x, y: y + (capa.modelData.height - capa.height)};
-    }
-    function soltarRaton() {
-        if (Paneles.ratonEscritorio?.pantalla === capa.modelData.name)
-            Paneles.ratonEscritorio = null;
+        Raton.apuntar(capa.modelData, x, y + (capa.modelData.height - capa.height));
     }
 
     // ------------------------------------------------------- Teclado
@@ -328,7 +324,6 @@ PanelWindow {
         property point desde: Qt.point(0, 0)
         property bool recuadro: false
         hoverEnabled: true
-        onExited: capa.soltarRaton()
         onPressed: e => {
             teclas.forceActiveFocus();
             capa.menuDe = null;

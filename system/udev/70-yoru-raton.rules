@@ -1,0 +1,11 @@
+# ============================================================================
+#  70-yoru-raton.rules — deja leer los RATONES (no los teclados) a quien está
+#  sentado delante del equipo (uaccess), para que Hotaru, la luna de la
+#  barra, siga el cursor también por encima de las ventanas
+#  (config/quickshell/yoru/scripts/cursor.py)
+#
+#  Solo los que se mueven como un ratón y no tienen teclas: así ningún
+#  programa tuyo puede leer lo que escribes. Lo instala install.sh en
+#  /etc/udev/rules.d/ (tiene que ir antes que 73-seat-late.rules).
+# ============================================================================
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_MOUSE}=="1", ENV{ID_INPUT_KEY}!="1", ENV{ID_INPUT_KEYBOARD}!="1", TAG+="uaccess"
