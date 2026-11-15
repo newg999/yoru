@@ -4,7 +4,7 @@
 #  MEGA de la barra (paneles/PanelMega.qml)
 #
 #    mega.py   →   {"usado": 13167959142, "total": 53687091200,
-#                   "carpeta": "/home/don/Descargas/Mega"}
+#                   "carpeta": "~/Descargas/Mega"}
 #
 #  MEGAsync no tiene una orden para preguntárselo: lo saca de su
 #  configuración (~/.local/share/data/Mega Limited/MEGAsync/MEGAsync.cfg).

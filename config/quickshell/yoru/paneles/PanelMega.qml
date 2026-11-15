@@ -8,7 +8,7 @@
 //    │ ( 24 % )  Almacenamiento                      │
 //    │           12,26 GB de 50 GB · quedan 37,74 GB │
 //    └──────────────────────────────────────────────┘
-//    󰉋 Abrir la carpeta          /home/don/Descargas/Mega
+//    󰉋 Abrir la carpeta          ~/Descargas/Mega
 //    󰖟 MEGA en el navegador
 //    󰋽 Transferencias y avisos   (la ventana de MEGA)
 //    󰒓 Ajustes de MEGA

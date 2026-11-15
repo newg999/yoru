@@ -282,18 +282,24 @@ codecs_completos() {
     fi
 }
 
-# uosc, la interfaz de mpv: su última versión de GitHub, dentro de
-# config/mpv (que va enlazado en ~/.config/mpv). Sus archivos (scripts/uosc
-# y fonts/) no se suben al repo (.gitignore); se rehacen en cada ./install.sh
+# uosc, la interfaz de mpv: una versión fija de GitHub (comprobando su suma),
+# dentro de config/mpv (que va enlazado en ~/.config/mpv). Sus archivos
+# (scripts/uosc y fonts/) no se suben al repo (.gitignore); se rehacen en
+# cada ./install.sh. Para actualizarlo: sube UOSC_VERSION y UOSC_SHA256
+# (sale en la página de la versión, junto a uosc.zip).
+UOSC_VERSION="5.13.0"
+UOSC_SHA256="4be9da3289285300fa374496c3f1bfd7bb20ac08e890d25bd5a06b28eebe4882"
 uosc_bajar() {
-    paso "uosc (la interfaz de mpv)"
+    paso "uosc $UOSC_VERSION (la interfaz de mpv)"
     local tmp
     tmp="$(mktemp -d)"
-    if curl -fsSL -o "$tmp/uosc.zip" https://github.com/tomasklaen/uosc/releases/latest/download/uosc.zip \
-        && unzip -qo "$tmp/uosc.zip" -d "$REPO/config/mpv"; then
-        ok "uosc al día"
+    if curl -fsSL -o "$tmp/uosc.zip" \
+            "https://github.com/tomasklaen/uosc/releases/download/$UOSC_VERSION/uosc.zip" \
+            && echo "$UOSC_SHA256  $tmp/uosc.zip" | sha256sum -c --quiet - \
+            && unzip -qo "$tmp/uosc.zip" -d "$REPO/config/mpv"; then
+        ok "uosc $UOSC_VERSION"
     else
-        aviso "No se pudo bajar uosc (¿sin conexión?): mpv usará su interfaz de siempre"
+        aviso "No se pudo bajar uosc (o no coincide su suma): mpv usará su interfaz de siempre"
     fi
     rm -rf "$tmp"
 }
