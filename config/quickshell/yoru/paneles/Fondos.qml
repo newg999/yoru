@@ -13,7 +13,7 @@
 //                    anime-8ge2x1
 //          3840×2160  ·  ✓ PUESTO  ·  9 / 36
 //      [←][→] elegir  [↵] poner  [Supr] borrar  [Esc] cerrar
-//         ( Uno al azar )  ( Buscar más fondos )
+//         ( Uno al azar )  ( Buscar más fondos )  ( Borrar )
 //
 //    ← → (o la rueda, o un clic en otra) para moverte · Enter (o clic en la
 //    elegida) para ponerlo · Esc o clic fuera para cerrar · Supr (o la
@@ -439,12 +439,12 @@ PanelWindow {
                     }
                 }
 
-                // Papelera: solo en la elegida y con el ratón encima (o si ya
-                // se ha pedido borrarla), en la esquina de arriba, que con la
-                // inclinación queda más a la derecha
+                // Papelera: siempre en la elegida (con el ratón encima, más
+                // clara), en la esquina de arriba, que con la inclinación
+                // queda más a la derecha
                 Rectangle {
                     visible: tarjeta.elegida
-                    opacity: encima.hovered || tarjeta.marcada ? 1 : 0
+                    opacity: encima.hovered || tarjeta.marcada ? 1 : 0.8
                     Behavior on opacity { NumberAnimation { duration: Tema.rapida } }
                     anchors { right: parent.right; top: parent.top; topMargin: 12; rightMargin: 12 - tarjeta.sesgo * 0.85 }
                     width: 32; height: 32; radius: 16
@@ -615,7 +615,7 @@ PanelWindow {
                     }
                     Texto {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: "¿A la papelera? Pulsa Supr otra vez (Esc no)"
+                        text: "¿A la papelera? Supr o Borrar otra vez (Esc no)"
                         font.pixelSize: 13
                         color: Tema.rojo
                     }
@@ -631,17 +631,21 @@ PanelWindow {
                 Repeater {
                     model: [
                         {id: "azar", icono: "󰒝", texto: "Uno al azar"},
-                        {id: "descubrir", icono: "󰍉", texto: "Buscar más fondos"}
+                        {id: "descubrir", icono: "󰍉", texto: "Buscar más fondos"},
+                        {id: "borrar", icono: "󰩹", texto: "Borrar"}
                     ]
                     Rectangle {
                         id: boton
                         required property var modelData
+                        // Borrar: rojo con el ratón encima o si ya se ha pedido
+                        readonly property bool peligro: modelData.id === "borrar"
+                            && (botonRaton.containsMouse || panel.aBorrar !== "")
                         width: filaBoton.width + 30
                         height: 36
                         radius: 18
-                        color: botonRaton.containsMouse ? Tema.claro(0.2) : Tema.sombra(0.45)
+                        color: peligro ? Tema.rojo : botonRaton.containsMouse ? Tema.claro(0.2) : Tema.sombra(0.45)
                         border.width: 1
-                        border.color: botonRaton.containsMouse ? Tema.claro(0.4) : Tema.claro(0.15)
+                        border.color: peligro ? Tema.rojo : botonRaton.containsMouse ? Tema.claro(0.4) : Tema.claro(0.15)
                         scale: botonRaton.pressed ? 0.96 : 1
                         Behavior on color { ColorAnimation { duration: Tema.rapida } }
                         Behavior on scale { NumberAnimation { duration: Tema.rapida } }
@@ -650,8 +654,12 @@ PanelWindow {
                             id: filaBoton
                             anchors.centerIn: parent
                             spacing: 8
-                            Texto { text: boton.modelData.icono; font.pixelSize: 14; color: Tema.blanco }
-                            Texto { text: boton.modelData.texto; font.pixelSize: 12 }
+                            Texto { text: boton.modelData.icono; font.pixelSize: 14; color: boton.peligro ? Tema.oscuro : Tema.blanco }
+                            Texto {
+                                text: boton.modelData.id === "borrar" && panel.aBorrar !== "" ? "¿Seguro? Otra vez" : boton.modelData.texto
+                                font.pixelSize: 12
+                                color: boton.peligro ? Tema.oscuro : Tema.texto
+                            }
                         }
                         MouseArea {
                             id: botonRaton
@@ -661,6 +669,8 @@ PanelWindow {
                             onClicked: {
                                 if (boton.modelData.id === "azar")
                                     panel.poner(panel.fondos[Math.floor(Math.random() * panel.fondos.length)]);
+                                else if (boton.modelData.id === "borrar")
+                                    panel.borrar(panel.elegido);
                                 else
                                     Paneles.alternar("ajustes", panel.modelData, "fondo");
                             }
