@@ -30,19 +30,26 @@ Item {
     function m(n) { return Math.round(n * k); }
 
     readonly property var r: Reproductor.actual
+    // Un vídeo de otra pestaña (Reddit...) le ha quitado el sitio a la
+    // canción de YouTube: se sigue enseñando la canción (comun/Reproductor.qml)
+    readonly property var tapada: Reproductor.tapada
     readonly property bool sonando: r?.isPlaying ?? false
     readonly property real largo: r?.length ?? 0
-    readonly property bool conBarra: (r?.canSeek ?? false) && largo > 0
+    readonly property bool conBarra: !tapada && (r?.canSeek ?? false) && largo > 0
     readonly property real posicion: arrastre.pressed ? arrastre.destino : (r?.position ?? 0)
     function tiempo(s) {
         s = Math.max(0, Math.round(s));
         return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
     }
-    // La posición no avisa sola: se pregunta cada segundo mientras suena
+    // La posición no avisa sola: se pregunta mientras se ve y suena. Nada
+    // más entrar en la página (si no, se veía la de antes un segundo) y
+    // luego cada cuarto de segundo, para que la barrita avance suave
+    // (Quickshell la calcula él solo: no le cuesta nada al reproductor)
     Timer {
         running: musica.activa && musica.sonando
-        interval: 1000
+        interval: 250
         repeat: true
+        triggeredOnStart: true
         onTriggered: musica.r?.positionChanged()
     }
 
@@ -91,16 +98,42 @@ Item {
             // Respira un poco con la música (pausada, algo más pequeña)
             scale: musica.sonando ? 1 : 0.94
             Behavior on scale { NumberAnimation { duration: Tema.normal * 2; easing.type: Easing.OutCubic } }
+            // La de antes se queda debajo hasta que la nueva está lista, y
+            // la nueva aparece con un fundido (la de YouTube grande tarda
+            // un segundo: así no se ve un hueco ni un salto)
+            Image {
+                id: debajo
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                sourceSize: imagen.sourceSize
+            }
             Image {
                 id: imagen
                 anchors.fill: parent
-                source: musica.r ? Reproductor.caratula(musica.r) : ""
+                source: musica.tapada ? musica.tapada.caratula : musica.r ? Reproductor.caratula(musica.r) : ""
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 sourceSize: Qt.size(caratula.width * 2, caratula.height * 2)
+                onSourceChanged: {
+                    aparecer.stop();
+                    opacity = 0;
+                    if (String(source) === "")
+                        debajo.source = "";
+                }
+                onStatusChanged: if (status === Image.Ready) aparecer.restart()
+                NumberAnimation {
+                    id: aparecer
+                    target: imagen
+                    property: "opacity"
+                    to: 1
+                    duration: Ajustes.animaciones ? 350 : 0
+                    easing.type: Easing.OutCubic
+                    onFinished: debajo.source = imagen.source
+                }
             }
             Texto {
-                visible: imagen.status !== Image.Ready
+                visible: imagen.status !== Image.Ready && debajo.status !== Image.Ready
                 anchors.centerIn: parent
                 text: "󰎆"
                 font.pixelSize: musica.m(56)
@@ -114,7 +147,7 @@ Item {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
-            text: Reproductor.titulo(musica.r) || Reproductor.nombre(musica.r)
+            text: musica.tapada?.titulo || Reproductor.titulo(musica.r) || Reproductor.nombre(musica.r)
             textFormat: Text.PlainText
             font.pixelSize: musica.m(18)
             color: Tema.blanco
@@ -124,7 +157,8 @@ Item {
             visible: text !== ""
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
-            text: [musica.r?.trackArtist ?? "", musica.r?.trackAlbum ?? ""].filter(t => t !== "").join(" · ")
+            text: musica.tapada ? musica.tapada.artista
+                : [musica.r?.trackArtist ?? "", musica.r?.trackAlbum ?? ""].filter(t => t !== "").join(" · ")
             textFormat: Text.PlainText
             font.bold: false
             font.pixelSize: musica.m(13)
@@ -133,7 +167,9 @@ Item {
         Texto {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
-            text: "en " + Reproductor.nombre(musica.r)
+            text: musica.tapada ? "en YouTube · otro vídeo tiene los botones de " + Reproductor.nombre(musica.r)
+                : "en " + Reproductor.nombre(musica.r)
+            elide: Text.ElideRight
             textFormat: Text.PlainText
             font.bold: false
             font.pixelSize: musica.m(11)
@@ -210,8 +246,10 @@ Item {
             }
         }
 
-        // Anterior · play/pausa (grande, redondo) · siguiente
+        // Anterior · play/pausa (grande, redondo) · siguiente (tapada, no:
+        // irían al otro vídeo)
         Row {
+            visible: !musica.tapada
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: musica.m(28)
             Repeater {

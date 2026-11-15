@@ -226,7 +226,8 @@ PanelWindow {
     readonly property var musica: Reproductor.actual
     readonly property bool sonando: musica?.isPlaying ?? false
     // (la luna solo se mece con música: no con un vídeo cualquiera)
-    readonly property bool sonandoMusica: sonando && Reproductor.esMusica(musica)
+    // (o la canción de YouTube tapada por un vídeo de otra pestaña)
+    readonly property bool sonandoMusica: (sonando && Reproductor.esMusica(musica)) || Reproductor.tapada !== null
 
     // ------------------------------------------------------- Actividades
     // Lo que enseña un momento (cerrada): "" · "aviso" · "volumen" · "micro"

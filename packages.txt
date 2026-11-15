@@ -89,6 +89,7 @@ okular                    # visor de PDF (colores oscuros: config/kdeglobals)
 gnome-text-editor         # editor de texto sencillo
 gnome-calculator          # calculadora
 ffmpegthumbnailer         # miniaturas de los vídeos en Nautilus
+yt-dlp                    # respaldo para la carátula grande de YouTube en la isla (scripts/caratula_youtube.sh)
 gnome-calendar            # calendario con eventos
 pavucontrol               # mezclador de audio
 blueman                   # bluetooth
