@@ -20,7 +20,7 @@ Singleton {
         [["brave", "browser", "epiphany", "vivaldi"], "󰖟"],   // otros navegadores
         [["code", "codium", "zed"], "󰨞"],   // editores de código
         [["ghostty", "kitty", "konsole", "alacritty", "foot", "wezterm", "terminal", "ptyxis"], "󰆍"],   // terminales
-        [["dolphin", "nautilus", "thunar", "nemo", "files"], "󰉋"],   // archivos
+        [["dolphin", "nautilus", "thunar", "nemo", "files", "hyprfm"], "󰉋"],   // archivos
         [["steam", "lutris", "heroic", "bottles"], "󰓓"],   // juegos
         [["okular", "evince", "papers", "pdf"], "󰈦"],   // PDF
         [["writer"], "󰈬"],   // LibreOffice Writer

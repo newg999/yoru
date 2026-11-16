@@ -26,7 +26,7 @@ Escritorio minimalista para **Fedora** basado en **[Niri](https://github.com/nir
 | Apps X11 | `xwayland-satellite` | automático |
 | Inicio de sesión | `greetd` + `gtkgreet` (dentro de un niri mínimo) | `system/greetd/` |
 | Arranque | `plymouth` (el 夜 de pincel con su sello y tres puntos que laten) · tema de `grub` a juego | `system/plymouth/` · `system/grub/` · `system/arranque/generar.py` |
-| Archivos | `nautilus` | — |
+| Archivos | el predeterminado (`Mod+E`, `archivos.sh`) | — |
 | Navegador | `brave-browser` | — |
 | Visor de PDF | `okular` | `config/kdeglobals` (sus colores oscuros) |
 | Documentos | PdfCraft, WordCraft, DeckCraft y GridCraft de [ArtCraft](https://github.com/storytold) (con su Launcher, que las actualiza), predeterminadas para PDF, Word, PowerPoint y Excel | `artcraft.txt` · `install.sh` → `apps_predeterminadas` |

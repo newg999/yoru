@@ -83,7 +83,7 @@ Singleton {
                 "Grabación guardada" "$(basename "$f") · ${raiz.tiempo}")
             case "$r" in
                 default) xdg-open "$f" ;;
-                carpeta) nautilus --select "$f" 2>/dev/null || xdg-open "$(dirname "$f")" ;;
+                carpeta) "$HOME/.config/niri/scripts/archivos.sh" --select "$f" ;;
             esac`, "aviso", f]);
     }
 

@@ -280,7 +280,7 @@ PanelWindow {
         const varios = lista.length > 1;
         return [
             {icono: "󰏌", texto: varios ? "Abrir " + lista.length : "Abrir", atajo: "Enter", hacer: abrirElegidos},
-            {icono: "󰉋", texto: "Mostrar en Archivos", hacer: () => hacer(["nautilus", "--select", menuDe.ruta])},
+            {icono: "󰉋", texto: "Mostrar en Archivos", hacer: () => hacer([Quickshell.env("HOME") + "/.config/niri/scripts/archivos.sh", "--select", menuDe.ruta])},
             {raya: true},
             {icono: "󰆏", texto: "Copiar", atajo: "Ctrl+C", hacer: copiar},
             {icono: "󰅍", texto: "Copiar la ruta", hacer: () => hacer(["wl-copy", lista.map(x => x.ruta).join("\n")])},
