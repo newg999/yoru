@@ -190,6 +190,18 @@ cmd_doctor() {
     fi
     systemctl is-enabled -q bluetooth 2>/dev/null && bien "bluetooth" || mal "bluetooth no está activado"
 
+    # La pantalla de inicio es la de bloqueo (bloqueo/Cerradura.qml), pero
+    # copiada en /etc/greetd (el usuario greetd no ve tu carpeta): la copia
+    # se rehace con cada yoru update; si no coinciden, es que falta pasarlo
+    if [[ -d /etc/greetd/yoru ]]; then
+        if cmp -s /etc/greetd/yoru/Cerradura.qml "$REPO/config/quickshell/yoru/bloqueo/Cerradura.qml" \
+            && cmp -s /etc/greetd/yoru/shell.qml "$REPO/system/greetd/yoru/shell.qml"; then
+            bien "Pantalla de inicio igual que la de bloqueo"
+        else
+            mal "La pantalla de inicio no es la misma que la de bloqueo → yoru update"
+        fi
+    fi
+
     paso "Juegos"
     if command -v gamemoded >/dev/null; then
         id -nG | grep -qw gamemode && bien "gamemode (y tu usuario en su grupo)" \

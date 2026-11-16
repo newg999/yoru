@@ -55,7 +55,10 @@ Singleton {
     // Abre una página del panel «pildora» (paneles/Paginas.qml: control,
     // calendario, multimedia, clima...) bajo el botón pulsado, aunque ya
     // estuviera abierto con otra (se mueve). Si ya está en esa página, se cierra
-    function abrirPagina(enPantalla, pagina, lado, bajoIsla) {
+    // desdeDentro: la abre el propio panel (del centro de control al wifi,
+    // de Sistema a las actualizaciones); solo entonces «atrás» (Esc, ‹)
+    // vuelve a la de antes
+    function abrirPagina(enPantalla, pagina, lado, bajoIsla, desdeDentro) {
         // (la isla de la que cuelga ahora, antes de cambiar «origen»)
         const antes = abierto !== "" ? islaDe(pantalla, abierto, seccion) : null;
         if (cambio.running) {
@@ -64,9 +67,11 @@ Singleton {
             return;
         }
         const ya = abierto === "pildora" && pantalla === enPantalla && seccion === pagina;
-        // De una página a otra dentro del mismo panel (del centro de control
-        // al wifi): se recuerda de dónde se vino, para «atrás»
-        anterior = abierto === "pildora" && pantalla === enPantalla && !ya
+        // De una página a otra desde dentro del panel (del centro de control
+        // al wifi): se recuerda de dónde se vino, para «atrás». Desde la
+        // barra (del wifi a la isla de actualizaciones), no: Esc cierra
+        // (antes volvía a la página de la otra isla)
+        anterior = desdeDentro && abierto === "pildora" && pantalla === enPantalla && !ya
             ? {pagina: seccion, lado: origen, ancla: ancla} : null;
         origen = lado ?? "centro";
         ancla = bajoIsla ?? null;

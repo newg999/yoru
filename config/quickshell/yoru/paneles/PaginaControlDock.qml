@@ -44,7 +44,7 @@ Item {
         if (enLinea)
             desplegada = desplegada === l ? "" : l;
         else
-            Paneles.abrirPagina(pantalla, panel, "derecha");
+            Paneles.abrirPagina(pantalla, panel, "derecha", null, true);
     }
     onActivaChanged: if (!activa) { armado = -1; desplegada = ""; }
 

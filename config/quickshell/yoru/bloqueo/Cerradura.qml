@@ -69,6 +69,9 @@ Item {
     property alias campo: campo
     default property alias esquina: esquina.data   // abajo a la derecha
     property alias encima: encima.data             // en lugar del nombre (p. ej. elegir usuario)
+    // ¿Hay que enseñar ya «encima»? (la pantalla de inicio, con varios
+    // usuarios: así se ve a quién entra). Si no, en reposo solo la hora
+    property bool conEncima: false
     property alias arriba: arriba.data             // arriba a la derecha
 
     signal enviar(string contrasena)
@@ -84,7 +87,7 @@ Item {
     // ----------------------------------------------- Solo la hora en reposo
     property bool despierta: false
     readonly property bool conAcceso: !soloAlEscribir || despierta || campo.text !== ""
-        || ocupada || encima.children.length > 0
+        || ocupada || conEncima
     function despertar() {
         despierta = true;
         dormir.restart();

@@ -129,7 +129,7 @@ Column {
             texto: Actualizaciones.cuantas > 0
                 ? Actualizaciones.cuantas + (Actualizaciones.cuantas === 1 ? " actualización" : " actualizaciones")
                 : "Sistema al día"
-            onClic: Paneles.abrirPagina(pagina.pantalla, "actualizaciones", Paneles.origen, Paneles.ancla)
+            onClic: Paneles.abrirPagina(pagina.pantalla, "actualizaciones", Paneles.origen, Paneles.ancla, true)
         }
     }
 

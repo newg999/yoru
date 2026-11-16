@@ -140,6 +140,11 @@ ShellRoot {
                 id: cerradura
                 anchors.fill: parent
                 fondo: "file://" + raiz.carpeta + "inicio"
+                // Igual que el bloqueo (bloqueo/Bloqueo.qml): en reposo solo
+                // la hora; la contraseña sale al escribir o con un clic
+                soloAlEscribir: true
+                // Con varios usuarios, el selector a la vista desde el principio
+                conEncima: raiz.usuarios.length > 1
                 colorTexto: raiz.estilo.texto
                 colorGris: raiz.estilo.gris
                 colorAcento: raiz.estilo.blanco
@@ -167,8 +172,10 @@ ShellRoot {
                 onEnergia: accion => Quickshell.execDetached(["systemctl", accion])
                 onCambiarTeclado: Quickshell.execDetached(["niri", "msg", "action", "switch-layout", "next"])
 
-                // Quién entra; con varios usuarios, ‹ › pasa al siguiente
+                // Quién entra, solo con varios usuarios (‹ › pasa al
+                // siguiente). Con uno, nada: como en el bloqueo
                 encima: Row {
+                    visible: raiz.usuarios.length > 1
                     spacing: 14
                     Text {
                         visible: raiz.usuarios.length > 1
