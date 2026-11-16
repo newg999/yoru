@@ -1,4 +1,4 @@
-// Actualizaciones: solo se ve si hay alguna. Clic = su panel
+// Actualizaciones: solo se ve si hay alguna. Clic = su página (Paginas.qml)
 import QtQuick
 import qs.comun
 
@@ -15,7 +15,8 @@ Isla {
     Modulo {
         icono: "󰚰"
         texto: String(Actualizaciones.cuantas)
-        resaltado: Paneles.esta("actualizaciones", isla.pantalla)
-        onClic: Paneles.alternar("actualizaciones", isla.pantalla, "")
+        resaltado: Paneles.esta("pildora", isla.pantalla, "actualizaciones")
+        // (una página más del panel de las islas: se desliza desde la otra)
+        onClic: Paneles.abrirPagina(isla.pantalla, "actualizaciones", "derecha")
     }
 }

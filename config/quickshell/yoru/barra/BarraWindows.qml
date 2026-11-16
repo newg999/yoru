@@ -78,7 +78,9 @@ PanelWindow {
         implicitHeight: 40
         anchors.verticalCenter: parent?.verticalCenter
         radius: Tema.esquina(8)
-        color: encendido ? Tema.claro(hover ? 0.16 : 0.11) : hover ? Tema.claro(0.08) : "transparent"
+        // (sin ratón, blanco transparente: "transparent" es negro y al
+        // animar pasaba por un gris oscuro)
+        color: encendido ? Tema.claro(hover ? 0.16 : 0.11) : hover ? Tema.claro(0.08) : Tema.claro(0)
         Behavior on color { ColorAnimation { duration: Tema.rapida } }
         Item {
             id: dentro
@@ -88,7 +90,16 @@ PanelWindow {
             transformOrigin: boton.crece ? Item.Bottom : Item.Center
             scale: boton.crece ? (botonRaton.pressed ? 1.05 : boton.hover ? 1.16 : 1)
                 : botonRaton.pressed ? 0.9 : 1
-            Behavior on scale { NumberAnimation { duration: Tema.rebote * 0.8; easing.type: Easing.OutBack; easing.overshoot: 2.6 } }
+            // Un rebote corto al crecer y sin rebote al volver: con tanto
+            // rebote (2.6), al pasar el ratón de un icono a otro se pasaban
+            // de tamaño, se quedaban cortos y temblaban
+            Behavior on scale {
+                NumberAnimation {
+                    duration: Tema.rebote * 0.6
+                    easing.type: boton.hover ? Easing.OutBack : Easing.OutCubic
+                    easing.overshoot: 1.4
+                }
+            }
         }
         MouseArea {
             id: botonRaton

@@ -1,5 +1,7 @@
 // ============================================================================
-//  Actualizaciones — se abre con su isla de la barra (o buscando «actualizar»)
+//  Página de actualizaciones del panel de las islas (Paginas.qml): se abre
+//  con su isla de la barra, desde Sistema o buscando «actualizar»
+//  (antes era un panel aparte y no se deslizaba de una isla a otra como el resto)
 //
 //    󰚰  84 actualizaciones
 //       81 del sistema (20 de seguridad) · 3 apps
@@ -12,18 +14,18 @@
 import QtQuick
 import qs.comun
 
-Panel {
+Item {
     id: panel
-    nombre: "actualizaciones"
-    lado: "derecha"
-    ancho: 400
+    property bool activa: false
+    implicitHeight: columna.implicitHeight
 
     // Si hace más de una hora que no se mira, se mira al abrir
-    onAbiertoChanged: if (abierto && Date.now() - Actualizaciones.ultima.getTime() > 3600 * 1000) Actualizaciones.comprobar()
+    onActivaChanged: if (activa && Date.now() - Actualizaciones.ultima.getTime() > 3600 * 1000) Actualizaciones.comprobar()
 
     readonly property int resto: Actualizaciones.cuantas - Actualizaciones.nombres.length
 
     Column {
+        id: columna
         width: parent.width
         spacing: 12
 

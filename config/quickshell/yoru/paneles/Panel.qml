@@ -124,6 +124,12 @@ PanelWindow {
         enabled: ventana.asentado
         NumberAnimation { duration: Tema.normal > 0 ? 460 : 0; easing.type: Easing.OutQuint }
     }
+    // Y su ancho (la página nueva pide otro): se ensancha o estrecha a la vez
+    property real anchoSuave: ancho
+    Behavior on anchoSuave {
+        enabled: ventana.asentado
+        NumberAnimation { duration: Tema.normal > 0 ? 460 : 0; easing.type: Easing.OutQuint }
+    }
     readonly property int bajoIslas: Tema.margenBarra + Tema.altoBarra
     // El hueco entre la isla y el panel que cuelga de ella
     readonly property int separacion: 6
@@ -171,7 +177,11 @@ PanelWindow {
     WlrLayershell.namespace: "yoru-panel"
     WlrLayershell.layer: WlrLayer.Top
     // Teclado para Esc y para escribir contraseñas
-    WlrLayershell.keyboardFocus: abierto ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    // Si se cierra porque se abre otro (del wifi al Inicio), lo sigue
+    // teniendo mientras se va: si lo soltaba al momento, el teclado volvía un
+    // instante a la ventana de detrás y su borde de foco destellaba en blanco
+    WlrLayershell.keyboardFocus: abierto || (progreso > 0 && Paneles.abierto !== "")
+        ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     // Sin desenfoque detrás del recuadro (las islas de la barra sí lo
     // tienen): el de niri no se puede desvanecer, y al ponerse al final de
@@ -215,8 +225,13 @@ PanelWindow {
             // Colgando de una isla: debajo de ella y al menos de su ancho
             readonly property bool colgado: ventana.isla !== null && !enMedio
             // Colgando, nace del ancho de la isla y se ensancha hasta el suyo
-            readonly property real anchoFinal: colgado ? Math.max(anclado ? ventana.ancla.ancho : ventana.ancho, ventana.islaAncho)
+            readonly property real anchoFinal: colgado ? Math.max(anclado ? ventana.ancla.ancho : ventana.anchoSuave, ventana.islaAncho)
                 : anclado ? ventana.ancla.ancho : ventana.ancho
+            // El ancho al que va (sin animar): el contenido toma ya este y
+            // queda centrado mientras la caja se desliza y cambia de ancho
+            // (si siguiera el ancho animado, el texto se recolocaba a cada paso)
+            readonly property real anchoMeta: colgado ? Math.max(anclado ? ventana.ancla.ancho : ventana.ancho, ventana.islaAnchoReal)
+                : anchoFinal
             readonly property real xFinal: Math.round(Math.max(Tema.margenLados, Math.min(parent.width - anchoFinal - Tema.margenLados,
                 ventana.islaX + (ventana.islaAncho - anchoFinal) / 2)))
             width: anchoFinal
@@ -251,7 +266,11 @@ PanelWindow {
                 : parent.width - width - (pegado ? -border.width : Tema.margenLados)
             // (en el recorte, que con la minimalista empieza bajo la barra)
             y: enMedio ? Math.round((ventana.height - height) / 2) - recorte.y
-                : fundido ? parent.height - ventana.hasta1 * height
+                // Fundido con la de abajo, como los de Windows 11: todos suben
+                // lo mismo (un tramo corto, saliendo de detrás de la barra) y se
+                // funden; antes subían todo su alto en el mismo tiempo, y el
+                // Inicio (alto) iba mucho más rápido que el centro de control
+                : fundido ? parent.height - height + (1 - ventana.hasta1) * 56
                 : colgado ? ventana.separacion
                 : comoDock ? (pegado ? 0 : Tema.hueco)
                 : pegado ? -(1 - ventana.hasta1) * height
@@ -266,6 +285,7 @@ PanelWindow {
             // (con las islas, al cerrarse se funde en el último tramo: si no,
             // quedaba una franja oscura bajo la isla en los últimos fotogramas)
             opacity: comoDock ? (ventana.abierto ? 1 : Math.min(1, ventana.progreso * 2.5))
+                : fundido ? Math.min(1, ventana.hasta1 * 1.6)
                 : pegado ? 1 : ventana.hasta1
             scale: pegado || comoDock ? 1 : (enMedio ? 0.94 : 0.96) + (enMedio ? 0.06 : 0.04) * ventana.progreso
             transformOrigin: enMedio ? Item.Center : ventana.vertical ? Item.Left : ventana.abajo ? Item.Bottom : Item.Top
@@ -332,9 +352,9 @@ PanelWindow {
                 // recuadro se ensancha: está ya en su sitio y aparece con un fundido
                 Item {
                     id: interior
-                    x: 16 + (caja.colgado ? caja.xFinal - caja.x : 0)
+                    x: 16 + (caja.colgado ? caja.xFinal - caja.x + Math.round((caja.anchoFinal - caja.anchoMeta) / 2) : 0)
                     y: 16
-                    width: caja.anchoFinal - 32
+                    width: caja.anchoMeta - 32
                     implicitHeight: childrenRect.height
                     // El contenido llega mientras la caja se despliega hacia
                     // abajo: se funde y baja un poco desde arriba (ventana.subida)

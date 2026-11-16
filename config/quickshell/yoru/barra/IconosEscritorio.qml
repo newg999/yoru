@@ -424,7 +424,9 @@ PanelWindow {
             Rectangle {
                 anchors.fill: parent
                 radius: Tema.esquina(10)
-                color: icono.sel ? Tema.conAlfa(Tema.blanco, 0.2) : raton.containsMouse ? Tema.claro(0.1) : "transparent"
+                // Sin ratón, blanco transparente (no "transparent", que es
+                // negro: al animar pasaba por un gris oscuro y parpadeaba)
+                color: icono.sel ? Tema.conAlfa(Tema.blanco, 0.2) : raton.containsMouse ? Tema.claro(0.1) : Tema.claro(0)
                 border.width: icono.sel ? 1 : 0
                 border.color: Tema.conAlfa(Tema.blanco, 0.45)
                 Behavior on color { ColorAnimation { duration: Tema.rapida } }

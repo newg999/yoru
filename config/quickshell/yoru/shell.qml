@@ -184,10 +184,6 @@ ShellRoot {
             }
             Variants {
                 model: Quickshell.screens
-                PanelActualizaciones {}
-            }
-            Variants {
-                model: Quickshell.screens
                 Lanzador {}
             }
             Variants {

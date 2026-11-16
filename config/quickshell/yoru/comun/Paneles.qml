@@ -40,10 +40,13 @@ Singleton {
             ? (enSeccion === "musica" ? i.musica
                 // el tiempo, de su isla (a la izquierda); si no se ve, del centro
                 : enSeccion === "clima" ? (i.clima?.visible && i.clima.width > 0 ? i.clima : i.centro)
+                // las actualizaciones, de la suya (si no se ve, del estado)
+                : enSeccion === "actualizaciones" ? (i.novedades?.visible && i.novedades.width > 0 ? i.novedades : i.estado)
                 : enSeccion === "calendario" || origen !== "derecha" ? i.centro : i.estado)
-            : {lanzador: i.botones, bateria: i.estado, actualizaciones: i.novedades, discos: i.discos,
+            : {lanzador: i.botones, bateria: i.estado, discos: i.discos,
                notificaciones: i.notificaciones, portapapeles: i.notificaciones, apagado: i.notificaciones,
-               mega: i.estado, bandeja: i.estado}[nombre];
+               // (la bandeja va en su propia isla, a la izquierda)
+               mega: i.bandeja ?? i.estado, bandeja: i.bandeja ?? i.estado}[nombre];
         // (una isla que acaba de aparecer para él, como la campana sin avisos,
         // aún no se ve ni tiene ancho: vale si ya no está vacía)
         return it && ((it.visible && it.width > 0) || it.vacia === false) ? it : null;
@@ -67,11 +70,13 @@ Singleton {
             ? {pagina: seccion, lado: origen, ancla: ancla} : null;
         origen = lado ?? "centro";
         ancla = bajoIsla ?? null;
-        // Islas con animaciones: si la página nueva cuelga de otra isla, el
-        // panel no se desliza de una a otra: se cierra (vuelve a su isla) y
-        // se abre desde la nueva
+        // Si la página nueva cuelga de otra isla, el panel se desliza hasta
+        // ella sin cerrarse (Panel.qml: islaX y anchoSuave). Antes se cerraba
+        // y se volvía a abrir desde la nueva: casi un segundo entre una y otra
+        // (cerrarYAbrir = true lo vuelve a dejar así)
+        const cerrarYAbrir = false;
         const despues = islaDe(enPantalla, "pildora", pagina);
-        if (!ya && antes && despues && antes !== despues && Tema.normal > 0) {
+        if (cerrarYAbrir && !ya && antes && despues && antes !== despues && Tema.normal > 0) {
             cambio.pendiente = [enPantalla, pagina, lado, bajoIsla];
             cerrar();
             cambio.restart();

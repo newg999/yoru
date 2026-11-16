@@ -28,8 +28,23 @@ Item {
     readonly property bool abierto: app !== null
     property bool dentro: false
 
+    // De una app a otra con las tarjetas ya abiertas: se cierran y se abren
+    // otra vez ya sobre el botón nuevo, sin la animación de entrada. (Mover
+    // la misma ventana no va: niri cambia lo de dentro antes que su sitio y
+    // durante un momento se veía sobre el botón de antes: saltaba)
+    property bool seguida: false
     function mostrar(a, item) {
         salida.stop();
+        if (abierto && clave !== a.clave) {
+            seguida = true;
+            clave = "";
+            sobre = item;
+            const c = a.clave;
+            Qt.callLater(() => vistas.clave = c);
+            return;
+        }
+        if (!abierto)
+            seguida = false;
         sobre = item;
         clave = a.clave;
     }
@@ -78,12 +93,22 @@ Item {
                 color: Tema.panel
                 border.width: Tema.borde(1)
                 border.color: Tema.claro(0.18)
-                Behavior on width { NumberAnimation { duration: Tema.rebote * 0.7; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
+                // Sin animar el ancho: la ventana (popup) va con él, y
+                // cambiarle el tamaño en cada fotograma hacía que niri la
+                // recolocara una y otra vez: temblaba al pasar de una app a otra
 
                 // Al aparecer sube un poco desde la barra, con rebote
+                // (si viene de otra app, ya está: sin subir otra vez)
                 opacity: 0
                 transform: Translate { id: subir; y: 10 }
-                Component.onCompleted: entrada.start()
+                Component.onCompleted: {
+                    if (vistas.seguida) {
+                        opacity = 1;
+                        subir.y = 0;
+                    } else {
+                        entrada.start();
+                    }
+                }
                 ParallelAnimation {
                     id: entrada
                     NumberAnimation { target: caja; property: "opacity"; to: 1; duration: Tema.rapida }

@@ -1,6 +1,7 @@
 // ============================================================================
 //  Bandeja del sistema: iconos de apps en segundo plano (Discord, Telegram...)
-//  Clic = abrir su ventana (o su panel de Yoru, como MEGA) · Clic derecho =
+//  Clic = ir a su ventana (a su escritorio) o, si ya está delante,
+//  esconderla (o su panel de Yoru, como MEGA) · Clic derecho =
 //  su menú (con el aspecto de Yoru: paneles/PanelBandeja.qml) · Clic
 //  central = acción 2
 //  Al pasar el ratón crecen un poco y se iluminan.
@@ -17,28 +18,53 @@ Isla {
     required property var ventana     // la barra (su pantalla, para abrir los paneles)
     relleno: 5
 
-    // Clic: su ventana al frente si ya la tiene (y si ya estaba delante, se
-    // cierra: vuelve a la bandeja, como el panel de MEGA); si no, se abre la
-    // app por su lanzador (Steam y otras con AppIndicator no responden a
-    // «activate»: solo enseñan su menú); si no hay lanzador, «activate»
+    // Clic: te lleva a su ventana, al escritorio donde esté (si estaba
+    // escondida, vuelve al suyo). Otro clic, con ella delante, la esconde.
+    // Esconder no la cierra (Spotify, al cerrar, se sale del todo): se va al
+    // escritorio escondido de las minimizadas (comun/Tareas.qml).
+    // Sin ventana (la cerraste con su X y quedó en la bandeja), se abre por
+    // su lanzador (Steam y otras con AppIndicator no responden a «activate»:
+    // solo enseñan su menú); si no hay lanzador, «activate».
     // Las apps con un panel propio de Yoru: su icono abre (y cierra) ese
     // panel, colgando de la isla como los demás, en vez de su ventana
     readonly property var paneles: ({MEGAsync: "mega"})
+
+    function idsDe(item) {
+        const entrada = DesktopEntries.heuristicLookup(item.id);
+        return [item.id, entrada?.id ?? "", entrada?.startupClass ?? ""]
+            .map(x => x.toLowerCase().replace(/\.desktop$/, "")).filter(x => x !== "");
+    }
+
+    // ¿Está delante? La última ventana que usaste es suya y está en el
+    // escritorio que se ve. (No vale mirar el foco: con un panel abierto o
+    // tras pulsar la barra, niri no deja ninguna ventana con el foco, y el
+    // segundo clic no la escondía)
+    function delante(suyas) {
+        const vistas = Object.values(Niri.ventanas).filter(v => !Tareas.minimizada(v));
+        const ultima = vistas.length > 0 ? Tareas.ultimaUsada(vistas) : null;
+        if (!ultima || !suyas.some(v => v.id === ultima.id))
+            return null;
+        const escritorio = Niri.escritorios.find(e => e.id === ultima.workspace_id);
+        return escritorio?.is_active ? ultima : null;
+    }
 
     function abrir(item) {
         if (paneles[item.id]) {
             Paneles.alternar(paneles[item.id], isla.ventana.screen);
             return;
         }
-        const entrada = DesktopEntries.heuristicLookup(item.id);
-        const ids = [item.id, entrada?.id ?? ""].map(x => x.toLowerCase()).filter(x => x !== "");
-        const ventana = Object.values(Niri.ventanas).find(v => ids.includes((v.app_id ?? "").toLowerCase()));
-        if (ventana && Niri.enfocada?.id === ventana.id)
-            Niri.accion("close-window", "--id", String(ventana.id));
-        else if (ventana)
-            Niri.accion("focus-window", "--id", String(ventana.id));
-        else if (entrada)
-            Niri.lanzar(entrada.command);
+        // Ir a una app cierra el panel que hubiera (el de MEGA seguía abierto
+        // encima: los clics en la barra le llegan aunque haya uno abierto)
+        Paneles.cerrar();
+        const ids = idsDe(item);
+        const suyas = Object.values(Niri.ventanas).filter(v => ids.includes((v.app_id ?? "").toLowerCase()));
+        const ya = delante(suyas);
+        if (ya)
+            Tareas.minimizar(ya);
+        else if (suyas.length > 0)
+            Tareas.irA(Tareas.ultimaUsada(suyas));
+        else if (DesktopEntries.heuristicLookup(item.id))
+            Niri.lanzar(DesktopEntries.heuristicLookup(item.id).command);
         else
             item.activate();
     }

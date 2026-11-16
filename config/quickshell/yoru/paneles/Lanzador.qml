@@ -3,7 +3,8 @@
 //  Con Mod+Space (sección "medio") sale en mitad de la pantalla, más ancho
 //  y con las apps en dos columnas. Con la barra de píldoras (islas arriba o
 //  minimalista), no: sale siempre arriba a la izquierda, bajo su ficha 󰍉.
-//  Con la de Windows es su Inicio, como el de Windows 11: flota sobre 夜,
+//  Con la de Windows es su Inicio, como el de Windows 11: sube sobre 夜
+//  pegado a la barra, como los demás paneles,
 //  con el buscador arriba, las apps ancladas (las fijadas en la barra y las
 //  que más abres; clic derecho = fijar o quitar), los archivos recientes,
 //  «Todas ›» con la lista entera y abajo tú y el botón de apagar.
@@ -24,10 +25,10 @@ import qs.comun
 Panel {
     id: panel
     nombre: "lanzador"
-    // (con la barra de Windows, en el centro y flotando sobre ella, como su Inicio)
+    // (con la barra de Windows, en el centro y pegado a ella, subiendo como
+    // los demás paneles; con Mod+Space, «medio», flota en mitad)
     lado: medio ? "medio" : Ajustes.windows ? "centro" : "izquierda"
     ancho: medio ? 820 : windows ? 640 : 480
-    fundido: false
 
     readonly property bool windows: Ajustes.windows
     // Inicio de Windows: «Todas ›» (la lista entera, por nombre) y el menú de apagar

@@ -1,7 +1,7 @@
 // ============================================================================
 //  BarraIslas — las islas de arriba, en píldoras (Ajustes.pildoras)
 //
-//    [⚙ 󰍉] [escritorios] [tiempo] [música]   [hora · grabando]   [… avisos] [bandeja · wifi · teclado · bluetooth · volumen · batería]
+//    [⚙ 󰍉] [escritorios] [bandeja] [música]   [tiempo · hora · grabando] [󰂚]   [… avisos] [wifi · teclado · bluetooth · volumen · batería]
 //
 //  Píldoras casi negras y redondas del todo, con fichas dentro (Ficha.qml):
 //  grises, o del color del tema cuando algo está encendido. Letra
@@ -59,7 +59,8 @@ PanelWindow {
     // De qué isla sale cada panel (para fundirlo con ella: Panel.qml)
     // (se reasigna entera para que avise: Avisos.qml la sigue con un binding)
     Component.onCompleted: Paneles.islas = Object.assign({}, Paneles.islas, {[modelData.name]: {
-        botones, musica, centro, estado, notificaciones, novedades, discos, clima
+        // (sin «clima»: va dentro de «centro» y su panel cuelga de ella)
+        botones, musica, centro, estado, notificaciones, novedades, discos, bandeja
     }})
 
     MouseArea {
@@ -76,7 +77,7 @@ PanelWindow {
         Region { item: escritorios; radius: Tema.radioIsla }
         Region { item: musica; radius: Tema.radioIsla }
         Region { item: centro; radius: Tema.radioIsla }
-        Region { item: clima; radius: Tema.radioIsla }
+        Region { item: bandeja; radius: Tema.radioIsla }
         Region { item: jugando; radius: Tema.radioIsla }
         Region { item: cafe; radius: Tema.radioIsla }
         Region { item: novedades; radius: Tema.radioIsla }
@@ -158,38 +159,14 @@ PanelWindow {
                 salida: barra.modelData.name
             }
 
-            // El tiempo (clic = previsión)
-            Isla {
-                id: clima
-                oculta: !Ajustes.islaClima || !Tiempo.listo
-                relleno: 10
-                Item {
-                    implicitWidth: filaClima.implicitWidth
-                    implicitHeight: 22
-                    Row {
-                        id: filaClima
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 7
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: Tiempo.icono
-                            font.family: Tema.mono
-                            font.pixelSize: Tema.letra + 4
-                            color: Tema.blanco
-                        }
-                        Mono {
-                            text: Tiempo.temperatura + "°C"
-                            color: climaRaton.containsMouse ? Tema.blanco : Tema.texto
-                        }
-                    }
-                    MouseArea {
-                        id: climaRaton
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: Paneles.abrirPagina(barra.modelData, "clima", "izquierda")
-                    }
-                }
+            // Las apps en segundo plano (Spotify, Telegram, Discord...): clic =
+            // sale flotando, otro clic = se esconde (Bandeja.qml). Antes iba
+            // dentro de la isla del estado, a la derecha
+            // (aquí estaba el tiempo: ahora va con la hora, en el centro)
+            Bandeja {
+                id: bandeja
+                ventana: barra
+                oculta: !Ajustes.islaBandeja
             }
 
             // Música: solo con algo sonando (o en pausa)
@@ -271,6 +248,39 @@ PanelWindow {
             readonly property var meses: ["ene", "feb", "mar", "abr", "may", "jun", "jul",
                 "ago", "sep", "oct", "nov", "dic"]
 
+            // El tiempo, delante de la hora: icono y grados, sin la «C»
+            // (clic = previsión, colgando de esta isla)
+            Item {
+                id: clima
+                visible: Ajustes.islaClima && Tiempo.listo
+                implicitWidth: filaClima.implicitWidth
+                implicitHeight: Tema.altoBarra
+                Row {
+                    id: filaClima
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 6
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Tiempo.icono
+                        font.family: Tema.mono
+                        font.pixelSize: Tema.letra + 4
+                        color: Tema.blanco
+                    }
+                    Mono {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Tiempo.temperatura + "°"
+                        color: climaRaton.containsMouse || Paneles.esta("pildora", barra.modelData, "clima") ? Tema.blanco : Tema.texto
+                    }
+                }
+                MouseArea {
+                    id: climaRaton
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Paneles.abrirPagina(barra.modelData, "clima", "centro")
+                }
+            }
+
             // Hora y fecha en una línea (segundos según Ajustes › Fecha y hora).
             // Clic = calendario
             Item {
@@ -338,6 +348,16 @@ PanelWindow {
             }
         }
 
+        // Las notificaciones, en su isla justo a la derecha de la hora y
+        // siempre a la vista (con o sin avisos: el punto rojo marca los
+        // nuevos). Su panel y los avisos que llegan salen debajo, en el centro
+        Campana {
+            id: notificaciones
+            x: centro.x + centro.width + Tema.separacion
+            cual: "notificaciones"
+            pantalla: barra.modelData
+        }
+
         // --------------------------------------------------------- Derecha
         Row {
             id: derecha
@@ -350,25 +370,12 @@ PanelWindow {
             Cafe { id: cafe }
             Novedades { id: novedades; pantalla: barra.modelData }
             Usb { id: discos; pantalla: barra.modelData }
-            Campana {
-                id: notificaciones
-                cual: "notificaciones"
-                pantalla: barra.modelData
-                oculta: !Notificaciones.hayNuevas && !Notificaciones.noMolestar && !colgando
-            }
+            // (la campana ya no va aquí: está en el centro, junto a la hora)
 
             Isla {
                 id: estado
                 relleno: 4
                 espacio: 4
-
-                Bandeja {
-                    ventana: barra
-                    oculta: !Ajustes.islaBandeja
-                    color: "transparent"
-                    border.width: 0
-                    relleno: 2
-                }
 
                 // Wi-Fi o cable: del color del tema con conexión. Con el
                 // wifi apagado (y sin cable) no sale

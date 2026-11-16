@@ -46,7 +46,7 @@ Singleton {
         ["󰍬", "Micrófono", "Entrada de audio", "micrófono microfono micro mic entrada", "pildora", "micro"],
         ["󰎞", "Nota nueva", "Una nota adhesiva en el escritorio (Mod+Alt+K)", "nota notas apuntar apunte sticky post-it postit recordatorio escribir", "nota", ""],
         ["󰁹", "Batería y energía", "Salud, consumo y perfil de energía", "batería bateria battery energía energia power perfil ahorro rendimiento", "bateria", ""],
-        ["󰚰", "Actualizaciones", "Actualizar Fedora y las apps", "actualizar actualizaciones updates update upgrade dnf flatpak", "actualizaciones", ""],
+        ["󰚰", "Actualizaciones", "Actualizar Fedora y las apps", "actualizar actualizaciones updates update upgrade dnf flatpak", "pildora", "actualizaciones"],
         ["󰕓", "Memorias USB y discos", "Abrir o expulsar los conectados", "usb pendrive memoria disco externo expulsar tarjeta sd", "discos", ""],
         ["󰨇", "Monitor del sistema", "Procesos, CPU, memoria, red y disco", "monitor procesos tareas task manager administrador cpu memoria ram rendimiento", "monitor", "procesos"],
         ["󰅶", "No suspender", "Centro de control: que no se bloquee ni se apague la pantalla", "no suspender cafeína cafeina caffeine despierto inhibir pantalla encendida presentación", "pildora", "control"],
