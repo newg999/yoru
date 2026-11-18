@@ -861,6 +861,31 @@ brave_nvidia() {
 # PDF con Okular y lo demás como esté.
 # A WordCraft no se le dan .txt, .md ni .html aunque los acepte: esos van a
 # un editor de texto o al navegador.
+# La configuración de Elisa (~/.var/app/org.kde.elisa/config/elisarc): la
+# biblioteca, solo la carpeta Música de casa (no el NAS) y sin repasarla al
+# arrancar. Lo demás que tenga el archivo se queda
+elisa_config() {
+    local cfg="$HOME/.var/app/org.kde.elisa/config/elisarc"
+    local musica
+    musica="$(xdg-user-dir MUSIC 2>/dev/null)"
+    [[ -n "$musica" && "$musica" != "$HOME" ]] || musica="$HOME/Música"
+    mkdir -p "$(dirname "$cfg")"
+    python3 - "$cfg" "$musica" <<'PY'
+import configparser, sys
+ruta, musica = sys.argv[1], sys.argv[2]
+c = configparser.ConfigParser(interpolation=None)
+c.optionxform = str                     # Elisa distingue mayúsculas
+c.read(ruta)
+if not c.has_section("ElisaFileIndexer"):
+    c.add_section("ElisaFileIndexer")
+c["ElisaFileIndexer"]["RootPath"] = musica
+c["ElisaFileIndexer"]["ScanAtStartup"] = "false"
+with open(ruta, "w") as f:
+    c.write(f, space_around_delimiters=False)
+PY
+    ok "Elisa: biblioteca solo en $musica, sin repasarla al arrancar"
+}
+
 apps_predeterminadas() {
     local apps="$HOME/.local/share/flatpak/exports/share/applications"
     _app() {   # _app <id de flatpak> <nombre> <tipos...>
@@ -898,13 +923,19 @@ apps_predeterminadas() {
         && xdg-mime default yoru-videos.desktop video/mp4 video/x-matroska video/webm video/quicktime \
             video/x-msvideo video/mpeg video/ogg video/x-flv video/3gpp video/mp2t 2>/dev/null \
         && ok "Vídeos → mpv"
-    # Música → Música de Yoru (paneles/VentanaMusica.qml, con un mpv aparte):
-    # antes Elisa, que tardaba en abrir y escaneaba el NAS sin parar
-    [[ -f /usr/share/applications/mpv.desktop ]] \
-        && xdg-mime default yoru-musica.desktop audio/mpeg audio/flac audio/x-flac audio/ogg \
-            audio/x-vorbis+ogg audio/opus audio/x-opus+ogg audio/mp4 audio/x-m4a audio/aac \
-            audio/wav audio/x-wav audio/x-aiff audio/x-ape audio/x-wavpack audio/x-mpegurl 2>/dev/null \
-        && ok "Música → Música de Yoru"
+    # Música → Elisa (de Flathub: así no trae medio KDE al sistema; coge los
+    # colores de Yoru por config/kdeglobals). Al abrir una canción salta a
+    # ella. Puede abrir la música del NAS, pero NO la tiene en su biblioteca:
+    # con las 3.000 canciones del NAS, al arrancar se ponía a leerlas todas
+    # cada vez. Su biblioteca: solo ~/Música, y sin repasarla al arrancar
+    [[ -f "$apps/org.kde.elisa.desktop" ]] \
+        || flatpak install --user -y --noninteractive flathub org.kde.elisa >/dev/null 2>&1
+    [[ -d /mnt/synology/Musica ]] \
+        && flatpak override --user --filesystem=/mnt/synology/Musica:ro org.kde.elisa 2>/dev/null
+    elisa_config
+    _app org.kde.elisa "Música → Elisa" audio/mpeg audio/flac audio/x-flac audio/ogg \
+        audio/x-vorbis+ogg audio/opus audio/x-opus+ogg audio/mp4 audio/x-m4a audio/aac \
+        audio/wav audio/x-wav audio/x-aiff audio/x-ape audio/x-wavpack audio/x-mpegurl
     # Texto plano: sin esto, .txt y .md acaban en WordCraft (que también los acepta)
     [[ -f /usr/share/applications/org.gnome.TextEditor.desktop ]] \
         && xdg-mime default org.gnome.TextEditor.desktop text/plain text/markdown text/x-log 2>/dev/null \

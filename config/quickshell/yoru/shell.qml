@@ -162,7 +162,6 @@ ShellRoot {
         loading: true
         Scope {
             VentanaAjustes {}
-            VentanaMusica {}
             Variants {
                 model: Quickshell.screens
                 PanelBateria {}
@@ -252,24 +251,6 @@ ShellRoot {
         function musica(): void { abrirEn(0); }
         function sistema(): void { abrirEn(0); }    // (antes; ahora es la música)
         function bandeja(): void { abrirEn(2); }
-    }
-    // Música de Yoru (paneles/VentanaMusica.qml, comun/Tocadiscos.qml):
-    //   qs -c yoru ipc call musica alternar      (Mod+Shift+M)
-    //   qs -c yoru ipc call musica abrir "<ruta>\n<ruta>..."   (yoru musica)
-    IpcHandler {
-        target: "musica"
-        function alternar(): void { Paneles.alternarMusica(false); }
-        function mostrar(): void { Paneles.alternarMusica(true); }
-        function abrir(rutas: string): void {
-            const r = rutas.split("\n").filter(x => x !== "");
-            if (r.length > 0)
-                Tocadiscos.reproducir(r, 0);
-        }
-        function anadir(rutas: string): void { Tocadiscos.anadir(rutas.split("\n").filter(x => x !== "")); }
-        function pausa(): void { Tocadiscos.pausa(); }
-        function siguiente(): void { Tocadiscos.siguiente(); }
-        function anterior(): void { Tocadiscos.anterior(); }
-        function escanear(): void { Tocadiscos.escanear(); }
     }
     IpcHandler {
         target: "panel"

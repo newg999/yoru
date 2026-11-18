@@ -59,7 +59,6 @@ Singleton {
 
     // ------------------------------------------- Grabar la pantalla (Mod+Alt+R)
     property alias grabarSonido: datos.grabarSonido     // lo que suena
-    property alias carpetasMusica: datos.carpetasMusica // Música de Yoru (scripts/musica.py); vacío = las de serie
     property alias grabarMicro: datos.grabarMicro       // el micrófono (en vez de lo que suena)
 
     readonly property bool vertical: barra === "izquierda"
@@ -227,7 +226,6 @@ window-rule {
 
             property bool grabarSonido: true
             property bool grabarMicro: false
-            property var carpetasMusica: []
         }
     }
 }

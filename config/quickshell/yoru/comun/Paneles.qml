@@ -182,24 +182,6 @@ Singleton {
         ajustesAbiertos = true;
     }
 
-    // «Música de Yoru» (paneles/VentanaMusica.qml): otra ventana aparte,
-    // como Ajustes. Si ya la tienes delante, se cierra; si estaba detrás de
-    // otras ventanas, se trae (con soloAbrir, nunca se cierra)
-    property bool musicaAbierta: false
-    readonly property string tituloMusica: "Música de Yoru"
-    function alternarMusica(soloAbrir) {
-        const ventana = Object.values(Niri.ventanas).find(v => v.title === tituloMusica);
-        const delante = musicaAbierta && Niri.enfocada?.title === tituloMusica;
-        if (delante && !soloAbrir) {
-            musicaAbierta = false;
-            return;
-        }
-        cerrar();
-        if (musicaAbierta && ventana)
-            Niri.accion("focus-window", "--id", String(ventana.id));
-        musicaAbierta = true;
-    }
-
     // Al abrir el overview (Mod+Tab) se cierra cualquier panel
     Connections {
         target: Niri
