@@ -31,13 +31,11 @@ window-rule {
     opacity 0.92
 }
 
-// Navegador, VirtualBox (el administrador y las máquinas) y Meteosat (el mapa
-// del tiempo, bin/meteosat): se abren a todo el ancho (el resto, también la
-// terminal, a la mitad). Mod+R los va estrechando
+// Las máquinas de VirtualBox, a todo el ancho. Todo lo demás (también el
+// navegador) se abre a la mitad: así caben dos ventanas a la vez (config.kdl,
+// always-center-single-column). Mod+R cambia el ancho
 window-rule {
-    match app-id=r#"(?i)(firefox|brave|chrom)"#
-    match app-id="^VirtualBox (Manager|Machine)$"
-    match app-id="^yoru-meteosat$"
+    match app-id="^VirtualBox Machine$"
     default-column-width { proportion 1.0; }
 }
 

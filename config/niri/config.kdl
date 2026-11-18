@@ -57,6 +57,10 @@ layout {
 
     // "never" | "always" | "on-overflow"
     center-focused-column "on-overflow"
+    // Una ventana sola, en el centro. Al abrir otra, la primera se aparta a
+    // la izquierda y se ven las dos (cada una a la mitad); si cierras una, la
+    // otra vuelve al centro
+    always-center-single-column
 
     // Anchos por los que va rotando Mod+R
     preset-column-widths {
@@ -69,8 +73,10 @@ layout {
     // El navegador y la terminal se abren a todo el ancho (rules.kdl)
     default-column-width { proportion 0.5; }
 
-    // Anillo de foco alrededor de la ventana activa (los colores, en colors.kdl)
+    // Sin anillo de foco: la ventana activa no lleva reborde (los colores,
+    // por si se vuelve a encender quitando «off», en colors.kdl)
     focus-ring {
+        off
         width 2
     }
 
