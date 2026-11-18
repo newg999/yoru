@@ -52,12 +52,13 @@ window-rule {
     opacity 1.0
 }
 
-// Terminal (también Meteosat, que es kitty) y Ajustes de Yoru: transparentes y
-// con el fondo desenfocado
+// Terminal (también Meteosat, que es kitty), Ajustes y Música de Yoru:
+// transparentes y con el fondo desenfocado
 window-rule {
     match app-id="^kitty$"
     match app-id="^yoru-meteosat$"
     match title="^Ajustes de Yoru$"
+    match title="^Música de Yoru$"
     background-effect {
         blur true
     }
@@ -142,6 +143,13 @@ window-rule {
     open-floating true
     default-column-width { fixed 1100; }
     default-window-height { fixed 760; }
+}
+
+// Música de Yoru: flotante. Sin tamaño fijo: la ventana recuerda el suyo
+// y dónde la dejaste (paneles/VentanaMusica.qml, ~/.local/state/yoru/musica.json)
+window-rule {
+    match title="^Música de Yoru$"
+    open-floating true
 }
 
 // Ajustes de Yoru: flotantes y en el centro, como un diálogo (no como una

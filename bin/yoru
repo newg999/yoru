@@ -28,6 +28,10 @@
 #                       imagen o vídeo en una sola ventana: si ya hay un
 #                       visor (swayimg) o reproductor (mpv) abierto, se abre
 #                       en él (es la app predeterminada para los dos)
+#    yoru musica [archivos]
+#                       «Música de Yoru»: sin nada, abre o trae la ventana
+#                       (Mod+Shift+M); con canciones, las pone a sonar (es
+#                       la app predeterminada para el audio)
 #    yoru ayuda
 # ============================================================================
 
@@ -471,6 +475,25 @@ PY
     fi
 }
 
+# ----------------------------------------------------------------- música
+# Música de Yoru (Quickshell: paneles/VentanaMusica.qml). Las canciones van
+# al mpv de la música por la IPC de la barra; si la barra no está, a un mpv
+# normal
+cmd_musica() {
+    local rutas=() a
+    for a in "$@"; do
+        [[ "$a" == file://* ]] && a="$(python3 -c 'import sys, urllib.parse; print(urllib.parse.unquote(sys.argv[1][7:]))' "$a")"
+        rutas+=("$(readlink -f "$a")")
+    done
+    if [[ ${#rutas[@]} -eq 0 ]]; then
+        qs -c yoru ipc call musica alternar
+    elif qs -c yoru ipc call musica abrir "$(printf '%s\n' "${rutas[@]}")" 2>/dev/null; then
+        qs -c yoru ipc call musica mostrar
+    else
+        exec mpv --force-window "${rutas[@]}"
+    fi
+}
+
 # -------------------------------------------------------------- kdeglobals
 # ~/.config/kdeglobals no es un enlace al repo: Plasma (en una sesión de KDE)
 # reescribe ese archivo, y con un enlace cambiaba el del repo. Se le ponen
@@ -493,6 +516,7 @@ case "${1:-ayuda}" in
     volver)             cmd_volver "${2:-}" ;;
     juego)              shift; cmd_juego "$@" ;;
     abrir)              shift; cmd_abrir "$@" ;;
+    musica|música)      shift; cmd_musica "$@" ;;
     ayuda|-h|--help|help)
         awk 'NR > 1 && !/^#/ { exit } NR > 1' "$0" | sed 's/^# \{0,1\}//' ;;
     *)
