@@ -1,0 +1,9 @@
+# ============================================================================
+#  «Mostrar en la carpeta» (navegadores, descargas...) → el gestor de archivos
+#  predeterminado, no siempre Nautilus.
+#  install.sh lo enlaza en ~/.local/share/dbus-1/services/, que manda sobre
+#  el de /usr/share (el de Nautilus). Ver config/niri/scripts/gestor-archivos-dbus.py
+# ============================================================================
+[D-BUS Service]
+Name=org.freedesktop.FileManager1
+Exec=/usr/bin/sh -c 'exec "$HOME/.config/niri/scripts/gestor-archivos-dbus.py"'

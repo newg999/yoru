@@ -115,6 +115,8 @@ spawn-sh-at-startup "~/.config/niri/scripts/inactividad.sh"
 
 // Historial del portapapeles (requiere cliphist; si no está, no pasa nada)
 spawn-sh-at-startup "command -v cliphist && wl-paste --watch cliphist store"
+// Si una app no entrega lo que copió, quitárselo (si no, Quickshell se congela)
+spawn-sh-at-startup "wl-paste --watch ~/.config/niri/scripts/portapapeles.sh"
 
 // Agente de bluetooth: muestra el PIN al emparejar dispositivos
 spawn-sh-at-startup "command -v blueman-applet && blueman-applet"

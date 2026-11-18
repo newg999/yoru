@@ -998,6 +998,10 @@ activar_barra() {
     # Las notificaciones también son cosa de la barra (antes, mako)
     enlazar "$REPO/system/dbus/org.freedesktop.Notifications.service" \
         "$HOME/.local/share/dbus-1/services/org.freedesktop.Notifications.service"
+    # «Mostrar en la carpeta» de los navegadores: al gestor predeterminado
+    # (archivos.sh), no siempre a Nautilus
+    enlazar "$REPO/system/dbus/org.freedesktop.FileManager1.service" \
+        "$HOME/.local/share/dbus-1/services/org.freedesktop.FileManager1.service"
     pkill -x mako 2>/dev/null || true
     systemctl --user daemon-reload >/dev/null 2>&1 || true
     # Otras barras ya no hacen falta: si estaban activas, se apagan (no se

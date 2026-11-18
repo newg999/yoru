@@ -217,3 +217,14 @@ window-rule {
     default-column-width { fixed 400; }
     default-window-height { fixed 570; }
 }
+
+// TeraBox: sus diálogos («Select download directory», elegir archivos...) no
+// dicen de qué ventana son, así que niri los ponía como columna a todo el
+// alto. Se distinguen porque su app-id es «Terabox» (b minúscula); la ventana
+// principal y el medidor de velocidad son «TeraBox»
+window-rule {
+    match app-id="^Terabox$"
+    open-floating true
+    default-column-width { fixed 900; }
+    default-window-height { fixed 600; }
+}
