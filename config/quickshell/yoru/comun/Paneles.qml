@@ -76,24 +76,35 @@ Singleton {
         origen = lado ?? "centro";
         ancla = bajoIsla ?? null;
         // Si la página nueva cuelga de otra isla, el panel se desliza hasta
-        // ella sin cerrarse (Panel.qml: islaX y anchoSuave). Antes se cerraba
-        // y se volvía a abrir desde la nueva: casi un segundo entre una y otra
-        // (cerrarYAbrir = true lo vuelve a dejar así)
-        const cerrarYAbrir = false;
+        // ella sin cerrarse (Panel.qml: islaX y anchoSuave). Con «Paneles que
+        // salen de su isla», no: se cierra deprisa (vuelve a su isla) y se
+        // abre desde la nueva, también deprisa (rapido)
+        const cerrarYAbrir = Ajustes.panelesDesdeIsla && Ajustes.pildoras;
         const despues = islaDe(enPantalla, "pildora", pagina);
         if (cerrarYAbrir && !ya && antes && despues && antes !== despues && Tema.normal > 0) {
             cambio.pendiente = [enPantalla, pagina, lado, bajoIsla];
+            deprisa();
             cerrar();
             cambio.restart();
             return;
         }
         alternar("pildora", enPantalla, pagina);
     }
-    // Lo que tarda en cerrarse (Panel.qml) antes de abrirse en la otra isla
+    // Al pasar de un panel a otro: se cierra y se abre deprisa (Panel.qml
+    // mira «rapido» para la duración). Vuelve a lo normal cuando ya ha
+    // terminado de abrirse el nuevo
+    property bool rapido: false
+    function deprisa() {
+        rapido = true;
+        normalidad.restart();
+    }
+    Timer { id: normalidad; interval: 550; onTriggered: paneles.rapido = false }
+
+    // Lo que tarda en cerrarse (Panel.qml, deprisa) antes de abrirse en la otra isla
     Timer {
         id: cambio
         property var pendiente: null
-        interval: 190
+        interval: 160
         onTriggered: {
             const p = pendiente;
             pendiente = null;
@@ -131,6 +142,10 @@ Singleton {
             cerrar();
             return;
         }
+        // De un panel abierto a otro (el reloj → las notificaciones): uno se
+        // cierra y el otro se abre a la vez, los dos deprisa
+        if (abierto !== "" && abierto !== nombre && Ajustes.panelesDesdeIsla)
+            deprisa();
         pantalla = enPantalla;
         seccion = enSeccion ?? "";
         abierto = nombre;

@@ -558,6 +558,14 @@ Item {
                 activo: Ajustes.animaciones
                 onCambiar: v => Ajustes.animaciones = v
             }
+            Interruptor {
+                width: parent.width
+                visible: Ajustes.animaciones
+                titulo: "Paneles que salen de su isla"
+                detalle: "Al abrir uno, nace de la isla como una pastilla, se ensancha y baja; al cerrarlo, vuelve a ella. Apagado: baja como una persiana"
+                activo: Ajustes.panelesDesdeIsla
+                onCambiar: v => Ajustes.panelesDesdeIsla = v
+            }
 
             // Luz nocturna (comun/LuzNocturna.qml, con wlsunset)
             Item {

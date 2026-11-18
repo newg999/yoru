@@ -59,6 +59,18 @@ Rectangle {
             mayor = Math.max(mayor, aportes[k]);
         fusion = mayor;
     }
+    // Con «Paneles que salen de su isla» (Panel.qml): la isla se convierte
+    // en su panel y deja su hueco vacío mientras está fuera (0 = aquí,
+    // 1 = ida). Manda el panel que más se la lleve
+    property var idas: ({})
+    property real ida: 0
+    function irse(clave, cuanto) {
+        idas[clave] = cuanto;
+        let mayor = 0;
+        for (const k in idas)
+            mayor = Math.max(mayor, idas[k]);
+        ida = mayor;
+    }
     function mezcla(a, b, t) {
         return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, a.a + (b.a - a.a) * t);
     }
@@ -115,7 +127,7 @@ Rectangle {
     // Al irse, sube y se esconde por arriba de la pantalla (con la barra
     // abajo, por abajo; con la vertical, por el lado) mientras se funde; al
     // aparecer, baja desde ahí
-    opacity: vacia ? 0 : 1
+    opacity: vacia ? 0 : 1 - ida
     // (sigue en la fila, ya invisible, hasta que su hueco se ha cerrado)
     visible: opacity > 0 || !recogida
     transform: Translate {
@@ -125,7 +137,8 @@ Rectangle {
         Behavior on x { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutCubic } }
         Behavior on y { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutCubic } }
     }
-    Behavior on opacity { NumberAnimation { duration: Tema.normal * 1.4; easing.type: Easing.OutCubic } }
+    // (mientras su panel se la lleva, sin retraso: va al ritmo del panel)
+    Behavior on opacity { enabled: isla.ida === 0; NumberAnimation { duration: Tema.normal * 1.4; easing.type: Easing.OutCubic } }
     // Al crecer o encoger (sale la música, una ficha...), se estira y frena
     // despacio, sin pasarse
     Behavior on implicitWidth { NumberAnimation { duration: Tema.rebote * 1.15; easing.type: Easing.OutQuint } }

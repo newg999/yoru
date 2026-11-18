@@ -59,8 +59,7 @@ PanelWindow {
     // De qué isla sale cada panel (para fundirlo con ella: Panel.qml)
     // (se reasigna entera para que avise: Avisos.qml la sigue con un binding)
     Component.onCompleted: Paneles.islas = Object.assign({}, Paneles.islas, {[modelData.name]: {
-        // (sin «clima»: va dentro de «centro» y su panel cuelga de ella)
-        botones, musica, centro, estado, notificaciones, novedades, discos, bandeja
+        botones, musica, clima, centro, estado, notificaciones, novedades, discos, bandeja
     }})
 
     MouseArea {
@@ -77,6 +76,7 @@ PanelWindow {
         Region { item: escritorios; radius: Tema.radioIsla }
         Region { item: musica; radius: Tema.radioIsla }
         Region { item: centro; radius: Tema.radioIsla }
+        Region { item: clima; radius: Tema.radioIsla }
         Region { item: bandeja; radius: Tema.radioIsla }
         Region { item: jugando; radius: Tema.radioIsla }
         Region { item: cafe; radius: Tema.radioIsla }
@@ -233,12 +233,14 @@ PanelWindow {
         }
 
         // ---------------------------------------------------------- Centro
-        // Hora y fecha (y la grabación, si se graba)
+        // Hora y fecha (y la grabación, si se graba). El tiempo, en la suya (a la izquierda)
         Isla {
             id: centro
             x: Math.round((contenido.width - width) / 2)
             relleno: 10
-            espacio: 10
+            // Sin espacio entre elementos: el de la grabación, aun oculto,
+            // dejaba 10 px de más a la derecha de la fecha. Lleva el suyo
+            espacio: 0
 
             SystemClock {
                 id: reloj
@@ -247,39 +249,6 @@ PanelWindow {
             readonly property var dias: ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"]
             readonly property var meses: ["ene", "feb", "mar", "abr", "may", "jun", "jul",
                 "ago", "sep", "oct", "nov", "dic"]
-
-            // El tiempo, delante de la hora: icono y grados, sin la «C»
-            // (clic = previsión, colgando de esta isla)
-            Item {
-                id: clima
-                visible: Ajustes.islaClima && Tiempo.listo
-                implicitWidth: filaClima.implicitWidth
-                implicitHeight: Tema.altoBarra
-                Row {
-                    id: filaClima
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 6
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: Tiempo.icono
-                        font.family: Tema.mono
-                        font.pixelSize: Tema.letra + 4
-                        color: Tema.blanco
-                    }
-                    Mono {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: Tiempo.temperatura + "°"
-                        color: climaRaton.containsMouse || Paneles.esta("pildora", barra.modelData, "clima") ? Tema.blanco : Tema.texto
-                    }
-                }
-                MouseArea {
-                    id: climaRaton
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Paneles.abrirPagina(barra.modelData, "clima", "centro")
-                }
-            }
 
             // Hora y fecha en una línea (segundos según Ajustes › Fecha y hora).
             // Clic = calendario
@@ -316,10 +285,11 @@ PanelWindow {
             // Clic = parar y guardar (o Mod+Alt+R)
             Item {
                 visible: Grabacion.grabando
-                implicitWidth: filaGrabando.implicitWidth
+                implicitWidth: filaGrabando.implicitWidth + 10
                 implicitHeight: 22
                 Row {
                     id: filaGrabando
+                    x: 10
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 6
                     Rectangle {
@@ -344,6 +314,46 @@ PanelWindow {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: Grabacion.alternar()
+                }
+            }
+        }
+
+        // El tiempo, en su isla, a la izquierda de la hora (antes iba dentro
+        // de la de la hora). Su panel cuelga de ella
+        Isla {
+            id: clima
+            x: centro.x - width - Tema.separacion
+            oculta: !Ajustes.islaClima || !Tiempo.listo
+            relleno: 10
+
+            // Icono y grados, sin la «C» (clic = previsión, colgando de esta isla)
+            Item {
+                id: climaDentro
+                implicitWidth: filaClima.implicitWidth
+                implicitHeight: Tema.altoBarra
+                Row {
+                    id: filaClima
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 6
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Tiempo.icono
+                        font.family: Tema.mono
+                        font.pixelSize: Tema.letra + 4
+                        color: Tema.blanco
+                    }
+                    Mono {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Tiempo.temperatura + "°"
+                        color: climaRaton.containsMouse || Paneles.esta("pildora", barra.modelData, "clima") ? Tema.blanco : Tema.texto
+                    }
+                }
+                MouseArea {
+                    id: climaRaton
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Paneles.abrirPagina(barra.modelData, "clima", "centro")
                 }
             }
         }
