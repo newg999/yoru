@@ -13,6 +13,6 @@
 
 craft-launcher     # ArtCraft Launcher: instala más y avisa de actualizaciones
 pdfcraft           # PDF (como Acrobat)
-wordcraft          # documentos (como Word)
-deckcraft          # presentaciones (como PowerPoint)
-gridcraft          # hojas de cálculo (como Excel)
+deckcraft          # sus propias presentaciones (.deckcraft)
+# Documentos, hojas de cálculo y presentaciones de Office: OnlyOffice
+# (Flathub, install.sh → apps_predeterminadas). Antes wordcraft y gridcraft

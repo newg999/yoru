@@ -856,11 +856,25 @@ brave_nvidia() {
     ok "Brave por XWayland (con NVIDIA, en Wayland parpadea)"
 }
 
-# Apps para abrir documentos. Si están las de ArtCraft (PdfCraft, WordCraft,
-# DeckCraft, GridCraft; las instala apps_artcraft), van ellas; si no, los
-# PDF con Okular y lo demás como esté.
-# A WordCraft no se le dan .txt, .md ni .html aunque los acepte: esos van a
-# un editor de texto o al navegador.
+# OnlyOffice, con el tema oscuro (como el resto de Yoru). Lo demás de su
+# configuración (la ventana, los recientes...) se queda
+onlyoffice_oscuro() {
+    local cfg="$HOME/.var/app/org.onlyoffice.desktopeditors/config/onlyoffice/DesktopEditors.conf"
+    mkdir -p "$(dirname "$cfg")"
+    python3 - "$cfg" <<'PY'
+import configparser, sys
+ruta = sys.argv[1]
+c = configparser.ConfigParser(interpolation=None)
+c.optionxform = str
+c.read(ruta)
+if not c.has_section("General"):
+    c.add_section("General")
+c["General"]["UITheme"] = "theme-dark"
+with open(ruta, "w") as f:
+    c.write(f, space_around_delimiters=False)
+PY
+}
+
 # La configuración de Elisa (~/.var/app/org.kde.elisa/config/elisarc): la
 # biblioteca, solo la carpeta Música de casa (no el NAS) y sin repasarla al
 # arrancar. Lo demás que tenga el archivo se queda
@@ -886,6 +900,10 @@ PY
     ok "Elisa: biblioteca solo en $musica, sin repasarla al arrancar"
 }
 
+# Apps para abrir documentos. Los PDF con PdfCraft (de ArtCraft, lo instala
+# apps_artcraft; si no está, Okular). Documentos, hojas de cálculo y
+# presentaciones de Office, con OnlyOffice (Flathub). Los .txt, .md y .html
+# van a un editor de texto o al navegador
 apps_predeterminadas() {
     local apps="$HOME/.local/share/flatpak/exports/share/applications"
     _app() {   # _app <id de flatpak> <nombre> <tipos...>
@@ -895,19 +913,26 @@ apps_predeterminadas() {
     }
     _app ai.storyteller.pdfcraft "PDF → PdfCraft" application/pdf \
         || { xdg-mime default org.kde.okular.desktop application/pdf 2>/dev/null && ok "PDF → Okular"; }
-    _app ai.storyteller.wordcraft "Documentos de texto → WordCraft" \
+    # Documentos y hojas de cálculo → OnlyOffice (de Flathub; antes WordCraft
+    # y GridCraft)
+    [[ -f "$apps/org.onlyoffice.desktopeditors.desktop" ]] \
+        || flatpak install --user -y --noninteractive flathub org.onlyoffice.desktopeditors >/dev/null 2>&1
+    onlyoffice_oscuro
+    _app org.onlyoffice.desktopeditors "Documentos de texto → OnlyOffice" \
         application/vnd.openxmlformats-officedocument.wordprocessingml.document \
         application/vnd.ms-word.document.macroEnabled.12 \
         application/vnd.openxmlformats-officedocument.wordprocessingml.template \
         application/vnd.ms-word.template.macroEnabled.12 \
         application/msword application/msword-template \
         application/vnd.oasis.opendocument.text application/rtf text/rtf
-    _app ai.storyteller.deckcraft "Presentaciones → DeckCraft" \
-        application/x-deckcraft \
+    _app org.onlyoffice.desktopeditors "Presentaciones → OnlyOffice" \
         application/vnd.openxmlformats-officedocument.presentationml.presentation \
         application/vnd.openxmlformats-officedocument.presentationml.template \
-        application/vnd.openxmlformats-officedocument.presentationml.slideshow
-    _app ai.storyteller.gridcraft "Hojas de cálculo → GridCraft" \
+        application/vnd.openxmlformats-officedocument.presentationml.slideshow \
+        application/vnd.ms-powerpoint application/vnd.oasis.opendocument.presentation
+    # (las presentaciones propias de DeckCraft, con DeckCraft)
+    _app ai.storyteller.deckcraft "Presentaciones .deckcraft → DeckCraft" application/x-deckcraft
+    _app org.onlyoffice.desktopeditors "Hojas de cálculo → OnlyOffice" \
         application/vnd.openxmlformats-officedocument.spreadsheetml.sheet \
         application/vnd.ms-excel.sheet.macroEnabled.12 \
         application/vnd.ms-excel.sheet.binary.macroEnabled.12 \
@@ -936,7 +961,7 @@ apps_predeterminadas() {
     _app org.kde.elisa "Música → Elisa" audio/mpeg audio/flac audio/x-flac audio/ogg \
         audio/x-vorbis+ogg audio/opus audio/x-opus+ogg audio/mp4 audio/x-m4a audio/aac \
         audio/wav audio/x-wav audio/x-aiff audio/x-ape audio/x-wavpack audio/x-mpegurl
-    # Texto plano: sin esto, .txt y .md acaban en WordCraft (que también los acepta)
+    # Texto plano: el editor de texto (si no, una app de documentos se los queda)
     [[ -f /usr/share/applications/org.gnome.TextEditor.desktop ]] \
         && xdg-mime default org.gnome.TextEditor.desktop text/plain text/markdown text/x-log 2>/dev/null \
         && ok "Texto plano → Editor de texto"
