@@ -122,8 +122,17 @@ def listar(carpeta):
     return cosas
 
 
+_ultima = None
+
+
 def emitir(carpeta):
-    print(json.dumps({"carpeta": carpeta, "cosas": listar(carpeta)}, ensure_ascii=False), flush=True)
+    # Solo si algo cambió: cada lista nueva rehace todos los iconos (y
+    # cortaría el nombre que se esté escribiendo)
+    global _ultima
+    linea = json.dumps({"carpeta": carpeta, "cosas": listar(carpeta)}, ensure_ascii=False)
+    if linea != _ultima:
+        _ultima = linea
+        print(linea, flush=True)
 
 
 def main():

@@ -558,14 +558,19 @@ PanelWindow {
                     selectedTextColor: Tema.blanco
                     font.family: Tema.fuente
                     font.pixelSize: Math.round(12 * capa.t)
-                    onVisibleChanged: {
-                        if (!visible)
+                    function empezar() {
+                        if (!icono.editando)
                             return;
                         text = icono.modelData.nombre;
                         forceActiveFocus();
                         const punto = text.lastIndexOf(".");
                         select(0, punto > 0 && icono.modelData.tipo !== "carpeta" ? punto : text.length);
                     }
+                    onVisibleChanged: if (visible) empezar()
+                    // Lo recién creado («Carpeta nueva») ya nace editándose:
+                    // el recuadro nunca «pasa» a visible y se quedaba vacío y
+                    // sin foco. Se prepara también al nacer
+                    Component.onCompleted: Qt.callLater(empezar)
                     onAccepted: capa.renombrar(icono.modelData.nombre, text)
                     onActiveFocusChanged: if (!activeFocus && icono.editando) capa.renombrar(icono.modelData.nombre, text)
                     Keys.onEscapePressed: { capa.renombrando = ""; teclas.forceActiveFocus(); }
