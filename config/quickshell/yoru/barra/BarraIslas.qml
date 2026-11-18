@@ -59,7 +59,10 @@ PanelWindow {
     // De qué isla sale cada panel (para fundirlo con ella: Panel.qml)
     // (se reasigna entera para que avise: Avisos.qml la sigue con un binding)
     Component.onCompleted: Paneles.islas = Object.assign({}, Paneles.islas, {[modelData.name]: {
-        botones, musica, clima, centro, estado, notificaciones, novedades, discos, bandeja
+        botones, musica, clima, centro, notificaciones, novedades, discos, bandeja,
+        red: islaRed, bt: islaBt, sonido: islaSonido, bateria: islaBateria, control: islaControl,
+        // (estado: la del centro de control; la usan otras páginas como reserva)
+        estado: islaControl
     }})
 
     MouseArea {
@@ -83,7 +86,12 @@ PanelWindow {
         Region { item: novedades; radius: Tema.radioIsla }
         Region { item: discos; radius: Tema.radioIsla }
         Region { item: notificaciones; radius: Tema.radioIsla }
-        Region { item: estado; radius: Tema.radioIsla }
+        Region { item: islaRed; radius: Tema.radioIsla }
+        Region { item: islaTeclado; radius: Tema.radioIsla }
+        Region { item: islaBt; radius: Tema.radioIsla }
+        Region { item: islaSonido; radius: Tema.radioIsla }
+        Region { item: islaBateria; radius: Tema.radioIsla }
+        Region { item: islaControl; radius: Tema.radioIsla }
     }
 
     // Texto monoespaciado de las píldoras (del tamaño de Ajustes › Aspecto › Letra)
@@ -382,137 +390,168 @@ PanelWindow {
             Usb { id: discos; pantalla: barra.modelData }
             // (la campana ya no va aquí: está en el centro, junto a la hora)
 
-            Isla {
+            // Lo que necesitan las islas de la derecha (no se ve: no ocupa sitio)
+            Item {
                 id: estado
-                relleno: 4
-                espacio: 4
-
-                // Wi-Fi o cable: del color del tema con conexión. Con el
-                // wifi apagado (y sin cable) no sale
+                visible: false
                 readonly property var dispositivos: Networking.devices.values
                 readonly property var cable: dispositivos.find(d => d.type === DeviceType.Wired && d.connected) ?? null
                 readonly property var wifi: dispositivos.find(d => d.type === DeviceType.Wifi) ?? null
                 readonly property var redWifi: wifi?.networks.values.find(r => r.connected) ?? null
-                Ficha {
-                    readonly property var senales: ["󰤟", "󰤢", "󰤥", "󰤨"]
-                    icono: estado.cable ? "󰈀"
-                        : estado.redWifi ? senales[Math.min(3, Math.floor(estado.redWifi.signalStrength * 4))]
-                        : !Networking.wifiEnabled ? "󰤭" : "󰤮"
-                    texto: estado.cable ? "Cable" : estado.redWifi ? estado.redWifi.name : "Sin red"
-                    visible: estado.cable !== null || Networking.wifiEnabled
-                    anchoTexto: barra.pequena ? 90 : 140
-                    cable: estado.cable !== null
-                    activa: estado.cable !== null || estado.redWifi !== null
-                    // VPN conectada: un escudito en la esquina del icono
-                    insignia: Vpn.conectadas.length > 0 ? "󰦝" : ""
-                    onClic: Paneles.abrirPagina(barra.modelData, "red", "derecha")
-                }
 
-                // Distribución del teclado: clic = la siguiente. Con una
-                // sola no sale (no hay nada que cambiar)
-                Ficha {
-                    id: teclado
-                    property string corto: ""
-                    property int cuantas: 0
-                    icono: "󰌌"
-                    texto: corto
-                    visible: corto !== "" && cuantas > 1
-                    onClic: {
-                        Niri.accion("switch-layout", "next");
-                        leerTeclado.restart();
-                    }
-                    Process {
-                        id: distribuciones
-                        running: true
-                        command: ["niri", "msg", "-j", "keyboard-layouts"]
-                        stdout: StdioCollector {
-                            onStreamFinished: {
-                                try {
-                                    const k = JSON.parse(text);
-                                    teclado.cuantas = k.names.length;
-                                    const nombre = k.names[k.current_idx] ?? "";
-                                    const codigos = {Spanish: "ES", English: "EN", French: "FR", German: "DE", Portuguese: "PT", Italian: "IT", Catalan: "CA"};
-                                    const clave = Object.keys(codigos).find(c => nombre.startsWith(c));
-                                    teclado.corto = clave ? codigos[clave] : nombre.slice(0, 2).toUpperCase();
-                                } catch (e) {
-                                    teclado.corto = "";
-                                }
-                            }
-                        }
-                    }
-                    Timer {
-                        id: leerTeclado
-                        interval: 200
-                        onTriggered: distribuciones.running = true
-                    }
-                }
-
-                // Bluetooth: solo encendido («On», o cuántos hay conectados).
-                // Apagado no sale: se enciende en el Centro de control (󰍜)
                 readonly property var adaptador: Bluetooth.defaultAdapter
                 readonly property int conectados: Bluetooth.devices.values.filter(d => d.connected).length
-                Ficha {
-                    visible: estado.adaptador?.enabled ?? false
-                    icono: estado.conectados > 0 ? "󰂱" : "󰂯"
-                    texto: estado.conectados > 0 ? String(estado.conectados) : ""
-                    activa: true
-                    onClic: Paneles.abrirPagina(barra.modelData, "bt", "derecha")
-                }
 
-                // Volumen · rueda = subir/bajar · clic central = silenciar.
-                // Silenciado (o sin salida) no sale: se quita en el Centro de control
                 readonly property var salida: Pipewire.defaultAudioSink
                 PwObjectTracker { objects: [estado.salida] }
                 readonly property real volumen: salida?.audio?.volume ?? 0
                 readonly property bool mudo: salida?.audio?.muted ?? true
-                Ficha {
-                    icono: estado.mudo ? "󰖁" : estado.volumen < 0.34 ? "󰕿" : estado.volumen < 0.67 ? "󰖀" : "󰕾"
-                    texto: Math.round(estado.volumen * 100) + "%"
-                    volumen: estado.volumen
-                    mudo: estado.mudo
-                    visible: !estado.mudo
-                    onClic: boton => {
-                        if (boton === Qt.MiddleButton)
-                            estado.salida.audio.muted = !estado.mudo;
-                        else if (boton === Qt.RightButton)
-                            Niri.lanzar(["pavucontrol"]);
-                        else
-                            Paneles.abrirPagina(barra.modelData, "sonido", "derecha");
-                    }
-                    onRueda: pasos => {
-                        if (!estado.salida?.audio)
-                            return;
-                        estado.salida.audio.muted = false;
-                        estado.salida.audio.volume = Math.max(0, Math.min(1, Math.round(estado.volumen * 20 + pasos) / 20));
-                    }
-                }
 
-                // Batería: la ficha se llena según la carga
                 readonly property var bateria: UPower.displayDevice
                 readonly property bool hayBateria: bateria && bateria.isLaptopBattery
                 readonly property int carga: hayBateria ? Math.round(bateria.percentage * 100) : 0
                 readonly property bool cargando: hayBateria
                     && (bateria.state === UPowerDeviceState.Charging || bateria.state === UPowerDeviceState.FullyCharged)
-                Ficha {
-                    visible: estado.hayBateria
-                    icono: estado.cargando ? "󰂄" : "󰁹"
-                    texto: estado.carga + "%"
-                    carga: estado.carga / 100
-                    cargando: estado.cargando
-                    // Cargando: el relleno ondea, como agua entrando
-                    ola: estado.cargando && estado.carga < 100
-                    // Por colores, como en el iPhone (Tema.bateria)
-                    colorCarga: Tema.bateria(estado.carga / 100, estado.cargando)
-                    colorIcono: !estado.cargando && estado.carga <= 15 ? Tema.bateria(estado.carga / 100, false) : tinta
-                    onClic: Paneles.alternar("bateria", barra.modelData, "")
-                }
+            }
 
-                // Centro de control
-                Ficha {
-                    icono: "󰍜"
-                    activa: Paneles.esta("pildora", barra.modelData, "control")
-                    onClic: Paneles.abrirPagina(barra.modelData, "control", "derecha")
-                }
+            // Cada cosa en su isla (como en el vídeo de r/unixporn): al abrir
+            // una, solo esa se convierte en su panel y las demás siguen a mano
+            // Wi-Fi o cable: del color del tema con conexión. Con el wifi apagado (y sin cable) no sale
+            Isla {
+                id: islaRed
+                relleno: 4
+                espacio: 4
+                    Ficha {
+                        readonly property var senales: ["󰤟", "󰤢", "󰤥", "󰤨"]
+                        icono: estado.cable ? "󰈀"
+                            : estado.redWifi ? senales[Math.min(3, Math.floor(estado.redWifi.signalStrength * 4))]
+                            : !Networking.wifiEnabled ? "󰤭" : "󰤮"
+                        texto: estado.cable ? "Cable" : estado.redWifi ? estado.redWifi.name : "Sin red"
+                        visible: estado.cable !== null || Networking.wifiEnabled
+                        anchoTexto: barra.pequena ? 90 : 140
+                        cable: estado.cable !== null
+                        activa: estado.cable !== null || estado.redWifi !== null
+                        // VPN conectada: un escudito en la esquina del icono
+                        insignia: Vpn.conectadas.length > 0 ? "󰦝" : ""
+                        onClic: Paneles.abrirPagina(barra.modelData, "red", "derecha")
+                    }
+            }
+
+            // Distribución del teclado: clic = la siguiente. Con una sola no sale
+            Isla {
+                id: islaTeclado
+                relleno: 4
+                espacio: 4
+                    Ficha {
+                        id: teclado
+                        property string corto: ""
+                        property int cuantas: 0
+                        icono: "󰌌"
+                        texto: corto
+                        visible: corto !== "" && cuantas > 1
+                        onClic: {
+                            Niri.accion("switch-layout", "next");
+                            leerTeclado.restart();
+                        }
+                        Process {
+                            id: distribuciones
+                            running: true
+                            command: ["niri", "msg", "-j", "keyboard-layouts"]
+                            stdout: StdioCollector {
+                                onStreamFinished: {
+                                    try {
+                                        const k = JSON.parse(text);
+                                        teclado.cuantas = k.names.length;
+                                        const nombre = k.names[k.current_idx] ?? "";
+                                        const codigos = {Spanish: "ES", English: "EN", French: "FR", German: "DE", Portuguese: "PT", Italian: "IT", Catalan: "CA"};
+                                        const clave = Object.keys(codigos).find(c => nombre.startsWith(c));
+                                        teclado.corto = clave ? codigos[clave] : nombre.slice(0, 2).toUpperCase();
+                                    } catch (e) {
+                                        teclado.corto = "";
+                                    }
+                                }
+                            }
+                        }
+                        Timer {
+                            id: leerTeclado
+                            interval: 200
+                            onTriggered: distribuciones.running = true
+                        }
+                    }
+            }
+
+            // Bluetooth: solo encendido («On», o cuántos hay conectados)
+            Isla {
+                id: islaBt
+                relleno: 4
+                espacio: 4
+                    Ficha {
+                        visible: estado.adaptador?.enabled ?? false
+                        icono: estado.conectados > 0 ? "󰂱" : "󰂯"
+                        texto: estado.conectados > 0 ? String(estado.conectados) : ""
+                        activa: true
+                        onClic: Paneles.abrirPagina(barra.modelData, "bt", "derecha")
+                    }
+            }
+
+            // Volumen · rueda = subir/bajar · clic central = silenciar
+            Isla {
+                id: islaSonido
+                relleno: 4
+                espacio: 4
+                    Ficha {
+                        icono: estado.mudo ? "󰖁" : estado.volumen < 0.34 ? "󰕿" : estado.volumen < 0.67 ? "󰖀" : "󰕾"
+                        texto: Math.round(estado.volumen * 100) + "%"
+                        volumen: estado.volumen
+                        mudo: estado.mudo
+                        visible: !estado.mudo
+                        onClic: boton => {
+                            if (boton === Qt.MiddleButton)
+                                estado.salida.audio.muted = !estado.mudo;
+                            else if (boton === Qt.RightButton)
+                                Niri.lanzar(["pavucontrol"]);
+                            else
+                                Paneles.abrirPagina(barra.modelData, "sonido", "derecha");
+                        }
+                        onRueda: pasos => {
+                            if (!estado.salida?.audio)
+                                return;
+                            estado.salida.audio.muted = false;
+                            estado.salida.audio.volume = Math.max(0, Math.min(1, Math.round(estado.volumen * 20 + pasos) / 20));
+                        }
+                    }
+            }
+
+            // Batería: la ficha se llena según la carga
+            Isla {
+                id: islaBateria
+                relleno: 4
+                espacio: 4
+                    Ficha {
+                        visible: estado.hayBateria
+                        icono: estado.cargando ? "󰂄" : "󰁹"
+                        texto: estado.carga + "%"
+                        carga: estado.carga / 100
+                        cargando: estado.cargando
+                        // Cargando: el relleno ondea, como agua entrando
+                        ola: estado.cargando && estado.carga < 100
+                        // Por colores, como en el iPhone (Tema.bateria)
+                        colorCarga: Tema.bateria(estado.carga / 100, estado.cargando)
+                        colorIcono: !estado.cargando && estado.carga <= 15 ? Tema.bateria(estado.carga / 100, false) : tinta
+                        onClic: Paneles.alternar("bateria", barra.modelData, "")
+                    }
+            }
+
+            // Centro de control
+            Isla {
+                id: islaControl
+                relleno: 4
+                espacio: 4
+                    Ficha {
+                        icono: "󰍜"
+                        activa: Paneles.esta("pildora", barra.modelData, "control")
+                        onClic: Paneles.abrirPagina(barra.modelData, "control", "derecha")
+                    }
             }
         }
     }

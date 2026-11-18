@@ -42,8 +42,12 @@ Singleton {
                 : enSeccion === "clima" ? (i.clima?.visible && i.clima.width > 0 ? i.clima : i.centro)
                 // las actualizaciones, de la suya (si no se ve, del estado)
                 : enSeccion === "actualizaciones" ? (i.novedades?.visible && i.novedades.width > 0 ? i.novedades : i.estado)
-                : enSeccion === "calendario" || origen !== "derecha" ? i.centro : i.estado)
-            : {lanzador: i.botones, bateria: i.estado, discos: i.discos,
+                : enSeccion === "calendario" || origen !== "derecha" ? i.centro
+                // las de la derecha, cada una de su isla (si no se ve, la del
+                // centro de control)
+                : ({red: i.red, bt: i.bt, sonido: i.sonido}[enSeccion]?.visible ? {red: i.red, bt: i.bt, sonido: i.sonido}[enSeccion] : null)
+                    ?? i.control ?? i.estado)
+            : {lanzador: i.botones, bateria: i.bateria ?? i.estado, discos: i.discos,
                notificaciones: i.notificaciones, portapapeles: i.notificaciones, apagado: i.notificaciones,
                // (la bandeja va en su propia isla, a la izquierda)
                mega: i.bandeja ?? i.estado, bandeja: i.bandeja ?? i.estado}[nombre];

@@ -96,7 +96,9 @@ PanelWindow {
     Connections {
         target: Paneles
         function onSeccionChanged() {
-            if (ventana.abierto)
+            // Navegando desde dentro (del centro de control al wifi), el
+            // panel se queda en su isla: no salta a la del wifi
+            if (ventana.abierto && !(Paneles.anterior && ventana.isla))
                 ventana.tomarIsla();
         }
     }
