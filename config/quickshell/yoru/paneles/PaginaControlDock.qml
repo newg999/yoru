@@ -5,16 +5,18 @@
 //
 //    (夜) don                              󰅌 󰒓      portapapeles y ajustes
 //         Fedora · encendido 3 h 20 min
-//    [Wi-Fi ●›] [Bluetooth ●›] [No molestar ●]      clic = encender/apagar
-//    [Juego ●]  [Luz noct. ●]  [No suspender ●]     › = su panel (red, bt)
+//    [No molestar ●] [Luz noct. ●] [No suspender ●] clic = encender/apagar
 //    ┌──────────────────────────────────────┐
-//    │ 󰕾 ━━━━━━━━━━━━○──────  92%  ›         │     › = el panel de sonido
-//    │ 󰍬 ━━━━━━━━━━━━━━━━━━○  100%           │     clic en el icono = silenciar
+//    │ 󰕾 ━━━━━━━━━━━━○──────  92%            │     clic en el icono = silenciar
+//    │ 󰍬 ━━━━━━━━━━━━━━━━━━○  100%           │
 //    │ 󰃠 ━━━━━━━━━━━━━━━━━━○  100%           │
 //    └──────────────────────────────────────┘
-//    [ Ahorro | Equilibrado | Rendimiento ]
 //    ENERGÍA     [󰌾] [󰤄] [󰍃] [󰜉] [󰐥]          los peligrosos: otra vez para confirmar
-//    NOTIFICACIONES                  Borrar      las dos últimas
+//
+//  Con las islas, lo que ya tiene su icono arriba (en la isla convertida en
+//  panel) no se repite aquí: ni Wi-Fi ni Bluetooth, ni la › del sonido, ni
+//  el perfil de energía (está en la batería, si hay), ni las notificaciones
+//  (la campana). En la isla única (enLinea) sí salen: allí no hay iconos.
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -38,6 +40,10 @@ Item {
     // despliegan aquí mismo en vez de abrir su panel: "wifi" · "bluetooth"
     // · "audio" · "" (la misma flecha otra vez = recogerla)
     property bool enLinea: false
+    // Con las islas: arriba están los iconos de wifi, Bluetooth, volumen,
+    // batería y la campana (cada uno abre lo suyo)
+    readonly property bool conIconosArriba: !enLinea
+    readonly property bool hayBateria: UPower.displayDevice?.isLaptopBattery ?? false
     property string desplegada: ""
     readonly property bool conRedes: desplegada === "wifi" || desplegada === "bluetooth"
     function abrirLista(l, panel) {
@@ -303,6 +309,7 @@ Item {
             readonly property real ancho: (width - 2 * spacing) / 3
 
             Tecla {
+                visible: !pagina.conIconosArriba
                 width: teclas.ancho
                 icono: Networking.wifiEnabled ? "󰖩" : "󰖪"
                 nombre: "Wi-Fi"
@@ -313,6 +320,7 @@ Item {
                 onAbrir: pagina.abrirLista("wifi", "red")
             }
             Tecla {
+                visible: !pagina.conIconosArriba
                 width: teclas.ancho
                 icono: pagina.adaptador?.enabled ? "󰂯" : "󰂲"
                 nombre: "Bluetooth"
@@ -332,15 +340,6 @@ Item {
                 detalle: Notificaciones.noMolestar ? "Solo urgentes" : "Apagado"
                 on: Notificaciones.noMolestar
                 onAlternar: Notificaciones.noMolestar = !Notificaciones.noMolestar
-            }
-            // A mano: sin avisos y con el mando en la barra (ver comun/Juego.qml)
-            Tecla {
-                width: teclas.ancho
-                icono: "󰊴"
-                nombre: "Modo juego"
-                detalle: Juego.activo ? "Sin avisos" : "Apagado"
-                on: Juego.activo
-                onAlternar: Juego.activo ? Juego.terminar() : Juego.empezar()
             }
             Tecla {
                 width: teclas.ancho
@@ -397,7 +396,7 @@ Item {
                     icono: (pagina.salida?.audio?.muted ?? true) ? "󰖁" : "󰕾"
                     valor: pagina.salida?.audio?.volume ?? 0
                     apagado: pagina.salida?.audio?.muted ?? true
-                    conFlecha: true
+                    conFlecha: !pagina.conIconosArriba
                     onMovido: v => {
                         if (!pagina.salida?.audio)
                             return;
@@ -440,7 +439,7 @@ Item {
         // ------------------------------------------- Perfil de energía
         Rectangle {
             id: perfiles
-            visible: lista.length > 0 && !pagina.conRedes
+            visible: lista.length > 0 && !pagina.conRedes && !(pagina.conIconosArriba && pagina.hayBateria)
             width: parent.width
             height: 40
             radius: Tema.esquina(13)
@@ -562,8 +561,9 @@ Item {
         }
 
         // ----------------------------------------------- Notificaciones
+        // (con las islas, no: están en la campana)
         Item {
-            visible: !pagina.conRedes
+            visible: !pagina.conRedes && !pagina.conIconosArriba
             width: parent.width
             height: 16
             Titulo { text: "NOTIFICACIONES" }
@@ -583,7 +583,7 @@ Item {
             }
         }
         Caja {
-            visible: !pagina.conRedes
+            visible: !pagina.conRedes && !pagina.conIconosArriba
             width: parent.width
             height: avisos.implicitHeight + 12
             Column {

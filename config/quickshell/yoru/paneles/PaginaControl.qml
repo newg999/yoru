@@ -3,8 +3,8 @@
 //  (ver Paginas.qml)
 //
 //    [󰖩 Wi-Fi      ] [󰂚 No molestar ]     icono = on/off · resto = su lista,
-//    [󰂯 Bluetooth  ] [󰊴 Modo juego  ]     desplegada aquí debajo (SeccionWifi/Bluetooth)
-//    [󰖔 Luz noct.  ] [󰅶 No suspender]
+//    [󰂯 Bluetooth  ] [󰖔 Luz noct.   ]     desplegada aquí debajo (SeccionWifi/Bluetooth)
+//    [󰅶 No suspender]
 //    󰕾 ━━━━━━━━━○────────── 45%  󰅀       󰅀 = elegir salida / micrófono (aquí debajo)
 //    󰍬 ━━━━━○────────────── 60%  󰅀
 //    󰃠 ━━━━━━━━━━━━○─────── 80%           brillo, si alguna pantalla lo permite
@@ -79,18 +79,6 @@ Column {
             onAlternar: Radios.alternarBluetooth()
             elegida: pagina.lista === "bluetooth"
             onElegir: pagina.elegir("bluetooth")
-        }
-        // A mano: sin avisos y con el mando en la barra (la CPU la pone a
-        // tope gamemode al abrir un juego, ver comun/Juego.qml)
-        Baldosa {
-            width: parent.ancho
-            conFlecha: false
-            icono: "󰊴"
-            titulo: "Modo juego"
-            detalle: Juego.activo ? "Sin avisos" : "Apagado"
-            encendida: Juego.activo
-            onAlternar: Juego.activo ? Juego.terminar() : Juego.empezar()
-            onElegir: alternar()
         }
         Baldosa {
             width: parent.ancho

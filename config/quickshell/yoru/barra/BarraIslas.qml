@@ -435,7 +435,9 @@ PanelWindow {
                     icono: estado.cable ? "󰈀"
                         : estado.redWifi ? senales[Math.min(3, Math.floor(estado.redWifi.signalStrength * 4))]
                         : !Networking.wifiEnabled ? "󰤭" : "󰤮"
-                    visible: estado.cable !== null || Networking.wifiEnabled
+                    // (apagado sigue a la vista, en gris: desde aquí se vuelve a encender)
+                    visible: estado.cable !== null || estado.wifi !== null
+                    apagada: estado.cable === null && !Networking.wifiEnabled
                     cable: estado.cable !== null
                     activa: estado.cable !== null || estado.redWifi !== null
                     // VPN conectada: un escudito en la esquina del icono
@@ -482,12 +484,16 @@ PanelWindow {
                     }
                 }
 
-                // Bluetooth: solo encendido («On», o cuántos hay conectados)
+                // Bluetooth (cuántos hay conectados). Apagado sigue a la vista,
+                // en gris: el centro de control ya no lo lleva y desde aquí se
+                // vuelve a encender
                 Ficha {
-                    visible: estado.adaptador?.enabled ?? false
-                    icono: estado.conectados > 0 ? "󰂱" : "󰂯"
-                    texto: estado.conectados > 0 ? String(estado.conectados) : ""
-                    activa: true
+                    readonly property bool encendido: estado.adaptador?.enabled ?? false
+                    visible: estado.adaptador !== null
+                    icono: !encendido ? "󰂲" : estado.conectados > 0 ? "󰂱" : "󰂯"
+                    texto: encendido && estado.conectados > 0 ? String(estado.conectados) : ""
+                    activa: encendido
+                    apagada: !encendido
                     elegida: Paneles.esta("pildora", barra.modelData, "bt")
                     onClic: Paneles.abrirPagina(barra.modelData, "bt", "derecha")
                 }
@@ -497,7 +503,9 @@ PanelWindow {
                     icono: estado.mudo ? "󰖁" : estado.volumen < 0.34 ? "󰕿" : estado.volumen < 0.67 ? "󰖀" : "󰕾"
                     volumen: estado.volumen
                     mudo: estado.mudo
-                    visible: !estado.mudo
+                    // (silenciado sigue a la vista, en gris)
+                    visible: estado.salida !== null
+                    apagada: estado.mudo
                     elegida: Paneles.esta("pildora", barra.modelData, "sonido")
                     onClic: boton => {
                         if (boton === Qt.MiddleButton)

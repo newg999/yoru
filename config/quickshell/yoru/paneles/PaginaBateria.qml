@@ -11,7 +11,7 @@
 //    [󱐋 Potencia] [󰣐 Salud] [󰂑 Capacidad]           cargar)
 //    PERFIL DE ENERGÍA
 //    [ Ahorro | Equilibrado | Rendimiento ]
-//    [☕ No suspender                     ●]
+//  («No suspender» está en el centro de control)
 //
 //  Los datos son de UPower. La salud es la capacidad de ahora frente a la
 //  de fábrica: con el tiempo baja y la batería dura menos.
@@ -401,68 +401,6 @@ Item {
                         onClicked: PowerProfiles.profile = perfil.modelData.perfil
                     }
                 }
-            }
-        }
-
-        // ------------------------------------------------ No suspender
-        Rectangle {
-            width: parent.width
-            height: 44
-            radius: Tema.esquina(14)
-            color: cafeRaton.containsMouse ? Tema.cajaHover : Tema.caja
-            border.width: 1
-            border.color: Despierto.activo ? panel.tinte(0.5) : Tema.claro(0.08)
-            Behavior on color { ColorAnimation { duration: Tema.rapida } }
-            Row {
-                x: 12
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 10
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 26; height: 26
-                    radius: Tema.esquina(8)
-                    color: Despierto.activo ? panel.acento : Tema.claro(0.08)
-                    Texto {
-                        anchors.centerIn: parent
-                        text: "󰅶"
-                        font.pixelSize: 14
-                        color: Despierto.activo ? Tema.oscuro : Tema.gris
-                    }
-                }
-                Column {
-                    anchors.verticalCenter: parent.verticalCenter
-                    Texto {
-                        text: "No suspender"
-                        font.pixelSize: 12
-                        color: Tema.texto
-                    }
-                    Texto {
-                        text: Despierto.activo ? "No se bloquea ni se apaga la pantalla" : "Apagado"
-                        font.bold: false
-                        font.pixelSize: 10
-                        color: Tema.gris
-                    }
-                }
-            }
-            Rectangle {
-                anchors { right: parent.right; rightMargin: 12; verticalCenter: parent.verticalCenter }
-                width: 38; height: 22; radius: 11
-                color: Despierto.activo ? panel.acento : Tema.claro(0.15)
-                Behavior on color { ColorAnimation { duration: Tema.rapida } }
-                Rectangle {
-                    width: 16; height: 16; radius: 8
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: Despierto.activo ? parent.width - width - 3 : 3
-                    color: Despierto.activo ? Tema.oscuro : Tema.gris
-                    Behavior on x { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutCubic } }
-                }
-            }
-            MouseArea {
-                id: cafeRaton
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: Despierto.activo = !Despierto.activo
             }
         }
     }
