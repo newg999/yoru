@@ -187,6 +187,10 @@ Rectangle {
     // abajo, por abajo; con la vertical, por el lado) mientras se funde; al
     // aparecer, baja desde ahí
     opacity: vacia ? 0 : (1 - ida) * (1 - tapada)
+    // Tapada por el panel de otra isla no se ve: tampoco atiende al ratón
+    // (si no, se pasaba de canción pulsando en el calendario sin verla).
+    // «enabled» se hereda: apaga también los MouseArea de sus módulos
+    enabled: tapada === 0
     // (sigue en la fila, ya invisible, hasta que su hueco se ha cerrado)
     visible: opacity > 0 || !recogida
     transform: Translate {
