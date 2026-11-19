@@ -91,6 +91,21 @@ Singleton {
         // (antes volvía a la página de la otra isla)
         anterior = desdeDentro && abierto === "pildora" && pantalla === enPantalla && !ya
             ? {pagina: seccion, lado: origen, ancla: ancla} : null;
+        // Barra minimalista: si la nueva página va en otro sitio (de la hora,
+        // en el centro, al wifi, a la derecha), el panel se recoge y baja en
+        // el suyo. Antes se deslizaba hasta allí con la página de antes
+        // dentro y se veía un momento el calendario donde iba el wifi
+        // (la que se cierra se queda en su sitio: «origen» cambia al abrir)
+        if (Ajustes.minimalista && abierto === "pildora" && pantalla === enPantalla && !ya
+                && origen !== (lado ?? "centro") && Tema.normal > 0) {
+            cambio.pendiente = [enPantalla, pagina, lado, bajoIsla];
+            const volver = anterior;
+            deprisa();
+            cerrar();
+            anterior = volver;
+            cambio.restart();
+            return;
+        }
         origen = lado ?? "centro";
         ancla = bajoIsla ?? null;
         // Si la página nueva cuelga de otra isla, el panel se desliza hasta
@@ -122,7 +137,8 @@ Singleton {
     Timer {
         id: cambio
         property var pendiente: null
-        interval: 160
+        // (la persiana de la minimalista tarda 170 ms en subir)
+        interval: Ajustes.minimalista ? 190 : 160
         onTriggered: {
             const p = pendiente;
             pendiente = null;

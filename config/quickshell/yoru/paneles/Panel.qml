@@ -73,11 +73,14 @@ PanelWindow {
         ensancharIsla();
     }
     onAbiertoChanged: {
+        // Si la ventana ya está puesta (se estaba cerrando), arranca ya
+        if (abierto)
+            pintado = backingWindowVisible;
         tomarIsla();
         // Y otra vez enseguida: la isla puede estar apareciendo justo ahora
         // (la campana sin avisos nuevos) y aún no contar como visible
         Qt.callLater(tomarIsla);
-        if (abierto && Tema.normal > 0)
+        if (abierto && Tema.normal > 0 && pintado)
             animSubida.restart();
     }
     // La isla pierde sus esquinas de abajo enseguida al abrirse y no las
@@ -164,25 +167,47 @@ PanelWindow {
     // así crece de más y se asienta (colgando de una isla, se ensancha de
     // más). Pegado a la minimalista, sin rebote: baja como una persiana.
     // Al cerrarse, rápido y sin rebote
-    property real progreso: abierto ? 1 : 0
+    property real progreso: abierto && pintado ? 1 : 0
+    // La ventana del panel se crea al abrirlo y su primer fotograma tarda
+    // (medido: ~70 ms, con el contenido): la animación ya iba por el 15 %
+    // cuando se veía y daba un tirón al empezar. Se espera a que la ventana
+    // esté en pantalla y haya pintado dos fotogramas, y entonces arranca
+    property bool pintado: false
+    property int _fotogramas: 0
+    FrameAnimation {
+        running: ventana.abierto && !ventana.pintado && ventana.backingWindowVisible
+        onRunningChanged: ventana._fotogramas = 0
+        onTriggered: if (++ventana._fotogramas >= 2) ventana.pintado = true
+    }
+    // (por si acaso: nunca más de 150 ms esperando)
+    Timer {
+        running: ventana.abierto && !ventana.pintado
+        interval: 150
+        onTriggered: ventana.pintado = true
+    }
     Behavior on progreso {
         NumberAnimation {
             duration: Tema.normal === 0 ? 0
                 // (de un panel a otro, deprisa: Paneles.rapido)
-                : ventana.puedeDesdeIsla ? (ventana.abierto ? (Paneles.rapido ? 320 : 420) : (Paneles.rapido ? 160 : 280))
-                : !ventana.abierto ? 170 : caja.pegado ? 300 : 380
-            easing.type: ventana.puedeDesdeIsla ? Easing.Linear
+                : ventana.puedeDesdeIsla ? (ventana.abierto ? ventana.durAbrir : (Paneles.rapido ? 160 : 260))
+                : !ventana.abierto ? 170 : ventana.persiana ? ventana.durPersiana : caja.pegado ? 300 : 380
+            easing.type: ventana.puedeDesdeIsla || (ventana.abierto && ventana.persiana) ? Easing.Linear
                 : !ventana.abierto ? Easing.InCubic : caja.pegado ? Easing.OutQuint : Easing.OutBack
             easing.overshoot: 1.4
         }
     }
 
     // ------------------------------------- La isla se convierte en el panel
-    // Sobre el mismo progreso (aquí lineal):
-    //   ensancha  0 – 0.4    el fondo de la isla se abre a los lados hasta el
-    //                        ancho del panel y pierde sus esquinas de abajo
-    //   crece     0.12 – 1   el panel baja pegado a ella, con un pequeño rebote;
-    //                        al final aparece el contenido
+    // Sobre el mismo progreso (aquí lineal), las dos cosas A LA VEZ (antes
+    // iban casi una detrás de otra y el movimiento se paraba a medias), cada
+    // una con un muelle, como la Dynamic Island: arranca suave, se pasa un
+    // poco y se posa, sin la cola quieta de las curvas Bézier
+    //   ensancha  muelle sin rebote (0,36 s): la isla se abre a los lados
+    //             hasta el ancho del panel (si rebotara, se bambolearía)
+    //   crece     muelle con un 2 % de rebote (0,42 s; 25 ms después): el
+    //             panel baja pegado a ella, se pasa unos px y se posa
+    //   contenido entra pronto y lo va descubriendo la caja al crecer
+    //             (antes salía al 80 %: caja vacía y luego todo de golpe)
     // Al cerrarse, el progreso va de 1 a 0: primero sube el panel y luego la
     // isla vuelve a su ancho
     // (la duración se decide al empezar a abrirse, cuando aún no se sabe de
@@ -191,13 +216,34 @@ PanelWindow {
         && Ajustes.pildoras && !Ajustes.minimalista && !vertical && !abajo && lado !== "medio"
     readonly property bool desdeIsla: puedeDesdeIsla && caja.colgado
     function tramo(p, a, b) { return Math.max(0, Math.min(1, (p - a) / (b - a))); }
-    function suave(t) { return 1 - Math.pow(1 - t, 3); }
-    function conRebote(t) { const c = 0.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); }
+    // Muelle amortiguado: dónde está a los t segundos (respuesta = lo que
+    // tarda una oscilación; amortiguación 1 = sin rebote, < 1 = rebota)
+    function muelle(t, respuesta, amort) {
+        if (t <= 0)
+            return 0;
+        const w = 2 * Math.PI / respuesta;
+        if (amort >= 1)
+            return 1 - Math.exp(-w * t) * (1 + w * t);
+        const wd = w * Math.sqrt(1 - amort * amort);
+        return 1 - Math.exp(-amort * w * t) * (Math.cos(wd * t) + amort * w / wd * Math.sin(wd * t));
+    }
+    readonly property int durAbrir: Paneles.rapido ? 320 : 420
+    // (al llegar al final, justo 1: el muelle se queda a un pelo)
+    function enMuelle(p, retraso, respuesta, amort) {
+        return p >= 1 ? 1 : muelle(p * durAbrir / 1000 - retraso, respuesta * durAbrir / 560, amort);
+    }
     // Al cerrar, otras curvas (t²): se recoge en cuanto haces clic y se posa
     // con suavidad en la isla
     function cierre(t) { return t * t; }
-    readonly property real fAncho: abierto ? suave(tramo(progreso, 0, 0.4)) : cierre(tramo(progreso, 0, 0.4))
-    readonly property real fAlto: abierto ? conRebote(tramo(progreso, 0.12, 1)) : cierre(tramo(progreso, 0.3, 1))
+    // Barra minimalista: el panel baja pegado a ella como una persiana. El
+    // mismo muelle, pero sin rebote (pegado a la barra, pasarse quedaba
+    // raro) y sin ensanchar: antes OutQuint en 300 ms, que arrancaba de golpe
+    readonly property bool persiana: caja.pegado && caja.comoDock && !desdeIsla
+    readonly property int durPersiana: Paneles.rapido ? 260 : 340
+    readonly property real fPersiana: !abierto || progreso >= 1 ? progreso
+        : muelle(progreso * durPersiana / 1000, 0.36 * durPersiana / 440, 1)
+    readonly property real fAncho: abierto ? enMuelle(progreso, 0, 0.36, 1) : cierre(tramo(progreso, 0, 0.4))
+    readonly property real fAlto: abierto ? enMuelle(progreso, 0.025, 0.42, 0.78) : cierre(tramo(progreso, 0.3, 1))
     // Lo que el panel sobresale de la isla a cada lado (ya abierto)
     readonly property real sobraIzq: Math.max(0, islaX - caja.xFinal)
     readonly property real sobraDer: Math.max(0, caja.xFinal + caja.anchoFinal - islaX - islaAncho)
@@ -208,6 +254,7 @@ PanelWindow {
         isla?.ensanchar(clave, ensancheIzq, ensancheDer);
         Paneles.tapar(clave, isla, islaX - sobraIzq, islaX + islaAncho + sobraDer, desdeIsla ? fAncho : 0);
     }
+    onPintadoChanged: if (pintado && abierto && Tema.normal > 0) animSubida.restart()
     onEnsancheIzqChanged: ensancharIsla()
     onEnsancheDerChanged: ensancharIsla()
     onFAnchoChanged: ensancharIsla()
@@ -228,8 +275,8 @@ PanelWindow {
     SequentialAnimation {
         id: animSubida
         PropertyAction { target: ventana; property: "subida"; value: 1 }
-        PauseAnimation { duration: Tema.rapida }
-        NumberAnimation { target: ventana; property: "subida"; to: 0; duration: Tema.ms(560); easing.type: Easing.OutQuart }
+        PauseAnimation { duration: Tema.ms(60) }
+        NumberAnimation { target: ventana; property: "subida"; to: 0; duration: Tema.ms(400); easing.type: Easing.OutCubic }
     }
 
     screen: modelData
@@ -309,7 +356,7 @@ PanelWindow {
             readonly property real altoFinal: interior.implicitHeight + 32
             height: ventana.desdeIsla
                 ? ventana.tapa + Math.max(0, Math.round(altoFinal * ventana.fAlto))
-                : comoDock ? Math.max(0, altoFinal * ventana.progreso) : altoFinal
+                : comoDock ? Math.max(0, altoFinal * (ventana.persiana ? ventana.fPersiana : ventana.progreso)) : altoFinal
             // (la minimalista también: pegado a su franja, se despliega igual)
             readonly property bool comoDock: colgado || (Ajustes.conPildoras && (!pegado || Ajustes.minimalista) && !enMedio && !ventana.vertical && !ventana.abajo)
             readonly property bool enMedio: ventana.lado === "medio"
@@ -435,14 +482,14 @@ PanelWindow {
                     // (la opacidad no depende de «subida»: al cambiar en cada
                     // fotograma reiniciaba el fundido y el contenido no llegaba
                     // hasta que la caja se paraba)
-                    readonly property bool mostrar: ventana.abierto && ventana.progreso > (ventana.desdeIsla ? 0.8 : 0.2)
+                    readonly property bool mostrar: ventana.abierto && ventana.progreso > (ventana.desdeIsla ? 0.3 : 0.2)
                     opacity: !caja.comoDock || mostrar ? 1 : 0
                     Behavior on opacity {
                         enabled: caja.comoDock
-                        NumberAnimation { duration: interior.mostrar ? 360 : 90; easing.type: Easing.OutCubic }
+                        NumberAnimation { duration: interior.mostrar ? (ventana.desdeIsla ? 220 : 260) : 90; easing.type: Easing.OutCubic }
                     }
                     transform: Translate {
-                        y: caja.comoDock ? -ventana.subida * 14 : 0
+                        y: caja.comoDock ? -ventana.subida * (ventana.desdeIsla ? 10 : 14) : 0
                     }
                 }
             }
