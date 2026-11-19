@@ -267,7 +267,7 @@ ShellRoot {
                 Paneles.menuIsla(pantalla.name, 1);
             else if (nombre === "pildora")
                 Paneles.abrirPagina(pantalla, seccion,
-                    ["control", "wifi", "bluetooth", "audio", "micro", ""].includes(seccion) ? "derecha" : "centro");
+                    ["control", "red", "bt", "sonido", "wifi", "bluetooth", "audio", "micro", ""].includes(seccion) ? "derecha" : "centro");
             else
                 Paneles.alternar(nombre, pantalla, seccion);
         }

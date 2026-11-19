@@ -23,11 +23,13 @@
 //
 //  Con las islas, sale bajo su isla, suelto (con un pequeño hueco y todas
 //  sus esquinas redondas: la isla no cambia), y se despliega hacia abajo.
-//  Con «Paneles que salen de su isla» (Ajustes.panelesDesdeIsla), en tres
-//  tiempos: una pastilla asoma por debajo de la isla, se ensancha y crece
-//  hacia abajo; al cerrarse, lo mismo al revés y vuelve a la isla. Si la página
-//  nueva cuelga de otra isla, el panel se cierra y se abre desde ella
-//  (Paneles.abrirPagina).
+//  Con «Paneles que salen de su isla» (Ajustes.panelesDesdeIsla), la isla
+//  SE CONVIERTE en el panel: se ensancha hacia los lados hasta su ancho
+//  (Isla.ensanchar; las islas que tapa se desvanecen), pierde sus esquinas
+//  de abajo y toma su color, y el panel crece pegado debajo, como una sola
+//  pieza. Los iconos de la isla siguen arriba: pulsar otro cambia de página
+//  sin cerrar. Al cerrarse, lo mismo al revés. Si la página nueva cuelga de
+//  otra isla, el panel se cierra y se abre desde ella (Paneles.abrirPagina).
 // ============================================================================
 import QtQuick
 import QtQuick.Shapes
@@ -61,12 +63,14 @@ PanelWindow {
         if (isla && isla !== nueva) {
             isla.aportar(clave, 0);
             isla.irse(clave, 0);
+            isla.ensanchar(clave, 0, 0);
         }
         isla = nueva;
         // La nueva se funde ya (si el panel ya estaba abierto, el progreso
         // no cambia y no se enteraba: se quedaba con sus esquinas y suelta)
         isla?.aportar(clave, fusion());
         isla?.irse(clave, ida);
+        ensancharIsla();
     }
     onAbiertoChanged: {
         tomarIsla();
@@ -79,10 +83,10 @@ PanelWindow {
     // La isla pierde sus esquinas de abajo enseguida al abrirse y no las
     // recupera hasta que el panel casi se ha ido (al ritmo del panel
     // asomaba el fondo entre los dos en la esquina)
-    // (ya no se funden: el panel va suelto bajo la isla, con su hueco y sus
-    // esquinas, y la isla se queda como está)
+    // (sin «salen de su isla» no se funden: el panel va suelto bajo la
+    // isla, con su hueco y sus esquinas, y la isla se queda como está)
     function fusion() {
-        return 0;
+        return desdeIsla ? Math.min(1, progreso * 6) * cerca : 0;
     }
     // Al pasar de una isla a otra, el panel se desliza hasta ella: la isla
     // nueva se funde (y salen las curvas) según llega, no antes (si no,
@@ -105,6 +109,8 @@ PanelWindow {
     Component.onDestruction: {
         isla?.aportar(clave, 0);
         isla?.irse(clave, 0);
+        isla?.ensanchar(clave, 0, 0);
+        Paneles.tapar(clave, null, 0, 0, 0);
     }
     // Dónde está (en la pantalla) y qué ancho tiene
     readonly property real islaXReal: {
@@ -171,42 +177,46 @@ PanelWindow {
         }
     }
 
-    // ------------------------------------- Saliendo de su isla
-    // Como en el vídeo de referencia (r/unixporn): la isla SE CONVIERTE en
-    // el panel. Sobre el mismo progreso (aquí lineal):
-    //   sale    0 – 0.22   la pastilla nace encima de la isla (su sitio, su
-    //                      tamaño y sus esquinas), se despega hacia abajo y
-    //                      se encoge en una pastilla pequeña; la isla se
-    //                      desvanece (Isla.irse): su hueco queda vacío
-    //   espera  0.22 – 0.32  la pastilla, quieta bajo la barra
-    //   crece   0.32 – 0.9   a lo ancho y a lo alto a la vez, con un pequeño
-    //                      rebote; luego aparece el contenido
-    // Al cerrarse, el progreso va de 1 a 0: lo mismo al revés, y la isla
-    // vuelve cuando la pastilla se mete en ella
+    // ------------------------------------- La isla se convierte en el panel
+    // Sobre el mismo progreso (aquí lineal):
+    //   ensancha  0 – 0.4    el fondo de la isla se abre a los lados hasta el
+    //                        ancho del panel y pierde sus esquinas de abajo
+    //   crece     0.12 – 1   el panel baja pegado a ella, con un pequeño rebote;
+    //                        al final aparece el contenido
+    // Al cerrarse, el progreso va de 1 a 0: primero sube el panel y luego la
+    // isla vuelve a su ancho
     // (la duración se decide al empezar a abrirse, cuando aún no se sabe de
     // qué isla cuelga: por eso va con lo que ya se sabe, el estilo de barra)
     readonly property bool puedeDesdeIsla: Ajustes.panelesDesdeIsla && Tema.normal > 0
-        && Ajustes.pildoras && !vertical && lado !== "medio"
+        && Ajustes.pildoras && !Ajustes.minimalista && !vertical && !abajo && lado !== "medio"
     readonly property bool desdeIsla: puedeDesdeIsla && caja.colgado
     function tramo(p, a, b) { return Math.max(0, Math.min(1, (p - a) / (b - a))); }
     function suave(t) { return 1 - Math.pow(1 - t, 3); }
     function conRebote(t) { const c = 0.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); }
-    // Al cerrar, otras curvas (t²): se encoge en cuanto haces clic y se posa
+    // Al cerrar, otras curvas (t²): se recoge en cuanto haces clic y se posa
     // con suavidad en la isla
     function cierre(t) { return t * t; }
-    readonly property real fSale: abierto ? suave(tramo(progreso, 0, 0.22)) : cierre(tramo(progreso, 0, 0.22))
-    readonly property real fCrece: abierto ? conRebote(tramo(progreso, 0.32, 0.9)) : cierre(tramo(progreso, 0.32, 0.9))
-    // La pastilla pequeña: algo más baja que la isla y el doble de ancha que de alta
-    readonly property real altoPastilla: Math.round(Tema.altoBarra * 0.8)
-    readonly property real anchoPastilla: Math.round(Math.max(altoPastilla * 1.8, Math.min(islaAncho, altoPastilla * 2.4)))
-    // Ancho y alto de cada momento: de la isla a la pastilla y de ahí al panel
-    function entre(a, b, f) { return a + (b - a) * f; }
-    readonly property real anchoAhora: fCrece > 0 ? entre(anchoPastilla, caja.anchoFinal, fCrece)
-        : entre(islaAncho, anchoPastilla, fSale)
-    readonly property real altoAhora: fCrece > 0 ? entre(altoPastilla, caja.altoFinal, fCrece)
-        : entre(Tema.altoBarra, altoPastilla, fSale)
-    // La isla se va según se despega la pastilla y vuelve al final del cierre
-    readonly property real ida: desdeIsla ? Math.min(1, progreso / 0.08) : 0
+    readonly property real fAncho: abierto ? suave(tramo(progreso, 0, 0.4)) : cierre(tramo(progreso, 0, 0.4))
+    readonly property real fAlto: abierto ? conRebote(tramo(progreso, 0.12, 1)) : cierre(tramo(progreso, 0.3, 1))
+    // Lo que el panel sobresale de la isla a cada lado (ya abierto)
+    readonly property real sobraIzq: Math.max(0, islaX - caja.xFinal)
+    readonly property real sobraDer: Math.max(0, caja.xFinal + caja.anchoFinal - islaX - islaAncho)
+    // Lo que se ha ensanchado ahora
+    readonly property real ensancheIzq: desdeIsla ? sobraIzq * fAncho : 0
+    readonly property real ensancheDer: desdeIsla ? sobraDer * fAncho : 0
+    function ensancharIsla() {
+        isla?.ensanchar(clave, ensancheIzq, ensancheDer);
+        Paneles.tapar(clave, isla, islaX - sobraIzq, islaX + islaAncho + sobraDer, desdeIsla ? fAncho : 0);
+    }
+    onEnsancheIzqChanged: ensancharIsla()
+    onEnsancheDerChanged: ensancharIsla()
+    onFAnchoChanged: ensancharIsla()
+    // Lo que la caja sube por encima del recorte (que la corta justo bajo la
+    // barra): así no se ven ni su borde ni sus esquinas de arriba, y sigue
+    // recta desde la isla
+    readonly property int tapa: Tema.radioPanel + 4
+    // (la isla ya no se va: se queda arriba, convertida en la cabeza del panel)
+    readonly property real ida: 0
     onIdaChanged: isla?.irse(clave, ida)
     // El progreso sin pasarse de 1: para lo que no debe rebotar (el sitio
     // bajo la barra o la isla y la transparencia)
@@ -269,8 +279,7 @@ PanelWindow {
         anchors.fill: parent
         anchors.topMargin: Ajustes.minimalista ? Tema.altoBarra + 2 : caja.colgado ? ventana.bajoIslas : 0
         anchors.bottomMargin: ventana.fundido ? Tema.altoTareas - 1 : 0
-        // (saliendo de su isla, sin recortar: la pastilla nace encima de ella)
-        clip: (Ajustes.minimalista || ventana.fundido || caja.colgado) && !ventana.desdeIsla
+        clip: Ajustes.minimalista || ventana.fundido || caja.colgado
 
         Rectangle {
             id: caja
@@ -288,10 +297,9 @@ PanelWindow {
                 : anchoFinal
             readonly property real xFinal: Math.round(Math.max(Tema.margenLados, Math.min(parent.width - anchoFinal - Tema.margenLados,
                 ventana.islaX + (ventana.islaAncho - anchoFinal) / 2)))
-            // Saliendo de la isla: nace algo más estrecha que ella y se
-            // ensancha hasta el suyo
+            // Saliendo de la isla: nace de su ancho y se ensancha a la vez que ella
             width: ventana.desdeIsla
-                ? Math.round(ventana.anchoAhora)
+                ? Math.round(ventana.islaAncho + ventana.ensancheIzq + ventana.ensancheDer)
                 : anchoFinal
             // Lo que sobresale a cada lado de la isla (ahí van las curvas)
             readonly property real sobraIzquierda: colgado ? ventana.islaX - x : 0
@@ -300,7 +308,7 @@ PanelWindow {
             // isla (o la barra) y se estira con rebote (progreso pasa de 1)
             readonly property real altoFinal: interior.implicitHeight + 32
             height: ventana.desdeIsla
-                ? Math.max(0, Math.round(ventana.altoAhora))
+                ? ventana.tapa + Math.max(0, Math.round(altoFinal * ventana.fAlto))
                 : comoDock ? Math.max(0, altoFinal * ventana.progreso) : altoFinal
             // (la minimalista también: pegado a su franja, se despliega igual)
             readonly property bool comoDock: colgado || (Ajustes.conPildoras && (!pegado || Ajustes.minimalista) && !enMedio && !ventana.vertical && !ventana.abajo)
@@ -316,8 +324,7 @@ PanelWindow {
 
             x: enMedio ? Math.round((parent.width - width) / 2)
                 // Centrado bajo la isla, sin salirse de la pantalla
-                : ventana.desdeIsla ? Math.round(Math.max(Tema.margenLados, Math.min(parent.width - width - Tema.margenLados,
-                    ventana.islaX + (ventana.islaAncho - width) / 2)))
+                : ventana.desdeIsla ? Math.round(ventana.islaX - ventana.ensancheIzq)
                 : colgado ? xFinal
                 : anclado ? ventana.ancla.x
                 : ventana.vertical ? Tema.hueco - deslizar
@@ -333,7 +340,7 @@ PanelWindow {
                 // funden; antes subían todo su alto en el mismo tiempo, y el
                 // Inicio (alto) iba mucho más rápido que el centro de control
                 : fundido ? parent.height - height + (1 - ventana.hasta1) * 56
-                : ventana.desdeIsla ? Math.round(ventana.separacion - (1 - ventana.fSale) * (Tema.altoBarra + ventana.separacion))
+                : ventana.desdeIsla ? -ventana.tapa
                 : colgado ? ventana.separacion
                 : comoDock ? (pegado ? 0 : Tema.hueco)
                 : pegado ? -(1 - ventana.hasta1) * height
@@ -347,17 +354,14 @@ PanelWindow {
             // fundido ni encoger (se despegaría de ella)
             // (con las islas, al cerrarse se funde en el último tramo: si no,
             // quedaba una franja oscura bajo la isla en los últimos fotogramas)
-            opacity: ventana.desdeIsla ? Math.min(1, ventana.progreso * 8)
+            opacity: ventana.desdeIsla ? 1
                 : comoDock ? (ventana.abierto ? 1 : Math.min(1, ventana.progreso * 2.5))
                 : fundido ? Math.min(1, ventana.hasta1 * 1.6)
                 : pegado ? 1 : ventana.hasta1
             scale: pegado || comoDock ? 1 : (enMedio ? 0.94 : 0.96) + (enMedio ? 0.06 : 0.04) * ventana.progreso
             transformOrigin: enMedio ? Item.Center : ventana.vertical ? Item.Left : ventana.abajo ? Item.Bottom : Item.Top
 
-            radius: ventana.desdeIsla && !Ajustes.recto
-                ? (ventana.fCrece > 0 ? Math.min(height / 2, ventana.entre(ventana.altoPastilla / 2, Tema.radioPanel, Math.min(1, ventana.fCrece)))
-                    : ventana.entre(Tema.radioIsla, ventana.altoPastilla / 2, ventana.fSale))
-                : Tema.radioPanel
+            radius: ventana.desdeIsla ? Math.min(Tema.radioPanel, Math.max(0, (height - ventana.tapa) / 2)) : Tema.radioPanel
             // Pegado a la barra minimalista: todo recto, como ella
             // (fundido con la de abajo: redondo arriba, recto contra ella y
             // contra el borde de la pantalla)
@@ -374,7 +378,9 @@ PanelWindow {
             // Como el dock: un brillo suave del acento arriba (colgando de
             // una isla, no: se notaba la costura con ella y con las curvas)
             Rectangle {
-                visible: caja.comoDock && !caja.pegado
+                // (saliendo de la isla, tampoco: el cuerpo quedaba más claro
+                // que la isla, que es su cabeza)
+                visible: caja.comoDock && !caja.pegado && !ventana.desdeIsla
                 anchors.fill: parent
                 topLeftRadius: caja.topLeftRadius
                 topRightRadius: caja.topRightRadius
@@ -420,7 +426,8 @@ PanelWindow {
                 Item {
                     id: interior
                     x: 16 + (caja.colgado ? caja.xFinal - caja.x + Math.round((caja.anchoFinal - caja.anchoMeta) / 2) : 0)
-                    y: 16
+                    // (saliendo de la isla, la caja empieza «tapa» más arriba, bajo la barra)
+                    y: 16 + (ventana.desdeIsla ? ventana.tapa : 0)
                     width: caja.anchoMeta - 32
                     implicitHeight: childrenRect.height
                     // El contenido llega mientras la caja se despliega hacia

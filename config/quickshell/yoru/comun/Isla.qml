@@ -11,6 +11,11 @@
 //  Con un panel colgando de ella (fusion: 0-1, al ritmo de su animación;
 //  lo lleva Panel.qml con aportar()), sus esquinas de abajo se vuelven
 //  rectas y toma el color del panel: los dos son una sola pieza.
+//  Con «Paneles que salen de su isla», la isla SE CONVIERTE en el panel: su
+//  fondo se ensancha hacia los lados hasta el ancho del panel (ensanchar(),
+//  sin mover nada de la barra) y el panel crece pegado debajo; sus iconos
+//  siguen arriba, a mano. Las islas que quedan debajo de ese fondo se
+//  desvanecen mientras (Paneles.tapas).
 // ============================================================================
 import QtQuick
 import Quickshell
@@ -71,6 +76,45 @@ Rectangle {
             mayor = Math.max(mayor, idas[k]);
         ida = mayor;
     }
+    // Lo que se ensancha el fondo a cada lado (manda el panel que más)
+    property var ensanches: ({})
+    property real extraIzq: 0
+    property real extraDer: 0
+    function ensanchar(clave, izq, der) {
+        ensanches[clave] = [izq, der];
+        let a = 0, b = 0;
+        for (const k in ensanches) {
+            a = Math.max(a, ensanches[k][0]);
+            b = Math.max(b, ensanches[k][1]);
+        }
+        extraIzq = a;
+        extraDer = b;
+    }
+    readonly property bool ensanchada: extraIzq + extraDer > 0.5
+    // Encima de las de al lado mientras se ensancha
+    z: ensanchada ? 5 : 0
+    // Su ventana (para no desvanecerse por un panel de otra pantalla)
+    readonly property var ventana: Window.window
+    // Dónde está en su ventana (sumando los x de sus padres, como Panel.qml)
+    readonly property real xVentana: {
+        let x = 0;
+        for (let p = isla; p; p = p.parent)
+            x += p.x;
+        return x;
+    }
+    // Tapada por el fondo ensanchado de otra isla: se desvanece al ritmo
+    readonly property real tapada: {
+        let t = 0;
+        const tapas = Paneles.tapas;
+        for (const k in tapas) {
+            const e = tapas[k];
+            if (e.isla === isla || e.ventana !== ventana)
+                continue;
+            if (xVentana < e.x1 && xVentana + width > e.x0)
+                t = Math.max(t, e.f);
+        }
+        return t;
+    }
     function mezcla(a, b, t) {
         return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, a.a + (b.a - a.a) * t);
     }
@@ -116,18 +160,33 @@ Rectangle {
     implicitWidth: vertical ? Tema.anchoBarra : plegada ? 0 : ocupado + 2 * relleno
     implicitHeight: !vertical ? Tema.altoBarra : plegada ? 0 : ocupado + 2 * rellenoVertical
     radius: Tema.radioIsla
-    bottomLeftRadius: radius * (1 - fusion)
-    bottomRightRadius: radius * (1 - fusion)
-    // Con la minimalista, sin fondo: las islas van sobre su franja entera
-    color: Ajustes.minimalista ? "transparent" : mezcla(Tema.isla, Tema.panel, fusion)
-    border.width: Ajustes.minimalista || fusion >= 1 ? 0 : Tema.borde(1)
-    border.color: Qt.rgba(Tema.islaBorde.r, Tema.islaBorde.g, Tema.islaBorde.b, Tema.islaBorde.a * (1 - fusion))
-    clip: true
+    // El fondo lo pinta «fondo» (abajo), que puede salirse por los lados
+    color: "transparent"
+    // (ensanchada, sin recortar: si no, no se vería el fondo de los lados)
+    clip: !ensanchada && fusion === 0
+
+    // Fundida con su panel: las esquinas de abajo, rectas; el color y el
+    // borde, los del panel; y baja un poco más que la ventana de la barra,
+    // que recorta su borde de abajo (la costura con el panel)
+    Rectangle {
+        id: fondo
+        z: -1
+        x: -isla.extraIzq
+        width: isla.width + isla.extraIzq + isla.extraDer
+        height: isla.height + Math.round(4 * isla.fusion)
+        radius: isla.radius
+        bottomLeftRadius: radius * (1 - isla.fusion)
+        bottomRightRadius: radius * (1 - isla.fusion)
+        // Con la minimalista, sin fondo: las islas van sobre su franja entera
+        color: Ajustes.minimalista ? "transparent" : isla.mezcla(Tema.isla, Tema.panel, isla.fusion)
+        border.width: Ajustes.minimalista ? 0 : isla.fusion > 0.5 ? Tema.borde(2) : Tema.borde(1)
+        border.color: isla.mezcla(Tema.islaBorde, Tema.panelBorde, isla.fusion)
+    }
 
     // Al irse, sube y se esconde por arriba de la pantalla (con la barra
     // abajo, por abajo; con la vertical, por el lado) mientras se funde; al
     // aparecer, baja desde ahí
-    opacity: vacia ? 0 : 1 - ida
+    opacity: vacia ? 0 : (1 - ida) * (1 - tapada)
     // (sigue en la fila, ya invisible, hasta que su hueco se ha cerrado)
     visible: opacity > 0 || !recogida
     transform: Translate {
@@ -138,7 +197,7 @@ Rectangle {
         Behavior on y { NumberAnimation { duration: Tema.rebote; easing.type: Easing.OutCubic } }
     }
     // (mientras su panel se la lleva, sin retraso: va al ritmo del panel)
-    Behavior on opacity { enabled: isla.ida === 0; NumberAnimation { duration: Tema.normal * 1.4; easing.type: Easing.OutCubic } }
+    Behavior on opacity { enabled: isla.ida === 0 && isla.tapada === 0; NumberAnimation { duration: Tema.normal * 1.4; easing.type: Easing.OutCubic } }
     // Al crecer o encoger (sale la música, una ficha...), se estira y frena
     // despacio, sin pasarse
     Behavior on implicitWidth { NumberAnimation { duration: Tema.rebote * 1.15; easing.type: Easing.OutQuint } }

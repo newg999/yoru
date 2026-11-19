@@ -33,6 +33,9 @@ ClippingRectangle {
     property color colorCarga: Tema.blanco  // el del relleno (la batería, por colores)
     property bool pulsable: true
     property bool apagada: false        // gris (sin reproductor...)
+    // Su panel está abierto (la isla convertida en panel): un fondo claro
+    // detrás, como una pestaña elegida
+    property bool elegida: false
     property color colorIcono: tinta
     property int tamIcono: Tema.letra + 2
     property int anchoTexto: 0          // > 0 = recorta el texto con "…"
@@ -53,7 +56,7 @@ ClippingRectangle {
 
     readonly property color tinta: comoDock
         ? (apagada ? Tema.tenue : (hover && pulsable) || activa ? Tema.blanco : Tema.texto)
-        : apagada ? Tema.tenue : activa ? Tema.oscuro : (hover && pulsable ? Tema.blanco : Tema.texto)
+        : apagada ? Tema.tenue : activa && !elegida ? Tema.oscuro : (elegida || (hover && pulsable) ? Tema.blanco : Tema.texto)
     // Con los del dock el texto no cambia al encenderse, solo con el ratón
     readonly property color tintaTexto: comoDock
         ? (apagada ? Tema.tenue : hover && pulsable ? Tema.blanco : Tema.texto)
@@ -64,7 +67,8 @@ ClippingRectangle {
         ? (texto === "" ? Math.max(implicitHeight, fila.implicitWidth + 8) : fila.implicitWidth + 2 * 6)
         : texto === "" ? implicitHeight : fila.implicitWidth + 2 * (icono === "" ? 10 : 9)
     radius: height / 2
-    color: comoDock ? "transparent"
+    color: elegida ? Tema.claro(0.16)
+        : comoDock ? "transparent"
         : activa ? (hover && pulsable ? Qt.lighter(Tema.blanco, 1.1) : Tema.blanco)
         : hover && pulsable ? Tema.claro(0.14) : Tema.claro(0.07)
     Behavior on color { ColorAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }

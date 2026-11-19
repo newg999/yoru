@@ -562,7 +562,7 @@ Item {
                 width: parent.width
                 visible: Ajustes.animaciones
                 titulo: "Paneles que salen de su isla"
-                detalle: "Al abrir uno, nace de la isla como una pastilla, se ensancha y baja; al cerrarlo, vuelve a ella. Apagado: baja como una persiana"
+                detalle: "La isla se convierte en el panel: se ensancha y el panel baja pegado a ella, con sus iconos arriba para cambiar de página; al cerrarlo, vuelve a ser isla. Apagado: baja suelto como una persiana"
                 activo: Ajustes.panelesDesdeIsla
                 onCambiar: v => Ajustes.panelesDesdeIsla = v
             }

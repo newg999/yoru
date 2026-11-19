@@ -24,6 +24,20 @@ Singleton {
     // Islas en píldoras: el panel sale de la isla que lo abre, fundido con
     // ella (Panel.qml). BarraIslas apunta aquí sus islas, por pantalla
     property var islas: ({})
+    // La isla que se convierte en panel ensancha su fondo de x0 a x1 (en su
+    // ventana): las demás islas que caen debajo se desvanecen al ritmo f
+    // (Isla.tapada). Lo lleva Panel.qml, por panel: clave → {isla, ventana, x0, x1, f}
+    property var tapas: ({})
+    function tapar(clave, isla, x0, x1, f) {
+        const t = Object.assign({}, tapas);
+        if (isla && f > 0)
+            t[clave] = {isla: isla, ventana: isla.ventana, x0: x0, x1: x1, f: f};
+        else if (t[clave])
+            delete t[clave];
+        else
+            return;
+        tapas = t;
+    }
     // Con la isla (barra/BarraIsla.qml), todo cuelga de ella: pantalla → isla
     property var islaUnica: ({})
     function islaDe(enPantalla, nombre, enSeccion) {
