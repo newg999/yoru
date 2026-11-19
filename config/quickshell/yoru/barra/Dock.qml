@@ -127,13 +127,18 @@ PanelWindow {
 
                         IconImage {
                             id: imagen
-                            anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 5 }
-                            implicitSize: dock.icono
+                            // Se dibuja ya al tamaño grande (el de pasar el ratón)
+                            // y en reposo se encoge: al revés, estirar el dibujo
+                            // pequeño lo dejaba borroso y pixelado
+                            readonly property int grande: Math.round(dock.icono * 1.16)
+                            anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 5 - (grande - dock.icono) }
+                            implicitSize: grande
                             source: Tareas.icono(hueco.app)
                             asynchronous: true
+                            mipmap: true
                             // Crece un poco hacia arriba al pasar el ratón
                             transformOrigin: Item.Bottom
-                            scale: raton.pressed ? 1.05 : raton.containsMouse ? 1.16 : 1
+                            scale: (raton.pressed ? 1.05 : raton.containsMouse ? 1.16 : 1) * dock.icono / grande
                             Behavior on scale { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutCubic } }
                         }
 

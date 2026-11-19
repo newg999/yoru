@@ -256,10 +256,14 @@ PanelWindow {
                         }
                     }
 
+                    // Dibujado al tamaño grande (el botón lo agranda ×1.16 al
+                    // pasar el ratón) y encogido aquí: así no se pixela
                     IconImage {
-                        implicitSize: 26
+                        implicitSize: 30
+                        scale: 26 / 30
                         source: Tareas.icono(tarea.app)
                         asynchronous: true
+                        mipmap: true
                     }
 
                     // Abierta: una raya debajo; la del foco, larga y del tema

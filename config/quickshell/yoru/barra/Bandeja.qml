@@ -81,9 +81,12 @@ Isla {
 
             IconImage {
                 anchors.centerIn: parent
-                implicitSize: 20
+                // Dibujado al tamaño grande y encogido en reposo (estirar el
+                // pequeño al pasar el ratón lo pixelaba)
+                implicitSize: 24
                 source: elemento.modelData.icon
-                scale: raton.containsMouse ? 1.18 : 1
+                mipmap: true
+                scale: (raton.containsMouse ? 1.18 : 1) * 20 / 24
                 Behavior on scale { NumberAnimation { duration: Tema.rapida; easing.type: Easing.OutCubic } }
             }
 

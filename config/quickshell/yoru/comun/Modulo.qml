@@ -61,8 +61,11 @@ Item {
             color: modulo.colorActual
             Behavior on color { ColorAnimation { duration: Tema.normal; easing.type: Easing.OutCubic } }
             // En las islas, con los iconos del dock: crece con un muelle al
-            // pasar el ratón, como allí
-            scale: Ajustes.conPildoras && Ajustes.iconosDock && modulo.pulsable && raton.containsMouse ? 1.1 : 1
+            // pasar el ratón, como allí. Si crece, con el dibujo de Qt: el
+            // nativo se pinta en píxeles y al agrandarlo se pixela
+            readonly property bool crece: Ajustes.conPildoras && Ajustes.iconosDock && modulo.pulsable
+            renderType: crece ? Text.QtRendering : Text.NativeRendering
+            scale: crece && raton.containsMouse ? 1.1 : 1
             Behavior on scale { NumberAnimation { duration: Tema.rebote * 0.75; easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
         }
         Texto {
