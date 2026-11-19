@@ -61,8 +61,8 @@ python3                   # scripts de los menús y del monitor del sistema
 python3-gobject           # iconos del escritorio: vigilar ~/Escritorio al instante (Gio)
 python3-numpy             # Meteosat (scripts/meteosat.py): cálculo del mapa y del viento
 python3-pillow            # Meteosat (scripts/meteosat.py): dibujar el mapa
-gtk4                      # Música (bin/yoru-musica): la ventana
-python3-mutagen           # Música: títulos, artistas y carátulas de las canciones
+gtk4                      # Nocturno (bin/nocturno, la música): la ventana
+python3-mutagen           # Nocturno: títulos, artistas y carátulas de las canciones
 
 # --- Escritorio --------------------------------------------------------------
 quickshell                # barra y paneles (del COPR avengemedia/danklinux)

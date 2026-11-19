@@ -108,10 +108,10 @@ window-rule {
     default-column-width { proportion 0.5; }
 }
 
-// Música (bin/yoru-musica): una columna estrecha, como un reproductor de
+// Nocturno, la música (bin/nocturno): una columna estrecha, como un reproductor de
 // Windows; el diseño está pensado para unos 460 px de ancho
 window-rule {
-    match app-id="^org.yoru.Musica$"
+    match app-id="^org.yoru.Nocturno$"
     default-column-width { fixed 460; }
 }
 
