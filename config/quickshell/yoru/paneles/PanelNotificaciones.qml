@@ -16,7 +16,9 @@ import qs.comun
 Panel {
     id: panel
     nombre: "notificaciones"
-    lado: "derecha"
+    // En la minimalista la campana va junto a la hora: el panel, debajo, en
+    // el centro (como el calendario). En las demás barras, a la derecha
+    lado: Ajustes.minimalista ? "centro" : "derecha"
     ancho: 400
 
     Column {

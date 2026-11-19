@@ -148,6 +148,19 @@ Singleton {
         }
     }
 
+    // (lo mismo, de un panel a otro en la minimalista)
+    Timer {
+        id: cambioPanel
+        property var pendiente: null
+        interval: 190
+        onTriggered: {
+            const p = pendiente;
+            pendiente = null;
+            if (p && paneles.abierto === "")
+                paneles.alternar(p[0], p[1], p[2]);
+        }
+    }
+
     // Ajustes es una ventana aparte (paneles/VentanaAjustes.qml), con una
     // sección elegida en su barra lateral. «ajustes» la abre en una de estas
     // secciones (la última que se vio, si no se dice cuál)
@@ -174,6 +187,15 @@ Singleton {
         }
         if (abierto === nombre && pantalla === enPantalla && seccion === (enSeccion ?? "")) {
             cerrar();
+            return;
+        }
+        // Minimalista: de un panel abierto a otro (el calendario → las
+        // notificaciones, los dos en el centro), primero se recoge uno y
+        // luego baja el otro; a la vez se cruzaban en el mismo hueco
+        if (Ajustes.minimalista && abierto !== "" && abierto !== nombre && Tema.normal > 0) {
+            cambioPanel.pendiente = [nombre, enPantalla, enSeccion];
+            cerrar();
+            cambioPanel.restart();
             return;
         }
         // De un panel abierto a otro (el reloj → las notificaciones): uno se
