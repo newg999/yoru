@@ -625,12 +625,13 @@ enlazar_todo() {
 
     paso "Comando yoru (mantenimiento)"
     enlazar "$REPO/bin/yoru" "$HOME/.local/bin/yoru"
-    # Meteosat: el tiempo en la terminal (Mod+Alt+E o «Meteosat» en el lanzador)
-    enlazar "$REPO/bin/meteosat" "$HOME/.local/bin/meteosat"
+    # Meteosat ya no es un comando de terminal: es una ventana de Yoru
+    # (paneles/Meteosat.qml). Fuera el enlace viejo, si quedaba
+    if [ -L "$HOME/.local/bin/meteosat" ]; then rm -f "$HOME/.local/bin/meteosat"; fi
 
     # Git ya guarda que son ejecutables; esto es solo por si vino en un .zip
     chmod +x "$REPO"/config/niri/scripts/*.sh "$REPO"/config/quickshell/yoru/scripts/* \
-        "$REPO"/wallpapers/descargar.sh "$REPO"/bin/yoru "$REPO"/bin/meteosat 2>/dev/null || true
+        "$REPO"/wallpapers/descargar.sh "$REPO"/bin/yoru 2>/dev/null || true
     mkdir -p "$HOME/Pictures/Screenshots"
 }
 

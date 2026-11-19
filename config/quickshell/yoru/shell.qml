@@ -162,6 +162,7 @@ ShellRoot {
         loading: true
         Scope {
             VentanaAjustes {}
+            Meteosat {}
             Variants {
                 model: Quickshell.screens
                 PanelBateria {}
@@ -252,6 +253,15 @@ ShellRoot {
         function sistema(): void { abrirEn(0); }    // (antes; ahora es la música)
         function bandeja(): void { abrirEn(2); }
     }
+    // Meteosat (paneles/Meteosat.qml): Mod+Alt+E y «Meteosat» en el lanzador
+    //   qs -c yoru ipc call meteosat alternar
+    IpcHandler {
+        target: "meteosat"
+        function alternar(): void {
+            Paneles.alternarMeteosat();
+        }
+    }
+
     IpcHandler {
         target: "panel"
 

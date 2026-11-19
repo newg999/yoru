@@ -50,11 +50,17 @@ window-rule {
     opacity 1.0
 }
 
-// Terminal (también Meteosat, que es kitty) y Ajustes de Yoru: transparentes y
-// con el fondo desenfocado
+// Meteosat (la ventana de Yoru, paneles/Meteosat.qml): un mapa, mejor a todo
+// el ancho y siempre opaco
+window-rule {
+    match app-id="^org.quickshell$" title="^Meteosat$"
+    default-column-width { proportion 1.0; }
+    opacity 1.0
+}
+
+// Terminal y Ajustes de Yoru: transparentes y con el fondo desenfocado
 window-rule {
     match app-id="^kitty$"
-    match app-id="^yoru-meteosat$"
     match title="^Ajustes de Yoru$"
     background-effect {
         blur true

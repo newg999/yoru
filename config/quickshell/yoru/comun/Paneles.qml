@@ -215,6 +215,22 @@ Singleton {
         ajustesAbiertos = true;
     }
 
+    // Meteosat (paneles/Meteosat.qml): una ventana aparte, como Ajustes. Si ya
+    // la tienes delante, se cierra; si está detrás de otras, se trae
+    property bool meteosatAbierto: false
+    readonly property string tituloMeteosat: "Meteosat"
+    function alternarMeteosat() {
+        const ventana = Object.values(Niri.ventanas).find(v => v.title === tituloMeteosat && v.app_id !== "kitty");
+        if (meteosatAbierto && Niri.enfocada?.title === tituloMeteosat) {
+            meteosatAbierto = false;
+            return;
+        }
+        cerrar();
+        if (meteosatAbierto && ventana)
+            Niri.accion("focus-window", "--id", String(ventana.id));
+        meteosatAbierto = true;
+    }
+
     // Al abrir el overview (Mod+Tab) se cierra cualquier panel
     Connections {
         target: Niri
