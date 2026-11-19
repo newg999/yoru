@@ -526,8 +526,10 @@ PanelWindow {
                     // Por colores, como en el iPhone (Tema.bateria)
                     colorCarga: Tema.bateria(estado.carga / 100, estado.cargando)
                     colorIcono: !estado.cargando && estado.carga <= 15 ? Tema.bateria(estado.carga / 100, false) : tinta
-                    elegida: Paneles.esta("bateria", barra.modelData)
-                    onClic: Paneles.alternar("bateria", barra.modelData, "")
+                    // (una página más del panel de la derecha: del volumen a la
+                    // batería se pasa deslizando, sin cerrar)
+                    elegida: Paneles.esta("pildora", barra.modelData, "bateria")
+                    onClic: Paneles.abrirPagina(barra.modelData, "bateria", "derecha")
                 }
 
                 // Centro de control
