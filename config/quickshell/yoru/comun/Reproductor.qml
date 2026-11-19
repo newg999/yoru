@@ -21,12 +21,37 @@ Singleton {
     readonly property var actual: {
         // Un reproductor enseñando una vista previa no cuenta (salvo que
         // tape una canción que sonaba: entonces se ve esa, «tapada»)
-        const vale = p => !vistaPrevia(p) || tapaCancion(p);
+        // Tampoco lo que seguro que no es música (Jellyfin, una película en
+        // mpv...), salvo que tape una canción del mismo navegador
+        const vale = p => (!vistaPrevia(p) && (!esVideo(p) || cancionTapada(p) !== null)) || tapaCancion(p);
         if (elegido && todos.includes(elegido) && vale(elegido))
             return elegido;
         return todos.find(p => p.isPlaying && vale(p))
-            ?? todos.find(p => p.playbackState === MprisPlaybackState.Paused)
+            ?? todos.find(p => p.playbackState === MprisPlaybackState.Paused && !esVideo(p))
             ?? null;
+    }
+
+    // ¿Seguro que NO es música? Lo que da esto como sí ni sale en la isla,
+    // ni en la barra, ni en los paneles:
+    //  · centros multimedia (Jellyfin, Plex, Kodi... como app)
+    //  · mpv, VLC... con un archivo de vídeo
+    //  · un vídeo del navegador sin artista: Jellyfin en Brave solo manda
+    //    el título («China Salvaje», sin artista, álbum ni carátula), igual
+    //    que los vídeos sueltos de Twitter, Reddit... YouTube siempre manda
+    //    el canal como artista, así que esos se siguen viendo
+    readonly property var appsCine: ["jellyfin", "plex", "kodi", "stremio", "emby", "infuse"]
+    function esVideo(p) {
+        if (!p)
+            return false;
+        const app = ((p.desktopEntry ?? "") + " " + (p.identity ?? "") + " " + (p.dbusName ?? "")).toLowerCase();
+        if (appsCine.some(a => app.includes(a)))
+            return true;
+        const url = String((p.metadata ?? {})["xesam:url"] ?? "").toLowerCase();
+        if (appsVideo.some(a => app.includes(a)))
+            return /\.(mkv|mp4|webm|avi|mov|m4v|wmv|flv|ts|mpe?g|3gp)(\?|$)/.test(url);
+        if (esNavegador(p))
+            return (p.trackTitle ?? "") !== "" && (p.trackArtist ?? "") === "" && (p.trackAlbum ?? "") === "";
+        return false;
     }
 
     // ------------------------------------------- Vistas previas de YouTube
@@ -132,8 +157,9 @@ Singleton {
             reproductor._recordar();
         }
     }
-    readonly property var tapada: {
-        const p = actual, c = recordada;
+    readonly property var tapada: cancionTapada(actual)
+    function cancionTapada(p) {
+        const c = recordada;
         if (!p || !c || c.jugador !== p || p.trackTitle === c.titulo)
             return null;
         // Una vista previa encima de la canción
@@ -222,7 +248,7 @@ Singleton {
     readonly property var appsVideo: ["mpv", "vlc", "celluloid", "totem", "showtime", "haruna", "smplayer", "clapper", "kodi"]
     readonly property var navegadores: ["brave", "firefox", "chromium", "chrome", "vivaldi", "opera", "edge", "zen", "librewolf", "epiphany", "falkon", "qutebrowser", "floorp"]
     function esMusica(p) {
-        if (!p)
+        if (!p || esVideo(p))
             return false;
         const app = ((p.desktopEntry ?? "") + " " + (p.identity ?? "") + " " + (p.dbusName ?? "")).toLowerCase();
         const md = p.metadata ?? {};

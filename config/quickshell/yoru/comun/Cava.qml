@@ -14,7 +14,9 @@ Singleton {
     id: cava
 
     property var niveles: [0, 0, 0, 0, 0, 0]     // de 0 a 1, uno por barra
-    readonly property bool sonando: Mpris.players.values.some(p => p.isPlaying)
+    // Solo con lo que enseña la isla: con Jellyfin sonando y la música en
+    // pausa, las barras bailaban con el audio de la película
+    readonly property bool sonando: Reproductor.actual?.isPlaying ?? false
 
     Process {
         id: proceso
