@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # ============================================================================
-#  yoru-musica — el reproductor de música de Yoru
+#  Nocturno — el reproductor de música de Yoru (Yoru, 夜, es «noche»; un
+#  nocturno, una pieza para la noche)
 # ----------------------------------------------------------------------------
 #  Una ventana GTK4 con un mpv detrás (hablan por su socket IPC). Cómo se
 #  comporta (contrato acordado con el usuario el 2026-11-19):
@@ -18,7 +19,7 @@
 #  colores.json y ajustes.json); cambia solo al cambiar de tema.
 #  Sale en la isla de la barra porque habla MPRIS (org.mpris.MediaPlayer2).
 #
-#  Pruebas: YORU_MUSICA_VOLUMEN=0 yoru-musica canción.flac
+#  Pruebas: NOCTURNO_VOLUMEN=0 nocturno canción.flac
 # ============================================================================
 
 import base64
@@ -53,16 +54,16 @@ try:
 except ImportError:  # sin mutagen funciona igual, pero con el nombre del archivo
     mutagen = None
 
-APP_ID = "org.yoru.Musica"
+APP_ID = "org.yoru.Nocturno"
 EXTENSIONES = {".mp3", ".flac", ".ogg", ".oga", ".opus", ".m4a", ".aac", ".wav",
                ".aif", ".aiff", ".wma", ".ape", ".wv", ".mka", ".alac"}
 NOMBRES_PORTADA = ("cover", "folder", "front", "album", "portada", "caratula")
 ESTADO = Path.home() / ".local/state/yoru"
-CACHE = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "yoru-musica"
+CACHE = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "nocturno"
 JUNTAR_SEGUNDOS = 2.0
 ANCHO = 412                 # la columna del reproductor (ventana de 460 - márgenes)
 ANCHO_DOBLE = 940           # desde aquí, la lista se pone a la derecha
-PREFERENCIAS = ESTADO / "musica.json"   # solo preferencias (volumen, visualizador), nunca la lista
+PREFERENCIAS = ESTADO / "nocturno.json"   # solo preferencias (volumen, visualizador), nunca la lista
 BARRAS = 40
 
 
@@ -159,7 +160,7 @@ class Mpv:
 
     def __init__(self, al_cambiar, volumen):
         runtime = os.environ.get("XDG_RUNTIME_DIR", "/tmp")
-        self.ruta = f"{runtime}/yoru-musica-{os.getpid()}.sock"
+        self.ruta = f"{runtime}/nocturno-{os.getpid()}.sock"
         libc = ctypes.CDLL("libc.so.6", use_errno=True)
 
         def morir_conmigo():
@@ -168,7 +169,7 @@ class Mpv:
         self.proc = subprocess.Popen(
             ["mpv", "--no-config", "--idle=yes", "--no-video", "--terminal=no",
              "--audio-display=no", "--keep-open=no", "--volume-max=100",
-             f"--volume={volumen}", "--audio-client-name=Música",
+             f"--volume={volumen}", "--audio-client-name=Nocturno",
              f"--input-ipc-server={self.ruta}"],
             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL, preexec_fn=morir_conmigo)
@@ -281,7 +282,7 @@ class Mpris:
         nodo = Gio.DBusNodeInfo.new_for_xml(MPRIS_XML)
         for iface in nodo.interfaces:
             conexion.register_object(RUTA_MPRIS, iface, self._metodo, self._leer, self._escribir)
-        Gio.bus_own_name_on_connection(conexion, "org.mpris.MediaPlayer2.yoru_musica",
+        Gio.bus_own_name_on_connection(conexion, "org.mpris.MediaPlayer2.nocturno",
                                        Gio.BusNameOwnerFlags.NONE, None, None)
 
     def _metodo(self, _con, _emisor, _ruta, _iface, metodo, params, inv):
@@ -317,8 +318,8 @@ class Mpris:
                 "CanQuit": GLib.Variant("b", True),
                 "CanRaise": GLib.Variant("b", True),
                 "HasTrackList": GLib.Variant("b", False),
-                "Identity": GLib.Variant("s", "Música"),
-                "DesktopEntry": GLib.Variant("s", "yoru-musica"),
+                "Identity": GLib.Variant("s", "Nocturno"),
+                "DesktopEntry": GLib.Variant("s", "nocturno"),
                 "SupportedUriSchemes": GLib.Variant("as", ["file"]),
                 "SupportedMimeTypes": GLib.Variant("as", ["audio/mpeg", "audio/flac", "audio/ogg"]),
             }
@@ -536,7 +537,7 @@ class Raiz(Gtk.Box):
 
 
 class Visualizador(Gtk.DrawingArea):
-    """Barras que bailan con lo que suena (cava, solo mientras suena Música),
+    """Barras que bailan con lo que suena (cava, solo mientras suena Nocturno),
     con su reflejo debajo, en el acento del tema. Tecla V: encender/apagar."""
 
     def __init__(self, ventana):
@@ -673,7 +674,7 @@ def poner_icono(b, icono):
 
 class Ventana(Gtk.ApplicationWindow):
     def __init__(self, app):
-        super().__init__(application=app, title="Música")
+        super().__init__(application=app, title="Nocturno")
         self.set_default_size(480, 840)
         self.set_decorated(False)  # sin barra de título, como el resto en niri
         self.add_css_class("musica")
@@ -689,7 +690,7 @@ class Ventana(Gtk.ApplicationWindow):
         self.duracion = None
         # el volumen se recuerda entre aperturas (lo único de la sesión que se guarda)
         guardado = leer_json(PREFERENCIAS).get("volumen", 100)
-        self.volumen = float(os.environ.get("YORU_MUSICA_VOLUMEN", guardado))
+        self.volumen = float(os.environ.get("NOCTURNO_VOLUMEN", guardado))
         self.guardar_vol = None
         self.silencio = False
         self.aleatorio = False
@@ -928,8 +929,8 @@ class Ventana(Gtk.ApplicationWindow):
 
     def _guardar_volumen_pronto(self):
         # al soltar la barra (medio segundo sin cambios), no en cada paso;
-        # con YORU_MUSICA_VOLUMEN (pruebas) no se toca lo guardado
-        if "YORU_MUSICA_VOLUMEN" in os.environ:
+        # con NOCTURNO_VOLUMEN (pruebas) no se toca lo guardado
+        if "NOCTURNO_VOLUMEN" in os.environ:
             return
         if self.guardar_vol is not None:
             GLib.source_remove(self.guardar_vol)
@@ -1240,7 +1241,7 @@ class Ventana(Gtk.ApplicationWindow):
             return {"mpris:trackid": GLib.Variant("o", "/org/mpris/MediaPlayer2/TrackList/NoTrack")}
         d = self.etiquetas.get(e.ruta, {"titulo": Path(e.ruta).stem})
         m = {
-            "mpris:trackid": GLib.Variant("o", f"/org/yoru/musica/pista/{e.id}"),
+            "mpris:trackid": GLib.Variant("o", f"/org/yoru/nocturno/pista/{e.id}"),
             "xesam:title": GLib.Variant("s", d.get("titulo") or Path(e.ruta).stem),
             "xesam:url": GLib.Variant("s", Gio.File.new_for_path(e.ruta).get_uri()),
         }
@@ -1291,7 +1292,7 @@ class Ventana(Gtk.ApplicationWindow):
         self._pintar_play()
         if e is None:
             self.pila.set_visible_child_name("vacia")
-            self.titulo.set_label("Música")
+            self.titulo.set_label("Nocturno")
             self.artista.set_label("Nada en la lista")
             self.t_total.set_label("–:––")
             self.portada_de = None
@@ -1300,7 +1301,7 @@ class Ventana(Gtk.ApplicationWindow):
         d = self.etiquetas.get(e.ruta, {})
         self.titulo.set_label(d.get("titulo") or Path(e.ruta).stem)
         self.artista.set_label(" · ".join(x for x in (d.get("artista"), d.get("album")) if x))
-        self.set_title(f"{self.titulo.get_label()} — Música")
+        self.set_title(f"{self.titulo.get_label()} — Nocturno")
         if self.portada_de != e.ruta:
             self.portada_de = e.ruta
             threading.Thread(target=self._buscar_portada, args=(e.ruta,), daemon=True).start()
@@ -1333,12 +1334,12 @@ class Ventana(Gtk.ApplicationWindow):
 
 
 # ------------------------------------------------------------------------ app
-class Musica(Gtk.Application):
+class Nocturno(Gtk.Application):
     def __init__(self):
         super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.HANDLES_OPEN)
         self.ventana = None
         self.ultima_tanda = 0.0
-        GLib.set_application_name("Música")
+        GLib.set_application_name("Nocturno")
 
     def _ventana(self):
         if self.ventana is None:
@@ -1377,4 +1378,4 @@ class Musica(Gtk.Application):
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    sys.exit(Musica().run(sys.argv))
+    sys.exit(Nocturno().run(sys.argv))

@@ -1,13 +1,14 @@
-# Música: el reproductor de Yoru (bin/yoru-musica). %F y no %f: así, al abrir
+# Nocturno: el reproductor de música de Yoru (bin/nocturno). %F y no %f: así, al abrir
 # varias canciones a la vez, llegan todas en un solo lanzamiento y forman una
 # lista (con %f el gestor lanzaría la app una vez por canción).
 [Desktop Entry]
 Type=Application
-Name=Música
-Comment=Reproduce canciones: doble clic y suena
-Keywords=música;musica;reproductor;canciones;audio;mp3;flac;player;
+Name=Nocturno
+GenericName=Reproductor de música
+Comment=Música: doble clic en una canción y suena
+Keywords=nocturno;música;musica;reproductor;canciones;audio;mp3;flac;player;
 Icon=multimedia-audio-player
-Exec=yoru-musica %F
+Exec=nocturno %F
 Terminal=false
 Categories=AudioVideo;Audio;Player;
 MimeType=audio/mpeg;audio/mp3;audio/flac;audio/x-flac;audio/ogg;audio/x-vorbis+ogg;audio/opus;audio/x-opus+ogg;audio/mp4;audio/x-m4a;audio/aac;audio/wav;audio/x-wav;audio/x-aiff;audio/x-ms-wma;audio/x-ape;audio/x-wavpack;audio/x-matroska;
