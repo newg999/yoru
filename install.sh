@@ -679,6 +679,7 @@ configurar_sistema() {
 
     brave_nvidia
     steam_niri
+    hyprfm_ventanas
     ajustes_juegos
     apps_predeterminadas
     raton_luna
@@ -841,6 +842,26 @@ steam_niri() {
         echo "unShaderBackgroundProcessingThreads 4" >> "$dev"
         ok "Steam compila los sombreadores con 4 hilos (menos calor)"
     fi
+}
+
+# HyprFM, una ventana nueva cada vez que se abre una carpeta. Por su cuenta,
+# si ya hay una abierta y se le pasa una carpeta (Mod+E, «Abrir en Archivos»,
+# xdg-open...), la añade como pestaña en esa ventana; con --new-window abre
+# otra independiente. Como Steam y Brave, se copia su .desktop a
+# ~/.local/share/applications con la opción en el Exec que recibe carpetas
+# (manda sobre el del Flatpak) y se rehace en cada ./install.sh
+hyprfm_ventanas() {
+    local id=io.github.soyeb_jim285.HyprFM
+    local destino="$HOME/.local/share/applications/$id.desktop"
+    local origen
+    for origen in "$HOME/.local/share/flatpak/exports/share/applications/$id.desktop" \
+                  "/var/lib/flatpak/exports/share/applications/$id.desktop" ""; do
+        [[ -f "$origen" ]] && break
+    done
+    [[ -n "$origen" ]] || return 0
+    mkdir -p "$(dirname "$destino")"
+    sed -E "/^Exec=.*%[fFuU]/ s| $id | $id --new-window |" "$origen" > "$destino"
+    ok "HyprFM abre cada carpeta en una ventana propia"
 }
 
 # Brave con NVIDIA: en Wayland parpadea y hace cosas raras al hacer scroll
