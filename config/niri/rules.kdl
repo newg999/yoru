@@ -108,6 +108,13 @@ window-rule {
     default-column-width { proportion 0.5; }
 }
 
+// Música (bin/yoru-musica): una columna estrecha, como un reproductor de
+// Windows; el diseño está pensado para unos 460 px de ancho
+window-rule {
+    match app-id="^org.yoru.Musica$"
+    default-column-width { fixed 460; }
+}
+
 // Ventanas que piden contraseña (administrador y llavero): flotantes y
 // centradas, como un diálogo, no como una columna de media pantalla
 window-rule {

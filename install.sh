@@ -625,13 +625,14 @@ enlazar_todo() {
 
     paso "Comando yoru (mantenimiento)"
     enlazar "$REPO/bin/yoru" "$HOME/.local/bin/yoru"
+    enlazar "$REPO/bin/yoru-musica" "$HOME/.local/bin/yoru-musica"   # Música
     # Meteosat ya no es un comando de terminal: es una ventana de Yoru
     # (paneles/Meteosat.qml). Fuera el enlace viejo, si quedaba
     if [ -L "$HOME/.local/bin/meteosat" ]; then rm -f "$HOME/.local/bin/meteosat"; fi
 
     # Git ya guarda que son ejecutables; esto es solo por si vino en un .zip
     chmod +x "$REPO"/config/niri/scripts/*.sh "$REPO"/config/quickshell/yoru/scripts/* \
-        "$REPO"/wallpapers/descargar.sh "$REPO"/bin/yoru 2>/dev/null || true
+        "$REPO"/wallpapers/descargar.sh "$REPO"/bin/yoru "$REPO"/bin/yoru-musica 2>/dev/null || true
     mkdir -p "$HOME/Pictures/Screenshots"
 }
 
@@ -962,6 +963,12 @@ apps_predeterminadas() {
     _app org.kde.elisa "Música → Elisa" audio/mpeg audio/flac audio/x-flac audio/ogg \
         audio/x-vorbis+ogg audio/opus audio/x-opus+ogg audio/mp4 audio/x-m4a audio/aac \
         audio/wav audio/x-wav audio/x-aiff audio/x-ape audio/x-wavpack audio/x-mpegurl
+    # …pero el audio lo abre Música, la de Yoru (bin/yoru-musica); Elisa se
+    # queda instalada por si acaso. La lista de playlists (.m3u) sigue en Elisa
+    xdg-mime default yoru-musica.desktop audio/mpeg audio/flac audio/x-flac audio/ogg \
+        audio/x-vorbis+ogg audio/opus audio/x-opus+ogg audio/mp4 audio/x-m4a audio/aac \
+        audio/wav audio/x-wav audio/x-aiff audio/x-ape audio/x-wavpack 2>/dev/null \
+        && ok "Música → Música (Yoru)"
     # Texto plano: el editor de texto (si no, una app de documentos se los queda)
     [[ -f /usr/share/applications/org.gnome.TextEditor.desktop ]] \
         && xdg-mime default org.gnome.TextEditor.desktop text/plain text/markdown text/x-log 2>/dev/null \

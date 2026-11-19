@@ -1,0 +1,1380 @@
+#!/usr/bin/env python3
+# ============================================================================
+#  yoru-musica — el reproductor de música de Yoru
+# ----------------------------------------------------------------------------
+#  Una ventana GTK4 con un mpv detrás (hablan por su socket IPC). Cómo se
+#  comporta (contrato acordado con el usuario el 2026-11-19):
+#    · Una sola ventana. Abrir canciones con la app abierta no abre otra: se
+#      las pasa a la que ya está (GApplication por D-Bus) y la trae delante.
+#    · Abrir canciones = sustituir la lista y sonar al momento. Si llegan
+#      varias tandas seguidas (< 2 s, hay gestores que mandan una por
+#      archivo), se juntan en la misma lista.
+#    · Una canción abierta = solo esa canción en la lista.
+#    · Arrastrar a la ventana = añadir al final.
+#    · Cerrar la ventana = para la música y no queda nada (ni procesos ni
+#      lista guardada). Al abrirla de nuevo, empieza limpia.
+#    · Al acabar la lista, se para en la última.
+#  Colores y letra: los del tema de Yoru (~/.local/state/yoru/tema/
+#  colores.json y ajustes.json); cambia solo al cambiar de tema.
+#  Sale en la isla de la barra porque habla MPRIS (org.mpris.MediaPlayer2).
+#
+#  Pruebas: YORU_MUSICA_VOLUMEN=0 yoru-musica canción.flac
+# ============================================================================
+
+import base64
+import ctypes
+import hashlib
+import json
+import os
+import random
+import re
+import signal
+import socket
+import subprocess
+import sys
+import threading
+import time
+import warnings
+from pathlib import Path
+
+# PyGObject marca como «deprecated» dos llamadas que siguen siendo las normales
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Gdk", "4.0")
+gi.require_version("GdkPixbuf", "2.0")
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk, Pango  # noqa: E402
+
+try:
+    import mutagen
+    from mutagen.flac import Picture
+except ImportError:  # sin mutagen funciona igual, pero con el nombre del archivo
+    mutagen = None
+
+APP_ID = "org.yoru.Musica"
+EXTENSIONES = {".mp3", ".flac", ".ogg", ".oga", ".opus", ".m4a", ".aac", ".wav",
+               ".aif", ".aiff", ".wma", ".ape", ".wv", ".mka", ".alac"}
+NOMBRES_PORTADA = ("cover", "folder", "front", "album", "portada", "caratula")
+ESTADO = Path.home() / ".local/state/yoru"
+CACHE = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "yoru-musica"
+JUNTAR_SEGUNDOS = 2.0
+ANCHO = 412                 # la columna del reproductor (ventana de 460 - márgenes)
+ANCHO_DOBLE = 940           # desde aquí, la lista se pone a la derecha
+PREFERENCIAS = ESTADO / "musica.json"   # solo preferencias (volumen, visualizador), nunca la lista
+BARRAS = 40
+
+
+# ----------------------------------------------------------------- utilidades
+def orden_natural(ruta):
+    return [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", ruta)]
+
+
+def expandir(rutas):
+    """Archivos de audio de una lista de rutas (las carpetas, por dentro)."""
+    salida = []
+    for r in rutas:
+        p = Path(r)
+        if p.is_dir():
+            hijos = [str(h) for h in p.rglob("*") if h.suffix.lower() in EXTENSIONES]
+            salida += sorted(hijos, key=orden_natural)
+        elif p.suffix.lower() in EXTENSIONES and p.exists():
+            salida.append(str(p))
+    return salida
+
+
+def mmss(segundos):
+    if segundos is None or segundos < 0:
+        return "–:––"
+    s = int(segundos)
+    return f"{s // 3600}:{s % 3600 // 60:02d}:{s % 60:02d}" if s >= 3600 else f"{s // 60}:{s % 60:02d}"
+
+
+def leer_json(ruta):
+    try:
+        return json.loads(Path(ruta).read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+# ------------------------------------------------------------------ etiquetas
+def leer_etiquetas(ruta):
+    datos = {"titulo": Path(ruta).stem, "artista": "", "album": "", "duracion": None}
+    if mutagen is None:
+        return datos
+    try:
+        f = mutagen.File(ruta, easy=True)
+    except Exception:
+        f = None
+    if f is not None:
+        def uno(clave):
+            v = (f.tags or {}).get(clave) if f.tags else None
+            return v[0] if v else ""
+        datos["titulo"] = uno("title") or datos["titulo"]
+        datos["artista"] = uno("artist") or uno("albumartist")
+        datos["album"] = uno("album")
+        if getattr(f, "info", None) is not None:
+            datos["duracion"] = getattr(f.info, "length", None)
+    return datos
+
+
+def leer_portada(ruta):
+    """Bytes de la carátula: la que lleva dentro el archivo o la de su carpeta."""
+    if mutagen is not None:
+        try:
+            f = mutagen.File(ruta)
+            t = f.tags if f is not None else None
+            if getattr(f, "pictures", None):                       # FLAC
+                return f.pictures[0].data
+            if t is not None and hasattr(t, "getall"):             # MP3 (ID3)
+                fotos = t.getall("APIC")
+                if fotos:
+                    return fotos[0].data
+            if t is not None and "covr" in t:                      # M4A
+                return bytes(t["covr"][0])
+            if t is not None and "metadata_block_picture" in t:    # Ogg / Opus
+                return Picture(base64.b64decode(t["metadata_block_picture"][0])).data
+        except Exception:
+            pass
+    carpeta = Path(ruta).parent
+    try:
+        imagenes = [h for h in carpeta.iterdir()
+                    if h.suffix.lower() in (".jpg", ".jpeg", ".png", ".webp")]
+    except OSError:
+        return None
+    imagenes.sort(key=lambda h: (not h.stem.lower().startswith(NOMBRES_PORTADA), h.name.lower()))
+    if imagenes:
+        try:
+            return imagenes[0].read_bytes()
+        except OSError:
+            return None
+    return None
+
+
+# ----------------------------------------------------------------------- mpv
+class Mpv:
+    """Un mpv sin ventana al que se le mandan órdenes por su socket JSON.
+    Muere con nosotros (PR_SET_PDEATHSIG), aunque nos maten de golpe."""
+
+    def __init__(self, al_cambiar, volumen):
+        runtime = os.environ.get("XDG_RUNTIME_DIR", "/tmp")
+        self.ruta = f"{runtime}/yoru-musica-{os.getpid()}.sock"
+        libc = ctypes.CDLL("libc.so.6", use_errno=True)
+
+        def morir_conmigo():
+            libc.prctl(1, signal.SIGTERM)  # PR_SET_PDEATHSIG
+
+        self.proc = subprocess.Popen(
+            ["mpv", "--no-config", "--idle=yes", "--no-video", "--terminal=no",
+             "--audio-display=no", "--keep-open=no", "--volume-max=100",
+             f"--volume={volumen}", "--audio-client-name=Música",
+             f"--input-ipc-server={self.ruta}"],
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL, preexec_fn=morir_conmigo)
+        self.al_cambiar = al_cambiar
+        self.cerrojo = threading.Lock()
+        self.sock = socket.socket(socket.AF_UNIX)
+        for _ in range(100):
+            try:
+                self.sock.connect(self.ruta)
+                break
+            except OSError:
+                time.sleep(0.05)
+        else:
+            raise RuntimeError("mpv no arranca")
+        threading.Thread(target=self._leer, daemon=True).start()
+        self.ids = {}
+
+    def orden(self, *args):
+        linea = json.dumps({"command": list(args)}) + "\n"
+        with self.cerrojo:
+            try:
+                self.sock.sendall(linea.encode())
+            except OSError:
+                pass
+
+    def observar(self, *nombres):
+        for n in nombres:
+            self.ids[len(self.ids) + 1] = n
+            self.orden("observe_property", len(self.ids), n)
+
+    def poner(self, nombre, valor):
+        self.orden("set_property", nombre, valor)
+
+    def _leer(self):
+        resto = b""
+        while True:
+            try:
+                trozo = self.sock.recv(65536)
+            except OSError:
+                return
+            if not trozo:
+                return
+            resto += trozo
+            *lineas, resto = resto.split(b"\n")
+            for linea in lineas:
+                try:
+                    msg = json.loads(linea)
+                except ValueError:
+                    continue
+                if msg.get("event") == "property-change":
+                    GLib.idle_add(self.al_cambiar, msg.get("name"), msg.get("data"))
+
+    def apagar(self):
+        try:
+            self.orden("quit")
+            self.proc.wait(timeout=2)
+        except Exception:
+            self.proc.kill()
+        try:
+            os.unlink(self.ruta)
+        except OSError:
+            pass
+
+
+# --------------------------------------------------------------------- MPRIS
+MPRIS_XML = """<node>
+<interface name="org.mpris.MediaPlayer2">
+  <method name="Raise"/><method name="Quit"/>
+  <property name="CanQuit" type="b" access="read"/>
+  <property name="CanRaise" type="b" access="read"/>
+  <property name="HasTrackList" type="b" access="read"/>
+  <property name="Identity" type="s" access="read"/>
+  <property name="DesktopEntry" type="s" access="read"/>
+  <property name="SupportedUriSchemes" type="as" access="read"/>
+  <property name="SupportedMimeTypes" type="as" access="read"/>
+</interface>
+<interface name="org.mpris.MediaPlayer2.Player">
+  <method name="Next"/><method name="Previous"/><method name="Pause"/>
+  <method name="PlayPause"/><method name="Stop"/><method name="Play"/>
+  <method name="Seek"><arg direction="in" name="Offset" type="x"/></method>
+  <method name="SetPosition"><arg direction="in" name="TrackId" type="o"/>
+    <arg direction="in" name="Position" type="x"/></method>
+  <method name="OpenUri"><arg direction="in" name="Uri" type="s"/></method>
+  <signal name="Seeked"><arg name="Position" type="x"/></signal>
+  <property name="PlaybackStatus" type="s" access="read"/>
+  <property name="LoopStatus" type="s" access="readwrite"/>
+  <property name="Rate" type="d" access="readwrite"/>
+  <property name="Shuffle" type="b" access="readwrite"/>
+  <property name="Metadata" type="a{sv}" access="read"/>
+  <property name="Volume" type="d" access="readwrite"/>
+  <property name="Position" type="x" access="read"/>
+  <property name="MinimumRate" type="d" access="read"/>
+  <property name="MaximumRate" type="d" access="read"/>
+  <property name="CanGoNext" type="b" access="read"/>
+  <property name="CanGoPrevious" type="b" access="read"/>
+  <property name="CanPlay" type="b" access="read"/>
+  <property name="CanPause" type="b" access="read"/>
+  <property name="CanSeek" type="b" access="read"/>
+  <property name="CanControl" type="b" access="read"/>
+</interface>
+</node>"""
+RUTA_MPRIS = "/org/mpris/MediaPlayer2"
+PLAYER = "org.mpris.MediaPlayer2.Player"
+
+
+class Mpris:
+    def __init__(self, ventana, conexion):
+        self.v = ventana
+        self.con = conexion
+        nodo = Gio.DBusNodeInfo.new_for_xml(MPRIS_XML)
+        for iface in nodo.interfaces:
+            conexion.register_object(RUTA_MPRIS, iface, self._metodo, self._leer, self._escribir)
+        Gio.bus_own_name_on_connection(conexion, "org.mpris.MediaPlayer2.yoru_musica",
+                                       Gio.BusNameOwnerFlags.NONE, None, None)
+
+    def _metodo(self, _con, _emisor, _ruta, _iface, metodo, params, inv):
+        v = self.v
+        if metodo == "Raise":
+            v.present()
+        elif metodo == "Quit":
+            v.close()
+        elif metodo == "PlayPause":
+            v.reproducir_pausar()
+        elif metodo == "Play":
+            v.reproducir()
+        elif metodo in ("Pause", "Stop"):
+            v.mpv.poner("pause", True)
+        elif metodo == "Next":
+            v.siguiente()
+        elif metodo == "Previous":
+            v.anterior()
+        elif metodo == "Seek":
+            v.mpv.orden("seek", params.unpack()[0] / 1e6, "relative")
+        elif metodo == "SetPosition":
+            v.mpv.orden("seek", params.unpack()[1] / 1e6, "absolute")
+        elif metodo == "OpenUri":
+            f = Gio.File.new_for_uri(params.unpack()[0])
+            if f.get_path():
+                v.sustituir(expandir([f.get_path()]))
+        inv.return_value(None)
+
+    def propiedades(self, iface):
+        v = self.v
+        if iface == "org.mpris.MediaPlayer2":
+            return {
+                "CanQuit": GLib.Variant("b", True),
+                "CanRaise": GLib.Variant("b", True),
+                "HasTrackList": GLib.Variant("b", False),
+                "Identity": GLib.Variant("s", "Música"),
+                "DesktopEntry": GLib.Variant("s", "yoru-musica"),
+                "SupportedUriSchemes": GLib.Variant("as", ["file"]),
+                "SupportedMimeTypes": GLib.Variant("as", ["audio/mpeg", "audio/flac", "audio/ogg"]),
+            }
+        hay = bool(v.lista)
+        return {
+            "PlaybackStatus": GLib.Variant("s", v.estado_mpris()),
+            "LoopStatus": GLib.Variant("s", ["None", "Playlist", "Track"][v.repetir]),
+            "Rate": GLib.Variant("d", 1.0),
+            "Shuffle": GLib.Variant("b", v.aleatorio),
+            "Metadata": GLib.Variant("a{sv}", v.metadatos_mpris()),
+            "Volume": GLib.Variant("d", v.volumen / 100),
+            "Position": GLib.Variant("x", int((v.tiempo or 0) * 1e6)),
+            "MinimumRate": GLib.Variant("d", 1.0),
+            "MaximumRate": GLib.Variant("d", 1.0),
+            "CanGoNext": GLib.Variant("b", hay),
+            "CanGoPrevious": GLib.Variant("b", hay),
+            "CanPlay": GLib.Variant("b", hay),
+            "CanPause": GLib.Variant("b", hay),
+            "CanSeek": GLib.Variant("b", hay),
+            "CanControl": GLib.Variant("b", True),
+        }
+
+    def _leer(self, _con, _emisor, _ruta, iface, nombre):
+        return self.propiedades(iface).get(nombre)
+
+    def _escribir(self, _con, _emisor, _ruta, _iface, nombre, valor):
+        v = self.v
+        if nombre == "Volume":
+            v.mpv.poner("volume", max(0.0, min(1.0, valor.unpack())) * 100)
+        elif nombre == "Shuffle":
+            if valor.unpack() != v.aleatorio:
+                v.cambiar_aleatorio()
+        elif nombre == "LoopStatus":
+            v.poner_repetir({"None": 0, "Playlist": 1, "Track": 2}.get(valor.unpack(), 0))
+        return True
+
+    def avisar(self, *nombres):
+        todas = self.propiedades(PLAYER)
+        cambios = {n: todas[n] for n in nombres}
+        self.con.emit_signal(None, RUTA_MPRIS, "org.freedesktop.DBus.Properties",
+                             "PropertiesChanged",
+                             GLib.Variant("(sa{sv}as)", (PLAYER, cambios, [])))
+
+    def salto(self):
+        self.con.emit_signal(None, RUTA_MPRIS, PLAYER, "Seeked",
+                             GLib.Variant("(x)", (int((self.v.tiempo or 0) * 1e6),)))
+
+
+# ---------------------------------------------------------------------- tema
+def colores_del_tema():
+    c = {"fondo": "#1a1b1e", "fondo2": "#26272b", "texto": "#e5e9f0", "gris": "#8a8f98",
+         "gris2": "#5c616b", "acento": "#ffffff"}
+    c.update({k: v for k, v in leer_json(ESTADO / "tema/colores.json").items() if k in c})
+    return c
+
+
+def rgb(hexa):
+    hexa = hexa.lstrip("#")
+    return tuple(int(hexa[i:i + 2], 16) / 255 for i in (0, 2, 4))
+
+
+def css_del_tema():
+    c = colores_del_tema()
+    ajustes = leer_json(ESTADO / "ajustes.json")
+    fuente = ajustes.get("fuente") or "Noto Sans"
+    recto = bool(ajustes.get("recto"))
+    radio = 0 if recto else int(ajustes.get("radio", 10))
+
+    def esquina(n):  # la misma cuenta que Tema.esquina() de la barra
+        return 0 if recto else round(n * (radio + 4) / 14)
+
+    return f"""
+window.musica {{ background: {c['fondo']}; color: {c['texto']}; font-family: "{fuente}"; }}
+window.musica * {{ outline: none; }}
+.portada {{ background: {c['fondo2']}; border-radius: {esquina(12)}px; }}
+.portada-vacia {{ color: {c['gris2']}; }}
+.portada-vacia label {{ color: {c['gris']}; font-size: 13px; }}
+.titulo {{ font-size: 21px; font-weight: 700; }}
+.artista {{ color: {c['gris']}; font-size: 14px; }}
+.tiempo {{ color: {c['gris']}; font-size: 11px; font-feature-settings: "tnum"; }}
+window.musica scale {{ padding: 6px 0; }}
+window.musica scale trough {{ background: {c['gris2']}; min-height: 4px; border-radius: 2px;
+    border: none; box-shadow: none; }}
+window.musica scale highlight {{ background: {c['texto']}; border-radius: 2px; border: none; }}
+window.musica scale:hover highlight {{ background: {c['acento']}; }}
+window.musica scale slider {{ min-width: 12px; min-height: 12px; margin: -4px; border: none;
+    background: {c['texto']}; box-shadow: none; opacity: 0; transition: opacity 120ms; }}
+window.musica scale:hover slider {{ opacity: 1; }}
+button.plano {{ background: none; border: none; box-shadow: none; color: {c['gris']};
+    min-width: 36px; min-height: 36px; padding: 0; border-radius: 999px; }}
+button.plano:hover {{ color: {c['texto']}; }}
+button.plano.activo {{ color: {c['acento']}; }}
+button.reproducir {{ background: {c['acento']}; color: {c['fondo']}; border: none;
+    box-shadow: none; min-width: 54px; min-height: 54px; padding: 0; border-radius: 999px; }}
+button.reproducir:hover {{ opacity: .9; }}
+.punto {{ background: {c['acento']}; min-width: 4px; min-height: 4px; border-radius: 2px; }}
+.cabecera {{ color: {c['gris']}; font-size: 12px; font-weight: 700; }}
+list.lista {{ background: transparent; color: {c['texto']}; }}
+list.lista row {{ background: transparent; color: {c['texto']}; border-radius: {esquina(8)}px;
+    padding: 7px 10px; }}
+list.lista row:hover {{ background: alpha({c['fondo2']}, .6); }}
+list.lista row:selected, list.lista row:selected:hover {{ background: {c['fondo2']}; }}
+.fila-num {{ color: {c['gris']}; font-size: 13px; font-feature-settings: "tnum"; }}
+.fila-titulo {{ color: {c['texto']}; font-size: 14px; }}
+.fila-artista, .fila-dur {{ color: {c['gris']}; font-size: 12px; font-feature-settings: "tnum"; }}
+row.sonando .fila-titulo, row.sonando .fila-num {{ color: {c['acento']}; }}
+popover.menu-fila contents {{ background: {c['fondo2']}; border-radius: {esquina(8)}px; }}
+popover.menu-fila button {{ background: none; border: none; box-shadow: none; color: {c['texto']}; }}
+popover.menu-fila button:hover {{ background: {c['gris2']}; }}
+"""
+
+
+# -------------------------------------------------------------------- ventana
+def tamano_portada():
+    """Carátula de 300 px, menos en pantallas bajas (el portátil tiene 768),
+    para que quede sitio para la lista."""
+    alto = 1080
+    monitores = Gdk.Display.get_default().get_monitors()
+    if monitores.get_n_items():
+        alto = min(monitores.get_item(i).get_geometry().height
+                   for i in range(monitores.get_n_items()))
+    return max(180, min(300, alto - 540))
+
+
+def textura_cuadrada(datos, lado):
+    """La carátula recortada al centro en cuadrado y a su tamaño."""
+    try:
+        carga = GdkPixbuf.PixbufLoader()
+        carga.write(datos)
+        carga.close()
+        pb = carga.get_pixbuf()
+    except GLib.Error:
+        return None
+    if pb is None:
+        return None
+    n = min(pb.get_width(), pb.get_height())
+    pb = pb.new_subpixbuf((pb.get_width() - n) // 2, (pb.get_height() - n) // 2, n, n)
+    pb = pb.scale_simple(lado, lado, GdkPixbuf.InterpType.BILINEAR)
+    return Gdk.Texture.new_for_pixbuf(pb)
+
+
+class IconoPlay(Gtk.DrawingArea):
+    """▶ o ❚❚ centrados al píxel en el botón redondo. El triángulo se corre
+    un poco a la derecha (centrado óptico: su peso está en el lado ancho)."""
+
+    def __init__(self, ventana):
+        super().__init__(content_width=24, content_height=24,
+                         halign=Gtk.Align.CENTER, valign=Gtk.Align.CENTER)
+        self.v = ventana
+        self.sonando = False
+        self.set_draw_func(self._pintar)
+
+    def poner(self, sonando):
+        if sonando != self.sonando:
+            self.sonando = sonando
+            self.queue_draw()
+
+    def _pintar(self, _a, cr, ancho, alto):
+        cr.set_source_rgb(*rgb(self.v.colores["fondo"]))
+        cx, cy = ancho / 2, alto / 2
+        if self.sonando:
+            for x in (cx - 6, cx + 2):                     # dos barras de 4×16
+                redondo(cr, x, cy - 8, 4, 16, 1.2)
+                cr.fill()
+        else:
+            h, w = 16, 14
+            x0 = cx - w / 2 + 1.5                          # centrado óptico
+            cr.move_to(x0, cy - h / 2)
+            cr.line_to(x0 + w, cy)
+            cr.line_to(x0, cy + h / 2)
+            cr.close_path()
+            cr.set_line_join(1)                            # esquinas redondeadas
+            cr.set_line_width(2)
+            cr.fill_preserve()
+            cr.stroke()
+
+
+class Raiz(Gtk.Box):
+    """Columna sola (estrecha) o columna + lista a la derecha (ancha)."""
+
+    def __init__(self, ventana):
+        super().__init__(orientation=Gtk.Orientation.VERTICAL)
+        self.v = ventana
+        self.ancha = False
+
+        # GTK4 no avisa (ni notify::default-width ni size_allocate desde Python)
+        # cuando niri cambia el tamaño: una capa invisible encima de todo, con
+        # la señal «resize» de DrawingArea, sí se entera
+        self.sensor = Gtk.DrawingArea(can_target=False, hexpand=True, vexpand=True)
+        self.sensor.connect("resize", self._al_cambiar_ancho)
+
+    def _al_cambiar_ancho(self, _area, ancho, _alto):
+        ancha = ancho >= ANCHO_DOBLE
+        if ancha != self.ancha:
+            self.ancha = ancha
+            GLib.idle_add(self._colocar)
+
+    def _colocar(self):
+        v = self.v
+        if self.ancha:
+            self.set_orientation(Gtk.Orientation.HORIZONTAL)
+            self.set_spacing(40)
+            v.columna.set_valign(Gtk.Align.START)   # carátula y lista empiezan a la vez
+            v.zona_lista.set_halign(Gtk.Align.FILL)
+            v.zona_lista.set_hexpand(True)
+            v.cabecera.set_margin_top(0)
+        else:
+            self.set_orientation(Gtk.Orientation.VERTICAL)
+            self.set_spacing(0)
+            v.columna.set_valign(Gtk.Align.START)
+            v.zona_lista.set_halign(Gtk.Align.CENTER)
+            v.zona_lista.set_hexpand(False)
+            v.cabecera.set_margin_top(18)
+        return False
+
+
+class Visualizador(Gtk.DrawingArea):
+    """Barras que bailan con lo que suena (cava, solo mientras suena Música),
+    con su reflejo debajo, en el acento del tema. Tecla V: encender/apagar."""
+
+    def __init__(self, ventana):
+        super().__init__(content_height=46, hexpand=True)
+        self.v = ventana
+        self.objetivo = [0.0] * BARRAS
+        self.ahora = [0.0] * BARRAS
+        self.proc = None
+        self.tic = None
+        self.set_draw_func(self._pintar)
+
+    # cava -------------------------------------------------------------
+    def arrancar(self):
+        if self.proc is not None or not self.get_visible():
+            return
+        CACHE.mkdir(parents=True, exist_ok=True)
+        conf = CACHE / "cava.conf"
+        conf.write_text(f"""[general]
+bars = {BARRAS}
+framerate = 30
+autosens = 1
+[input]
+method = pulse
+source = auto
+[output]
+method = raw
+raw_target = /dev/stdout
+data_format = ascii
+ascii_max_range = 100
+bar_delimiter = 59
+frame_delimiter = 10
+[smoothing]
+noise_reduction = 60
+""")
+        libc = ctypes.CDLL("libc.so.6", use_errno=True)
+        try:
+            self.proc = subprocess.Popen(["cava", "-p", str(conf)], stdout=subprocess.PIPE,
+                                         stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                         preexec_fn=lambda: libc.prctl(1, signal.SIGTERM))
+        except OSError:
+            self.proc = None
+            return
+        threading.Thread(target=self._leer, args=(self.proc,), daemon=True).start()
+        self._animar()
+
+    def parar(self):
+        if self.proc is not None:
+            self.proc.terminate()
+            self.proc = None
+        self.objetivo = [0.0] * BARRAS   # caen suavemente hasta 0
+
+    def _leer(self, proc):
+        for linea in proc.stdout:
+            try:
+                n = [int(x) / 100 for x in linea.decode().strip().split(";") if x]
+            except ValueError:
+                continue
+            if len(n) == BARRAS:
+                GLib.idle_add(self._nuevos, n)
+
+    def _nuevos(self, n):
+        if self.proc is not None:
+            self.objetivo = n
+        return False
+
+    # dibujo -----------------------------------------------------------
+    def _animar(self):
+        if self.tic is None:
+            self.tic = self.add_tick_callback(self._paso)
+
+    def _paso(self, _w, _reloj):
+        quieto = True
+        for i in range(BARRAS):
+            d = self.objetivo[i] - self.ahora[i]
+            self.ahora[i] += d * (0.45 if d > 0 else 0.18)   # sube rápido, cae despacio
+            if abs(d) > 0.004:
+                quieto = False
+        self.queue_draw()
+        if quieto and self.proc is None:
+            self.tic = None
+            return GLib.SOURCE_REMOVE
+        return GLib.SOURCE_CONTINUE
+
+    def _pintar(self, _area, cr, ancho, alto):
+        r, g, b = rgb(self.v.colores["acento"])
+        hueco = 3
+        w = (ancho - hueco * (BARRAS - 1)) / BARRAS
+        medio = alto * 0.72
+        for i, nivel in enumerate(self.ahora):
+            x = i * (w + hueco)
+            h = max(2.0, nivel * (medio - 2))
+            redondo(cr, x, medio - h, w, h, min(w / 2, 2))
+            cr.set_source_rgba(r, g, b, 0.95)
+            cr.fill()
+            hr = max(1.0, nivel * (alto - medio - 2))   # reflejo
+            redondo(cr, x, medio + 2, w, hr, min(w / 2, 2))
+            cr.set_source_rgba(r, g, b, 0.28)
+            cr.fill()
+
+
+def redondo(cr, x, y, w, h, rad):
+    rad = min(rad, h / 2, w / 2)
+    cr.new_sub_path()
+    cr.arc(x + w - rad, y + rad, rad, -1.5708, 0)
+    cr.arc(x + w - rad, y + h - rad, rad, 0, 1.5708)
+    cr.arc(x + rad, y + h - rad, rad, 1.5708, 3.1416)
+    cr.arc(x + rad, y + rad, rad, 3.1416, 4.7124)
+    cr.close_path()
+
+
+class Entrada:
+    contador = 0
+
+    def __init__(self, ruta):
+        Entrada.contador += 1
+        self.id = Entrada.contador
+        self.ruta = ruta
+
+
+def boton(icono, clase="plano", tam=18):
+    b = Gtk.Button()
+    b.add_css_class(clase)
+    img = Gtk.Image.new_from_icon_name(icono)
+    img.set_pixel_size(tam)
+    b.set_child(img)
+    b.set_focusable(False)
+    b.set_valign(Gtk.Align.CENTER)
+    return b
+
+
+def poner_icono(b, icono):
+    b.get_child().set_from_icon_name(icono)
+
+
+class Ventana(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app, title="Música")
+        self.set_default_size(480, 840)
+        self.set_decorated(False)  # sin barra de título, como el resto en niri
+        self.add_css_class("musica")
+
+        self.lista = []           # [Entrada] en el orden en que suenan
+        self.original = []        # el mismo, sin barajar
+        self.etiquetas = {}       # ruta → {titulo, artista, album, duracion}
+        self.filas = {}           # id → (fila, num, titulo, artista, dur)
+        self.pos = -1
+        self.pausa = False
+        self.parado = True        # mpv sin nada cargado (al empezar o al acabar)
+        self.tiempo = 0.0
+        self.duracion = None
+        # el volumen se recuerda entre aperturas (lo único de la sesión que se guarda)
+        guardado = leer_json(PREFERENCIAS).get("volumen", 100)
+        self.volumen = float(os.environ.get("YORU_MUSICA_VOLUMEN", guardado))
+        self.guardar_vol = None
+        self.silencio = False
+        self.aleatorio = False
+        self.repetir = 0          # 0 no, 1 la lista, 2 la canción
+        self.ultimo_salto = 0.0
+        self.portada_de = None    # ruta cuya carátula se ve
+        self.art_url = ""
+
+        self.mpv = Mpv(self.al_cambiar_mpv, self.volumen)
+        self.mpv.observar("playlist-pos", "pause", "idle-active", "time-pos", "duration",
+                          "volume", "mute")
+        self.mpris = None
+        con = app.get_dbus_connection()
+        if con is not None:
+            try:
+                self.mpris = Mpris(self, con)
+            except GLib.Error as e:
+                print("MPRIS no disponible:", e.message, file=sys.stderr)
+
+        self._construir()
+        self._teclas()
+        self._soltar()
+        self._pintar_reproductor()
+
+    # ------------------------------------------------------------ interfaz
+    def _construir(self):
+        # Todo el reproductor va en una columna de ANCHO px centrada: así la
+        # barra, los botones y la lista tienen los mismos bordes aunque la
+        # ventana se ensanche. Muy ancha (≥ ANCHO_DOBLE), la lista pasa a la
+        # derecha (Raiz cambia de orientación).
+        caja = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, width_request=ANCHO,
+                       halign=Gtk.Align.CENTER, valign=Gtk.Align.START)
+        self.columna = caja
+        self.zona_lista = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, vexpand=True,
+                                  width_request=ANCHO, halign=Gtk.Align.CENTER)
+        raiz = Raiz(self)
+        raiz.set_margin_top(28)
+        raiz.set_margin_bottom(12)
+        raiz.set_margin_start(24)
+        raiz.set_margin_end(24)
+        raiz.append(caja)
+        raiz.append(self.zona_lista)
+        # Dentro de un ScrolledWindow «EXTERNAL» (sin barras): la ventana no
+        # impone ancho mínimo. Si no, la vista ancha (≈ 900 px de mínimo)
+        # impedía a niri volver a estrecharla y se quedaba atascada a medias.
+        marco = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.EXTERNAL,
+                                   vscrollbar_policy=Gtk.PolicyType.EXTERNAL)
+        marco.set_child(raiz)
+        capas = Gtk.Overlay()
+        capas.set_child(marco)
+        capas.add_overlay(raiz.sensor)
+        self.set_child(capas)
+
+        # carátula (o el aviso de lista vacía)
+        self.pila = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
+        self.pila.add_css_class("portada")
+        self.pila.set_overflow(Gtk.Overflow.HIDDEN)
+        self.lado = tamano_portada()
+        self.pila.set_size_request(self.lado, self.lado)
+        self.pila.set_halign(Gtk.Align.CENTER)
+        vacia = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12,
+                        valign=Gtk.Align.CENTER, halign=Gtk.Align.CENTER)
+        vacia.add_css_class("portada-vacia")
+        icono = Gtk.Image.new_from_icon_name("folder-music-symbolic")
+        icono.set_pixel_size(72)
+        vacia.append(icono)
+        aviso = Gtk.Label(label="Suelta canciones aquí\no ábrelas desde Archivos",
+                          justify=Gtk.Justification.CENTER)
+        vacia.append(aviso)
+        self.pila.add_named(vacia, "vacia")
+        sin = Gtk.Image.new_from_icon_name("audio-x-generic-symbolic")
+        sin.set_pixel_size(96)
+        sin.add_css_class("portada-vacia")
+        self.pila.add_named(sin, "sin")
+        # Gtk.Image con pixel_size y no Gtk.Picture: Picture pide el tamaño de
+        # la imagen y la carátula crecía más de lo que cabe
+        self.foto = Gtk.Image()
+        self.foto.set_pixel_size(self.lado)
+        self.pila.add_named(self.foto, "foto")
+        caja.append(self.pila)
+
+        # título y artista
+        # max_width_chars=1: si no, un título largo pide su ancho entero y
+        # ensancha la columna en vez de cortarse con «…»
+        self.titulo = Gtk.Label(xalign=0.5, ellipsize=Pango.EllipsizeMode.END,
+                                max_width_chars=1, hexpand=True)
+        self.titulo.add_css_class("titulo")
+        self.titulo.set_margin_top(22)
+        self.artista = Gtk.Label(xalign=0.5, ellipsize=Pango.EllipsizeMode.END,
+                                 max_width_chars=1, hexpand=True)
+        self.artista.add_css_class("artista")
+        caja.append(self.titulo)
+        caja.append(self.artista)
+
+        # barra de progreso
+        self.barra = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 1, 0.001)
+        self.barra.set_draw_value(False)
+        self.barra.set_margin_top(10)
+        self.barra.set_focusable(False)
+        self.barra.connect("change-value", self._al_mover_barra)
+        caja.append(self.barra)
+        tiempos = Gtk.Box()
+        self.t_ahora = Gtk.Label(label="0:00", xalign=0, hexpand=True)
+        self.t_total = Gtk.Label(label="–:––", xalign=1)
+        for t in (self.t_ahora, self.t_total):
+            t.add_css_class("tiempo")
+            tiempos.append(t)
+        caja.append(tiempos)
+
+        # controles
+        fila = Gtk.CenterBox()
+        fila.set_margin_top(6)
+        centro = Gtk.Box(spacing=18)
+        self.b_ant = boton("media-skip-backward-symbolic", tam=22)
+        # Play/Pausa dibujados a mano: el triángulo de Papirus sale 4 px a la
+        # izquierda y 4 px arriba dentro del círculo
+        self.b_play = Gtk.Button(focusable=False, valign=Gtk.Align.CENTER)
+        self.b_play.add_css_class("reproducir")
+        self.icono_play = IconoPlay(self)
+        self.b_play.set_child(self.icono_play)
+        self.b_sig = boton("media-skip-forward-symbolic", tam=22)
+        self.b_ant.connect("clicked", lambda *_: self.anterior())
+        self.b_play.connect("clicked", lambda *_: self.reproducir_pausar())
+        self.b_sig.connect("clicked", lambda *_: self.siguiente())
+        self.b_alea, alea = self._con_punto("media-playlist-shuffle-symbolic")
+        self.b_rep, rep = self._con_punto("media-playlist-repeat-symbolic")
+        self.b_alea.set_tooltip_text("Aleatorio")
+        self.b_alea.connect("clicked", lambda *_: self.cambiar_aleatorio())
+        self.b_rep.connect("clicked", lambda *_: self.poner_repetir((self.repetir + 1) % 3))
+        for w in (alea, self.b_ant, self.b_play, self.b_sig, rep):
+            centro.append(w)
+        fila.set_center_widget(centro)
+        caja.append(fila)
+
+        # volumen
+        vol = Gtk.Box(spacing=6, halign=Gtk.Align.CENTER)
+        vol.set_margin_top(8)
+        self.b_vol = boton("audio-volume-high-symbolic", tam=16)
+        self.b_vol.set_tooltip_text("Silenciar")
+        self.b_vol.connect("clicked", lambda *_: self.mpv.poner("mute", not self.silencio))
+        self.vol = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 1)
+        self.vol.set_draw_value(False)
+        self.vol.set_size_request(180, -1)
+        self.vol.set_focusable(False)
+        self.vol.set_value(self.volumen)
+        self.vol.connect("change-value", lambda _s, _t, val: self.mpv.poner(
+            "volume", max(0.0, min(100.0, val))) or False)
+        hueco = Gtk.Box(width_request=36)
+        vol.append(self.b_vol)
+        vol.append(self.vol)
+        vol.append(hueco)
+        caja.append(vol)
+
+        # visualizador (cava), debajo de los mandos
+        self.visu = Visualizador(self)
+        self.visu.set_margin_top(14)
+        self.visu.set_visible(leer_json(PREFERENCIAS).get("visualizador", True))
+        caja.append(self.visu)
+
+        # lista
+        self.cabecera = Gtk.Label(xalign=0)
+        self.cabecera.add_css_class("cabecera")
+        self.cabecera.set_margin_top(18)
+        self.cabecera.set_margin_bottom(6)
+        self.cabecera.set_margin_start(10)
+        self.zona_lista.append(self.cabecera)
+        # como Spotify: un clic marca la canción, doble clic la pone (con un
+        # solo clic, el doble clic la ponía dos veces: arrancaba y volvía a empezar)
+        self.caja_lista = Gtk.ListBox(selection_mode=Gtk.SelectionMode.SINGLE,
+                                      activate_on_single_click=False)
+        self.caja_lista.add_css_class("lista")
+        self.caja_lista.connect("row-activated", self._al_activar_fila)
+        desliza = Gtk.ScrolledWindow(vexpand=True, hscrollbar_policy=Gtk.PolicyType.NEVER)
+        desliza.set_child(self.caja_lista)
+        self.zona_lista.append(desliza)
+
+        self._css = Gtk.CssProvider()
+        Gtk.StyleContext.add_provider_for_display(
+            Gdk.Display.get_default(), self._css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
+        self._cargar_tema()
+        self._vigilantes = []
+        for archivo in (ESTADO / "tema/colores.json", ESTADO / "ajustes.json"):
+            m = Gio.File.new_for_path(str(archivo)).monitor_file(Gio.FileMonitorFlags.NONE, None)
+            m.connect("changed", lambda *_: self._cargar_tema())
+            self._vigilantes.append(m)
+
+    def _con_punto(self, icono):
+        b = boton(icono, tam=18)
+        cont = Gtk.Overlay(valign=Gtk.Align.CENTER)
+        cont.set_child(b)
+        punto = Gtk.Box(halign=Gtk.Align.CENTER, valign=Gtk.Align.END)
+        punto.set_margin_bottom(1)
+        punto.add_css_class("punto")
+        punto.set_visible(False)
+        cont.add_overlay(punto)
+        b.punto = punto
+        return b, cont
+
+    def _cargar_tema(self):
+        # la variante oscura (o clara) de GTK según el fondo del tema: si no,
+        # lo que no pinta nuestro CSS sale con texto negro del tema claro
+        fondo = leer_json(ESTADO / "tema/colores.json").get("fondo", "#1a1b1e")
+        try:
+            r, g, b = (int(fondo[i:i + 2], 16) for i in (1, 3, 5))
+            oscuro = 0.299 * r + 0.587 * g + 0.114 * b < 128
+        except ValueError:
+            oscuro = True
+        Gtk.Settings.get_default().set_property("gtk-application-prefer-dark-theme", oscuro)
+        self._css.load_from_string(css_del_tema())
+        self.colores = colores_del_tema()
+        if hasattr(self, "visu"):
+            self.visu.queue_draw()
+            self.icono_play.queue_draw()
+
+    def _teclas(self):
+        tec = Gtk.EventControllerKey()
+
+        def pulsar(_c, tecla, _cod, estado):
+            ctrl = estado & Gdk.ModifierType.CONTROL_MASK
+            if tecla == Gdk.KEY_space:
+                self.reproducir_pausar()
+            elif ctrl and tecla in (Gdk.KEY_q, Gdk.KEY_w):
+                self.close()
+            elif tecla in (Gdk.KEY_v, Gdk.KEY_V):
+                self.alternar_visualizador()
+            elif tecla == Gdk.KEY_Right:
+                self.mpv.orden("seek", 5, "relative")
+            elif tecla == Gdk.KEY_Left:
+                self.mpv.orden("seek", -5, "relative")
+            else:
+                return False
+            return True
+
+        tec.connect("key-pressed", pulsar)
+        self.add_controller(tec)
+
+    def _guardar_volumen_pronto(self):
+        # al soltar la barra (medio segundo sin cambios), no en cada paso;
+        # con YORU_MUSICA_VOLUMEN (pruebas) no se toca lo guardado
+        if "YORU_MUSICA_VOLUMEN" in os.environ:
+            return
+        if self.guardar_vol is not None:
+            GLib.source_remove(self.guardar_vol)
+        self.guardar_vol = GLib.timeout_add(500, self._guardar_volumen)
+
+    def _guardar_volumen(self):
+        self.guardar_vol = None
+        prefs = leer_json(PREFERENCIAS)
+        if prefs.get("volumen") != round(self.volumen):
+            prefs["volumen"] = round(self.volumen)
+            try:
+                PREFERENCIAS.write_text(json.dumps(prefs, indent=4) + "\n")
+            except OSError:
+                pass
+        return False
+
+    def alternar_visualizador(self):
+        ver = not self.visu.get_visible()
+        self.visu.set_visible(ver)
+        if ver and not self.parado and not self.pausa:
+            self.visu.arrancar()
+        elif not ver:
+            self.visu.parar()
+        prefs = leer_json(PREFERENCIAS)
+        prefs["visualizador"] = ver
+        try:
+            PREFERENCIAS.write_text(json.dumps(prefs, indent=4) + "\n")
+        except OSError:
+            pass
+
+    def _soltar(self):
+        destino = Gtk.DropTarget.new(Gdk.FileList, Gdk.DragAction.COPY)
+
+        def soltado(_d, valor, _x, _y):
+            rutas = expandir([f.get_path() for f in valor.get_files() if f.get_path()])
+            self.anadir(sorted(rutas, key=orden_natural))
+            return True
+
+        destino.connect("drop", soltado)
+        self.add_controller(destino)
+
+    # ------------------------------------------------------------ la lista
+    def sustituir(self, rutas):
+        if not rutas:
+            return
+        nuevas = [Entrada(r) for r in rutas]
+        self.original = list(nuevas)
+        if self.aleatorio and len(nuevas) > 1:
+            resto = nuevas[1:]
+            random.shuffle(resto)
+            nuevas = [nuevas[0]] + resto
+        self.lista = nuevas
+        self.mpv.orden("loadfile", nuevas[0].ruta, "replace")
+        for e in nuevas[1:]:
+            self.mpv.orden("loadfile", e.ruta, "append")
+        self.mpv.poner("pause", False)
+        self._tras_cambiar_lista()
+
+    def anadir(self, rutas):
+        if not rutas:
+            return
+        if not self.lista:
+            self.sustituir(rutas)
+            return
+        nuevas = [Entrada(r) for r in rutas]
+        self.lista += nuevas
+        self.original += nuevas
+        for e in nuevas:
+            self.mpv.orden("loadfile", e.ruta, "append")
+        self._tras_cambiar_lista()
+
+    def quitar(self, entrada):
+        if entrada not in self.lista:
+            return
+        i = self.lista.index(entrada)
+        self.mpv.orden("playlist-remove", i)
+        self.lista.remove(entrada)
+        self.original.remove(entrada)
+        self._tras_cambiar_lista()
+
+    def _reordenar(self, objetivo):
+        """Mueve las entradas de mpv una a una hasta el orden pedido, sin
+        cortar lo que suena."""
+        sim = list(self.lista)
+        for t, e in enumerate(objetivo):
+            i = sim.index(e)
+            if i != t:
+                self.mpv.orden("playlist-move", i, t)
+                sim.insert(t, sim.pop(i))
+        self.lista = sim
+
+    def cambiar_aleatorio(self):
+        self.aleatorio = not self.aleatorio
+        if self.lista:
+            actual = self.lista[self.pos] if 0 <= self.pos < len(self.lista) else None
+            if self.aleatorio:
+                resto = [e for e in self.lista if e is not actual]
+                random.shuffle(resto)
+                self._reordenar(([actual] if actual else []) + resto)
+            else:
+                self._reordenar(list(self.original))
+            self._tras_cambiar_lista()
+        self._pintar_modos()
+        if self.mpris:
+            self.mpris.avisar("Shuffle")
+
+    def poner_repetir(self, modo):
+        self.repetir = modo
+        self.mpv.poner("loop-playlist", "inf" if modo == 1 else "no")
+        self.mpv.poner("loop-file", "inf" if modo == 2 else "no")
+        self._pintar_modos()
+        if self.mpris:
+            self.mpris.avisar("LoopStatus")
+
+    def _tras_cambiar_lista(self):
+        self._rehacer_filas()
+        pendientes = [e.ruta for e in self.lista if e.ruta not in self.etiquetas]
+        if pendientes:
+            threading.Thread(target=self._leer_etiquetas, args=(pendientes,), daemon=True).start()
+        self._pintar_reproductor()
+
+    def _leer_etiquetas(self, rutas):
+        for r in dict.fromkeys(rutas):
+            datos = leer_etiquetas(r)
+            GLib.idle_add(self._etiquetas_leidas, r, datos)
+
+    def _etiquetas_leidas(self, ruta, datos):
+        self.etiquetas[ruta] = datos
+        for e in self.lista:
+            if e.ruta == ruta and e.id in self.filas:
+                _f, _n, t, a, d = self.filas[e.id]
+                t.set_label(datos["titulo"])
+                a.set_label(datos["artista"] or "Artista desconocido")
+                d.set_label(mmss(datos["duracion"]))
+        if self._actual() and self._actual().ruta == ruta:
+            self._pintar_reproductor()
+        self._pintar_cabecera()
+
+    # ------------------------------------------------------------ las filas
+    def _rehacer_filas(self):
+        self.caja_lista.remove_all()
+        self.filas = {}
+        for i, e in enumerate(self.lista):
+            datos = self.etiquetas.get(e.ruta, {})
+            fila = Gtk.ListBoxRow()
+            fila.entrada = e
+            h = Gtk.Box(spacing=14)
+            num = Gtk.Label(label=str(i + 1), width_chars=2, xalign=1)
+            num.add_css_class("fila-num")
+            v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, hexpand=True, valign=Gtk.Align.CENTER)
+            t = Gtk.Label(label=datos.get("titulo", Path(e.ruta).stem), xalign=0,
+                          ellipsize=Pango.EllipsizeMode.END, max_width_chars=1)
+            t.add_css_class("fila-titulo")
+            a = Gtk.Label(label=datos.get("artista") or ("Artista desconocido" if datos else ""),
+                          xalign=0, ellipsize=Pango.EllipsizeMode.END, max_width_chars=1)
+            a.add_css_class("fila-artista")
+            v.append(t)
+            v.append(a)
+            d = Gtk.Label(label=mmss(datos.get("duracion")) if datos else "")
+            d.add_css_class("fila-dur")
+            h.append(num)
+            h.append(v)
+            h.append(d)
+            fila.set_child(h)
+            clic = Gtk.GestureClick(button=3)
+            clic.connect("pressed", self._menu_fila, fila)
+            fila.add_controller(clic)
+            self.caja_lista.append(fila)
+            self.filas[e.id] = (fila, num, t, a, d)
+        self._pintar_sonando()
+        self._pintar_cabecera()
+
+    def _pintar_cabecera(self):
+        n = len(self.lista)
+        if not n:
+            self.cabecera.set_label("")
+            return
+        total = sum((self.etiquetas.get(e.ruta, {}).get("duracion") or 0) for e in self.lista)
+        texto = "1 CANCIÓN" if n == 1 else f"{n} CANCIONES"
+        if total:
+            texto += f"  ·  {mmss(total)}"
+        self.cabecera.set_label(texto)
+
+    def _pintar_sonando(self):
+        actual = self._actual() if not self.parado else None
+        for i, e in enumerate(self.lista):
+            if e.id not in self.filas:
+                continue
+            fila, num, *_ = self.filas[e.id]
+            if e is actual:
+                fila.add_css_class("sonando")
+                num.set_label("♪" if not self.pausa else str(i + 1))
+            else:
+                fila.remove_css_class("sonando")
+                num.set_label(str(i + 1))
+
+    def _menu_fila(self, gesto, _n, x, y, fila):
+        pop = Gtk.Popover(has_arrow=False)
+        pop.add_css_class("menu-fila")
+        pop.set_parent(fila)
+        pop.set_pointing_to(Gdk.Rectangle(int(x), int(y), 1, 1))
+        b = Gtk.Button(label="Quitar de la lista")
+
+        def quitar(*_):
+            pop.popdown()
+            GLib.idle_add(self.quitar, fila.entrada)
+
+        b.connect("clicked", quitar)
+        pop.set_child(b)
+        pop.connect("closed", lambda p: GLib.idle_add(p.unparent))
+        pop.popup()
+
+    def _al_activar_fila(self, _caja, fila):
+        if fila.entrada in self.lista:
+            self.mpv.orden("playlist-play-index", self.lista.index(fila.entrada))
+            self.mpv.poner("pause", False)
+
+    # ------------------------------------------------------------ mandos
+    def _actual(self):
+        if 0 <= self.pos < len(self.lista):
+            return self.lista[self.pos]
+        return self.lista[0] if self.lista else None
+
+    def reproducir(self):
+        if not self.lista:
+            return
+        if self.parado:
+            # acabada la lista, se vuelve a empezar por la primera
+            i = 0 if self.pos >= len(self.lista) - 1 else max(self.pos, 0)
+            self.mpv.orden("playlist-play-index", i)
+        self.mpv.poner("pause", False)
+
+    def reproducir_pausar(self):
+        if self.parado or self.pausa:
+            self.reproducir()
+        else:
+            self.mpv.poner("pause", True)
+
+    def siguiente(self):
+        if self.lista:
+            self.mpv.orden("playlist-next", "weak")
+
+    def anterior(self):
+        if not self.lista:
+            return
+        if (self.tiempo or 0) > 3 or self.pos <= 0:
+            self.mpv.orden("seek", 0, "absolute")
+        else:
+            self.mpv.orden("playlist-prev", "weak")
+
+    def _al_mover_barra(self, _s, _tipo, valor):
+        if self.duracion:
+            self.ultimo_salto = time.monotonic()
+            self.mpv.orden("seek", max(0.0, min(1.0, valor)) * self.duracion, "absolute")
+        return False
+
+    # ------------------------------------------------------------ mpv → UI
+    def al_cambiar_mpv(self, nombre, valor):
+        if nombre == "playlist-pos":
+            nueva = valor if isinstance(valor, int) else -1
+            if nueva >= 0 or self.parado:
+                self.pos = nueva
+            self._pintar_reproductor()
+            self._pintar_sonando()
+            if self.mpris:
+                self.mpris.avisar("Metadata", "PlaybackStatus")
+        elif nombre == "pause":
+            self.pausa = bool(valor)
+            self._pintar_play()
+            self._pintar_sonando()
+        elif nombre == "idle-active":
+            self.parado = bool(valor)
+            if self.parado:
+                self.tiempo = 0.0
+                self.barra.set_value(0)
+                self.t_ahora.set_label("0:00")
+            self._pintar_play()
+            self._pintar_sonando()
+        elif nombre == "time-pos":
+            self.tiempo = valor or 0.0
+            if time.monotonic() - self.ultimo_salto > 0.6:
+                if self.duracion:
+                    self.barra.set_value(self.tiempo / self.duracion)
+                self.t_ahora.set_label(mmss(self.tiempo))
+        elif nombre == "duration":
+            self.duracion = valor
+            self.t_total.set_label(mmss(valor))
+        elif nombre == "volume":
+            self.volumen = valor or 0.0
+            self.vol.set_value(self.volumen)
+            self._pintar_volumen()
+            self._guardar_volumen_pronto()
+            if self.mpris:
+                self.mpris.avisar("Volume")
+        elif nombre == "mute":
+            self.silencio = bool(valor)
+            self._pintar_volumen()
+        return False
+
+    def estado_mpris(self):
+        if self.parado or not self.lista:
+            return "Stopped"
+        return "Paused" if self.pausa else "Playing"
+
+    def metadatos_mpris(self):
+        e = self._actual()
+        if e is None:
+            return {"mpris:trackid": GLib.Variant("o", "/org/mpris/MediaPlayer2/TrackList/NoTrack")}
+        d = self.etiquetas.get(e.ruta, {"titulo": Path(e.ruta).stem})
+        m = {
+            "mpris:trackid": GLib.Variant("o", f"/org/yoru/musica/pista/{e.id}"),
+            "xesam:title": GLib.Variant("s", d.get("titulo") or Path(e.ruta).stem),
+            "xesam:url": GLib.Variant("s", Gio.File.new_for_path(e.ruta).get_uri()),
+        }
+        if d.get("artista"):
+            m["xesam:artist"] = GLib.Variant("as", [d["artista"]])
+        if d.get("album"):
+            m["xesam:album"] = GLib.Variant("s", d["album"])
+        dur = self.duracion or d.get("duracion")
+        if dur:
+            m["mpris:length"] = GLib.Variant("x", int(dur * 1e6))
+        if self.art_url and self.portada_de == e.ruta:
+            m["mpris:artUrl"] = GLib.Variant("s", self.art_url)
+        return m
+
+    def _pintar_play(self):
+        sonando = not self.parado and not self.pausa
+        if hasattr(self, "visu"):
+            self.visu.arrancar() if sonando else self.visu.parar()
+        self.icono_play.poner(sonando)
+        if self.mpris:
+            self.mpris.avisar("PlaybackStatus")
+
+    def _pintar_modos(self):
+        self.b_alea.punto.set_visible(self.aleatorio)
+        if self.aleatorio:
+            self.b_alea.add_css_class("activo")
+        else:
+            self.b_alea.remove_css_class("activo")
+        poner_icono(self.b_rep, "media-playlist-repeat-song-symbolic" if self.repetir == 2
+                    else "media-playlist-repeat-symbolic")
+        self.b_rep.set_tooltip_text(["Repetir: no", "Repetir la lista", "Repetir la canción"][self.repetir])
+        self.b_rep.punto.set_visible(self.repetir > 0)
+        if self.repetir:
+            self.b_rep.add_css_class("activo")
+        else:
+            self.b_rep.remove_css_class("activo")
+
+    def _pintar_volumen(self):
+        v = 0 if self.silencio else self.volumen
+        icono = ("audio-volume-muted-symbolic" if v <= 0 else
+                 "audio-volume-low-symbolic" if v < 34 else
+                 "audio-volume-medium-symbolic" if v < 67 else "audio-volume-high-symbolic")
+        poner_icono(self.b_vol, icono)
+
+    def _pintar_reproductor(self):
+        e = self._actual()
+        self._pintar_modos()
+        self._pintar_play()
+        if e is None:
+            self.pila.set_visible_child_name("vacia")
+            self.titulo.set_label("Música")
+            self.artista.set_label("Nada en la lista")
+            self.t_total.set_label("–:––")
+            self.portada_de = None
+            self._pintar_cabecera()
+            return
+        d = self.etiquetas.get(e.ruta, {})
+        self.titulo.set_label(d.get("titulo") or Path(e.ruta).stem)
+        self.artista.set_label(" · ".join(x for x in (d.get("artista"), d.get("album")) if x))
+        self.set_title(f"{self.titulo.get_label()} — Música")
+        if self.portada_de != e.ruta:
+            self.portada_de = e.ruta
+            threading.Thread(target=self._buscar_portada, args=(e.ruta,), daemon=True).start()
+
+    def _buscar_portada(self, ruta):
+        datos = leer_portada(ruta)
+        GLib.idle_add(self._portada_lista, ruta, datos)
+
+    def _portada_lista(self, ruta, datos):
+        if ruta != self.portada_de:
+            return False
+        self.art_url = ""
+        textura = textura_cuadrada(datos, self.lado * self.get_scale_factor()) if datos else None
+        if textura is not None:
+            self.foto.set_from_paintable(textura)
+            self.pila.set_visible_child_name("foto")
+            try:
+                CACHE.mkdir(parents=True, exist_ok=True)
+                archivo = CACHE / (hashlib.md5(datos).hexdigest() + ".img")
+                if not archivo.exists():
+                    archivo.write_bytes(datos)
+                self.art_url = archivo.as_uri()
+            except OSError:
+                pass
+        else:
+            self.pila.set_visible_child_name("sin")
+        if self.mpris:
+            self.mpris.avisar("Metadata")
+        return False
+
+
+# ------------------------------------------------------------------------ app
+class Musica(Gtk.Application):
+    def __init__(self):
+        super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.HANDLES_OPEN)
+        self.ventana = None
+        self.ultima_tanda = 0.0
+        GLib.set_application_name("Música")
+
+    def _ventana(self):
+        if self.ventana is None:
+            self.ventana = Ventana(self)
+            self.ventana.connect("close-request", self._al_cerrar)
+        return self.ventana
+
+    def do_activate(self):
+        self._ventana().present()
+
+    def do_open(self, archivos, _n, _pista):
+        v = self._ventana()
+        rutas = sorted(expandir([f.get_path() for f in archivos if f.get_path()]), key=orden_natural)
+        ahora = time.monotonic()
+        if ahora - self.ultima_tanda < JUNTAR_SEGUNDOS:
+            v.anadir(rutas)       # misma tanda (el gestor manda los archivos de uno en uno)
+        else:
+            v.sustituir(rutas)
+        self.ultima_tanda = ahora
+        v.present()
+
+    def _al_cerrar(self, v):
+        if v.guardar_vol is not None:
+            GLib.source_remove(v.guardar_vol)
+            v._guardar_volumen()
+        v.visu.parar()
+        v.mpv.apagar()
+        self.ventana = None
+        return False
+
+    def do_shutdown(self):
+        if self.ventana is not None:
+            self.ventana.mpv.apagar()
+        Gtk.Application.do_shutdown(self)
+
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    sys.exit(Musica().run(sys.argv))
