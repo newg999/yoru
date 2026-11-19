@@ -8,7 +8,7 @@
 #    · Una sola ventana. Abrir canciones con la app abierta no abre otra: se
 #      las pasa a la que ya está (GApplication por D-Bus) y la trae delante.
 #    · Abrir canciones = sustituir la lista y sonar al momento. Si llegan
-#      varias tandas seguidas (< 2 s, hay gestores que mandan una por
+#      varias tandas casi a la vez (< 0,25 s, hay gestores que mandan una por
 #      archivo), se juntan en la misma lista.
 #    · Una canción abierta = solo esa canción en la lista.
 #    · Arrastrar a la ventana = añadir al final.
@@ -26,6 +26,7 @@ import base64
 import ctypes
 import hashlib
 import json
+import math
 import os
 import random
 import re
@@ -46,7 +47,15 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Gdk", "4.0")
 gi.require_version("GdkPixbuf", "2.0")
-from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk, Pango  # noqa: E402
+gi.require_version("Gsk", "4.0")
+gi.require_version("Graphene", "1.0")
+from gi.repository import (Gdk, GdkPixbuf, Gio, GLib, GObject, Graphene, Gsk,  # noqa: E402
+                           Gtk, Pango)
+
+try:
+    import numpy as np   # modo visualización
+except ImportError:
+    np = None
 
 try:
     import mutagen
@@ -54,16 +63,25 @@ try:
 except ImportError:  # sin mutagen funciona igual, pero con el nombre del archivo
     mutagen = None
 
-APP_ID = "org.yoru.Nocturno"
+# NOCTURNO_PRUEBA=1: otra app aparte (no toca la ventana del usuario), ajustes
+# en la caché y audio inventado para el visualizador (no hace falta sonido)
+PRUEBA = bool(os.environ.get("NOCTURNO_PRUEBA"))
+APP_ID = "org.yoru.NocturnoPrueba" if PRUEBA else "org.yoru.Nocturno"
 EXTENSIONES = {".mp3", ".flac", ".ogg", ".oga", ".opus", ".m4a", ".aac", ".wav",
                ".aif", ".aiff", ".wma", ".ape", ".wv", ".mka", ".alac"}
 NOMBRES_PORTADA = ("cover", "folder", "front", "album", "portada", "caratula")
 ESTADO = Path.home() / ".local/state/yoru"
 CACHE = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "nocturno"
-JUNTAR_SEGUNDOS = 2.0
+# Tandas que llegan casi a la vez (< 0,25 s) son la misma selección: hay
+# gestores de archivos que mandan los archivos de uno en uno, en milisegundos.
+# Con 2 s, los dobles clics rápidos del usuario se iban poniendo en cola
+JUNTAR_SEGUNDOS = 0.25
 ANCHO = 412                 # la columna del reproductor (ventana de 460 - márgenes)
 ANCHO_DOBLE = 940           # desde aquí, la lista se pone a la derecha
-PREFERENCIAS = ESTADO / "nocturno.json"   # solo preferencias (volumen, visualizador), nunca la lista
+PREFERENCIAS = (CACHE / "prueba.json") if PRUEBA else (ESTADO / "nocturno.json")
+if PRUEBA:
+    CACHE.mkdir(parents=True, exist_ok=True)
+# ↑ solo preferencias (volumen, escena, visualizador), nunca la lista
 BARRAS = 40
 
 
@@ -282,7 +300,8 @@ class Mpris:
         nodo = Gio.DBusNodeInfo.new_for_xml(MPRIS_XML)
         for iface in nodo.interfaces:
             conexion.register_object(RUTA_MPRIS, iface, self._metodo, self._leer, self._escribir)
-        Gio.bus_own_name_on_connection(conexion, "org.mpris.MediaPlayer2.nocturno",
+        Gio.bus_own_name_on_connection(conexion, "org.mpris.MediaPlayer2.nocturno"
+                                       + ("_prueba" if PRUEBA else ""),
                                        Gio.BusNameOwnerFlags.NONE, None, None)
 
     def _metodo(self, _con, _emisor, _ruta, _iface, metodo, params, inv):
@@ -371,7 +390,7 @@ class Mpris:
 # ---------------------------------------------------------------------- tema
 def colores_del_tema():
     c = {"fondo": "#1a1b1e", "fondo2": "#26272b", "texto": "#e5e9f0", "gris": "#8a8f98",
-         "gris2": "#5c616b", "acento": "#ffffff"}
+         "gris2": "#5c616b", "acento": "#ffffff", "rojo": "#bf616a", "amarillo": "#ebcb8b"}
     c.update({k: v for k, v in leer_json(ESTADO / "tema/colores.json").items() if k in c})
     return c
 
@@ -395,6 +414,7 @@ def css_del_tema():
 window.musica {{ background: {c['fondo']}; color: {c['texto']}; font-family: "{fuente}"; }}
 window.musica * {{ outline: none; }}
 .portada {{ background: {c['fondo2']}; border-radius: {esquina(12)}px; }}
+.portada.transparente {{ background: transparent; }}
 .portada-vacia {{ color: {c['gris2']}; }}
 .portada-vacia label {{ color: {c['gris']}; font-size: 13px; }}
 .titulo {{ font-size: 21px; font-weight: 700; }}
@@ -426,6 +446,14 @@ list.lista row:selected, list.lista row:selected:hover {{ background: {c['fondo2
 .fila-titulo {{ color: {c['texto']}; font-size: 14px; }}
 .fila-artista, .fila-dur {{ color: {c['gris']}; font-size: 12px; font-feature-settings: "tnum"; }}
 row.sonando .fila-titulo, row.sonando .fila-num {{ color: {c['acento']}; }}
+.velo {{ background: linear-gradient(to bottom, alpha({c['fondo']}, .05),
+    alpha({c['fondo']}, .45) 45%, alpha({c['fondo']}, .80) 75%); }}
+window.con-fondo label {{ text-shadow: 0 0 6px alpha({c['fondo']}, .95), 0 1px 2px alpha({c['fondo']}, .9); }}
+.cine {{ background: #000; }}
+.cine-pie {{ padding: 40px 28px 18px 28px;
+    background: linear-gradient(to top, alpha({c['fondo']}, .85), alpha({c['fondo']}, 0)); }}
+.cine-cancion {{ color: {c['texto']}; font-size: 15px; font-weight: 600; }}
+.cine-escena {{ color: {c['gris']}; font-size: 13px; }}
 popover.menu-fila contents {{ background: {c['fondo2']}; border-radius: {esquina(8)}px; }}
 popover.menu-fila button {{ background: none; border: none; box-shadow: none; color: {c['texto']}; }}
 popover.menu-fila button:hover {{ background: {c['gris2']}; }}
@@ -497,6 +525,351 @@ class IconoPlay(Gtk.DrawingArea):
             cr.stroke()
 
 
+# --------------------------------------------------------- modo visualización
+# Como las visualizaciones del Reproductor de Windows Media de XP, pero
+# propias: cada fotograma es el anterior deformado (zoom, giro, remolino),
+# difuminado y apagado, más lo que dibuja la escena con el audio de cava.
+# Se calcula pequeño con numpy (~1,5 ms) y la GPU lo escala suavizado.
+
+class Escena:
+    nombre = ""
+    zoom = 1.0      # >1: lo de antes se acerca (sale hacia fuera); <1: se va al centro
+    giro = 0.0      # radianes por fotograma
+    remolino = 0.0  # giro extra según la distancia al centro
+    apagado = 0.94  # cuánto queda del fotograma anterior
+    color = "acento"  # color del tema para lo brillante
+
+    def __init__(self):
+        self.t = 0.0
+
+    def emitir(self, motor, a):
+        pass
+
+
+class MareaNocturna(Escena):
+    """Una flor de puntos que respira con el bajo, como la espiral de XP."""
+    nombre = "marea nocturna"
+    zoom, giro, remolino, apagado = 1.012, 0.004, 0.012, 0.93
+
+    def emitir(self, m, a):
+        n = 900
+        fi = np.linspace(0, 2 * math.pi, n, endpoint=False)
+        petalos = 8
+        r = 0.22 + 0.42 * (0.35 + 0.65 * np.abs(np.cos(petalos / 2 * fi))) * (0.55 + a["bajo"])
+        ang = fi + self.t * 0.25
+        m.puntos(r * np.cos(ang), r * np.sin(ang), 0.25 + 0.6 * a["agudo"])
+
+
+class Luciernagas(Escena):
+    """Puntitos que vagan y se encienden cada uno con su banda del espectro."""
+    nombre = "luciérnagas"
+    color = "amarillo"
+    zoom, giro, remolino, apagado = 0.995, 0.0, 0.0, 0.88
+
+    def __init__(self):
+        super().__init__()
+        rng = np.random.default_rng(7)
+        self.p = rng.uniform(-0.9, 0.9, (160, 2))
+        self.fase = rng.uniform(0, 2 * math.pi, (160, 2))
+
+    def emitir(self, m, a):
+        vel = 0.003 + 0.012 * a["medio"]
+        self.p += vel * np.stack([np.sin(self.t * 0.7 + self.fase[:, 0]),
+                                  np.cos(self.t * 0.5 + self.fase[:, 1])], 1)
+        self.p = (self.p + 1) % 2 - 1
+        niveles = a["niveles"]
+        brillo = 0.3 + 1.2 * niveles[np.arange(len(self.p)) % len(niveles)]
+        m.puntos(self.p[:, 0], self.p[:, 1], brillo, gordo=True)
+
+
+class TunelDeNeon(Escena):
+    """Un cuadrado que gira en el borde y se cuela hacia el centro."""
+    nombre = "túnel de neón"
+    color = "rojo"
+    zoom, giro, remolino, apagado = 0.965, 0.010, 0.0, 0.88
+
+    def emitir(self, m, a):
+        n = 480
+        s = np.linspace(-1, 1, n // 4)
+        lado = 0.62 + 0.2 * a["bajo"]
+        xs = np.concatenate([s, np.ones_like(s), -s, -np.ones_like(s)]) * lado
+        ys = np.concatenate([np.ones_like(s), s, -np.ones_like(s), -s]) * lado
+        g = self.t * 0.6
+        x = xs * math.cos(g) - ys * math.sin(g)
+        y = xs * math.sin(g) + ys * math.cos(g)
+        # solo con los golpes del bajo: así salen aros separados, no una mancha
+        m.puntos(x, y, 0.18 + 2.2 * a["bajo"] ** 2)
+
+
+class Corona(Escena):
+    """El espectro en círculo: 40 rayos que dejan estela en espiral."""
+    nombre = "corona"
+    zoom, giro, remolino, apagado = 1.018, 0.008, 0.0, 0.91
+
+    def emitir(self, m, a):
+        niveles = a["niveles"]
+        k = len(niveles)
+        ang = np.repeat(np.linspace(0, 2 * math.pi, k, endpoint=False) + self.t * 0.2, 14)
+        largo = np.repeat(niveles, 14)
+        paso = np.tile(np.linspace(0, 1, 14), k)
+        r = 0.18 + paso * (0.05 + 0.55 * largo)
+        m.puntos(r * np.cos(ang), r * np.sin(ang), 0.2 + 0.8 * largo)
+
+
+class Remolino(Escena):
+    """Dos brazos de humo que giran; el remolino los enrosca."""
+    nombre = "remolino de humo"
+    color = "texto"
+    zoom, giro, remolino, apagado = 1.004, 0.0, 0.05, 0.955
+
+    def emitir(self, m, a):
+        n = 300
+        u = np.linspace(0.05, 0.95, n)
+        for brazo in (0, math.pi):
+            ang = u * 5 + self.t * (0.8 + a["medio"]) + brazo
+            r = u * (0.55 + 0.5 * a["bajo"])
+            m.puntos(r * np.cos(ang), r * np.sin(ang), 0.15 + 0.5 * a["agudo"] + 0.25 * (1 - u))
+
+
+ESCENAS = [MareaNocturna, Luciernagas, TunelDeNeon, Corona, Remolino]
+
+
+class Motor:
+    def __init__(self, ancho=320, alto=320):
+        self.escena = ESCENAS[0]()
+        self.tamano(ancho, alto)
+        self.paleta(np.array([[26, 27, 38], [122, 162, 247], [235, 240, 255]]))
+
+    def tamano(self, ancho, alto, centro=(0.5, 0.5), escala=1.0):
+        """centro: dónde nace todo, en fracción de ancho y alto (de fondo, en
+        la carátula, para que el resplandor la rodee como un halo)."""
+        self.w, self.h = int(ancho), int(alto)
+        self.cx, self.cy = centro[0] * self.w, centro[1] * self.h
+        self.esc = min(self.w, self.h) / 2 * escala
+        self.buf = np.zeros((self.h, self.w), np.float32)
+        self._mapa = None
+        # viñeteado: solo se apaga suave junto a los bordes (si no, el
+        # resplandor chocaba con ellos y se cortaba en seco)
+        yy, xx = np.mgrid[0:self.h, 0:self.w].astype(np.float32)
+        bx = np.clip(np.minimum(xx, self.w - 1 - xx) / (0.18 * self.w), 0, 1)
+        by = np.clip(np.minimum(yy, self.h - 1 - yy) / (0.12 * self.h), 0, 1)
+        self._vineta = (bx * by) ** 1.2
+
+    def paleta(self, tres):
+        """fondo → acento → casi blanco, 256 pasos."""
+        x = np.linspace(0, 1, 256)[:, None]
+        f, ac, bl = (np.asarray(c, np.float32) for c in tres)
+        x = x ** 0.7   # levanta los tonos medios: el resplandor se ve más
+        lut = np.where(x < 0.55, f + (ac - f) * (x / 0.55), ac + (bl - ac) * ((x - 0.55) / 0.45))
+        lut = lut.clip(0, 255).astype(np.uint32)
+        # empaquetada en un uint32 por color (R8G8B8A8): np.take es ~3× más
+        # rápido que indexar una tabla de 3 columnas
+        self.lut = lut[:, 0] | (lut[:, 1] << 8) | (lut[:, 2] << 16) | np.uint32(0xFF000000)
+
+    def poner(self, clase):
+        self.escena = clase()
+        self._mapa = None
+
+    def _deformacion(self):
+        e = self.escena
+        esc = self.esc
+        yy, xx = np.mgrid[0:self.h, 0:self.w].astype(np.float32)
+        u = (xx - self.cx + 0.5) / esc
+        v = (yy - self.cy + 0.5) / esc
+        r = np.sqrt(u * u + v * v)
+        g = -(e.giro + e.remolino * (1 - np.minimum(r, 1.4)))
+        su = (u * np.cos(g) - v * np.sin(g)) / e.zoom
+        sv = (u * np.sin(g) + v * np.cos(g)) / e.zoom
+        fx = su * esc + self.cx - 0.5
+        fy = sv * esc + self.cy - 0.5
+        dentro = (fx >= 0) & (fx <= self.w - 1) & (fy >= 0) & (fy <= self.h - 1)
+        # bilineal: cada píxel mezcla sus 4 vecinos del fotograma anterior.
+        # Con «el más cercano» salían escalones que, ampliados, se veían pixelados
+        x0 = np.clip(np.floor(fx), 0, self.w - 2).astype(np.int32)
+        y0 = np.clip(np.floor(fy), 0, self.h - 2).astype(np.int32)
+        ax = np.clip(fx - x0, 0, 1).astype(np.float32).ravel()
+        ay = np.clip(fy - y0, 0, 1).astype(np.float32).ravel()
+        d = dentro.astype(np.float32).ravel()      # lo que entra de fuera, negro
+        self._mapa = (y0 * self.w + x0).ravel()
+        self._pesos = ((1 - ax) * (1 - ay) * d, ax * (1 - ay) * d, (1 - ax) * ay * d, ax * ay * d)
+
+    def puntos(self, x, y, brillo, gordo=False):
+        # cada punto se reparte entre los 4 píxeles que pisa (suavizado)
+        esc = self.esc
+        fx = np.asarray(x, np.float32) * esc + self.cx
+        fy = np.asarray(y, np.float32) * esc + self.cy
+        x0 = np.floor(fx).astype(np.int32)
+        y0 = np.floor(fy).astype(np.int32)
+        ax, ay = fx - x0, fy - y0
+        b = np.broadcast_to(np.asarray(brillo, np.float32) * (2.6 if gordo else 1.9), fx.shape)
+        plano = self.buf.ravel()
+        for dx, dy, peso in ((0, 0, (1 - ax) * (1 - ay)), (1, 0, ax * (1 - ay)),
+                             (0, 1, (1 - ax) * ay), (1, 1, ax * ay)):
+            qx, qy = x0 + dx, y0 + dy
+            ok = (qx >= 0) & (qx < self.w) & (qy >= 0) & (qy < self.h)
+            plano += np.bincount((qy[ok] * self.w + qx[ok]), weights=(b * peso)[ok],
+                                 minlength=self.w * self.h).astype(np.float32)
+
+    def paso(self, niveles, dt=1 / 40, emitir=True):
+        e = self.escena
+        if self._mapa is None:
+            self._deformacion()
+        n = np.asarray(niveles, np.float32)
+        a = {"niveles": n, "bajo": float(n[:6].mean()), "medio": float(n[6:20].mean()),
+             "agudo": float(n[20:].mean())}
+        f, i, w = self.buf.ravel(), self._mapa, self.w
+        p00, p10, p01, p11 = self._pesos
+        b = (np.take(f, i) * p00 + np.take(f, i + 1) * p10 + np.take(f, i + w) * p01
+             + np.take(f, i + w + 1) * p11).reshape(self.h, w)
+        # difuminado barato (cruz de 5) para el resplandor
+        b = (b * 2 + np.roll(b, 1, 0) + np.roll(b, -1, 0) + np.roll(b, 1, 1) + np.roll(b, -1, 1)) / 6
+        if emitir:
+            self.buf = b * e.apagado
+            e.t += dt
+            e.emitir(self, a)
+        else:
+            # disipándose (en pausa): sigue girando, no dibuja nada nuevo y
+            # se apaga más deprisa
+            self.buf = b * min(e.apagado, 0.9)
+        np.clip(self.buf, 0, 1.2, out=self.buf)
+
+    def imagen(self):
+        """RGBA (alto, ancho) en uint32 empaquetado."""
+        i = (np.minimum(self.buf * self._vineta, 1.0) * 255).astype(np.uint8)
+        return np.take(self.lut, i)
+
+
+class Lienzo(GObject.Object, Gdk.Paintable):
+    """Donde se pinta la visualización. Cambiar de imagen solo pide
+    redibujar (invalidate_contents): con set_paintable en cada fotograma GTK
+    recolocaba toda la ventana. Sin tamaño propio: llena lo que le den."""
+
+    def __init__(self):
+        super().__init__()
+        self.tex = None
+
+    def poner(self, tex):
+        self.tex = tex
+        self.invalidate_contents()
+
+    def do_snapshot(self, snapshot, ancho, alto):
+        if self.tex is None:
+            return
+        rect = Graphene.Rect().init(0, 0, ancho, alto)
+        # Al ampliar mucho (ventana grande, pantalla completa) los píxeles se
+        # notaban como bloques: un desenfoque en la GPU, proporcional a lo que
+        # se amplía, los funde sin gastar CPU (y da el resplandor de XP)
+        factor = ancho / max(1, self.tex.get_width())
+        if factor > 1.4:
+            snapshot.push_blur(factor * 0.8)
+        snapshot.append_scaled_texture(self.tex, Gsk.ScalingFilter.LINEAR, rect)
+        if factor > 1.4:
+            snapshot.pop()
+
+    def do_get_flags(self):
+        return Gdk.PaintableFlags.SIZE
+
+    def do_get_intrinsic_width(self):
+        return 0
+
+    def do_get_intrinsic_height(self):
+        return 0
+
+
+class Pelicula:
+    """El modo visualización: en la carátula o a pantalla completa («cine»)."""
+    PASO = 1 / 30   # lo que da cava; más solo gasta
+
+    def __init__(self, v):
+        self.v = v
+        self.motor = Motor(v.lado, v.lado)
+        # en la carátula, Gtk.Image con pixel_size (Gtk.Picture pedía el tamaño
+        # de la imagen y agrandaba la carátula, como pasó con la foto)
+        self.lienzo_portada = Lienzo()
+        self.lienzo_cine = Lienzo()
+        # de fondo de toda la ventana (detrás de los mandos y la lista)
+        self.portada = Gtk.Picture(paintable=self.lienzo_portada, content_fit=Gtk.ContentFit.FILL,
+                                   can_shrink=True, can_target=False, visible=False)
+        self.cine = Gtk.Picture(paintable=self.lienzo_cine, content_fit=Gtk.ContentFit.FILL,
+                                can_shrink=True, hexpand=True, vexpand=True)
+        self.tic = None
+        self.tic_en = None
+        self.disipando = False
+        self.ultimo = None
+        self.acum = 0.0
+        self.desde = 0.0
+        eleccion = leer_json(PREFERENCIAS).get("escena", "aleatoria")
+        self.aleatoria = eleccion == "aleatoria"
+        clase = next((e for e in ESCENAS if e.nombre == eleccion), None)
+        self.poner(clase or random.choice(ESCENAS))
+
+    def poner(self, clase):
+        self.motor.poner(clase)
+        if hasattr(self.v, "colores"):
+            self.colorear()
+        self.desde = time.monotonic()
+        self.v._pintar_pie()
+
+    def colorear(self):
+        c = self.v.colores
+        acento = [int(x * 255) for x in rgb(c.get(self.motor.escena.color, c["acento"]))]
+        fondo = [int(x * 255) for x in rgb(c["fondo"])]
+        brillo = [min(255, x + 70) for x in acento]
+        self.motor.paleta(np.array([fondo, acento, brillo]))
+
+    def lienzo(self):
+        return self.cine if self.v.modo == "cine" else self.portada
+
+    def tamano(self, ancho, alto, centro=(0.5, 0.5), escala=1.0):
+        self.motor.tamano(ancho, alto, centro, escala)
+
+    def animar(self, disipar=False):
+        self.disipando = disipar
+        destino = self.lienzo()
+        if self.tic is not None and self.tic_en is not destino:
+            self.quieto()
+        if self.tic is None:
+            self.ultimo = None
+            self.tic_en = destino
+            self.tic = destino.add_tick_callback(self._paso)
+
+    def quieto(self):
+        """Se congela en el último fotograma (en pausa no gasta nada)."""
+        if self.tic is not None:
+            self.tic_en.remove_tick_callback(self.tic)
+            self.tic = None
+
+    def _paso(self, _w, reloj):
+        t = reloj.get_frame_time() / 1e6
+        if self.ultimo is None:
+            self.ultimo = t
+        self.acum += min(t - self.ultimo, 0.1)
+        self.ultimo = t
+        hecho = False
+        while self.acum >= self.PASO:
+            self.motor.paso(self.v.visu.objetivo, self.PASO, emitir=not self.disipando)
+            self.acum -= self.PASO
+            hecho = True
+        if self.disipando and float(self.motor.buf.max()) < 0.01:
+            self.motor.buf[:] = 0
+            self.mostrar()
+            self.tic = None          # ya a oscuras: deja de gastar
+            return GLib.SOURCE_REMOVE
+        if self.aleatoria and time.monotonic() - self.desde > 25:
+            otras = [e for e in ESCENAS if not isinstance(self.motor.escena, e)]
+            self.poner(random.choice(otras))
+        if hecho:
+            self.mostrar()
+        return GLib.SOURCE_CONTINUE
+
+    def mostrar(self):
+        img = self.motor.imagen()
+        h, w = img.shape
+        tex = Gdk.MemoryTexture.new(w, h, Gdk.MemoryFormat.R8G8B8A8,
+                                    GLib.Bytes.new(img.tobytes()), w * 4)
+        (self.lienzo_cine if self.v.modo == "cine" else self.lienzo_portada).poner(tex)
+
+
 class Raiz(Gtk.Box):
     """Columna sola (estrecha) o columna + lista a la derecha (ancha)."""
 
@@ -511,7 +884,10 @@ class Raiz(Gtk.Box):
         self.sensor = Gtk.DrawingArea(can_target=False, hexpand=True, vexpand=True)
         self.sensor.connect("resize", self._al_cambiar_ancho)
 
-    def _al_cambiar_ancho(self, _area, ancho, _alto):
+    def _al_cambiar_ancho(self, _area, ancho, alto):
+        if self.v.modo == "portada":
+            # después de colocar (la carátula cambia de sitio con la vista)
+            GLib.timeout_add(60, lambda: self.v._tamano_fondo(ancho, alto) and False)
         ancha = ancho >= ANCHO_DOBLE
         if ancha != self.ancha:
             self.ancha = ancha
@@ -551,7 +927,24 @@ class Visualizador(Gtk.DrawingArea):
 
     # cava -------------------------------------------------------------
     def arrancar(self):
-        if self.proc is not None or not self.get_visible():
+        if self.proc is not None:
+            return
+        if PRUEBA:      # niveles inventados: un bajo que late y medios que bailan
+            self.proc = "prueba"
+            self.t_prueba = 0
+
+            def latir():
+                if self.proc != "prueba":
+                    return False
+                self.t_prueba += 1
+                t = self.t_prueba
+                bajo = 0.85 if t % 15 < 3 else 0.2
+                self.objetivo = [max(0.0, min(1.0, (bajo if i < 6 else 0.45 * abs(math.sin(t * 0.21 + i * 0.7))
+                                                    * (1 - i / 50)))) for i in range(BARRAS)]
+                return True
+
+            GLib.timeout_add(33, latir)
+            self._animar()
             return
         CACHE.mkdir(parents=True, exist_ok=True)
         conf = CACHE / "cava.conf"
@@ -584,7 +977,9 @@ noise_reduction = 60
         self._animar()
 
     def parar(self):
-        if self.proc is not None:
+        if self.proc == "prueba":
+            self.proc = None
+        elif self.proc is not None:
             self.proc.terminate()
             self.proc = None
         self.objetivo = [0.0] * BARRAS   # caen suavemente hasta 0
@@ -608,11 +1003,17 @@ noise_reduction = 60
         if self.tic is None:
             self.tic = self.add_tick_callback(self._paso)
 
-    def _paso(self, _w, _reloj):
+    def _paso(self, _w, reloj):
+        # a 30 fps, lo que da cava: a 60 se redibujaba el doble para nada
+        # (28 % de un núcleo solo las barras; a 30, la mitad)
+        t = reloj.get_frame_time()
+        if t - getattr(self, "ultimo", 0) < 30_000:
+            return GLib.SOURCE_CONTINUE
+        self.ultimo = t
         quieto = True
         for i in range(BARRAS):
             d = self.objetivo[i] - self.ahora[i]
-            self.ahora[i] += d * (0.45 if d > 0 else 0.18)   # sube rápido, cae despacio
+            self.ahora[i] += d * (0.6 if d > 0 else 0.3)     # sube rápido, cae despacio
             if abs(d) > 0.004:
                 quieto = False
         self.queue_draw()
@@ -626,16 +1027,17 @@ noise_reduction = 60
         hueco = 3
         w = (ancho - hueco * (BARRAS - 1)) / BARRAS
         medio = alto * 0.72
+        # rectángulos sin redondear y un solo fill por color: con 80 esquinas
+        # redondeadas por fotograma, cairo se llevaba buena parte de la CPU
         for i, nivel in enumerate(self.ahora):
-            x = i * (w + hueco)
             h = max(2.0, nivel * (medio - 2))
-            redondo(cr, x, medio - h, w, h, min(w / 2, 2))
-            cr.set_source_rgba(r, g, b, 0.95)
-            cr.fill()
-            hr = max(1.0, nivel * (alto - medio - 2))   # reflejo
-            redondo(cr, x, medio + 2, w, hr, min(w / 2, 2))
-            cr.set_source_rgba(r, g, b, 0.28)
-            cr.fill()
+            cr.rectangle(i * (w + hueco), medio - h, w, h)
+        cr.set_source_rgba(r, g, b, 0.95)
+        cr.fill()
+        for i, nivel in enumerate(self.ahora):
+            cr.rectangle(i * (w + hueco), medio + 2, w, max(1.0, nivel * (alto - medio - 2)))
+        cr.set_source_rgba(r, g, b, 0.28)   # reflejo
+        cr.fill()
 
 
 def redondo(cr, x, y, w, h, rad):
@@ -678,6 +1080,10 @@ class Ventana(Gtk.ApplicationWindow):
         self.set_default_size(480, 840)
         self.set_decorated(False)  # sin barra de título, como el resto en niri
         self.add_css_class("musica")
+        self.modo = "no"            # visualización: "no", "portada" o "cine"
+        self.pagina = "vacia"       # lo que enseña la carátula cuando no hay visualización
+        self.clic_pendiente = None
+        self.pie_oculto = None
 
         self.lista = []           # [Entrada] en el orden en que suenan
         self.original = []        # el mismo, sin barajar
@@ -739,10 +1145,23 @@ class Ventana(Gtk.ApplicationWindow):
         marco = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.EXTERNAL,
                                    vscrollbar_policy=Gtk.PolicyType.EXTERNAL)
         marco.set_child(raiz)
+        # Capas: [visualización de fondo] + [velo] + contenido + sensor de tamaño.
+        # El contenido es el que da el tamaño (set_measure_overlay); el fondo
+        # se pone luego (self.peli aún no existe aquí).
         capas = Gtk.Overlay()
-        capas.set_child(marco)
+        self.capas = capas
+        capas.set_child(Gtk.Box())
+        self.velo = Gtk.Box(can_target=False, visible=False)
+        self.velo.add_css_class("velo")
+        capas.add_overlay(self.velo)
+        capas.add_overlay(marco)
+        capas.set_measure_overlay(marco, True)
         capas.add_overlay(raiz.sensor)
-        self.set_child(capas)
+        self.escenario = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE,
+                                   transition_duration=250)
+        self.escenario.add_named(capas, "normal")
+        self.set_child(self.escenario)
+        self.connect("notify::fullscreened", self._al_cambiar_pantalla)
 
         # carátula (o el aviso de lista vacía)
         self.pila = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
@@ -771,6 +1190,24 @@ class Ventana(Gtk.ApplicationWindow):
         self.foto.set_pixel_size(self.lado)
         self.pila.add_named(self.foto, "foto")
         caja.append(self.pila)
+        self.peli = Pelicula(self) if np is not None else None
+        if self.peli:
+            # hueco transparente: con la visualización, la carátula se va y su
+            # sitio sigue respondiendo al clic (para volver a ella)
+            # (aquí hubo un selector «‹ escena ›» a la vista: el usuario prefirió
+            # que no estuviera; se cambia con clic derecho o con ↑ ↓)
+            self.pila.add_named(Gtk.Box(), "hueco")
+            self.capas.set_child(self.peli.portada)
+            # clic derecho en cualquier parte del fondo → menú de escenas
+            fondo_clic = Gtk.GestureClick(button=3)
+            fondo_clic.connect("pressed", self._clic_derecho_fondo)
+            self.capas.add_controller(fondo_clic)
+            self.pila.set_tooltip_text("Clic: visualización de fondo · Doble clic: pantalla completa"
+                                       " · Clic derecho: elegir visualización")
+            self.pila.set_cursor_from_name("pointer")
+            clic = Gtk.GestureClick(button=0)
+            clic.connect("pressed", self._clic_portada)
+            self.pila.add_controller(clic)
 
         # título y artista
         # max_width_chars=1: si no, un título largo pide su ancho entero y
@@ -867,6 +1304,9 @@ class Ventana(Gtk.ApplicationWindow):
         desliza.set_child(self.caja_lista)
         self.zona_lista.append(desliza)
 
+        if self.peli:
+            self._construir_cine()
+
         self._css = Gtk.CssProvider()
         Gtk.StyleContext.add_provider_for_display(
             Gdk.Display.get_default(), self._css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
@@ -876,6 +1316,258 @@ class Ventana(Gtk.ApplicationWindow):
             m = Gio.File.new_for_path(str(archivo)).monitor_file(Gio.FileMonitorFlags.NONE, None)
             m.connect("changed", lambda *_: self._cargar_tema())
             self._vigilantes.append(m)
+
+    def _construir_cine(self):
+        cine = Gtk.Overlay()
+        cine.add_css_class("cine")
+        cine.set_child(self.peli.cine)
+        pie = Gtk.Box(valign=Gtk.Align.END, spacing=12)
+        pie.add_css_class("cine-pie")
+        self.pie_cancion = Gtk.Label(xalign=0, hexpand=True, ellipsize=Pango.EllipsizeMode.END,
+                                     max_width_chars=1)
+        self.pie_cancion.add_css_class("cine-cancion")
+        self.pie_escena = Gtk.Label(xalign=1)
+        self.pie_escena.add_css_class("cine-escena")
+        pie.append(self.pie_cancion)
+        pie.append(self.pie_escena)
+        self.pie = Gtk.Revealer(child=pie, valign=Gtk.Align.END, reveal_child=True,
+                                transition_type=Gtk.RevealerTransitionType.CROSSFADE,
+                                transition_duration=300)
+        cine.add_overlay(self.pie)
+        mover = Gtk.EventControllerMotion()
+        mover.connect("motion", self._raton_cine)
+        cine.add_controller(mover)
+        clic = Gtk.GestureClick(button=0)
+        clic.connect("pressed", self._clic_cine)
+        cine.add_controller(clic)
+        self.cine_caja = cine
+        self.escenario.add_named(cine, "cine")
+        self._pintar_pie()
+
+    # ------------------------------------------------------ visualización
+    def _clic_portada(self, gesto, n, x, y):
+        if not self.lista or not self.peli:
+            return
+        boton_raton = gesto.get_current_button()
+        if boton_raton == 3:
+            if self.modo != "no":
+                self._menu_visual(self.pila, x, y)
+            return
+        if boton_raton != 1:
+            return
+        if self.clic_pendiente is not None:
+            GLib.source_remove(self.clic_pendiente)
+            self.clic_pendiente = None
+        if n >= 2:
+            self.entrar_cine()
+        else:
+            # esperar por si es un doble clic (si no, el primer clic ya cambiaba)
+            ajustes = Gtk.Settings.get_default()
+            self.clic_pendiente = GLib.timeout_add(ajustes.props.gtk_double_click_time,
+                                                   self._clic_simple)
+
+    def _clic_derecho_fondo(self, _g, _n, x, y):
+        if self.modo != "portada":
+            return
+        w = self.capas.pick(x, y, Gtk.PickFlags.DEFAULT)
+        while w is not None:                 # sobre la lista: es «Quitar»
+            if w is self.caja_lista or w is self.pila:
+                return                       # (la carátula ya tiene el suyo)
+            w = w.get_parent()
+        self._menu_visual(self.capas, x, y)
+
+    def otra_escena(self, paso):
+        if not self.peli:
+            return
+        actual = next((i for i, e in enumerate(ESCENAS)
+                       if isinstance(self.peli.motor.escena, e)), 0)
+        self._elegir_escena(ESCENAS[(actual + paso) % len(ESCENAS)])
+
+    def _clic_simple(self):
+        self.clic_pendiente = None
+        self.poner_modo("no" if self.modo == "portada" else "portada", guardar=True)
+        return False
+
+    def _clic_cine(self, gesto, n, x, y):
+        b = gesto.get_current_button()
+        if b == 3:
+            self._menu_visual(self.cine_caja, x, y)
+        elif b == 1 and n == 2:
+            self.salir_cine()
+        self._ensenar_pie()
+
+    def poner_modo(self, modo, guardar=False):
+        """guardar=True cuando lo decide el usuario: se recuerda para la próxima
+        vez (si se apaga sola, p. ej. con la lista vacía, no cuenta)."""
+        if not self.peli:
+            return
+        if guardar and modo in ("no", "portada"):
+            self._guardar_pref("visualizacion", modo == "portada")
+        antes = self.modo
+        self.modo = modo
+        if modo == "portada":   # «de fondo»: toda la ventana, la carátula se queda
+            if antes == "cine":
+                self.peli.quieto()
+            self._tamano_fondo(self.get_width(), self.get_height())
+            self.peli.portada.set_visible(True)
+            self.velo.set_visible(True)
+            self.add_css_class("con-fondo")
+            self.pila.add_css_class("transparente")
+            self.pila.set_visible_child_name("hueco")
+        elif modo == "cine":
+            self.peli.quieto()
+            mon = self.get_display().get_monitor_at_surface(self.get_surface())
+            geo = mon.get_geometry() if mon else None
+            ancho, alto = (geo.width, geo.height) if geo else (16, 9)
+            self.peli.tamano(480, max(120, round(480 * alto / ancho)))
+            self.escenario.set_visible_child_name("cine")
+            self._ensenar_pie()
+        else:
+            self.peli.quieto()
+        if modo != "portada":
+            self.peli.portada.set_visible(False)
+            self.velo.set_visible(False)
+            self.remove_css_class("con-fondo")
+            self.pila.remove_css_class("transparente")
+            self.pila.set_visible_child_name(self.pagina)
+        if modo != "cine" and self.escenario.get_visible_child_name() == "cine":
+            self.escenario.set_visible_child_name("normal")
+            self.set_cursor(None)
+        self.peli.mostrar()
+        self._actualizar_animacion()
+
+    def _tamano_fondo(self, ancho, alto):
+        """La imagen del fondo, a la mitad de la ventana (máx. 400 de ancho):
+        la GPU la escala suavizada, y así sale el resplandor de XP."""
+        if not self.peli or ancho <= 0 or alto <= 0:
+            return
+        w = min(420, max(200, round(ancho * 0.45)))
+        h = max(120, round(w * alto / ancho))
+        # centro de la carátula dentro de la ventana (ya colocada)
+        centro = (0.5, 0.3)
+        ok, caja = self.pila.compute_bounds(self.capas)
+        if ok and caja.get_width() > 0:
+            centro = ((caja.get_x() + caja.get_width() / 2) / ancho,
+                      (caja.get_y() + caja.get_height() / 2) / alto)
+        # figuras grandes: que nazcan ya fuera de la carátula y lleguen a los
+        # bordes de la ventana (con 1.0 quedaban escondidas detrás del disco)
+        escala = max(1.0, self.lado * 1.4 / (min(ancho, alto) / 2))
+        m = self.peli.motor
+        clave = (w, h, round(centro[0], 3), round(centro[1], 3), round(escala, 3))
+        if clave != getattr(self, "_clave_fondo", None):
+            self._clave_fondo = clave
+            self.peli.tamano(w, h, centro, escala)
+
+    def entrar_cine(self):
+        if not self.peli or not self.lista:
+            return
+        self.poner_modo("cine")
+        self.fullscreen()
+
+    def salir_cine(self):
+        if self.modo == "cine":
+            self.poner_modo("portada", guardar=True)
+            self.unfullscreen()
+
+    def _al_cambiar_pantalla(self, *_):
+        # si niri la saca de pantalla completa por su cuenta (Mod+Shift+F...)
+        if not self.is_fullscreen() and self.modo == "cine":
+            self.poner_modo("portada")
+
+    def _actualizar_animacion(self):
+        sonando = not self.parado and not self.pausa
+        if hasattr(self, "visu"):
+            if sonando and (self.visu.get_visible() or self.modo != "no"):
+                self.visu.arrancar()
+            else:
+                self.visu.parar()
+        if self.peli:
+            if self.modo == "no":
+                self.peli.quieto()
+            else:
+                # al pausar, lo que hubiera se disipa hasta quedar a oscuras
+                self.peli.animar(disipar=not sonando)
+
+    def _raton_cine(self, _c, x, y):
+        # GTK manda «motion» aunque el ratón esté quieto (al cambiar lo que
+        # hay debajo): solo cuenta si se ha movido de verdad
+        antes = getattr(self, "raton", None)
+        self.raton = (x, y)
+        if antes is not None and abs(antes[0] - x) + abs(antes[1] - y) > 3:
+            self._ensenar_pie()
+
+    def _ensenar_pie(self):
+        if not hasattr(self, "pie"):
+            return
+        self.pie.set_reveal_child(True)
+        self.cine_caja.set_cursor(None)
+        if self.pie_oculto is not None:
+            GLib.source_remove(self.pie_oculto)
+        self.pie_oculto = GLib.timeout_add(2500, self._ocultar_pie)
+
+    def _ocultar_pie(self):
+        self.pie_oculto = None
+        if self.modo == "cine":
+            self.pie.set_reveal_child(False)
+            self.cine_caja.set_cursor_from_name("none")
+        return False
+
+    def _pintar_pie(self):
+        if not hasattr(self, "pie_cancion") or not self.peli:
+            return
+        e = self._actual()
+        d = self.etiquetas.get(e.ruta, {}) if e else {}
+        texto = d.get("titulo") or (Path(e.ruta).stem if e else "")
+        if d.get("artista"):
+            texto += f"  —  {d['artista']}"
+        self.pie_cancion.set_label(texto)
+        nombre = self.peli.motor.escena.nombre
+        self.pie_escena.set_label(f"Nocturno: {nombre}" + ("  ·  aleatoria" if self.peli.aleatoria else ""))
+
+    def _menu_visual(self, sobre, x, y):
+        pop = Gtk.Popover(has_arrow=False)
+        pop.add_css_class("menu-fila")
+        pop.set_parent(sobre)
+        pop.set_pointing_to(Gdk.Rectangle(int(x), int(y), 1, 1))
+        caja = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+
+        def opcion(texto, marcado, accion):
+            b = Gtk.Button()
+            etiqueta = Gtk.Label(label=("✓  " if marcado else "     ") + texto, xalign=0)
+            b.set_child(etiqueta)
+
+            def pulsar(*_):
+                pop.popdown()
+                GLib.idle_add(accion)
+
+            b.connect("clicked", pulsar)
+            caja.append(b)
+
+        opcion("Aleatoria", self.peli.aleatoria, lambda: self._elegir_escena(None))
+        for clase in ESCENAS:
+            marcado = not self.peli.aleatoria and isinstance(self.peli.motor.escena, clase)
+            opcion(clase.nombre.capitalize(), marcado, lambda c=clase: self._elegir_escena(c))
+        caja.append(Gtk.Separator())
+        if self.modo == "cine":
+            opcion("Salir de pantalla completa", False, self.salir_cine)
+        else:
+            opcion("Pantalla completa", False, self.entrar_cine)
+        opcion("Quitar la visualización", False, lambda: (self.unfullscreen(), self.poner_modo("no", guardar=True)))
+        pop.set_child(caja)
+        pop.connect("closed", lambda p: GLib.idle_add(p.unparent))
+        pop.popup()
+
+    def _elegir_escena(self, clase):
+        self.peli.aleatoria = clase is None
+        self.peli.poner(clase or random.choice(ESCENAS))
+        prefs = leer_json(PREFERENCIAS)
+        prefs["escena"] = "aleatoria" if clase is None else clase.nombre
+        try:
+            PREFERENCIAS.write_text(json.dumps(prefs, indent=4) + "\n")
+        except OSError:
+            pass
+        self.peli.mostrar()
+        return False
 
     def _con_punto(self, icono):
         b = boton(icono, tam=18)
@@ -901,6 +1593,9 @@ class Ventana(Gtk.ApplicationWindow):
         Gtk.Settings.get_default().set_property("gtk-application-prefer-dark-theme", oscuro)
         self._css.load_from_string(css_del_tema())
         self.colores = colores_del_tema()
+        if getattr(self, "peli", None):
+            self.peli.colorear()
+            self.peli.mostrar()
         if hasattr(self, "visu"):
             self.visu.queue_draw()
             self.icono_play.queue_draw()
@@ -918,6 +1613,12 @@ class Ventana(Gtk.ApplicationWindow):
                 self.alternar_visualizador()
             elif tecla == Gdk.KEY_Right:
                 self.mpv.orden("seek", 5, "relative")
+            elif tecla in (Gdk.KEY_f, Gdk.KEY_F, Gdk.KEY_F11):
+                self.salir_cine() if self.modo == "cine" else self.entrar_cine()
+            elif tecla in (Gdk.KEY_Up, Gdk.KEY_Down) and self.modo != "no":
+                self.otra_escena(-1 if tecla == Gdk.KEY_Up else 1)
+            elif tecla == Gdk.KEY_Escape and self.modo == "cine":
+                self.salir_cine()
             elif tecla == Gdk.KEY_Left:
                 self.mpv.orden("seek", -5, "relative")
             else:
@@ -936,6 +1637,15 @@ class Ventana(Gtk.ApplicationWindow):
             GLib.source_remove(self.guardar_vol)
         self.guardar_vol = GLib.timeout_add(500, self._guardar_volumen)
 
+    def _guardar_pref(self, clave, valor):
+        prefs = leer_json(PREFERENCIAS)
+        if prefs.get(clave) != valor:
+            prefs[clave] = valor
+            try:
+                PREFERENCIAS.write_text(json.dumps(prefs, indent=4) + "\n")
+            except OSError:
+                pass
+
     def _guardar_volumen(self):
         self.guardar_vol = None
         prefs = leer_json(PREFERENCIAS)
@@ -950,10 +1660,7 @@ class Ventana(Gtk.ApplicationWindow):
     def alternar_visualizador(self):
         ver = not self.visu.get_visible()
         self.visu.set_visible(ver)
-        if ver and not self.parado and not self.pausa:
-            self.visu.arrancar()
-        elif not ver:
-            self.visu.parar()
+        self._actualizar_animacion()
         prefs = leer_json(PREFERENCIAS)
         prefs["visualizador"] = ver
         try:
@@ -1046,6 +1753,12 @@ class Ventana(Gtk.ApplicationWindow):
             self.mpris.avisar("LoopStatus")
 
     def _tras_cambiar_lista(self):
+        # si la última vez se dejó la visualización puesta, vuelve en cuanto
+        # hay canciones (sin canciones no se puede)
+        if (self.lista and self.modo == "no" and self.peli
+                and leer_json(PREFERENCIAS).get("visualizacion")):
+            GLib.idle_add(lambda: self.modo == "no" and self.lista
+                          and self.poner_modo("portada") and False)
         self._rehacer_filas()
         pendientes = [e.ruta for e in self.lista if e.ruta not in self.etiquetas]
         if pendientes:
@@ -1258,8 +1971,7 @@ class Ventana(Gtk.ApplicationWindow):
 
     def _pintar_play(self):
         sonando = not self.parado and not self.pausa
-        if hasattr(self, "visu"):
-            self.visu.arrancar() if sonando else self.visu.parar()
+        self._actualizar_animacion()
         self.icono_play.poner(sonando)
         if self.mpris:
             self.mpris.avisar("PlaybackStatus")
@@ -1286,12 +1998,18 @@ class Ventana(Gtk.ApplicationWindow):
                  "audio-volume-medium-symbolic" if v < 67 else "audio-volume-high-symbolic")
         poner_icono(self.b_vol, icono)
 
+    def _pagina(self, nombre):
+        self.pagina = nombre
+        if self.modo != "portada":     # con la visualización, la carátula no está
+            self.pila.set_visible_child_name(nombre)
+
     def _pintar_reproductor(self):
         e = self._actual()
         self._pintar_modos()
         self._pintar_play()
         if e is None:
-            self.pila.set_visible_child_name("vacia")
+            self.poner_modo("no") if self.modo != "no" else None
+            self._pagina("vacia")
             self.titulo.set_label("Nocturno")
             self.artista.set_label("Nada en la lista")
             self.t_total.set_label("–:––")
@@ -1302,6 +2020,7 @@ class Ventana(Gtk.ApplicationWindow):
         self.titulo.set_label(d.get("titulo") or Path(e.ruta).stem)
         self.artista.set_label(" · ".join(x for x in (d.get("artista"), d.get("album")) if x))
         self.set_title(f"{self.titulo.get_label()} — Nocturno")
+        self._pintar_pie()
         if self.portada_de != e.ruta:
             self.portada_de = e.ruta
             threading.Thread(target=self._buscar_portada, args=(e.ruta,), daemon=True).start()
@@ -1317,7 +2036,7 @@ class Ventana(Gtk.ApplicationWindow):
         textura = textura_cuadrada(datos, self.lado * self.get_scale_factor()) if datos else None
         if textura is not None:
             self.foto.set_from_paintable(textura)
-            self.pila.set_visible_child_name("foto")
+            self._pagina("foto")
             try:
                 CACHE.mkdir(parents=True, exist_ok=True)
                 archivo = CACHE / (hashlib.md5(datos).hexdigest() + ".img")
@@ -1327,7 +2046,7 @@ class Ventana(Gtk.ApplicationWindow):
             except OSError:
                 pass
         else:
-            self.pila.set_visible_child_name("sin")
+            self._pagina("sin")
         if self.mpris:
             self.mpris.avisar("Metadata")
         return False
@@ -1346,6 +2065,39 @@ class Nocturno(Gtk.Application):
             self.ventana = Ventana(self)
             self.ventana.connect("close-request", self._al_cerrar)
         return self.ventana
+
+    def do_startup(self):
+        Gtk.Application.do_startup(self)
+        # Acciones publicadas por D-Bus (org.gtk.Actions en /org/yoru/Nocturno):
+        # sirven para atajos de niri y para probar sin ratón, p. ej.
+        #   gdbus call --session -d org.yoru.Nocturno -o /org/yoru/Nocturno \
+        #     -m org.gtk.Actions.Activate pantalla-completa [] {}
+        for nombre, hacer in (("visualizacion", self._accion_visual),
+                              ("pantalla-completa", self._accion_cine)):
+            a = Gio.SimpleAction.new(nombre, None)
+            a.connect("activate", hacer)
+            self.add_action(a)
+        esc = Gio.SimpleAction.new("escena", GLib.VariantType.new("s"))
+        esc.connect("activate", self._accion_escena)
+        self.add_action(esc)
+
+    def _accion_visual(self, *_):
+        v = self.ventana
+        if v and v.lista and v.peli:
+            if v.modo == "cine":
+                v.salir_cine()
+            v.poner_modo("no" if v.modo == "portada" else "portada", guardar=True)
+
+    def _accion_cine(self, *_):
+        v = self.ventana
+        if v:
+            v.salir_cine() if v.modo == "cine" else v.entrar_cine()
+
+    def _accion_escena(self, _a, param):
+        v = self.ventana
+        if v and v.peli:
+            nombre = param.unpack()
+            v._elegir_escena(next((e for e in ESCENAS if e.nombre == nombre), None))
 
     def do_activate(self):
         self._ventana().present()
