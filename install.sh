@@ -903,6 +903,38 @@ with open(ruta, "w") as f:
 PY
 }
 
+# El audio nunca al navegador: Zen Browser dice que abre .flac, .ogg y
+# .webm, y era la siguiente opción si el sistema no usaba la predeterminada
+# (se abrían canciones en el navegador). Se le quita en mimeapps.list
+# ([Removed Associations]); lo demás del archivo se queda
+audio_sin_navegador() {
+    python3 - "$HOME/.config/mimeapps.list" <<'PY'
+import os, sys
+ruta = sys.argv[1]
+try:
+    lineas = open(ruta, encoding="utf-8").read().rstrip("\n").split("\n")
+except FileNotFoundError:
+    lineas = []
+if "[Removed Associations]" not in lineas:
+    lineas += ["", "[Removed Associations]"]
+i = lineas.index("[Removed Associations]")
+fin = next((j for j in range(i + 1, len(lineas)) if lineas[j].startswith("[")), len(lineas))
+seccion = lineas[i + 1:fin]
+for tipo in ("audio/flac", "audio/ogg", "audio/webm"):
+    app = "app.zen_browser.zen.desktop"
+    k = next((n for n, l in enumerate(seccion) if l.startswith(tipo + "=")), None)
+    if k is None:
+        seccion.append(f"{tipo}={app};")
+    elif app not in seccion[k]:
+        seccion[k] = seccion[k].rstrip(";") + f";{app};"
+lineas[i + 1:fin] = seccion
+os.makedirs(os.path.dirname(ruta), exist_ok=True)
+open(ruta + ".tmp", "w", encoding="utf-8").write("\n".join(lineas) + "\n")
+os.replace(ruta + ".tmp", ruta)
+PY
+    ok "El audio nunca se abre en el navegador"
+}
+
 # La configuración de Elisa (~/.var/app/org.kde.elisa/config/elisarc): la
 # biblioteca, solo la carpeta Música de casa (no el NAS) y sin repasarla al
 # arrancar. Lo demás que tenga el archivo se queda
@@ -995,6 +1027,7 @@ apps_predeterminadas() {
         audio/x-vorbis+ogg audio/opus audio/x-opus+ogg audio/mp4 audio/x-m4a audio/aac \
         audio/wav audio/x-wav audio/x-aiff audio/x-ape audio/x-wavpack 2>/dev/null \
         && ok "Música → Nocturno"
+    audio_sin_navegador
     # Texto plano: el editor de texto (si no, una app de documentos se los queda)
     [[ -f /usr/share/applications/org.gnome.TextEditor.desktop ]] \
         && xdg-mime default org.gnome.TextEditor.desktop text/plain text/markdown text/x-log 2>/dev/null \
