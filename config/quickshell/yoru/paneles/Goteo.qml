@@ -52,7 +52,13 @@ Item {
     readonly property real faseCorte: 0.78      // (de la parte de gota) se suelta
 
     readonly property bool ocupado: lista.length > 0
-    readonly property real altoTotal: col.y + col.height + 24
+    // El alto de la ventana: crece al llegar uno, pero no encoge mientras
+    // se van (redimensionar la ventana a cada fotograma la hacía ir a
+    // trompicones); vuelve a lo justo cuando ya no queda ninguno
+    readonly property real altoAhora: col.y + col.height + 24
+    property real altoTotal: altoAhora
+    onAltoAhoraChanged: if (altoAhora > altoTotal || !ocupado) altoTotal = altoAhora
+    onOcupadoChanged: if (!ocupado) altoTotal = altoAhora
     readonly property Item zona: col
 
     implicitWidth: ancho + 2 * pad
@@ -280,7 +286,8 @@ Item {
                     target: gota
                     property: "f"
                     to: 0
-                    duration: Tema.rebote * 1.8 * Math.max(0.3, gota.f)
+                    // (se fija al empezar: atada a «f», cambiaba en plena
+                    // animación y la gota subía a trompicones)
                     onFinished: goteo.quitar(gota.modelData)
                 }
                 Component.onCompleted: if (sale) goteo.quitar(modelData); else entra.start()
@@ -288,6 +295,7 @@ Item {
                     if (sale) {
                         entra.stop();
                         cuenta.stop();
+                        va.duration = Tema.rebote * 1.8 * Math.max(0.3, f);
                         va.restart();
                     } else {
                         va.stop();
