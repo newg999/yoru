@@ -182,7 +182,8 @@ PanelWindow {
     FrameAnimation {
         running: ventana.abierto && !ventana.pintado && ventana.backingWindowVisible
         onRunningChanged: ventana._fotogramas = 0
-        onTriggered: if (++ventana._fotogramas >= 2) ventana.pintado = true
+        // (goteando, con uno basta: lo primero que sale es una gota diminuta)
+        onTriggered: if (++ventana._fotogramas >= (ventana.puedeGota ? 1 : 2)) ventana.pintado = true
     }
     // (por si acaso: nunca más de 150 ms esperando)
     Timer {
@@ -194,7 +195,7 @@ PanelWindow {
         NumberAnimation {
             duration: Tema.normal === 0 ? 0
                 // (de un panel a otro, deprisa: Paneles.rapido)
-                : ventana.puedeGota ? (ventana.abierto ? ventana.durGota : (Paneles.rapido ? 300 : 440))
+                : ventana.puedeGota ? (ventana.abierto ? ventana.durGota : (Paneles.rapido ? 240 : 320))
                 : ventana.puedeDesdeIsla ? (ventana.abierto ? ventana.durAbrir : (Paneles.rapido ? 160 : 260))
                 : !ventana.abierto ? 170 : ventana.persiana ? ventana.durPersiana : caja.pegado ? 300 : 380
             easing.type: ventana.puedeGota || ventana.puedeDesdeIsla || (ventana.abierto && ventana.persiana) ? Easing.Linear
@@ -224,9 +225,40 @@ PanelWindow {
     readonly property bool puedeGota: Ajustes.panelesGota && Tema.normal > 0
         && Ajustes.pildoras && !Ajustes.minimalista && !vertical && !abajo && lado !== "medio"
     readonly property bool gota: puedeGota && caja.colgado
-    readonly property int durGota: Paneles.rapido ? 520 : 720
+    readonly property int durGota: Paneles.rapido ? 360 : 480
     // El hueco entre la isla y el panel que ha goteado de ella
     readonly property int huecoGota: 10
+    // De dónde gotea: bajo el icono de la página abierta (en la isla de la
+    // derecha: el wifi, el volumen...: la ficha «elegida»), o del centro de
+    // la isla. Si pulsas otro icono de la misma isla, se va hasta él, y al
+    // cerrar la gota vuelve ahí (por eso no cambia mientras se cierra)
+    function buscarElegida(it) {
+        for (const c of it.children) {
+            if (!c.visible)
+                continue;
+            if (c.elegida === true)
+                return c;
+            const d = buscarElegida(c);
+            if (d)
+                return d;
+        }
+        return null;
+    }
+    readonly property real fuenteXAhora: {
+        const f = isla ? buscarElegida(isla) : null;
+        if (!f)
+            return islaX + islaAncho / 2;
+        let x = f.width / 2;
+        for (let p = f; p; p = p.parent)
+            x += p.x;
+        return x;
+    }
+    property real fuenteX: fuenteXAhora
+    onFuenteXAhoraChanged: if (abierto) fuenteX = fuenteXAhora
+    Behavior on fuenteX {
+        enabled: ventana.asentado
+        NumberAnimation { duration: Tema.normal * 1.4; easing.type: Easing.OutCubic }
+    }
     readonly property bool desdeIsla: puedeDesdeIsla && caja.colgado
     function tramo(p, a, b) { return Math.max(0, Math.min(1, (p - a) / (b - a))); }
     // Muelle amortiguado: dónde está a los t segundos (respuesta = lo que
@@ -333,16 +365,22 @@ PanelWindow {
 
     // «Gotean de su isla»: la gota y su cuello, en una capa opaca con la
     // transparencia de las islas encima (como la isla de la que cae); lo
-    // que cae sobre la isla se recorta. Ya abierto no hace falta: el panel
-    // tapa la gota, que se desvanece mientras él aparece
+    // que cae sobre la isla se recorta. Ya abierto no se ve: el panel tapa
+    // la gota, que se desvanece mientras él aparece.
+    // Las capas se preparan en cuanto la ventana sale (mientras espera a
+    // estar pintada), no al arrancar la gota: crearlas entonces costaba
+    // ~100 ms y la gota salía con un tirón. Y solo del alto que hace falta
+    readonly property real altoGoo: Math.min(height, bajoIslas + huecoGota + caja.altoFinal + 24)
     Item {
-        anchors.fill: parent
-        visible: ventana.gota && ventana.progreso > 0 && ventana.progreso < 1
-        opacity: Ajustes.opacidadIslas * (1 - formaPanel.cl((formaPanel.pB - 0.75) / 0.25))
+        width: parent.width
+        height: ventana.altoGoo
+        visible: ventana.gota
+        opacity: ventana.progreso > 0 && ventana.progreso < 1
+            ? Ajustes.opacidadIslas * (1 - formaPanel.cl((formaPanel.pB - 0.75) / 0.25)) : 0
         Item {
             id: gooPanel
             anchors.fill: parent
-            layer.enabled: parent.visible
+            layer.enabled: ventana.gota && ventana.visible
             layer.effect: MultiEffect {
                 maskEnabled: true
                 maskInverted: true
@@ -354,9 +392,10 @@ PanelWindow {
     }
     Item {
         id: huecoIsla
-        anchors.fill: parent
+        width: parent.width
+        height: ventana.altoGoo
         visible: false
-        layer.enabled: ventana.gota && ventana.progreso > 0 && ventana.progreso < 1
+        layer.enabled: ventana.gota && ventana.visible
         Rectangle {
             x: ventana.islaX
             y: Tema.margenBarra
@@ -370,7 +409,7 @@ PanelWindow {
         id: formaPanel
         capa: gooPanel
         f: ventana.gota ? Math.min(1, ventana.progreso) : 0
-        sx: ventana.islaX + ventana.islaAncho / 2
+        sx: ventana.fuenteX
         sy: Tema.margenBarra + (ventana.isla?.height ?? Tema.altoBarra)
         fuenteR: (ventana.isla?.height ?? Tema.altoBarra) / 2
         y0: ventana.bajoIslas + ventana.huecoGota
