@@ -30,8 +30,13 @@
 //  pieza. Los iconos de la isla siguen arriba: pulsar otro cambia de página
 //  sin cerrar. Al cerrarse, lo mismo al revés. Si la página nueva cuelga de
 //  otra isla, el panel se cierra y se abre desde ella (Paneles.abrirPagina).
+//  Con «Gotean de su isla» (Ajustes.panelesGota), como los avisos: bajo la
+//  isla nace una gota que cuelga de un cuello, se suelta y se ensancha
+//  hasta ser el panel, suelto bajo ella; al cerrarse, la isla se la traga
+//  (comun/Gota.qml).
 // ============================================================================
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Wayland
@@ -189,9 +194,10 @@ PanelWindow {
         NumberAnimation {
             duration: Tema.normal === 0 ? 0
                 // (de un panel a otro, deprisa: Paneles.rapido)
+                : ventana.puedeGota ? (ventana.abierto ? ventana.durGota : (Paneles.rapido ? 300 : 440))
                 : ventana.puedeDesdeIsla ? (ventana.abierto ? ventana.durAbrir : (Paneles.rapido ? 160 : 260))
                 : !ventana.abierto ? 170 : ventana.persiana ? ventana.durPersiana : caja.pegado ? 300 : 380
-            easing.type: ventana.puedeDesdeIsla || (ventana.abierto && ventana.persiana) ? Easing.Linear
+            easing.type: ventana.puedeGota || ventana.puedeDesdeIsla || (ventana.abierto && ventana.persiana) ? Easing.Linear
                 : !ventana.abierto ? Easing.InCubic : caja.pegado ? Easing.OutQuint : Easing.OutBack
             easing.overshoot: 1.4
         }
@@ -212,8 +218,15 @@ PanelWindow {
     // isla vuelve a su ancho
     // (la duración se decide al empezar a abrirse, cuando aún no se sabe de
     // qué isla cuelga: por eso va con lo que ya se sabe, el estilo de barra)
-    readonly property bool puedeDesdeIsla: Ajustes.panelesDesdeIsla && Tema.normal > 0
+    readonly property bool puedeDesdeIsla: Ajustes.panelesDesdeIsla && !Ajustes.panelesGota && Tema.normal > 0
         && Ajustes.pildoras && !Ajustes.minimalista && !vertical && !abajo && lado !== "medio"
+    // «Gotean de su isla»: el progreso (lineal) es el de la gota (Gota.qml)
+    readonly property bool puedeGota: Ajustes.panelesGota && Tema.normal > 0
+        && Ajustes.pildoras && !Ajustes.minimalista && !vertical && !abajo && lado !== "medio"
+    readonly property bool gota: puedeGota && caja.colgado
+    readonly property int durGota: Paneles.rapido ? 520 : 720
+    // El hueco entre la isla y el panel que ha goteado de ella
+    readonly property int huecoGota: 10
     readonly property bool desdeIsla: puedeDesdeIsla && caja.colgado
     function tramo(p, a, b) { return Math.max(0, Math.min(1, (p - a) / (b - a))); }
     // Muelle amortiguado: dónde está a los t segundos (respuesta = lo que
@@ -318,6 +331,57 @@ PanelWindow {
         onClicked: Paneles.cerrar()
     }
 
+    // «Gotean de su isla»: la gota y su cuello, en una capa opaca con la
+    // transparencia de las islas encima (como la isla de la que cae); lo
+    // que cae sobre la isla se recorta. Ya abierto no hace falta: el panel
+    // tapa la gota, que se desvanece mientras él aparece
+    Item {
+        anchors.fill: parent
+        visible: ventana.gota && ventana.progreso > 0 && ventana.progreso < 1
+        opacity: Ajustes.opacidadIslas * (1 - formaPanel.cl((formaPanel.pB - 0.75) / 0.25))
+        Item {
+            id: gooPanel
+            anchors.fill: parent
+            layer.enabled: parent.visible
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskInverted: true
+                maskSource: huecoIsla
+                maskThresholdMin: 0.5
+                maskSpreadAtMin: 0.1
+            }
+        }
+    }
+    Item {
+        id: huecoIsla
+        anchors.fill: parent
+        visible: false
+        layer.enabled: ventana.gota && ventana.progreso > 0 && ventana.progreso < 1
+        Rectangle {
+            x: ventana.islaX
+            y: Tema.margenBarra
+            width: ventana.islaAncho
+            height: ventana.isla?.height ?? Tema.altoBarra
+            radius: Tema.radioIsla
+            color: "black"
+        }
+    }
+    Gota {
+        id: formaPanel
+        capa: gooPanel
+        f: ventana.gota ? Math.min(1, ventana.progreso) : 0
+        sx: ventana.islaX + ventana.islaAncho / 2
+        sy: Tema.margenBarra + (ventana.isla?.height ?? Tema.altoBarra)
+        fuenteR: (ventana.isla?.height ?? Tema.altoBarra) / 2
+        y0: ventana.bajoIslas + ventana.huecoGota
+        xFin: caja.xFinal
+        anchoFin: caja.anchoFinal
+        altoFin: caja.height
+        radioFin: Tema.radioPanel
+        r0: 14
+        faseGota: 0.4
+    }
+
     // Con la minimalista, el panel baja desde la barra como una persiana: se
     // recorta justo por debajo de ella para no pintarse encima mientras baja.
     // Fundido con la de abajo, igual pero subiendo (y tapando su línea de arriba)
@@ -354,7 +418,8 @@ PanelWindow {
             // Con las islas, como los paneles del dock: nace sin alto bajo la
             // isla (o la barra) y se estira con rebote (progreso pasa de 1)
             readonly property real altoFinal: interior.implicitHeight + 32
-            height: ventana.desdeIsla
+            height: ventana.gota ? altoFinal
+                : ventana.desdeIsla
                 ? ventana.tapa + Math.max(0, Math.round(altoFinal * ventana.fAlto))
                 : comoDock ? Math.max(0, altoFinal * (ventana.persiana ? ventana.fPersiana : ventana.progreso)) : altoFinal
             // (la minimalista también: pegado a su franja, se despliega igual)
@@ -388,6 +453,7 @@ PanelWindow {
                 // Inicio (alto) iba mucho más rápido que el centro de control
                 : fundido ? parent.height - height + (1 - ventana.hasta1) * 56
                 : ventana.desdeIsla ? -ventana.tapa
+                : ventana.gota ? ventana.huecoGota
                 : colgado ? ventana.separacion
                 : comoDock ? (pegado ? 0 : Tema.hueco)
                 : pegado ? -(1 - ventana.hasta1) * height
@@ -401,7 +467,9 @@ PanelWindow {
             // fundido ni encoger (se despegaría de ella)
             // (con las islas, al cerrarse se funde en el último tramo: si no,
             // quedaba una franja oscura bajo la isla en los últimos fotogramas)
-            opacity: ventana.desdeIsla ? 1
+            // (goteando: aparece encima de la gota cuando ya casi es él)
+            opacity: ventana.gota ? formaPanel.cl((formaPanel.pB - 0.5) / 0.5)
+                : ventana.desdeIsla ? 1
                 : comoDock ? (ventana.abierto ? 1 : Math.min(1, ventana.progreso * 2.5))
                 : fundido ? Math.min(1, ventana.hasta1 * 1.6)
                 : pegado ? 1 : ventana.hasta1

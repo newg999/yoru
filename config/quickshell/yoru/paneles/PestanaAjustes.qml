@@ -558,13 +558,47 @@ Item {
                 activo: Ajustes.animaciones
                 onCambiar: v => Ajustes.animaciones = v
             }
-            Interruptor {
+            // Cómo se abren los paneles de las islas (paneles/Panel.qml)
+            Column {
                 width: parent.width
                 visible: Ajustes.animaciones
-                titulo: "Paneles que salen de su isla"
-                detalle: "La isla se convierte en el panel: se ensancha y el panel baja pegado a ella, con sus iconos arriba para cambiar de página; al cerrarlo, vuelve a ser isla. Apagado: baja suelto como una persiana"
-                activo: Ajustes.panelesDesdeIsla
-                onCambiar: v => Ajustes.panelesDesdeIsla = v
+                spacing: 0
+                Item { width: 1; height: 8 }
+                Texto {
+                    leftPadding: 12
+                    bottomPadding: 6
+                    text: "Cómo se abren los paneles"
+                    font.pixelSize: 13
+                }
+                Opciones {
+                    width: parent.width
+                    opciones: [
+                        {id: "isla", icono: "󰹑", texto: "La isla se convierte"},
+                        {id: "gota", icono: "󰖌", texto: "Gotean de su isla"},
+                        {id: "persiana", icono: "󰁅", texto: "Bajan sueltos"}
+                    ]
+                    valor: Ajustes.panelesGota ? "gota" : Ajustes.panelesDesdeIsla ? "isla" : "persiana"
+                    onElegir: id => {
+                        Ajustes.panelesGota = id === "gota";
+                        Ajustes.panelesDesdeIsla = id === "isla";
+                    }
+                }
+                Texto {
+                    width: parent.width
+                    leftPadding: 12
+                    rightPadding: 12
+                    topPadding: 4
+                    bottomPadding: 6
+                    text: Ajustes.panelesGota
+                        ? "Como los avisos: bajo la isla nace una gota que se suelta y se ensancha hasta ser el panel; al cerrarlo, la isla se la traga"
+                        : Ajustes.panelesDesdeIsla
+                        ? "La isla se ensancha y el panel baja pegado a ella, con sus iconos arriba para cambiar de página; al cerrarlo, vuelve a ser isla"
+                        : "El panel baja suelto bajo su isla, como una persiana"
+                    font.pixelSize: 11
+                    font.bold: false
+                    color: Tema.gris
+                    wrapMode: Text.Wrap
+                }
             }
 
             // Luz nocturna (comun/LuzNocturna.qml, con wlsunset)

@@ -112,7 +112,7 @@ Singleton {
         // ella sin cerrarse (Panel.qml: islaX y anchoSuave). Con «Paneles que
         // salen de su isla», no: se cierra deprisa (vuelve a su isla) y se
         // abre desde la nueva, también deprisa (rapido)
-        const cerrarYAbrir = Ajustes.panelesDesdeIsla && Ajustes.pildoras;
+        const cerrarYAbrir = (Ajustes.panelesDesdeIsla || Ajustes.panelesGota) && Ajustes.pildoras;
         const despues = islaDe(enPantalla, "pildora", pagina);
         if (cerrarYAbrir && !ya && antes && despues && antes !== despues && Tema.normal > 0) {
             cambio.pendiente = [enPantalla, pagina, lado, bajoIsla];
@@ -200,7 +200,7 @@ Singleton {
         }
         // De un panel abierto a otro (el reloj → las notificaciones): uno se
         // cierra y el otro se abre a la vez, los dos deprisa
-        if (abierto !== "" && abierto !== nombre && Ajustes.panelesDesdeIsla)
+        if (abierto !== "" && abierto !== nombre && (Ajustes.panelesDesdeIsla || Ajustes.panelesGota))
             deprisa();
         pantalla = enPantalla;
         seccion = enSeccion ?? "";

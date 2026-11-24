@@ -39,6 +39,7 @@ Singleton {
     property alias bordes: datos.bordes               // línea alrededor de islas y paneles
     property alias animaciones: datos.animaciones
     property alias panelesDesdeIsla: datos.panelesDesdeIsla // el panel nace de su isla como una pastilla (paneles/Panel.qml)
+    property alias panelesGota: datos.panelesGota       // el panel gotea de su isla (manda sobre panelesDesdeIsla)
 
     // ------------------------------------------------- Energía (0 = nunca)
     property alias bloquearMin: datos.bloquearMin       // bloquear la pantalla
@@ -212,6 +213,7 @@ window-rule {
             property bool bordes: true
             property bool animaciones: true
             property bool panelesDesdeIsla: true
+            property bool panelesGota: false
 
             property int bloquearMin: 5
             property int pantallaMin: 10

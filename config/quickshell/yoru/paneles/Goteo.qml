@@ -23,7 +23,6 @@
 // ============================================================================
 import QtQuick
 import QtQuick.Effects
-import QtQuick.Shapes
 import Quickshell
 import qs.comun
 
@@ -88,9 +87,7 @@ Item {
 
     // ------------------------------------------------------ Curvas de tiempo
     function cl(t) { return Math.max(0, Math.min(1, t)); }
-    function salida(t) { return 1 - Math.pow(1 - t, 3); }
     function suave(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
-    function muelle(t, s) { const u = t - 1; return 1 + (s + 1) * u * u * u + s * u * u; }
 
     // ------------------------------------------------------------ La mancha
     Item {
@@ -158,91 +155,22 @@ Item {
                     : col.y + previa.y + previa.alto
                 readonly property real y0: col.y + y
 
-                // La gota (fase 1): su radio y dónde está su centro
-                function radio(p) { return goteo.r0 * goteo.salida(goteo.cl(p * 1.8)); }
-                function centro(p) {
-                    const r = radio(p);
-                    const ini = sy - r * 0.3;
-                    return ini + (y0 + goteo.r0 - ini) * goteo.suave(p);
-                }
-                readonly property real pA: goteo.cl(f / goteo.faseGota)
-                readonly property real pB: goteo.cl((f - goteo.faseGota) / (1 - goteo.faseGota))
-                readonly property real r: radio(pA)
-                readonly property real cy: centro(pA)
-
-                // El cuello: de la campana (o la tarjeta) a la gota; al
-                // soltarse, lo que queda arriba se recoge
-                readonly property bool cortado: pA >= goteo.faseCorte
-                readonly property real largoCorte: Math.max(0, centro(goteo.faseCorte) - radio(goteo.faseCorte) - sy) / 2
-                readonly property real a: deCampana ? goteo.origenR * 0.8 : goteo.r0 * 1.4
-                readonly property real ty: sy - (deCampana ? goteo.origenR * 0.45 : 0.5)
-                readonly property real wy: cortado
-                    ? sy + largoCorte * (1 - goteo.salida(goteo.cl((pA - goteo.faseCorte) / (1 - goteo.faseCorte))))
-                    : sy + Math.max(0, cy - r - sy) / 2
-                readonly property real m: cortado ? 0 : r * 0.8 + (0.6 - r * 0.8) * goteo.suave(pA / goteo.faseCorte)
-                readonly property real b: cortado ? 0 : r * 0.9
-                readonly property real by: cortado ? wy : cy
-
-                // La tarjeta (fase 2): de la gota a su sitio, ensanchándose
-                // con un poco de rebote
-                readonly property real ew: goteo.muelle(pB, 0.9)
-                readonly property real eh: goteo.salida(goteo.cl((pB - 0.12) / 0.88))
-                readonly property rect cuerpo: f <= goteo.faseGota
-                    ? Qt.rect(sx - r, cy - r, 2 * r, 2 * r)
-                    : Qt.rect(sx - goteo.r0 + (col.x - sx + goteo.r0) * ew, y0,
-                              2 * goteo.r0 + (col.width - 2 * goteo.r0) * ew,
-                              2 * goteo.r0 + (alto - 2 * goteo.r0) * eh)
-
-                Rectangle {
-                    parent: goo
-                    visible: gota.f > 0
-                    x: gota.cuerpo.x
-                    y: gota.cuerpo.y
-                    width: gota.cuerpo.width
-                    height: gota.cuerpo.height
-                    radius: Math.min(height / 2, width / 2,
-                        gota.f <= goteo.faseGota ? gota.r : goteo.r0 + (goteo.radioTarjeta - goteo.r0) * gota.pB)
-                    color: Tema.oscuro
-                    antialiasing: true
-                }
-
-                Shape {
-                    parent: goo
-                    visible: gota.f > 0 && gota.pA < 1 && gota.r > 0.5
-                    anchors.fill: parent
-                    preferredRendererType: Shape.CurveRenderer
-                    ShapePath {
-                        id: trazo
-                        fillColor: Tema.oscuro
-                        strokeWidth: -1
-                        readonly property real sx: gota.sx
-                        readonly property real sy: gota.sy
-                        readonly property real k1: Math.max(2, (gota.wy - sy) * 0.6)
-                        readonly property real k2: (gota.by - gota.wy) * 0.4
-                        startX: sx + gota.a; startY: gota.ty
-                        PathCubic {
-                            control1X: trazo.sx + gota.a * 0.5; control1Y: trazo.sy
-                            control2X: trazo.sx + gota.m; control2Y: gota.wy - trazo.k1
-                            x: trazo.sx + gota.m; y: gota.wy
-                        }
-                        PathCubic {
-                            control1X: trazo.sx + gota.m; control1Y: gota.wy + trazo.k2
-                            control2X: trazo.sx + gota.b; control2Y: gota.by - trazo.k2
-                            x: trazo.sx + gota.b; y: gota.by
-                        }
-                        PathLine { x: trazo.sx - gota.b; y: gota.by }
-                        PathCubic {
-                            control1X: trazo.sx - gota.b; control1Y: gota.by - trazo.k2
-                            control2X: trazo.sx - gota.m; control2Y: gota.wy + trazo.k2
-                            x: trazo.sx - gota.m; y: gota.wy
-                        }
-                        PathCubic {
-                            control1X: trazo.sx - gota.m; control1Y: gota.wy - trazo.k1
-                            control2X: trazo.sx - gota.a * 0.5; control2Y: trazo.sy
-                            x: trazo.sx - gota.a; y: gota.ty
-                        }
-                        PathLine { x: trazo.sx + gota.a; y: gota.ty }
-                    }
+                // La gota (comun/Gota.qml), pintada en la mancha
+                Gota {
+                    id: forma
+                    capa: goo
+                    f: gota.f
+                    sx: gota.sx
+                    sy: gota.sy
+                    fuenteR: gota.deCampana ? goteo.origenR : 0
+                    y0: gota.y0
+                    xFin: col.x
+                    anchoFin: col.width
+                    altoFin: gota.alto
+                    r0: goteo.r0
+                    radioFin: goteo.radioTarjeta
+                    faseGota: goteo.faseGota
+                    faseCorte: goteo.faseCorte
                 }
 
                 TarjetaAviso {
@@ -255,7 +183,7 @@ Item {
                     radius: goteo.radioTarjeta
                     border.width: urgente ? 2 : 0
                     border.color: Tema.rojo
-                    opacity: goteo.cl((gota.pB - 0.55) / 0.45)
+                    opacity: goteo.cl((forma.pB - 0.55) / 0.45)
                     enabled: !gota.sale
                     // Lo que le queda: la raya de abajo
                     property real resta: 1
