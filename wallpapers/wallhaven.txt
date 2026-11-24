@@ -11,15 +11,16 @@ e89l8k https://w.wallhaven.cc/full/e8/wallhaven-e89l8k.jpg
 e82xxr https://w.wallhaven.cc/full/e8/wallhaven-e82xxr.jpg
 vpywv3 https://w.wallhaven.cc/full/vp/wallhaven-vpywv3.jpg
 8ge2x1 https://w.wallhaven.cc/full/8g/wallhaven-8ge2x1.png
+yqvj5g https://w.wallhaven.cc/full/yq/wallhaven-yqvj5g.jpg
+3qkzqv https://w.wallhaven.cc/full/3q/wallhaven-3qkzqv.jpg
+5ymyz7 https://w.wallhaven.cc/full/5y/wallhaven-5ymyz7.jpg
 
 # Paisajes anime sin personajes
-7j3lve https://w.wallhaven.cc/full/7j/wallhaven-7j3lve.png
 gp7mq3 https://w.wallhaven.cc/full/gp/wallhaven-gp7mq3.jpg
 3q9qky https://w.wallhaven.cc/full/3q/wallhaven-3q9qky.png
 x621xo https://w.wallhaven.cc/full/x6/wallhaven-x621xo.png
 vg8mo8 https://w.wallhaven.cc/full/vg/wallhaven-vg8mo8.jpg
 yqjdpd https://w.wallhaven.cc/full/yq/wallhaven-yqjdpd.jpg
-2y89my https://w.wallhaven.cc/full/2y/wallhaven-2y89my.jpg
 
 # Más fondos: quita la # de los que quieras y ejecuta wallpapers/descargar.sh
 # yqe81l https://w.wallhaven.cc/full/yq/wallhaven-yqe81l.png
@@ -51,12 +52,11 @@ yqjdpd https://w.wallhaven.cc/full/yq/wallhaven-yqjdpd.jpg
 # rq6j57 https://w.wallhaven.cc/full/rq/wallhaven-rq6j57.png
 
 # Bajados desde el panel de fondos (Descubrir)
-3q3j6y https://w.wallhaven.cc/full/3q/wallhaven-3q3j6y.jpg
-7jx713 https://w.wallhaven.cc/full/7j/wallhaven-7jx713.png
 rqgrz7 https://w.wallhaven.cc/full/rq/wallhaven-rqgrz7.jpg
 jelyoq https://w.wallhaven.cc/full/je/wallhaven-jelyoq.png
-lyyg8p https://w.wallhaven.cc/full/ly/wallhaven-lyyg8p.jpg
-mlrdwk https://w.wallhaven.cc/full/ml/wallhaven-mlrdwk.jpg
-yqw88g https://w.wallhaven.cc/full/yq/wallhaven-yqw88g.jpg
 8gpd82 https://w.wallhaven.cc/full/8g/wallhaven-8gpd82.jpg
 mlrwd1 https://w.wallhaven.cc/full/ml/wallhaven-mlrwd1.png
+5ykkv3 https://w.wallhaven.cc/full/5y/wallhaven-5ykkv3.jpg
+nkxjw1 https://w.wallhaven.cc/full/nk/wallhaven-nkxjw1.jpg
+jel73p https://w.wallhaven.cc/full/je/wallhaven-jel73p.png
+mlo5g9 https://w.wallhaven.cc/full/ml/wallhaven-mlo5g9.jpg
