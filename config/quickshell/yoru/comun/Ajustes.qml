@@ -55,6 +55,7 @@ Singleton {
     property alias avisosSegundos: datos.avisosSegundos // lo que dura un aviso en pantalla
     property alias avisosLado: datos.avisosLado         // "derecha" · "centro"
     property alias avisosSonido: datos.avisosSonido     // un «tin» al llegar
+    property alias avisosGota: datos.avisosGota         // gotean de la campana (barra de islas arriba)
     property alias appsAvisos: datos.appsAvisos         // las apps que han avisado alguna vez
     property alias silenciadas: datos.silenciadas       // esas, sin aviso ni sonido (sí en el panel)
 
@@ -223,6 +224,7 @@ window-rule {
             property int avisosSegundos: 5
             property string avisosLado: "derecha"
             property bool avisosSonido: false
+            property bool avisosGota: true
             property var appsAvisos: []
             property var silenciadas: []
 

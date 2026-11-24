@@ -89,6 +89,33 @@ Item {
                 onElegir: id => Ajustes.avisosLado = id
             }
 
+            Item { width: 1; height: 8 }
+            Texto {
+                leftPadding: 12
+                bottomPadding: 6
+                text: "Cómo salen"
+                font.pixelSize: 13
+            }
+            Opciones {
+                width: parent.width
+                opciones: [
+                    {id: "gota", icono: "󰖌", texto: "Gotean de la campana"},
+                    {id: "tarjeta", icono: "󰂚", texto: "Tarjetas"}
+                ]
+                valor: Ajustes.avisosGota ? "gota" : "tarjeta"
+                onElegir: id => Ajustes.avisosGota = id === "gota"
+            }
+            Texto {
+                width: parent.width
+                leftPadding: 12
+                topPadding: 4
+                text: "La gota sale con la barra de islas arriba y los avisos a la derecha"
+                font.pixelSize: 11
+                font.bold: false
+                color: Tema.gris
+                wrapMode: Text.Wrap
+            }
+
             Item { width: 1; height: 12 }
             Opciones {
                 width: parent.width

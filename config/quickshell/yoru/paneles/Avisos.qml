@@ -10,7 +10,8 @@
 //
 //  Con la barra de islas, salen bajo la campana: cada una en su tarjeta,
 //  como un panel pequeño, que baja un poco al llegar. Una raya fina abajo
-//  marca lo que le queda (se para con el ratón encima).
+//  marca lo que le queda (se para con el ratón encima). Con «Gota» (Ajustes
+//  › Notificaciones), en vez de eso gotean de la campana: Goteo.qml.
 //
 //  Con la barra minimalista, dentro de un recuadro pegado a ella (mismo
 //  fondo, esquinas rectas, hasta el borde de la pantalla) que baja como una
@@ -56,6 +57,8 @@ PanelWindow {
     }
     readonly property real campanaAncho: campana?.width ?? 0
     readonly property bool colgada: campana !== null && campana.visible && campanaAncho > 0
+    // Gotean de la campana (Goteo.qml), con «Gota» en Ajustes
+    readonly property bool gota: Ajustes.avisosGota && colgada
     // (de cuando colgaban fundidas con curvas: ya no hay)
     readonly property int curvas: 0
     // El hueco entre la barra y la primera tarjeta (como entre la barra y
@@ -108,36 +111,49 @@ PanelWindow {
     readonly property real altoPila: pila.height + 2 * relleno
     onAltoPilaChanged: if (pila.height > 0) alto = altoPila
 
-    visible: mostrar || (colgada && aparecer > 0)
+    visible: gota ? goteo.ocupado : mostrar || (colgada && aparecer > 0)
     // A la derecha o en el centro (Ajustes › Notificaciones)
     anchors { top: !abajo; bottom: abajo; right: aLaDerecha }
     // Bajo la barra (pegados a ella con la minimalista o a la campana); con
     // la barra a la izquierda, arriba del todo; con la de abajo, encima de
     // ella, tapando su línea de arriba
-    margins.top: colgada ? Tema.margenBarra + Tema.altoBarra + hueco
+    margins.top: gota ? Tema.margenBarra : colgada ? Tema.margenBarra + Tema.altoBarra + hueco
         : Ajustes.minimalista ? Tema.altoBarra + 2 : Ajustes.vertical ? Tema.margenLados + 6 : Tema.hueco
     margins.bottom: Tema.altoTareas - 1
     // Bajo la campana: alineadas con el borde derecho de la barra (como los
     // paneles de ese lado), si así la campana queda encima; si no, centradas
     // bajo ella, sin salirse de la pantalla
     margins.right: pegada ? 0
+        : gota ? Math.round(Math.max(Tema.margenLados - goteo.pad, modelData.width - (campanaX + campanaAncho / 2) - implicitWidth / 2))
         : colgada && campanaX + campanaAncho >= modelData.width - Tema.margenLados - implicitWidth ? Tema.margenLados
         : colgada ? Math.round(Math.max(Tema.margenLados, modelData.width - (campanaX + campanaAncho / 2) - implicitWidth / 2))
         : Tema.margenLados
-    implicitWidth: pegada ? 400 : 380
-    implicitHeight: Math.max(1, colgada ? curvas + alto : pegada ? fondo.height : pila.height)
+    implicitWidth: gota ? goteo.implicitWidth : pegada ? 400 : 380
+    implicitHeight: Math.max(1, gota ? goteo.altoTotal : colgada ? curvas + alto : pegada ? fondo.height : pila.height)
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "yoru-avisos"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     // Solo se pueden pulsar las tarjetas (o su recuadro); el resto deja pasar los clics
-    mask: Region { item: ventana.pegada || ventana.colgada ? fondo : pila }
+    mask: Region { item: ventana.gota ? goteo.zona : ventana.pegada || ventana.colgada ? fondo : pila }
+
+    Goteo {
+        id: goteo
+        visible: ventana.gota
+        anchors.fill: parent
+        modelo: ventana.gota && ventana.mostrar ? Notificaciones.emergentes.slice(0, 3).reverse() : []
+        activo: ventana.mostrar
+        origenX: ventana.campanaDentro + ventana.campanaAncho / 2
+        origenY: (ventana.campana?.height ?? Tema.altoBarra) / 2
+        origenR: (ventana.campana?.height ?? Tema.altoBarra) / 2
+    }
 
     // El recuadro: pegado a la barra (minimalista o Windows) o colgando de
     // la campana. Sueltas (otras barras), sin recuadro
     Rectangle {
         id: fondo
+        visible: !ventana.gota
         readonly property bool hay: ventana.pegada
         // Pegado al borde de la pantalla, su borde de ese lado queda fuera
         width: parent.width + (ventana.pegada && ventana.aLaDerecha ? border.width : 0)
@@ -183,7 +199,7 @@ PanelWindow {
             // Colgando: al irse la última, se funde
             opacity: ventana.colgada ? Math.min(1, ventana.aparecer * 2) : 1
 
-            model: ScriptModel { values: Notificaciones.emergentes.slice(0, 5) }
+            model: ScriptModel { values: ventana.gota ? [] : Notificaciones.emergentes.slice(0, 5) }
 
             displaced: Transition {
                 NumberAnimation { property: "y"; duration: Tema.normal; easing.type: Easing.OutCubic }
