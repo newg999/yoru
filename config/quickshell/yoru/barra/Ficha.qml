@@ -18,6 +18,7 @@
 //  (cable: true) se dibujan como allí (IconoBateria, IconoVolumen, IconoCable).
 // ============================================================================
 import QtQuick
+import QtQuick.Effects
 import Quickshell.Widgets
 import qs.comun
 
@@ -111,26 +112,26 @@ ClippingRectangle {
         moviendo: ficha.ola
     }
 
-    // El candadito de la esquina de abajo a la derecha (VPN), dibujado para
-    // que salga nítido a 9 px (el glifo a ese tamaño era una mancha). Sin
-    // fondo detrás: el de la isla es translúcido y un círculo nunca casaba
-    // con él. Va en el hueco que deja el abanico del wifi abajo a la
-    // derecha, un poco por fuera, para no montarse sobre las ondas
+    // El candadito de la esquina de abajo a la derecha (VPN), pequeño y
+    // metido dentro del icono, como las insignias del móvil: el icono lleva
+    // un hueco recortado alrededor (ver «hueco» abajo), así se lee sin
+    // círculo de fondo (el de la isla es translúcido y nunca casaba).
+    // Dibujado, no un glifo: a 7 px un glifo es una mancha
     //
     //      ╭─╮      el arco
     //     ▐███▌     el cuerpo
     component Insignia: Item {
         property color tinta
         visible: ficha.insignia
-        readonly property int an: ficha.comoDock ? 9 : 8
+        readonly property int an: ficha.comoDock ? 7 : 6
         width: an
         height: an + 1
-        x: parent.width - Math.round(an * 0.2)
+        x: parent.width - width
         y: Math.round(parent.height / 2 + 7 - height)
         // El arco: un aro recortado por abajo (lo tapa el cuerpo)
         Item {
-            x: 2; y: 0
-            width: parent.width - 4
+            x: 1; y: 0
+            width: parent.width - 2
             height: Math.ceil(parent.height / 2) + 1
             clip: true
             Rectangle {
@@ -144,10 +145,10 @@ ClippingRectangle {
         }
         // El cuerpo
         Rectangle {
-            y: Math.floor(parent.height / 2) - 1
+            y: Math.floor(parent.height / 2)
             width: parent.width
             height: parent.height - y
-            radius: 1.5
+            radius: 1
             color: parent.tinta
         }
     }
@@ -158,18 +159,43 @@ ClippingRectangle {
         property color tintaIcono
         property color tintaTexto
         spacing: ficha.comoDock ? 5 : 6
-        // Sitio para el candadito, que sobresale del icono: la ficha (que
-        // recorta en redondo) se alarga un poco en vez de comérselo
-        rightPadding: ficha.insignia ? 6 : 0
-        Text {
+        Item {
             visible: ficha.icono !== "" && ficha.dibujo === ""
             anchors.verticalCenter: parent.verticalCenter
-            text: ficha.icono
-            color: parent.tintaIcono
-            font.family: Tema.mono
-            font.pixelSize: ficha.comoDock ? ficha.tamDock : ficha.tamIcono
-            Behavior on color { enabled: ficha.comoDock; ColorAnimation { duration: Tema.normal * 0.8 } }
-            Insignia { tinta: contenido.tintaIcono }
+            width: glifo.implicitWidth
+            height: glifo.implicitHeight
+            Text {
+                id: glifo
+                text: ficha.icono
+                color: contenido.tintaIcono
+                font.family: Tema.mono
+                font.pixelSize: ficha.comoDock ? ficha.tamDock : ficha.tamIcono
+                Behavior on color { enabled: ficha.comoDock; ColorAnimation { duration: Tema.normal * 0.8 } }
+                // Con candadito, el hueco alrededor de él, recortado del icono
+                layer.enabled: ficha.insignia
+                layer.effect: MultiEffect {
+                    maskEnabled: true
+                    maskInverted: true
+                    maskSource: hueco
+                    maskThresholdMin: 0.5
+                    maskSpreadAtMin: 1
+                }
+            }
+            Item {
+                id: hueco
+                anchors.fill: parent
+                visible: false
+                layer.enabled: ficha.insignia
+                Rectangle {
+                    x: candado.x - 1.5
+                    y: candado.y - 1.5
+                    width: candado.width + 3
+                    height: candado.height + 3
+                    radius: 2.5
+                    color: "black"
+                }
+            }
+            Insignia { id: candado; tinta: contenido.tintaIcono }
         }
         IconoBateria {
             visible: ficha.dibujo === "bateria"
