@@ -72,6 +72,7 @@ PanelWindow {
     property var fondos: []          // [{ruta, miniatura, vista, medida, nombre}]
     property string actual: ""
     property bool cargando: false
+    property int volverA: -1         // tras borrar, dónde seguir
     readonly property var elegido: fondos[carrusel.currentIndex] ?? null
 
     // Borrar: la primera vez (Supr o la papelera) lo pide; la segunda, a la papelera
@@ -95,11 +96,12 @@ PanelWindow {
     }
     Process {
         id: borrador
+        // Al releer la lista, se queda donde estaba (en la de después de la
+        // borrada), no vuelve a la puesta
         onExited: {
-            const i = carrusel.currentIndex;
+            panel.volverA = carrusel.currentIndex;
             leer.running = true;
             actualFile.reload();
-            carrusel.currentIndex = Math.max(0, Math.min(i, panel.fondos.length - 2));
         }
     }
 
@@ -107,6 +109,7 @@ PanelWindow {
         if (abierto) {
             cargando = fondos.length === 0;
             aBorrar = "";
+            volverA = -1;
             leer.running = true;
             actualFile.reload();
             carrusel.forceActiveFocus();
@@ -138,7 +141,10 @@ PanelWindow {
                             nombre: ruta.split("/").pop().replace(/\.[^.]+$/, "")};
                 });
                 panel.cargando = false;
-                const i = panel.fondos.findIndex(f => f.ruta === panel.actual);
+                const i = panel.volverA >= 0
+                    ? Math.min(panel.volverA, panel.fondos.length - 1)
+                    : panel.fondos.findIndex(f => f.ruta === panel.actual);
+                panel.volverA = -1;
                 carrusel.positionViewAtIndex(Math.max(i, 0), PathView.Center);
                 carrusel.currentIndex = Math.max(i, 0);
             }
