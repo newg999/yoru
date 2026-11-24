@@ -364,9 +364,8 @@ PanelWindow {
     }
 
     // «Gotean de su isla»: la gota y su cuello, en una capa opaca con la
-    // transparencia de las islas encima (como la isla de la que cae); lo
-    // que cae sobre la isla se recorta. Ya abierto no se ve: el panel tapa
-    // la gota, que se desvanece mientras él aparece.
+    // transparencia de los paneles encima; lo que cae sobre la isla se
+    // recorta. Ya abierto no se ve: la caja toma su fondo en el mismo sitio.
     // Las capas se preparan en cuanto la ventana sale (mientras espera a
     // estar pintada), no al arrancar la gota: crearlas entonces costaba
     // ~100 ms y la gota salía con un tirón. Y solo del alto que hace falta
@@ -375,8 +374,10 @@ PanelWindow {
         width: parent.width
         height: ventana.altoGoo
         visible: ventana.gota
-        opacity: ventana.progreso > 0 && ventana.progreso < 1
-            ? Ajustes.opacidadIslas * (1 - formaPanel.cl((formaPanel.pB - 0.75) / 0.25)) : 0
+        // Con la transparencia del panel ya abierto (no la de la isla): la
+        // gota es el panel desde el principio. Al terminar, la caja toma
+        // su fondo justo donde estaba la gota, del mismo color: no se nota
+        opacity: ventana.progreso > 0 && ventana.progreso < 1 ? Ajustes.opacidadPaneles : 0
         Item {
             id: gooPanel
             anchors.fill: parent
@@ -524,7 +525,9 @@ PanelWindow {
             topRightRadius: pegado && (!fundido || sitio === "derecha") ? 0 : radius
             bottomLeftRadius: pegado ? 0 : radius
             bottomRightRadius: pegado ? 0 : radius
-            color: Tema.panel
+            // (goteando, su fondo es la gota hasta que termina: si los dos se
+            // fundían, a medias se veía más oscuro o más claro)
+            color: ventana.gota && ventana.progreso < 1 ? "transparent" : Tema.panel
             border.width: pegado ? Tema.borde(1) : Tema.borde(2)
             border.color: pegado ? Tema.claro(0.08) : Tema.panelBorde
             clip: true
