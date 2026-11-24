@@ -440,8 +440,8 @@ PanelWindow {
                     apagada: estado.cable === null && !Networking.wifiEnabled
                     cable: estado.cable !== null
                     activa: estado.cable !== null || estado.redWifi !== null
-                    // VPN conectada: un escudito en la esquina del icono
-                    insignia: Vpn.conectadas.length > 0 ? "󰦝" : ""
+                    // VPN conectada: un candadito en la esquina del icono
+                    insignia: Vpn.conectadas.length > 0
                     elegida: Paneles.esta("pildora", barra.modelData, "red")
                     onClic: Paneles.abrirPagina(barra.modelData, "red", "derecha")
                 }

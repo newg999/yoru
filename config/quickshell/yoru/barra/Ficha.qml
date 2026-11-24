@@ -46,7 +46,7 @@ ClippingRectangle {
     property bool mudo: false
     property bool cable: false          // el ethernet dibujado
     property bool cargando: false       // el rayo en la pila dibujada
-    property string insignia: ""        // un iconito en la esquina del icono (VPN: 󰦝)
+    property bool insignia: false       // un candadito en la esquina del icono (VPN)
     readonly property string dibujo: !comoDock ? ""
         : cable ? "cable" : carga >= 0 ? "bateria" : volumen >= 0 ? "volumen" : ""
     readonly property int tamDock: tamIcono + 5
@@ -111,24 +111,44 @@ ClippingRectangle {
         moviendo: ficha.ola
     }
 
-    // El iconito de la esquina de abajo a la derecha, sobre un círculo del
-    // color del fondo (así se recorta sobre el icono)
-    component Insignia: Rectangle {
+    // El candadito de la esquina de abajo a la derecha (VPN), dibujado para
+    // que salga nítido a 9 px (el glifo a ese tamaño era una mancha). Sin
+    // fondo detrás: el de la isla es translúcido y un círculo nunca casaba
+    // con él. Va en el hueco que deja el abanico del wifi abajo a la
+    // derecha, un poco por fuera, para no montarse sobre las ondas
+    //
+    //      ╭─╮      el arco
+    //     ▐███▌     el cuerpo
+    component Insignia: Item {
         property color tinta
-        visible: ficha.insignia !== ""
-        readonly property int tam: Math.round((ficha.comoDock ? ficha.tamDock : ficha.tamIcono) * 0.55)
-        width: tam + 3
-        height: tam + 3
-        radius: width / 2
-        x: parent.width - width * 0.75
-        y: parent.height - height * 0.85
-        color: ficha.comoDock || !ficha.activa ? Tema.oscuro : Tema.blanco
-        Text {
-            anchors.centerIn: parent
-            text: ficha.insignia
+        visible: ficha.insignia
+        readonly property int an: ficha.comoDock ? 9 : 8
+        width: an
+        height: an + 1
+        x: parent.width - Math.round(an * 0.2)
+        y: Math.round(parent.height / 2 + 7 - height)
+        // El arco: un aro recortado por abajo (lo tapa el cuerpo)
+        Item {
+            x: 2; y: 0
+            width: parent.width - 4
+            height: Math.ceil(parent.height / 2) + 1
+            clip: true
+            Rectangle {
+                width: parent.width
+                height: width + 2
+                radius: width / 2
+                color: "transparent"
+                border.color: parent.parent.tinta
+                border.width: 1.5
+            }
+        }
+        // El cuerpo
+        Rectangle {
+            y: Math.floor(parent.height / 2) - 1
+            width: parent.width
+            height: parent.height - y
+            radius: 1.5
             color: parent.tinta
-            font.family: Tema.mono
-            font.pixelSize: parent.tam
         }
     }
 
@@ -138,6 +158,9 @@ ClippingRectangle {
         property color tintaIcono
         property color tintaTexto
         spacing: ficha.comoDock ? 5 : 6
+        // Sitio para el candadito, que sobresale del icono: la ficha (que
+        // recorta en redondo) se alarga un poco en vez de comérselo
+        rightPadding: ficha.insignia ? 6 : 0
         Text {
             visible: ficha.icono !== "" && ficha.dibujo === ""
             anchors.verticalCenter: parent.verticalCenter
