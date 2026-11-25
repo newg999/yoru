@@ -4,7 +4,7 @@
 //  lanzador: Paneles.alternarMeteosat). Solo existe mientras está abierta.
 //
 //  El trabajo pesado lo hace scripts/meteosat.py (Python): descarga el
-//  modelo (Open-Meteo) y el mapa y el satélite (EUMETSAT), y dibuja la vista
+//  modelo (Open-Meteo), el radar (RainViewer), los partes de los aeropuertos (METAR) y el mapa y el satélite (EUMETSAT), y dibuja la vista
 //  pedida en un PNG. Se le pide una vista por línea (JSON) y responde con la
 //  ruta de la imagen, la rejilla del modelo y los valores de las ciudades.
 //  Aquí se pinta lo demás, nítido y en vivo:
@@ -63,6 +63,8 @@ Scope {
             ]
             readonly property string unidad: arranque?.unidades?.[modo] ?? ""
             readonly property bool sat: info?.sat ?? false
+            // Lluvia «ahora»: el radar (RainViewer) en vez del modelo
+            readonly property var radar: info?.radar ?? null
             readonly property bool conViento: (modo === "v" || modo === "r") && (info?.rejilla ?? null) !== null
 
             // La vista ahora (como en scripts/meteosat.py: grados por igual en los dos ejes)
@@ -148,7 +150,7 @@ Scope {
                 interval: 60000
                 onTriggered: ventana.pedir()
             }
-            // El satélite se renueva cada pocos minutos; el modelo, cada hora
+            // El satélite y el radar se renuevan cada pocos minutos; el modelo, cada media hora
             Timer {
                 interval: 5 * 60 * 1000
                 running: true
@@ -213,8 +215,8 @@ Scope {
             // ------------------------------------------------------ rejilla del modelo
             // Valor de la rejilla (de norte a sur y de oeste a este) en un punto,
             // con interpolación bilineal; null fuera de ella
-            function muestra(lista, la, lo) {
-                const r = info?.rejilla;
+            function muestra(lista, la, lo, rej) {
+                const r = rej ?? info?.rejilla;
                 if (!r || !lista)
                     return null;
                 const b = r.bbox;
@@ -503,6 +505,54 @@ Scope {
                     }
                 }
 
+                // Los aeropuertos (Lluvia, ahora): solo si llueve o llovió hace
+                // poco, lo que dice su parte (METAR) en una pastilla; la lluvia
+                // del parte ya va pintada en el mapa (scripts/meteosat.py)
+                Repeater {
+                    model: ventana.modo === "l" && ventana.desfase === 0
+                        ? (ventana.info?.aeropuertos ?? []).filter(a => a.estado !== "") : []
+                    Rectangle {
+                        id: aero
+                        required property var modelData
+                        readonly property real px: ventana.xDe(modelData.lon)
+                        readonly property real py: ventana.yDe(modelData.lat)
+                        visible: px > 10 && py > 50 && px < mapa.width - 10 && py < mapa.height - 110
+                        x: px + 8
+                        y: py + 6
+                        width: textoAero.implicitWidth + 14
+                        height: 20
+                        radius: 10
+                        color: Qt.rgba(0.05, 0.08, 0.11, 0.82)
+                        border.width: 1
+                        border.color: modelData.llueve ? "#4aa3ff" : "#9cc8f0"
+                        Texto {
+                            id: textoAero
+                            anchors.centerIn: parent
+                            text: aero.modelData.estado + (aero.modelData.cuando ? " a las " + aero.modelData.cuando : "")
+                            color: "white"
+                            font.pixelSize: 11
+                        }
+                        HoverHandler { id: sobreAero }
+                        Rectangle {
+                            visible: sobreAero.hovered
+                            anchors.left: parent.left
+                            anchors.top: parent.bottom
+                            anchors.topMargin: 4
+                            width: textoAeroInfo.implicitWidth + 14
+                            height: 20
+                            radius: 10
+                            color: Tema.panel
+                            Texto {
+                                id: textoAeroInfo
+                                anchors.centerIn: parent
+                                text: "Aeropuerto de " + aero.modelData.nombre + " · parte de las " + aero.modelData.hora
+                                color: Tema.texto
+                                font.pixelSize: 11
+                            }
+                        }
+                    }
+                }
+
                 // Arrastrar mueve el mapa; la rueda acerca o aleja; el ratón
                 // encima enseña el valor de ese punto
                 DragHandler {
@@ -538,7 +588,9 @@ Scope {
             // El valor bajo el ratón
             Rectangle {
                 readonly property var v: encima.hovered && !arrastre.active
-                    ? ventana.muestra(ventana.info?.rejilla?.valor, ventana.latDe(encima.point.position.y), ventana.lonDe(encima.point.position.x))
+                    ? (ventana.radar
+                        ? ventana.muestra(ventana.radar.valor, ventana.latDe(encima.point.position.y), ventana.lonDe(encima.point.position.x), ventana.radar)
+                        : ventana.muestra(ventana.info?.rejilla?.valor, ventana.latDe(encima.point.position.y), ventana.lonDe(encima.point.position.x)))
                     : null
                 visible: v !== null
                 x: Math.min(parent.width - width - 8, encima.point.position.x + 16)
@@ -785,6 +837,7 @@ Scope {
                         }
                         Texto {
                             text: ventana.sat ? "Satélite Meteosat · en vivo"
+                                : ventana.radar ? "Radar · " + ventana.radar.hora
                                 : ventana.desfase === 0 ? "Ahora"
                                 : (ventana.desfase > 0 ? "Dentro de " : "Hace ") + Math.abs(ventana.desfase) + " h"
                             font.pixelSize: 11
